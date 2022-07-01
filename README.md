@@ -1,5 +1,7 @@
 # Storage
 
+This is a simple spdk based storage PoC
+
 ## Docs
 
 * [JSON RPC Proxy](https://spdk.io/doc/jsonrpc_proxy.html)
