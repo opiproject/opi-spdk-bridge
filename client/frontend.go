@@ -27,17 +27,17 @@ func do_frontend(conn grpc.ClientConnInterface, ctx context.Context) {
 		log.Fatalf("could not list NVMe subsystem: %v", err)
 	}
 	log.Printf("Listed: %v", rs4)
-	rs5, err := c1.NVMeSubsystemGet(ctx, &pb.NVMeSubsystemGetRequest{Id: 7})
+	rs5, err := c1.NVMeSubsystemGet(ctx, &pb.NVMeSubsystemGetRequest{Nqn: "7"})
 	if err != nil {
 		log.Fatalf("could not get NVMe subsystem: %v", err)
 	}
 	log.Printf("Got: %s", rs5.Subsystem.Nqn)
-	rs6, err := c1.NVMeSubsystemStats(ctx, &pb.NVMeSubsystemStatsRequest{Id: 7})
+	rs6, err := c1.NVMeSubsystemStats(ctx, &pb.NVMeSubsystemStatsRequest{Nqn: "7"})
 	if err != nil {
 		log.Fatalf("could not stats NVMe subsystem: %v", err)
 	}
 	log.Printf("Stats: %s", rs6.Stats)
-	rs2, err := c1.NVMeSubsystemDelete(ctx, &pb.NVMeSubsystemDeleteRequest{Id: 7})
+	rs2, err := c1.NVMeSubsystemDelete(ctx, &pb.NVMeSubsystemDeleteRequest{Nqn: "7"})
 	if err != nil {
 		log.Fatalf("could not delete NVMe subsystem: %v", err)
 	}
