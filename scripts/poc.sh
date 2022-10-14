@@ -31,13 +31,20 @@ tests_poc() {
         fi
     done
     curl --fail --insecure --user spdkuser:spdkpass -X POST -H 'Content-Type: application/json' -d '{"id": 1, "method": "bdev_get_bdevs"}' http://127.0.0.1:9009
-    docker-compose run opi-spdk-client
+
+    STORAGE_CLIENT_NAME=$(docker-compose ps | grep opi-spdk-client | awk '{print $1}')
+    STORAGE_CLIENT_RC=$(docker inspect --format '{{.State.ExitCode}}' "${STORAGE_CLIENT_NAME}")
+    if [ "${STORAGE_CLIENT_RC}" != "0" ]; then
+        echo "opi-spdk-client failed:"
+        docker logs "${STORAGE_CLIENT_NAME}"
+        exit 1
+    fi
 
     # Check exported port also works (host network)
-    docker run --network=host --rm namely/grpc-cli ls 127.0.0.1:50051
+    docker run --network=host --rm docker.io/namely/grpc-cli ls 127.0.0.1:50051
 
     # check reflection
-    grpc_cli=(docker run --network=storage_opi --rm namely/grpc-cli)
+    grpc_cli=(docker run --network=storage_opi --rm docker.io/namely/grpc-cli)
     "${grpc_cli[@]}" ls opi-spdk-server:50051
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.AioControllerService -l
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerService -l
