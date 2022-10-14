@@ -4,8 +4,9 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/opiproject/opi-api v0.0.0-20221012134350-65199a33c618
+	github.com/opiproject/opi-api v0.0.0-20221014192412-69b132c4e5d3
 	google.golang.org/grpc v1.50.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
@@ -14,5 +15,4 @@ require (
 	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220927151529-dcaddaf36704 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 )
