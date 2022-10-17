@@ -85,7 +85,7 @@ func do_backend(conn grpc.ClientConnInterface, ctx context.Context) {
 		log.Fatalf("could not create Aio device: %v", err)
 	}
 	log.Printf("Added: %v", ra1)
-	ra3, err := c2.AioControllerUpdate(ctx, &pb.AioControllerUpdateRequest{Device: &pb.AioController{Name: "OpiAio4"}})
+	ra3, err := c2.AioControllerUpdate(ctx, &pb.AioControllerUpdateRequest{Device: &pb.AioController{Name: "OpiAio4", Filename: "/tmp/aio_bdev_file"}})
 	if err != nil {
 		log.Fatalf("could not update Aio device: %v", err)
 	}
