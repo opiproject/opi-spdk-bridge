@@ -9,9 +9,9 @@ import (
 	"log"
 
 	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 //////////////////////////////////////////////////////////
@@ -233,7 +233,7 @@ func (s *server) AioControllerCreate(ctx context.Context, in *pb.AioControllerCr
 	params := BdevAioCreateParams{
 		Name:      in.GetDevice().GetName(),
 		BlockSize: 512,
-		Filename:  "/tmp/aio_bdev_file",
+		Filename:  in.GetDevice().GetFilename(),
 	}
 	var result BdevAioCreateResult
 	err := call("bdev_aio_create", &params, &result)
