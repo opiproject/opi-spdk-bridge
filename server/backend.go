@@ -281,7 +281,7 @@ func (s *server) AioControllerUpdate(ctx context.Context, in *pb.AioControllerUp
 	params2 := BdevAioCreateParams{
 		Name:      in.GetDevice().GetName(),
 		BlockSize: 512,
-		Filename:  "/tmp/aio_bdev_file",
+		Filename:  in.GetDevice().GetFilename(),
 	}
 	var result2 BdevAioCreateResult
 	err2 := call("bdev_aio_create", &params2, &result2)
