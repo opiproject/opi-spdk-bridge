@@ -13,7 +13,7 @@ RUN go mod download
 
 # build an app
 COPY *.go ./
-RUN go build -o /opi-spdk-bridge
+RUN go build -v -o /opi-spdk-bridge && CGO_ENABLED=0 go test -v ./...
 
 EXPOSE 50051
 CMD [ "/opi-spdk-bridge" ]
