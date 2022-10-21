@@ -13,7 +13,7 @@ RUN go mod download
 
 # build an app
 COPY *.go ./
-RUN go build -o /opi-storage-client
+RUN go build -v -o /opi-storage-client && CGO_ENABLED=0 go test -v ./...
 
 EXPOSE 50051
 CMD [ "/opi-storage-client" ]
