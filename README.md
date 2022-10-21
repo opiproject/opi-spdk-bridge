@@ -46,7 +46,7 @@ It is just an example and implies SPDK just as example, not mandated by OPI.
 
 ## Getting started
 
-* [Setup everything once using ansible](../setup)
+* [Setup everything once using ansible](https://github.com/opiproject/opi-poc/tree/main/setup)
 * Run `docker-compose up -d`
 
 ## QEMU example
