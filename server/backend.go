@@ -36,7 +36,7 @@ func (s *server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 	err := call("bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if len(result) != 1 {

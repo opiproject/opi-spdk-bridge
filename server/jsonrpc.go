@@ -56,7 +56,10 @@ func call(method string, args, result interface{}) error {
 	log.Printf("Sending to SPDK: %s", data)
 
 	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
-	resp, _ := unixSocketCom(*rpcSock, data)
+	resp, err := unixSocketCom(*rpcSock, data)
+	if err != nil {
+		return err
+	}
 
 	response := struct {
 		ID    int32 `json:"id"`
@@ -87,17 +90,15 @@ func call(method string, args, result interface{}) error {
 func unixSocketCom(rpcSock string, buf []byte) (io.Reader, error) {
 	conn, err := net.Dial("unix", rpcSock)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	_, err = conn.Write(buf)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
 	err = conn.(*net.UnixConn).CloseWrite()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
