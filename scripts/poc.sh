@@ -44,7 +44,7 @@ tests_poc() {
     docker run --network=host --rm docker.io/namely/grpc-cli ls 127.0.0.1:50051
 
     # check reflection
-    grpc_cli=(docker run --network=storage_opi --rm docker.io/namely/grpc-cli)
+    grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cli)
     "${grpc_cli[@]}" ls opi-spdk-server:50051
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.AioControllerService -l
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerService -l

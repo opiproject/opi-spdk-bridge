@@ -1,10 +1,21 @@
-# Storage
+# OPI storage gRPC to SPDK json-rpc bridge
+
+[![Linters](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/linters.yml)
+[![tests](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/poc-storage.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/poc-storage.yml)
+[![License](https://img.shields.io/github/license/opiproject/opi-spdk-bridge?style=flat-square&color=blue&label=License)](https://github.com/opiproject/opi-spdk-bridge/blob/master/LICENSE)
+[![Last Release](https://img.shields.io/github/v/release/opiproject/opi-spdk-bridge?label=Latest&style=flat-square&logo=go)](https://github.com/opiproject/opi-spdk-bridge/releases)
 
 This is a simple SPDK based storage API PoC.
 
 * SPDK - container with SPDK app that is running on xPU
 * Server - container with OPI gRPC storage APIs to SPDK json-rpc APIs bridge
 * Client - container with OPI gRPC client for testing of the above server/bridge
+
+## I Want To Contribute
+
+This project welcomes contributions and suggestions.  We are happy to have the Community involved via submission of **Issues and Pull Requests** (with substantive content or even just fixes). We are hoping for the documents, test framework, etc. to become a community process with active engagement.  PRs can be reviewed by by any number of people, and a maintainer may accept.
+
+See [CONTRIBUTING](https://github.com/opiproject/opi/blob/main/CONTRIBUTING.md) and [GitHub Basic Process](https://github.com/opiproject/opi/blob/main/doc-github-rules.md) for more details.
 
 ## Docs
 
@@ -95,7 +106,7 @@ From <https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflectio
 Alias
 
 ```bash
-alias grpc_cli='docker run --network=storage_opi --rm -it namely/grpc-cli'
+alias grpc_cli='docker run --network=opi-spdk-bridge_opi --rm -it namely/grpc-cli'
 ```
 
 See services
