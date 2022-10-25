@@ -194,7 +194,7 @@ func (s *server) NVMeNamespaceList(ctx context.Context, in *pb.NVMeNamespaceList
 			Blobarray := make([]*pb.NVMeNamespace, len(rr.Namespaces))
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
-				Blobarray[j] = &pb.NVMeNamespace{Name: r.Name}
+				Blobarray[j] = &pb.NVMeNamespace{Name: r.Name, Nsid: int64(r.Nsid)}
 			}
 			return &pb.NVMeNamespaceListResponse{Namespace: Blobarray}, nil
 		}
