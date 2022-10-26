@@ -65,9 +65,60 @@ $ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 ghcr.io/opiproject/o
 on X86 management VM run
 
 ```bash
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeSubsystemCreate "{'subsystem' : {'nqn' : 'Opi1'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeControllerCreate "{'controller' : {'name' : 'Opi2' , 'subsystem_id' : '1'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeNamespaceCreate "{'namespace' : {'name' : 'Opi3' , 'controller_id' : '2' , 'subsystem_id' : '1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeSubsystemCreate "{'subsystem' : {'nqn' : 'nqn.2022-09.io.spdk:opi1'} }"
+connecting to 10.10.10.1:50051
+{}
+Rpc succeeded with OK status
+
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeSubsystemList "{}"
+connecting to 10.10.10.1:50051
+{
+ "subsystem": [
+  {
+   "nqn": "nqn.2014-08.org.nvmexpress.discovery"
+  },
+  {
+   "nqn": "nqn.2016-06.io.spdk:cnode1"
+  },
+  {
+   "nqn": "nqn.2022-09.io.spdk:opi1"
+  }
+ ]
+}
+Rpc succeeded with OK status
+
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeControllerCreate "{'controller' : {'name' : 'Opi2' , 'subsystem_id' : '1'} }"
+connecting to 10.10.10.1:50051
+{}
+Rpc succeeded with OK status
+
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeControllerList "{'subsystem_id' : '1'}"
+connecting to 10.10.10.1:50051
+{
+ "controller": [
+  {},
+  {},
+  {}
+ ]
+}
+Rpc succeeded with OK status
+
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeNamespaceCreate "{'namespace' : {'subsystem_id' : 'nqn.2016-06.io.spdk:cnode1' , 'bdev' : 'Malloc1' } }"
+connecting to 10.10.10.1:50051
+{}
+Rpc succeeded with OK status
+
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 NVMeNamespaceList "{'subsystem_id' : '1'}"
+connecting to 10.10.10.1:50051
+{
+ "namespace": [
+  {
+   "name": "Malloc1",
+   "nsid": "1"
+  }
+ ]
+}
+Rpc succeeded with OK status
 ```
 
 and netwok-facing APIs:
