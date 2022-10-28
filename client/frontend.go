@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	pbc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
 	"google.golang.org/grpc"
 )
@@ -160,78 +161,160 @@ func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error 
 }
 
 func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) error {
-	// NVMeNamespace
-	c3 := pb.NewNVMeNamespaceServiceClient(conn)
-	log.Printf("Testing NewNVMeNamespaceServiceClient")
-	rn1, err := c3.NVMeNamespaceCreate(ctx, &pb.NVMeNamespaceCreateRequest{Namespace: &pb.NVMeNamespace{SubsystemId: "nqn.2016-06.io.spdk:cnode1", Bdev: "Malloc1"}})
+	// pre create: subsystem and controller
+	c1 := pb.NewNVMeSubsystemServiceClient(conn)
+	log.Printf("Testing NewNVMeSubsystemServiceClient")
+	rs1, err := c1.NVMeSubsystemCreate(ctx, &pb.NVMeSubsystemCreateRequest{
+			Subsystem: &pb.NVMeSubsystem{
+				Id: &pbc.ObjectKey{Value: "namespace-test-ss"},
+				Nqn: "nqn.2022-09.io.spdk:opi1"}})
 	if err != nil {
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
-	log.Printf("Added: %v", rn1)
-	rn3, err := c3.NVMeNamespaceUpdate(ctx, &pb.NVMeNamespaceUpdateRequest{Namespace: &pb.NVMeNamespace{Name: "OPI-Nvme"}})
+	log.Printf("Added subsystem: %v", rs1)
+	c2 := pb.NewNVMeControllerServiceClient(conn)
+	log.Printf("Testing NewNVMeControllerServiceClient")
+	rc1, err := c2.NVMeControllerCreate(ctx, &pb.NVMeControllerCreateRequest{
+			Controller: &pb.NVMeController{
+				Id: &pbc.ObjectKey{Value: "namespace-test-ctrler"},
+				SubsystemId: &pbc.ObjectKey{Value: "namespace-test-ss"},
+				NvmeControllerId: 1}})
 	if err != nil {
-		log.Fatalf("could not update NVMe subsystem: %v", err)
+		log.Fatalf("could not create NVMe controller: %v", err)
+	}
+	log.Printf("Added controller: %v", rc1)
+
+	// NVMeNamespace
+	c3 := pb.NewNVMeNamespaceServiceClient(conn)
+	log.Printf("Testing NewNVMeNamespaceServiceClient")
+	rn1, err := c3.NVMeNamespaceCreate(ctx, &pb.NVMeNamespaceCreateRequest{
+			Namespace: &pb.NVMeNamespace{
+				Id: &pbc.ObjectKey{Value: "namespace-test"},
+				SubsystemId: &pbc.ObjectKey{Value: "namespace-test-ss"},
+				ControllerId: &pbc.ObjectKey{Value: "namesspace-test-ctrler"},
+				HostNsid: 1}})
+	if err != nil {
+		log.Fatalf("could not create NVMe namespace: %v", err)
+	}
+	log.Printf("Added: %v", rn1)
+	rn3, err := c3.NVMeNamespaceUpdate(ctx, &pb.NVMeNamespaceUpdateRequest{
+			Namespace: &pb.NVMeNamespace{
+				Id: &pbc.ObjectKey{Value: "namespace-test"},
+				SubsystemId: &pbc.ObjectKey{Value: "namespace-test-ss"},
+				ControllerId: &pbc.ObjectKey{Value: "namesspace-test-ctrler"},
+				HostNsid: 1}})
+	if err != nil {
+		log.Fatalf("could not update NVMe namespace: %v", err)
 	}
 	log.Printf("Updated: %v", rn3)
-	rn4, err := c3.NVMeNamespaceList(ctx, &pb.NVMeNamespaceListRequest{SubsystemId: 1})
+	rn4, err := c3.NVMeNamespaceList(ctx, &pb.NVMeNamespaceListRequest{SubsystemId: &pbc.ObjectKey{Value: "namespace-test-ss"}})
 	if err != nil {
-		log.Fatalf("could not list NVMe subsystem: %v", err)
+		log.Fatalf("could not list NVMe namespace: %v", err)
 	}
 	log.Printf("Listed: %v", rn4)
-	rn5, err := c3.NVMeNamespaceGet(ctx, &pb.NVMeNamespaceGetRequest{SubsystemId: 1, NamespaceId: 1})
+	rn5, err := c3.NVMeNamespaceGet(ctx, &pb.NVMeNamespaceGetRequest{NamespaceId: &pbc.ObjectKey{Value: "namespace-test"}})
 	if err != nil {
-		log.Fatalf("could not get NVMe subsystem: %v", err)
+		log.Fatalf("could not get NVMe namespace: %v", err)
 	}
-	log.Printf("Got: %v", rn5.Namespace.Name)
-	rn6, err := c3.NVMeNamespaceStats(ctx, &pb.NVMeNamespaceStatsRequest{SubsystemId: 8})
+	log.Printf("Got: %v", rn5.Namespace.Id.Value)
+	rn6, err := c3.NVMeNamespaceStats(ctx, &pb.NVMeNamespaceStatsRequest{NamespaceId: &pbc.ObjectKey{Value: "namespace-test"}})
 	if err != nil {
-		log.Fatalf("could not stats NVMe subsystem: %v", err)
+		log.Fatalf("could not stats NVMe namespace: %v", err)
 	}
 	log.Printf("Stats: %v", rn6.Stats)
-	rn2, err := c3.NVMeNamespaceDelete(ctx, &pb.NVMeNamespaceDeleteRequest{SubsystemId: 1, NamespaceId: 1})
+	rn2, err := c3.NVMeNamespaceDelete(ctx, &pb.NVMeNamespaceDeleteRequest{NamespaceId: &pbc.ObjectKey{Value: "namespace-test"}})
 	if err != nil {
-		log.Fatalf("could not delete NVMe subsystem: %v", err)
+		log.Fatalf("could not delete NVMe namespace: %v", err)
 	}
 	log.Printf("Deleted: %v", rn2)
 
+	// post cleanup: controller and subsystem
+	rc2, err := c2.NVMeControllerDelete(ctx, &pb.NVMeControllerDeleteRequest{
+			ControllerId: &pbc.ObjectKey{Value: "controller-test"}})
+	if err != nil {
+		log.Fatalf("could not delete NVMe controller: %v", err)
+	}
+	log.Printf("Deleted: %v", rc2)
+
+	rs2, err := c1.NVMeSubsystemDelete(ctx, &pb.NVMeSubsystemDeleteRequest{
+			SubsystemId: &pbc.ObjectKey{Value: "controller-test-subsys"}})
+	if err != nil {
+		log.Fatalf("could not delete NVMe subsystem: %v", err)
+	}
+	log.Printf("Deleted: %v", rs2)
 	return err
 }
 
 func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) error {
-	// NVMeController
-	c2 := pb.NewNVMeControllerServiceClient(conn)
-	log.Printf("Testing NewNVMeControllerServiceClient")
-	rc1, err := c2.NVMeControllerCreate(ctx, &pb.NVMeControllerCreateRequest{Controller: &pb.NVMeController{Name: "OPI-Nvme"}})
+	// pre create: subsystem
+	c1 := pb.NewNVMeSubsystemServiceClient(conn)
+	log.Printf("Testing NewNVMeSubsystemServiceClient")
+	rs1, err := c1.NVMeSubsystemCreate(ctx, &pb.NVMeSubsystemCreateRequest{
+			Subsystem: &pb.NVMeSubsystem{
+				Id: &pbc.ObjectKey{Value: "controller-test-ss"},
+				Nqn: "nqn.2022-09.io.spdk:opi2"}})
 	if err != nil {
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
-	log.Printf("Added: %v", rc1)
-	rc2, err := c2.NVMeControllerDelete(ctx, &pb.NVMeControllerDeleteRequest{SubsystemId: 8})
+	log.Printf("Added subsystem: %v", rs1)
+
+	// NVMeController
+	c2 := pb.NewNVMeControllerServiceClient(conn)
+	log.Printf("Testing NewNVMeControllerServiceClient")
+	rc1, err := c2.NVMeControllerCreate(ctx, &pb.NVMeControllerCreateRequest{
+			Controller: &pb.NVMeController{
+				Id: &pbc.ObjectKey{Value: "controller-test"},
+				SubsystemId: &pbc.ObjectKey{Value: "controller-test-ss"},
+				NvmeControllerId: 1}})
 	if err != nil {
-		log.Fatalf("could not delete NVMe subsystem: %v", err)
+		log.Fatalf("could not create NVMe controller: %v", err)
 	}
-	log.Printf("Deleted: %v", rc2)
-	rc3, err := c2.NVMeControllerUpdate(ctx, &pb.NVMeControllerUpdateRequest{Controller: &pb.NVMeController{Name: "OPI-Nvme"}})
+	log.Printf("Added: %v", rc1)
+
+	rc3, err := c2.NVMeControllerUpdate(ctx, &pb.NVMeControllerUpdateRequest{
+			Controller: &pb.NVMeController{
+				Id: &pbc.ObjectKey{Value: "controller-test"},
+				SubsystemId: &pbc.ObjectKey{Value: "controller-test-subsys"},
+				NvmeControllerId: 2}})
 	if err != nil {
-		log.Fatalf("could not update NVMe subsystem: %v", err)
+		log.Fatalf("could not update NVMe controller: %v", err)
 	}
 	log.Printf("Updated: %v", rc3)
-	rc4, err := c2.NVMeControllerList(ctx, &pb.NVMeControllerListRequest{SubsystemId: 8})
+
+	rc4, err := c2.NVMeControllerList(ctx, &pb.NVMeControllerListRequest{
+			SubsystemId: &pbc.ObjectKey{Value: "controller-test-ss"}})
 	if err != nil {
-		log.Fatalf("could not list NVMe subsystem: %v", err)
+		log.Fatalf("could not list NVMe controller: %v", err)
 	}
 	log.Printf("Listed: %s", rc4)
-	rc5, err := c2.NVMeControllerGet(ctx, &pb.NVMeControllerGetRequest{SubsystemId: 8})
+
+	rc5, err := c2.NVMeControllerGet(ctx, &pb.NVMeControllerGetRequest{
+			ControllerId: &pbc.ObjectKey{Value: "controller-test"}})
 	if err != nil {
-		log.Fatalf("could not get NVMe subsystem: %v", err)
+		log.Fatalf("could not get NVMe controller: %v", err)
 	}
-	log.Printf("Got: %s", rc5.Controller.Name)
-	rc6, err := c2.NVMeControllerStats(ctx, &pb.NVMeControllerStatsRequest{SubsystemId: 8})
+	log.Printf("Got: %s", rc5.Controller.Id.Value)
+
+	rc6, err := c2.NVMeControllerStats(ctx, &pb.NVMeControllerStatsRequest{Id: &pbc.ObjectKey{Value: "controller-test"}})
 	if err != nil {
-		log.Fatalf("could not stats NVMe subsystem: %v", err)
+		log.Fatalf("could not stats NVMe controller: %v", err)
 	}
 	log.Printf("Stats: %s", rc6.Stats)
 
+	rc2, err := c2.NVMeControllerDelete(ctx, &pb.NVMeControllerDeleteRequest{
+			ControllerId: &pbc.ObjectKey{Value: "controller-test"}})
+	if err != nil {
+		log.Fatalf("could not delete NVMe controller: %v", err)
+	}
+	log.Printf("Deleted: %v", rc2)
+
+	// post cleanup: subsystem
+	rs2, err := c1.NVMeSubsystemDelete(ctx, &pb.NVMeSubsystemDeleteRequest{
+			SubsystemId: &pbc.ObjectKey{Value: "controller-test-subsys"}})
+	if err != nil {
+		log.Fatalf("could not delete NVMe subsystem: %v", err)
+	}
+	log.Printf("Deleted: %v", rs2)
 	return err
 }
 
@@ -239,12 +322,18 @@ func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) er
 	// NVMeSubsystem
 	c1 := pb.NewNVMeSubsystemServiceClient(conn)
 	log.Printf("Testing NewNVMeSubsystemServiceClient")
-	rs1, err := c1.NVMeSubsystemCreate(ctx, &pb.NVMeSubsystemCreateRequest{Subsystem: &pb.NVMeSubsystem{Nqn: "nqn.2022-09.io.spdk:opi7"}})
+	rs1, err := c1.NVMeSubsystemCreate(ctx, &pb.NVMeSubsystemCreateRequest{
+			Subsystem: &pb.NVMeSubsystem{
+				Id: &pbc.ObjectKey{Value: "subsystem-test"},
+				Nqn: "nqn.2022-09.io.spdk:opi3"}})
 	if err != nil {
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
 	log.Printf("Added: %v", rs1)
-	rs3, err := c1.NVMeSubsystemUpdate(ctx, &pb.NVMeSubsystemUpdateRequest{Subsystem: &pb.NVMeSubsystem{Nqn: "nqn.2022-09.io.spdk:opi7"}})
+	rs3, err := c1.NVMeSubsystemUpdate(ctx, &pb.NVMeSubsystemUpdateRequest{
+			Subsystem: &pb.NVMeSubsystem{
+				Id: &pbc.ObjectKey{Value: "subsystem-test"},
+				Nqn: "nqn.2022-09.io.spdk:opi3"}})
 	if err != nil {
 		log.Fatalf("could not update NVMe subsystem: %v", err)
 	}
@@ -254,17 +343,20 @@ func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) er
 		log.Fatalf("could not list NVMe subsystem: %v", err)
 	}
 	log.Printf("Listed: %v", rs4)
-	rs5, err := c1.NVMeSubsystemGet(ctx, &pb.NVMeSubsystemGetRequest{Nqn: "7"})
+	rs5, err := c1.NVMeSubsystemGet(ctx, &pb.NVMeSubsystemGetRequest{
+			SubsystemId: &pbc.ObjectKey{Value: "subsystem-test"}})
 	if err != nil {
 		log.Fatalf("could not get NVMe subsystem: %v", err)
 	}
 	log.Printf("Got: %s", rs5.Subsystem.Nqn)
-	rs6, err := c1.NVMeSubsystemStats(ctx, &pb.NVMeSubsystemStatsRequest{Nqn: "7"})
+	rs6, err := c1.NVMeSubsystemStats(ctx, &pb.NVMeSubsystemStatsRequest{
+			SubsystemId: &pbc.ObjectKey{Value: "subsystem-test"}})
 	if err != nil {
 		log.Fatalf("could not stats NVMe subsystem: %v", err)
 	}
 	log.Printf("Stats: %s", rs6.Stats)
-	rs2, err := c1.NVMeSubsystemDelete(ctx, &pb.NVMeSubsystemDeleteRequest{Nqn: "7"})
+	rs2, err := c1.NVMeSubsystemDelete(ctx, &pb.NVMeSubsystemDeleteRequest{
+			SubsystemId: &pbc.ObjectKey{Value: "subsystem-test"}})
 	if err != nil {
 		log.Fatalf("could not delete NVMe subsystem: %v", err)
 	}
