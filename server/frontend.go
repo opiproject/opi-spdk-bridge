@@ -5,9 +5,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
-	"errors"
 
 	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
 	"google.golang.org/grpc/codes"
@@ -137,7 +137,7 @@ func (s *server) NVMeControllerDelete(ctx context.Context, in *pb.NVMeController
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("error finding controller %s", in.ControllerId.Value))
 	}
-	delete (controllers, controller.Id.Value)
+	delete(controllers, controller.Id.Value)
 	return &pb.NVMeControllerDeleteResponse{}, nil
 }
 
@@ -225,7 +225,7 @@ func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDe
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	delete (namespaces, namespace.Id.Value)
+	delete(namespaces, namespace.Id.Value)
 	return &pb.NVMeNamespaceDeleteResponse{}, nil
 }
 
@@ -237,7 +237,7 @@ func (s *server) NVMeNamespaceUpdate(ctx context.Context, in *pb.NVMeNamespaceUp
 
 func (s *server) NVMeNamespaceList(ctx context.Context, in *pb.NVMeNamespaceListRequest) (*pb.NVMeNamespaceListResponse, error) {
 	log.Printf("NVMeNamespaceList: Received from client: %v", in)
-	
+
 	nqn := "all"
 	if in.SubsystemId != nil {
 		subsys, ok := subsystems[in.SubsystemId.Value]
@@ -294,7 +294,7 @@ func (s *server) NVMeNamespaceGet(ctx context.Context, in *pb.NVMeNamespaceGetRe
 		return nil, err
 	}
 
-        var result []NvmfGetSubsystemsResult
+	var result []NvmfGetSubsystemsResult
 	err := call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
