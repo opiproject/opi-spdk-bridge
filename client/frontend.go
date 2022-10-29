@@ -194,6 +194,7 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 			Id:           &pbc.ObjectKey{Value: "namespace-test"},
 			SubsystemId:  &pbc.ObjectKey{Value: "namespace-test-ss"},
 			ControllerId: &pbc.ObjectKey{Value: "namespace-test-ctrler"},
+			CryptoKeyId:  &pbc.ObjectKey{Value: "Malloc1"},
 			HostNsid:     1}})
 	if err != nil {
 		log.Fatalf("could not create NVMe namespace: %v", err)
