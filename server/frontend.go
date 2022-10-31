@@ -9,6 +9,7 @@ import (
 	"log"
 
 	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
+	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,7 +17,7 @@ import (
 // ////////////////////////////////////////////////////////
 var subsystems = map[string]*pb.NVMeSubsystem{}
 
-func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCreateRequest) (*pb.NVMeSubsystemCreateResponse, error) {
+func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCreateRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("NVMeSubsystemCreate: Received from client: %v", in)
 	params := NvmfCreateSubsystemParams{
 		Nqn:          in.GetSubsystem().GetNqn(),
@@ -31,7 +32,13 @@ func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCr
 	}
 	subsystems[in.Subsystem.Id.Value] = in.Subsystem
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NVMeSubsystemCreateResponse{}, nil
+	response := &pb.NVMeSubsystem{}
+	err = deepcopier.Copy(in.Subsystem).To(response)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return response, nil
 }
 
 func (s *server) NVMeSubsystemDelete(ctx context.Context, in *pb.NVMeSubsystemDeleteRequest) (*pb.NVMeSubsystemDeleteResponse, error) {
@@ -124,10 +131,16 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 // ////////////////////////////////////////////////////////
 var controllers = map[string]*pb.NVMeController{}
 
-func (s *server) NVMeControllerCreate(ctx context.Context, in *pb.NVMeControllerCreateRequest) (*pb.NVMeControllerCreateResponse, error) {
+func (s *server) NVMeControllerCreate(ctx context.Context, in *pb.NVMeControllerCreateRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.Controller)
 	controllers[in.Controller.Id.Value] = in.Controller
-	return &pb.NVMeControllerCreateResponse{}, nil
+	response := &pb.NVMeController{}
+	err := deepcopier.Copy(in.Controller).To(response)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return response, nil
 }
 
 func (s *server) NVMeControllerDelete(ctx context.Context, in *pb.NVMeControllerDeleteRequest) (*pb.NVMeControllerDeleteResponse, error) {
@@ -172,7 +185,7 @@ func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 // ////////////////////////////////////////////////////////
 var namespaces = map[string]*pb.NVMeNamespace{}
 
-func (s *server) NVMeNamespaceCreate(ctx context.Context, in *pb.NVMeNamespaceCreateRequest) (*pb.NVMeNamespaceCreateResponse, error) {
+func (s *server) NVMeNamespaceCreate(ctx context.Context, in *pb.NVMeNamespaceCreateRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("NVMeNamespaceCreate: Received from client: %v", in)
 	subsys, ok := subsystems[in.Namespace.SubsystemId.Value]
 	if !ok {
@@ -196,7 +209,14 @@ func (s *server) NVMeNamespaceCreate(ctx context.Context, in *pb.NVMeNamespaceCr
 	}
 	log.Printf("Received from SPDK: %v", result)
 	namespaces[in.Namespace.Id.Value] = in.Namespace
-	return &pb.NVMeNamespaceCreateResponse{}, nil
+
+	response := &pb.NVMeNamespace{}
+	err = deepcopier.Copy(in.Namespace).To(response)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return response, nil
 }
 
 func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDeleteRequest) (*pb.NVMeNamespaceDeleteResponse, error) {
@@ -327,7 +347,7 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 
 //////////////////////////////////////////////////////////
 
-func (s *server) VirtioBlkCreate(ctx context.Context, in *pb.VirtioBlkCreateRequest) (*pb.VirtioBlkCreateResponse, error) {
+func (s *server) VirtioBlkCreate(ctx context.Context, in *pb.VirtioBlkCreateRequest) (*pb.VirtioBlk, error) {
 	log.Printf("VirtioBlkCreate: Received from client: %v", in)
 	params := VhostCreateBlkControllerParams{
 		Ctrlr:   in.GetController().GetName(),
@@ -343,7 +363,7 @@ func (s *server) VirtioBlkCreate(ctx context.Context, in *pb.VirtioBlkCreateRequ
 	if !result {
 		log.Printf("Could not create: %v", in)
 	}
-	return &pb.VirtioBlkCreateResponse{}, nil
+	return &pb.VirtioBlk{}, nil
 }
 
 func (s *server) VirtioBlkDelete(ctx context.Context, in *pb.VirtioBlkDeleteRequest) (*pb.VirtioBlkDeleteResponse, error) {
@@ -413,7 +433,7 @@ func (s *server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsReques
 
 //////////////////////////////////////////////////////////
 
-func (s *server) VirtioScsiControllerCreate(ctx context.Context, in *pb.VirtioScsiControllerCreateRequest) (*pb.VirtioScsiControllerCreateResponse, error) {
+func (s *server) VirtioScsiControllerCreate(ctx context.Context, in *pb.VirtioScsiControllerCreateRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("VirtioScsiControllerCreate: Received from client: %v", in)
 	params := VhostCreateScsiControllerParams{
 		Ctrlr: in.GetController().GetName(),
@@ -428,7 +448,7 @@ func (s *server) VirtioScsiControllerCreate(ctx context.Context, in *pb.VirtioSc
 	if !result {
 		log.Printf("Could not create: %v", in)
 	}
-	return &pb.VirtioScsiControllerCreateResponse{}, nil
+	return &pb.VirtioScsiController{}, nil
 }
 
 func (s *server) VirtioScsiControllerDelete(ctx context.Context, in *pb.VirtioScsiControllerDeleteRequest) (*pb.VirtioScsiControllerDeleteResponse, error) {
@@ -498,7 +518,7 @@ func (s *server) VirtioScsiControllerStats(ctx context.Context, in *pb.VirtioScs
 
 //////////////////////////////////////////////////////////
 
-func (s *server) VirtioScsiLunCreate(ctx context.Context, in *pb.VirtioScsiLunCreateRequest) (*pb.VirtioScsiLunCreateResponse, error) {
+func (s *server) VirtioScsiLunCreate(ctx context.Context, in *pb.VirtioScsiLunCreateRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("VirtioScsiLunCreate: Received from client: %v", in)
 	params := struct {
 		Name string `json:"ctrlr"`
@@ -516,7 +536,7 @@ func (s *server) VirtioScsiLunCreate(ctx context.Context, in *pb.VirtioScsiLunCr
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.VirtioScsiLunCreateResponse{}, nil
+	return &pb.VirtioScsiLun{}, nil
 }
 
 func (s *server) VirtioScsiLunDelete(ctx context.Context, in *pb.VirtioScsiLunDeleteRequest) (*pb.VirtioScsiLunDeleteResponse, error) {

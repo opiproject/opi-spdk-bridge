@@ -278,7 +278,7 @@ See commands
 filename: frontend.proto
 package: opi_api.storage.v1;
 service NVMeControllerService {
-  rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeControllerCreateResponse) {}
+  rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
   rpc NVMeControllerDelete(opi_api.storage.v1.NVMeControllerDeleteRequest) returns (opi_api.storage.v1.NVMeControllerDeleteResponse) {}
   rpc NVMeControllerUpdate(opi_api.storage.v1.NVMeControllerUpdateRequest) returns (opi_api.storage.v1.NVMeControllerUpdateResponse) {}
   rpc NVMeControllerList(opi_api.storage.v1.NVMeControllerListRequest) returns (opi_api.storage.v1.NVMeControllerListResponse) {}
@@ -291,7 +291,7 @@ See methods
 
 ```bash
 grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerService.NVMeControllerCreate -l
-  rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeControllerCreateResponse) {}
+  rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
 ```
 
 See messages
