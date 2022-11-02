@@ -212,8 +212,8 @@ func (s *server) NVMeNamespaceCreate(ctx context.Context, in *pb.NVMeNamespaceCr
 		Nqn: subsys.Nqn,
 	}
 
-	// TODO: using bdev for crypto key id as a middle end handle for now
-	params.Namespace.BdevName = in.Namespace.CryptoKeyId.Value
+	// TODO: using bdev for volume id as a middle end handle for now
+	params.Namespace.BdevName = in.Namespace.VolumeId.Value
 
 	var result NvmfSubsystemAddNsResult
 	err := call("nvmf_subsystem_add_ns", &params, &result)

@@ -3,7 +3,7 @@ module opi.storage.v1
 go 1.19
 
 require (
-	github.com/opiproject/opi-api v0.0.0-20221102184319-3c744e340157
+	github.com/opiproject/opi-api v0.0.0-20221102195714-805c63e06611
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
