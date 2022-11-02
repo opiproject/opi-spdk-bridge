@@ -12,6 +12,7 @@ import (
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // ////////////////////////////////////////////////////////
@@ -41,7 +42,7 @@ func (s *server) NVMeSubsystemCreate(ctx context.Context, in *pb.NVMeSubsystemCr
 	return response, nil
 }
 
-func (s *server) NVMeSubsystemDelete(ctx context.Context, in *pb.NVMeSubsystemDeleteRequest) (*pb.NVMeSubsystemDeleteResponse, error) {
+func (s *server) NVMeSubsystemDelete(ctx context.Context, in *pb.NVMeSubsystemDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("NVMeSubsystemDelete: Received from client: %v", in)
 	subsys, ok := subsystems[in.SubsystemId.Value]
 	if !ok {
@@ -63,7 +64,7 @@ func (s *server) NVMeSubsystemDelete(ctx context.Context, in *pb.NVMeSubsystemDe
 		log.Printf("Could not delete: %v", in)
 	}
 	delete(subsystems, subsys.Id.Value)
-	return &pb.NVMeSubsystemDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *server) NVMeSubsystemUpdate(ctx context.Context, in *pb.NVMeSubsystemUpdateRequest) (*pb.NVMeSubsystemUpdateResponse, error) {
@@ -143,14 +144,14 @@ func (s *server) NVMeControllerCreate(ctx context.Context, in *pb.NVMeController
 	return response, nil
 }
 
-func (s *server) NVMeControllerDelete(ctx context.Context, in *pb.NVMeControllerDeleteRequest) (*pb.NVMeControllerDeleteResponse, error) {
+func (s *server) NVMeControllerDelete(ctx context.Context, in *pb.NVMeControllerDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("Received from client: %v", in.ControllerId)
 	controller, ok := controllers[in.ControllerId.Value]
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.ControllerId.Value)
 	}
 	delete(controllers, controller.Id.Value)
-	return &pb.NVMeControllerDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *server) NVMeControllerUpdate(ctx context.Context, in *pb.NVMeControllerUpdateRequest) (*pb.NVMeControllerUpdateResponse, error) {
@@ -219,7 +220,7 @@ func (s *server) NVMeNamespaceCreate(ctx context.Context, in *pb.NVMeNamespaceCr
 	return response, nil
 }
 
-func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDeleteRequest) (*pb.NVMeNamespaceDeleteResponse, error) {
+func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("NVMeNamespaceDelete: Received from client: %v", in)
 	namespace, ok := namespaces[in.NamespaceId.Value]
 	if !ok {
@@ -246,7 +247,7 @@ func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDe
 	}
 	log.Printf("Received from SPDK: %v", result)
 	delete(namespaces, namespace.Id.Value)
-	return &pb.NVMeNamespaceDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *server) NVMeNamespaceUpdate(ctx context.Context, in *pb.NVMeNamespaceUpdateRequest) (*pb.NVMeNamespaceUpdateResponse, error) {
@@ -366,7 +367,7 @@ func (s *server) VirtioBlkCreate(ctx context.Context, in *pb.VirtioBlkCreateRequ
 	return &pb.VirtioBlk{}, nil
 }
 
-func (s *server) VirtioBlkDelete(ctx context.Context, in *pb.VirtioBlkDeleteRequest) (*pb.VirtioBlkDeleteResponse, error) {
+func (s *server) VirtioBlkDelete(ctx context.Context, in *pb.VirtioBlkDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("VirtioBlkDelete: Received from client: %v", in)
 	params := VhostDeleteControllerParams{
 		Ctrlr: fmt.Sprint("VirtioBlk", in.GetControllerId()),
@@ -381,7 +382,7 @@ func (s *server) VirtioBlkDelete(ctx context.Context, in *pb.VirtioBlkDeleteRequ
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
-	return &pb.VirtioBlkDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *server) VirtioBlkUpdate(ctx context.Context, in *pb.VirtioBlkUpdateRequest) (*pb.VirtioBlkUpdateResponse, error) {
@@ -451,7 +452,7 @@ func (s *server) VirtioScsiControllerCreate(ctx context.Context, in *pb.VirtioSc
 	return &pb.VirtioScsiController{}, nil
 }
 
-func (s *server) VirtioScsiControllerDelete(ctx context.Context, in *pb.VirtioScsiControllerDeleteRequest) (*pb.VirtioScsiControllerDeleteResponse, error) {
+func (s *server) VirtioScsiControllerDelete(ctx context.Context, in *pb.VirtioScsiControllerDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("VirtioScsiControllerDelete: Received from client: %v", in)
 	params := VhostDeleteControllerParams{
 		Ctrlr: fmt.Sprint("OPI-VirtioScsi", in.GetControllerId()),
@@ -466,7 +467,7 @@ func (s *server) VirtioScsiControllerDelete(ctx context.Context, in *pb.VirtioSc
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
-	return &pb.VirtioScsiControllerDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *server) VirtioScsiControllerUpdate(ctx context.Context, in *pb.VirtioScsiControllerUpdateRequest) (*pb.VirtioScsiControllerUpdateResponse, error) {
@@ -539,7 +540,7 @@ func (s *server) VirtioScsiLunCreate(ctx context.Context, in *pb.VirtioScsiLunCr
 	return &pb.VirtioScsiLun{}, nil
 }
 
-func (s *server) VirtioScsiLunDelete(ctx context.Context, in *pb.VirtioScsiLunDeleteRequest) (*pb.VirtioScsiLunDeleteResponse, error) {
+func (s *server) VirtioScsiLunDelete(ctx context.Context, in *pb.VirtioScsiLunDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("VirtioScsiLunDelete: Received from client: %v", in)
 	params := struct {
 		Name string `json:"ctrlr"`
@@ -558,7 +559,7 @@ func (s *server) VirtioScsiLunDelete(ctx context.Context, in *pb.VirtioScsiLunDe
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
-	return &pb.VirtioScsiLunDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 func (s *server) VirtioScsiLunUpdate(ctx context.Context, in *pb.VirtioScsiLunUpdateRequest) (*pb.VirtioScsiLunUpdateResponse, error) {

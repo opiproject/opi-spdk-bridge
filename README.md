@@ -279,7 +279,7 @@ filename: frontend.proto
 package: opi_api.storage.v1;
 service NVMeControllerService {
   rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
-  rpc NVMeControllerDelete(opi_api.storage.v1.NVMeControllerDeleteRequest) returns (opi_api.storage.v1.NVMeControllerDeleteResponse) {}
+  rpc NVMeControllerDelete(opi_api.storage.v1.NVMeControllerDeleteRequest) returns (google.protobuf.Empty) {}
   rpc NVMeControllerUpdate(opi_api.storage.v1.NVMeControllerUpdateRequest) returns (opi_api.storage.v1.NVMeControllerUpdateResponse) {}
   rpc NVMeControllerList(opi_api.storage.v1.NVMeControllerListRequest) returns (opi_api.storage.v1.NVMeControllerListResponse) {}
   rpc NVMeControllerGet(opi_api.storage.v1.NVMeControllerGetRequest) returns (opi_api.storage.v1.NVMeControllerGetResponse) {}
