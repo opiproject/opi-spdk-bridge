@@ -71,7 +71,7 @@ func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5
 	if err != nil {
 		log.Fatalf("could not get VirtioScsi subsystem: %v", err)
 	}
-	log.Printf("Got: %v", rl5.Lun.Bdev)
+	log.Printf("Got: %v", rl5.Bdev)
 	rl6, err := c6.VirtioScsiLunStats(ctx, &pb.VirtioScsiLunStatsRequest{ControllerId: 8})
 	if err != nil {
 		log.Fatalf("could not stats VirtioScsi subsystem: %v", err)
@@ -114,7 +114,7 @@ func executeVirtioScsiController(ctx context.Context, conn grpc.ClientConnInterf
 	if err != nil {
 		log.Fatalf("could not get VirtioScsi subsystem: %v", err)
 	}
-	log.Printf("Got: %s", rss5.Controller.Name)
+	log.Printf("Got: %s", rss5.Name)
 	rss6, err := c5.VirtioScsiControllerStats(ctx, &pb.VirtioScsiControllerStatsRequest{ControllerId: 8})
 	if err != nil {
 		log.Fatalf("could not stats VirtioScsi subsystem: %v", err)
@@ -146,7 +146,7 @@ func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error 
 	if err != nil {
 		log.Fatalf("could not get VirtioBlk Controller: %v", err)
 	}
-	log.Printf("Got: %v", rv5.Controller.Name)
+	log.Printf("Got: %v", rv5.Name)
 	rv6, err := c4.VirtioBlkStats(ctx, &pb.VirtioBlkStatsRequest{ControllerId: 8})
 	if err != nil {
 		log.Fatalf("could not stats VirtioBlk Controller: %v", err)
@@ -219,7 +219,7 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 	if err != nil {
 		log.Fatalf("could not get NVMe namespace: %v", err)
 	}
-	log.Printf("Got: %v", rn5.Namespace.Id.Value)
+	log.Printf("Got: %v", rn5.Id.Value)
 	rn6, err := c3.NVMeNamespaceStats(ctx, &pb.NVMeNamespaceStatsRequest{NamespaceId: &pbc.ObjectKey{Value: "namespace-test"}})
 	if err != nil {
 		log.Fatalf("could not stats NVMe namespace: %v", err)
@@ -295,7 +295,7 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 	if err != nil {
 		log.Fatalf("could not get NVMe controller: %v", err)
 	}
-	log.Printf("Got: %s", rc5.Controller.Id.Value)
+	log.Printf("Got: %s", rc5.Id.Value)
 
 	rc6, err := c2.NVMeControllerStats(ctx, &pb.NVMeControllerStatsRequest{Id: &pbc.ObjectKey{Value: "controller-test"}})
 	if err != nil {
@@ -350,7 +350,7 @@ func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) er
 	if err != nil {
 		log.Fatalf("could not get NVMe subsystem: %v", err)
 	}
-	log.Printf("Got: %s", rs5.Subsystem.Nqn)
+	log.Printf("Got: %s", rs5.Nqn)
 	rs6, err := c1.NVMeSubsystemStats(ctx, &pb.NVMeSubsystemStatsRequest{
 		SubsystemId: &pbc.ObjectKey{Value: "subsystem-test"}})
 	if err != nil {
