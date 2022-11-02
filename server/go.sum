@@ -3,8 +3,8 @@ github.com/golang/protobuf v1.5.2 h1:ROPKBNFfQgOUMifHyP+KYbvpjbdoFNs+aK7DXlji0Tw
 github.com/golang/protobuf v1.5.2/go.mod h1:XVQd3VNwM+JqD3oG2Ue2ip4fOMUkwXdXDdiuN0vRsmY=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
-github.com/opiproject/opi-api v0.0.0-20221102184319-3c744e340157 h1:bi+U9smq1BCeeYosan1pZZCZLkGMtgzkE1xaBr14VFI=
-github.com/opiproject/opi-api v0.0.0-20221102184319-3c744e340157/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20221102195714-805c63e06611 h1:PvBuobh2upqclbr19wytX/Z4tShyFGwPEThJZ6IGEGk=
+github.com/opiproject/opi-api v0.0.0-20221102195714-805c63e06611/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6 h1:TtyC78WMafNW8QFfv3TeP3yWNDG+uxNkk9vOrnDu6JA=
 github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6/go.mod h1:h8272+G2omSmi30fBXiZDMkmHuOgonplfKIKjQWzlfs=
 golang.org/x/net v0.1.0 h1:hZ/3BUoy5aId7sCpA/Tc5lt8DkFgdVS2onTpJsZ/fl0=
