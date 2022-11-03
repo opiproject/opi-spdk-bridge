@@ -47,14 +47,11 @@ tests_poc() {
     grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cli)
     "${grpc_cli[@]}" ls opi-spdk-server:50051
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.AioControllerService -l
-    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerService -l
-    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMeNamespaceService -l
-    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMeSubsystemService -l
+    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService -l
+    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendVirtioBlkService -l
+    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendVirtioScsiService -l
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMfRemoteControllerService -l
     "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullDebugService -l
-    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.VirtioBlkService -l
-    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.VirtioScsiControllerService -l
-    "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.VirtioScsiLunService -l
 
     # test nvme
     "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 NVMeNamespaceCreate "{'namespace' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'nqn.2016-06.io.spdk:cnode1' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } }"
