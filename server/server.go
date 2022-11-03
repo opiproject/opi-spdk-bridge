@@ -19,13 +19,10 @@ var (
 )
 
 type server struct {
-	pb.UnimplementedNVMeSubsystemServiceServer
-	pb.UnimplementedNVMeControllerServiceServer
-	pb.UnimplementedNVMeNamespaceServiceServer
+	pb.UnimplementedFrontendNvmeServiceServer
 	pb.UnimplementedNVMfRemoteControllerServiceServer
-	pb.UnimplementedVirtioBlkServiceServer
-	pb.UnimplementedVirtioScsiControllerServiceServer
-	pb.UnimplementedVirtioScsiLunServiceServer
+	pb.UnimplementedFrontendVirtioBlkServiceServer
+	pb.UnimplementedFrontendVirtioScsiServiceServer
 	pb.UnimplementedNullDebugServiceServer
 	pb.UnimplementedAioControllerServiceServer
 }
@@ -38,13 +35,10 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	pb.RegisterNVMeSubsystemServiceServer(s, &server{})
-	pb.RegisterNVMeControllerServiceServer(s, &server{})
-	pb.RegisterNVMeNamespaceServiceServer(s, &server{})
+	pb.RegisterFrontendNvmeServiceServer(s, &server{})
 	pb.RegisterNVMfRemoteControllerServiceServer(s, &server{})
-	pb.RegisterVirtioBlkServiceServer(s, &server{})
-	pb.RegisterVirtioScsiControllerServiceServer(s, &server{})
-	pb.RegisterVirtioScsiLunServiceServer(s, &server{})
+	pb.RegisterFrontendVirtioBlkServiceServer(s, &server{})
+	pb.RegisterFrontendVirtioScsiServiceServer(s, &server{})
 	pb.RegisterNullDebugServiceServer(s, &server{})
 	pb.RegisterAioControllerServiceServer(s, &server{})
 

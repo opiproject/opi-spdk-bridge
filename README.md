@@ -226,10 +226,12 @@ $ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_ou
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
+
 $ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerDelete "{'controller_id' : {'value' : 'controller2'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
+
 $ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemDelete "{'subsystem_id' : {'value' : 'subsystem3'} }"
 connecting to localhost:50051
 {}
@@ -281,36 +283,45 @@ See services
 $ grpc_cli ls opi-spdk-server:50051
 grpc.reflection.v1alpha.ServerReflection
 opi_api.storage.v1.AioControllerService
-opi_api.storage.v1.NVMeControllerService
-opi_api.storage.v1.NVMeNamespaceService
-opi_api.storage.v1.NVMeSubsystemService
+opi_api.storage.v1.FrontendNvmeService
+opi_api.storage.v1.FrontendVirtioBlkService
+opi_api.storage.v1.FrontendVirtioScsiService
 opi_api.storage.v1.NVMfRemoteControllerService
 opi_api.storage.v1.NullDebugService
-opi_api.storage.v1.VirtioBlkService
-opi_api.storage.v1.VirtioScsiControllerService
-opi_api.storage.v1.VirtioScsiLunService
 ```
 
 See commands
 
 ```bash
- $ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerService -l
+$ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService -l
 filename: frontend_nvme_pcie.proto
 package: opi_api.storage.v1;
-service NVMeControllerService {
+service FrontendNvmeService {
+  rpc NVMeSubsystemCreate(opi_api.storage.v1.NVMeSubsystemCreateRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
+  rpc NVMeSubsystemDelete(opi_api.storage.v1.NVMeSubsystemDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc NVMeSubsystemUpdate(opi_api.storage.v1.NVMeSubsystemUpdateRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
+  rpc NVMeSubsystemList(opi_api.storage.v1.NVMeSubsystemListRequest) returns (opi_api.storage.v1.NVMeSubsystemListResponse) {}
+  rpc NVMeSubsystemGet(opi_api.storage.v1.NVMeSubsystemGetRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
+  rpc NVMeSubsystemStats(opi_api.storage.v1.NVMeSubsystemStatsRequest) returns (opi_api.storage.v1.NVMeSubsystemStatsResponse) {}
   rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
   rpc NVMeControllerDelete(opi_api.storage.v1.NVMeControllerDeleteRequest) returns (google.protobuf.Empty) {}
   rpc NVMeControllerUpdate(opi_api.storage.v1.NVMeControllerUpdateRequest) returns (opi_api.storage.v1.NVMeController) {}
   rpc NVMeControllerList(opi_api.storage.v1.NVMeControllerListRequest) returns (opi_api.storage.v1.NVMeControllerListResponse) {}
   rpc NVMeControllerGet(opi_api.storage.v1.NVMeControllerGetRequest) returns (opi_api.storage.v1.NVMeController) {}
   rpc NVMeControllerStats(opi_api.storage.v1.NVMeControllerStatsRequest) returns (opi_api.storage.v1.NVMeControllerStatsResponse) {}
+  rpc NVMeNamespaceCreate(opi_api.storage.v1.NVMeNamespaceCreateRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
+  rpc NVMeNamespaceDelete(opi_api.storage.v1.NVMeNamespaceDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc NVMeNamespaceUpdate(opi_api.storage.v1.NVMeNamespaceUpdateRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
+  rpc NVMeNamespaceList(opi_api.storage.v1.NVMeNamespaceListRequest) returns (opi_api.storage.v1.NVMeNamespaceListResponse) {}
+  rpc NVMeNamespaceGet(opi_api.storage.v1.NVMeNamespaceGetRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
+  rpc NVMeNamespaceStats(opi_api.storage.v1.NVMeNamespaceStatsRequest) returns (opi_api.storage.v1.NVMeNamespaceStatsResponse) {}
 }
 ```
 
 See methods
 
 ```bash
-grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerService.NVMeControllerCreate -l
+$ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService.NVMeControllerCreate -l
   rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
 ```
 
@@ -319,12 +330,15 @@ See messages
 ```bash
 $ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NVMeController
 message NVMeController {
-  int64 id = 1 [json_name = "id"];
-  string name = 2 [json_name = "name"];
-  string subsystem_id = 3 [json_name = "subsystemId"];
+  .opi_api.common.v1.ObjectKey id = 1 [json_name = "id"];
+  uint32 nvme_controller_id = 2 [json_name = "nvmeControllerId"];
+  .opi_api.common.v1.ObjectKey subsystem_id = 3 [json_name = "subsystemId"];
   .opi_api.storage.v1.NvmeControllerPciId pcie_id = 4 [json_name = "pcieId"];
-  int64 max_io_qps = 5 [json_name = "maxIoQps"];
-  int64 max_ns = 6 [json_name = "maxNs"];
+  uint32 max_nsq = 5 [json_name = "maxNsq"];
+  uint32 max_ncq = 6 [json_name = "maxNcq"];
+  uint32 sqes = 7 [json_name = "sqes"];
+  uint32 cqes = 8 [json_name = "cqes"];
+  uint32 max_ns = 9 [json_name = "maxNs"];
 }
 
 $ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NvmeControllerPciId
