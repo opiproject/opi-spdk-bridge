@@ -29,11 +29,7 @@ jobs:
       working-directory: server
 
     - name: Test
-      run: go test -v ./...
-      working-directory: server
-
-    - name: Run coverage
-      run: go test -race -coverprofile=coverage.out -covermode=atomic
+      run: go test -race -coverprofile=coverage.out -covermode=atomic -v ./...
       working-directory: server
 
     - name: Upload coverage to Codecov
