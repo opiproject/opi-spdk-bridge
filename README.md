@@ -3,6 +3,7 @@
 [![Linters](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/linters.yml)
 [![tests](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/poc-storage.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/poc-storage.yml)
 [![License](https://img.shields.io/github/license/opiproject/opi-spdk-bridge?style=flat-square&color=blue&label=License)](https://github.com/opiproject/opi-spdk-bridge/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/opiproject/opi-spdk-bridge/branch/main/graph/badge.svg)](https://codecov.io/gh/opiproject/opi-spdk-bridge)
 [![Last Release](https://img.shields.io/github/v/release/opiproject/opi-spdk-bridge?label=Latest&style=flat-square&logo=go)](https://github.com/opiproject/opi-spdk-bridge/releases)
 
 This is a simple SPDK based storage API PoC.
