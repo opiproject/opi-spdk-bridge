@@ -137,7 +137,7 @@ func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error 
 		log.Fatalf("could not update VirtioBlk Controller: %v", err)
 	}
 	log.Printf("Updated: %v", rv3)
-	rv4, err := c4.VirtioBlkList(ctx, &pb.VirtioBlkListRequest{SubsystemId: 8})
+	rv4, err := c4.VirtioBlkList(ctx, &pb.VirtioBlkListRequest{VirtioblkId: 8})
 	if err != nil {
 		log.Fatalf("could not list VirtioBlk Controller: %v", err)
 	}
