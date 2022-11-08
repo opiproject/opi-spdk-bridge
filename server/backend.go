@@ -10,7 +10,7 @@ import (
 	"log"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
-	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
+	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"

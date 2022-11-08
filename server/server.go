@@ -9,7 +9,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
+	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

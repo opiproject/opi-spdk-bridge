@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
+	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
