@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 
+	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1/gen/go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -181,7 +182,7 @@ func (s *server) NullDebugList(ctx context.Context, in *pb.NullDebugListRequest)
 	Blobarray := make([]*pb.NullDebug, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NullDebug{Name: r.Name}
+		Blobarray[i] = &pb.NullDebug{Name: r.Name, Uuid: &pc.Uuid{Value: r.UUID}}
 	}
 	return &pb.NullDebugListResponse{Device: Blobarray}, nil
 }
@@ -203,7 +204,7 @@ func (s *server) NullDebugGet(ctx context.Context, in *pb.NullDebugGetRequest) (
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullDebugGetResponse{Device: &pb.NullDebug{Name: result[0].Name}}, nil
+	return &pb.NullDebugGetResponse{Device: &pb.NullDebug{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}}}, nil
 }
 
 func (s *server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
