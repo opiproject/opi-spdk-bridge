@@ -306,7 +306,7 @@ func (s *server) NVMeNamespaceList(ctx context.Context, in *pb.NVMeNamespaceList
 		if rr.Nqn == nqn || nqn == "" {
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
-				Blobarray = append(Blobarray, &pb.NVMeNamespace{HostNsid: uint32(r.Nsid)})
+				Blobarray = append(Blobarray, &pb.NVMeNamespace{HostNsid: int32(r.Nsid)})
 			}
 		}
 	}
@@ -352,7 +352,7 @@ func (s *server) NVMeNamespaceGet(ctx context.Context, in *pb.NVMeNamespaceGetRe
 		if rr.Nqn == subsys.Nqn {
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
-				if uint32(r.Nsid) == namespace.HostNsid {
+				if int32(r.Nsid) == namespace.HostNsid {
 					return &pb.NVMeNamespace{Id: namespace.Id, HostNsid: namespace.HostNsid}, nil
 				}
 			}
