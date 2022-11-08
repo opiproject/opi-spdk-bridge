@@ -7,6 +7,8 @@ github.com/opiproject/opi-api v0.0.0-20221108132726-72b6da21c09a h1:VeVARKHUwoVM
 github.com/opiproject/opi-api v0.0.0-20221108132726-72b6da21c09a/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20221108151912-50dd35e8bdf9 h1:Se6voYPH0tFU4hPjMzzm/qi+fQ9bX7jUZxMvGooJcxQ=
 github.com/opiproject/opi-api v0.0.0-20221108151912-50dd35e8bdf9/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20221108172248-8bc7b1116f8a h1:ZRG10EkYPLVZoh0Rj+frQlcoUr0ExtwucoGu09Ff5LU=
+github.com/opiproject/opi-api v0.0.0-20221108172248-8bc7b1116f8a/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 golang.org/x/net v0.1.0 h1:hZ/3BUoy5aId7sCpA/Tc5lt8DkFgdVS2onTpJsZ/fl0=
 golang.org/x/net v0.1.0/go.mod h1:Cx3nUiGt4eDBEyega/BKRp+/AlGL8hYe7U9odMt2Cco=
 golang.org/x/sys v0.1.0 h1:kunALQeHf1/185U1i0GOB/fy1IPRDDpuoOOqRReG57U=
