@@ -67,7 +67,7 @@ on X86 management VM run
 
 ```bash
 # subsystem apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'subsystem' : {'id' : {'value' : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1'} } }"
 connecting to localhost:50051
 {
  "id": {
@@ -107,7 +107,7 @@ connecting to localhost:50051
 Rpc succeeded with OK status
 
 # controller apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'subsystem' : {'id' : {'value' : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2'} } }"
 connecting to localhost:50051
 {
  "id": {
@@ -117,7 +117,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerCreate "{'controller' : {'id' : {'value' : 'controller1'}, 'subsystem_id' : { 'value' : 'subsystem2' } } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerCreate "{'spec' : {'controller' : {'id' : {'value' : 'controller1'}, 'subsystem_id' : { 'value' : 'subsystem2' } } } }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
@@ -153,7 +153,7 @@ connecting to localhost:50051
 Rpc succeeded with OK status
 
 # namespace apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'subsystem' : {'id' : {'value' : 'subsystem3'}, nqn: 'nqn.2022-09.io.spdk:opitest3'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem3'}, nqn: 'nqn.2022-09.io.spdk:opitest3'} } }"
 connecting to localhost:50051
 {
  "id": {
@@ -163,7 +163,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerCreate "{'controller' : {'id' : {'value' : 'controller2'}, 'subsystem_id' : { 'value' : 'subsystem3' } } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerCreate "{'spec' : {'controller' : {'id' : {'value' : 'controller2'}, 'subsystem_id' : { 'value' : 'subsystem3' } } } }"
 connecting to localhost:50051
 {
  "id": {
@@ -175,7 +175,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeNamespaceCreate "{'namespace' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem3' }, 'controller_id' : { 'value' : 'controller2' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeNamespaceCreate "{'spec' : {'namespace' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem3' }, 'controller_id' : { 'value' : 'controller2' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } } }"
 connecting to localhost:50051
 {
  "id": {
