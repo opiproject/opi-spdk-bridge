@@ -108,7 +108,7 @@ func (s *server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemot
 func (s *server) NullDebugCreate(ctx context.Context, in *pb.NullDebugCreateRequest) (*pb.NullDebugCreateResponse, error) {
 	log.Printf("NullDebugCreate: Received from client: %v", in)
 	params := BdevNullCreateParams{
-		Name:      in.GetDevice().GetName(),
+		Name:      fmt.Sprint("OpiNull", in.GetDevice().GetId()),
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -143,7 +143,7 @@ func (s *server) NullDebugDelete(ctx context.Context, in *pb.NullDebugDeleteRequ
 func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequest) (*pb.NullDebugUpdateResponse, error) {
 	log.Printf("NullDebugUpdate: Received from client: %v", in)
 	params1 := BdevNullDeleteParams{
-		Name: in.GetDevice().GetName(),
+		Name: fmt.Sprint("OpiNull", in.GetDevice().GetId()),
 	}
 	var result1 BdevNullDeleteResult
 	err1 := call("bdev_null_delete", &params1, &result1)
@@ -156,7 +156,7 @@ func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequ
 		log.Printf("Could not delete: %v", in)
 	}
 	params2 := BdevNullCreateParams{
-		Name:      in.GetDevice().GetName(),
+		Name:      fmt.Sprint("OpiNull", in.GetDevice().GetId()),
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -182,7 +182,8 @@ func (s *server) NullDebugList(ctx context.Context, in *pb.NullDebugListRequest)
 	Blobarray := make([]*pb.NullDebug, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NullDebug{Name: r.Name, Uuid: &pc.Uuid{Value: r.UUID}}
+		// TODO: re-add back r.Name
+		Blobarray[i] = &pb.NullDebug{Uuid: &pc.Uuid{Value: r.UUID}}
 	}
 	return &pb.NullDebugListResponse{Device: Blobarray}, nil
 }
@@ -204,7 +205,8 @@ func (s *server) NullDebugGet(ctx context.Context, in *pb.NullDebugGetRequest) (
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullDebugGetResponse{Device: &pb.NullDebug{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}}}, nil
+	// TODO: re-add back r.Name
+	return &pb.NullDebugGetResponse{Device: &pb.NullDebug{Uuid: &pc.Uuid{Value: result[0].UUID}}}, nil
 }
 
 func (s *server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
@@ -233,7 +235,7 @@ func (s *server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 func (s *server) AioControllerCreate(ctx context.Context, in *pb.AioControllerCreateRequest) (*pb.AioController, error) {
 	log.Printf("AioControllerCreate: Received from client: %v", in)
 	params := BdevAioCreateParams{
-		Name:      in.GetDevice().GetName(),
+		Name:      in.GetDevice().GetHandle().GetValue(),
 		BlockSize: 512,
 		Filename:  in.GetDevice().GetFilename(),
 	}
@@ -250,7 +252,7 @@ func (s *server) AioControllerCreate(ctx context.Context, in *pb.AioControllerCr
 func (s *server) AioControllerDelete(ctx context.Context, in *pb.AioControllerDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("AioControllerDelete: Received from client: %v", in)
 	params := BdevAioDeleteParams{
-		Name: fmt.Sprint("OpiAio", in.GetHandle().GetValue()),
+		Name: in.GetHandle().GetValue(),
 	}
 	var result BdevAioDeleteResult
 	err := call("bdev_aio_delete", &params, &result)
@@ -268,7 +270,7 @@ func (s *server) AioControllerDelete(ctx context.Context, in *pb.AioControllerDe
 func (s *server) AioControllerUpdate(ctx context.Context, in *pb.AioControllerUpdateRequest) (*pb.AioController, error) {
 	log.Printf("AioControllerUpdate: Received from client: %v", in)
 	params1 := BdevAioDeleteParams{
-		Name: in.GetDevice().GetName(),
+		Name: in.GetDevice().GetHandle().GetValue(),
 	}
 	var result1 BdevAioDeleteResult
 	err1 := call("bdev_aio_delete", &params1, &result1)
@@ -281,7 +283,7 @@ func (s *server) AioControllerUpdate(ctx context.Context, in *pb.AioControllerUp
 		log.Printf("Could not delete: %v", in)
 	}
 	params2 := BdevAioCreateParams{
-		Name:      in.GetDevice().GetName(),
+		Name:      in.GetDevice().GetHandle().GetValue(),
 		BlockSize: 512,
 		Filename:  in.GetDevice().GetFilename(),
 	}
@@ -307,7 +309,7 @@ func (s *server) AioControllerGetList(ctx context.Context, in *pb.AioControllerG
 	Blobarray := make([]*pb.AioController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.AioController{Name: r.Name}
+		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}}
 	}
 	return &pb.AioControllerList{Device: Blobarray}, nil
 }
@@ -315,7 +317,7 @@ func (s *server) AioControllerGetList(ctx context.Context, in *pb.AioControllerG
 func (s *server) AioControllerGet(ctx context.Context, in *pb.AioControllerGetRequest) (*pb.AioController, error) {
 	log.Printf("AioControllerGet: Received from client: %v", in)
 	params := BdevGetBdevsParams{
-		Name: fmt.Sprint("OpiAio", in.GetHandle().GetValue()),
+		Name: in.GetHandle().GetValue(),
 	}
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", &params, &result)
@@ -329,13 +331,13 @@ func (s *server) AioControllerGet(ctx context.Context, in *pb.AioControllerGetRe
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.AioController{Name: result[0].Name}, nil
+	return &pb.AioController{Handle: &pc.ObjectKey{Value: result[0].Name}}, nil
 }
 
 func (s *server) AioControllerGetStats(ctx context.Context, in *pb.AioControllerGetStatsRequest) (*pb.AioControllerStats, error) {
 	log.Printf("AioControllerGetStats: Received from client: %v", in)
 	params := BdevGetIostatParams{
-		Name: fmt.Sprint("OpiAio", in.GetHandle().GetValue()),
+		Name: in.GetHandle().GetValue(),
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result BdevGetIostatResult

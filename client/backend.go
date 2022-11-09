@@ -52,12 +52,12 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// NullDebug
 	c1 := pb.NewNullDebugServiceClient(conn)
 	log.Printf("Testing NewNullDebugServiceClient")
-	rs1, err := c1.NullDebugCreate(ctx, &pb.NullDebugCreateRequest{Device: &pb.NullDebug{Name: "OpiNull9"}})
+	rs1, err := c1.NullDebugCreate(ctx, &pb.NullDebugCreateRequest{Device: &pb.NullDebug{Id: 9}})
 	if err != nil {
 		log.Fatalf("could not create NULL device: %v", err)
 	}
 	log.Printf("Added: %v", rs1)
-	rs3, err := c1.NullDebugUpdate(ctx, &pb.NullDebugUpdateRequest{Device: &pb.NullDebug{Name: "OpiNull9"}})
+	rs3, err := c1.NullDebugUpdate(ctx, &pb.NullDebugUpdateRequest{Device: &pb.NullDebug{Id: 9}})
 	if err != nil {
 		log.Fatalf("could not update NULL device: %v", err)
 	}
@@ -71,7 +71,7 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	if err != nil {
 		log.Fatalf("could not get NULL device: %v", err)
 	}
-	log.Printf("Got: %s", rs5.Device.Name)
+	log.Printf("Got: %d", rs5.Device.Id)
 	rs6, err := c1.NullDebugStats(ctx, &pb.NullDebugStatsRequest{Id: 9})
 	if err != nil {
 		log.Fatalf("could not stats NULL device: %v", err)
@@ -86,12 +86,12 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// Aio
 	c2 := pb.NewAioControllerServiceClient(conn)
 	log.Printf("Testing NewAioControllerServiceClient")
-	ra1, err := c2.AioControllerCreate(ctx, &pb.AioControllerCreateRequest{Device: &pb.AioController{Name: "OpiAio4", Filename: "/tmp/aio_bdev_file"}})
+	ra1, err := c2.AioControllerCreate(ctx, &pb.AioControllerCreateRequest{Device: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
 	if err != nil {
 		log.Fatalf("could not create Aio device: %v", err)
 	}
 	log.Printf("Added: %v", ra1)
-	ra3, err := c2.AioControllerUpdate(ctx, &pb.AioControllerUpdateRequest{Device: &pb.AioController{Name: "OpiAio4", Filename: "/tmp/aio_bdev_file"}})
+	ra3, err := c2.AioControllerUpdate(ctx, &pb.AioControllerUpdateRequest{Device: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
 	if err != nil {
 		log.Fatalf("could not update Aio device: %v", err)
 	}
@@ -101,17 +101,17 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 		log.Fatalf("could not list Aio device: %v", err)
 	}
 	log.Printf("Listed: %v", ra4)
-	ra5, err := c2.AioControllerGet(ctx, &pb.AioControllerGetRequest{Handle: &pc.ObjectKey{Value: "4"}})
+	ra5, err := c2.AioControllerGet(ctx, &pb.AioControllerGetRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
 	if err != nil {
 		log.Fatalf("could not get Aio device: %v", err)
 	}
-	log.Printf("Got: %s", ra5.Name)
-	ra6, err := c2.AioControllerGetStats(ctx, &pb.AioControllerGetStatsRequest{Handle: &pc.ObjectKey{Value: "4"}})
+	log.Printf("Got: %s", ra5.Handle.Value)
+	ra6, err := c2.AioControllerGetStats(ctx, &pb.AioControllerGetStatsRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
 	if err != nil {
 		log.Fatalf("could not stats Aio device: %v", err)
 	}
 	log.Printf("Stats: %s", ra6.Stats)
-	ra2, err := c2.AioControllerDelete(ctx, &pb.AioControllerDeleteRequest{Handle: &pc.ObjectKey{Value: "4"}})
+	ra2, err := c2.AioControllerDelete(ctx, &pb.AioControllerDeleteRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
 	if err != nil {
 		log.Fatalf("could not delete Aio device: %v", err)
 	}

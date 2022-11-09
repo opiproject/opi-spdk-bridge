@@ -52,38 +52,38 @@ func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5
 	// VirtioScsiLun
 	c6 := pb.NewFrontendVirtioScsiServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioScsiServiceClient")
-	rl1, err := c6.VirtioScsiLunCreate(ctx, &pb.VirtioScsiLunCreateRequest{Lun: &pb.VirtioScsiLun{ControllerId: 8, Bdev: "Malloc1"}})
+	rl1, err := c6.VirtioScsiLunCreate(ctx, &pb.VirtioScsiLunCreateRequest{Lun: &pb.VirtioScsiLun{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, Bdev: "Malloc1"}})
 	if err != nil {
 		log.Fatalf("could not create VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Added: %v", rl1)
-	rl3, err := c6.VirtioScsiLunUpdate(ctx, &pb.VirtioScsiLunUpdateRequest{Lun: &pb.VirtioScsiLun{ControllerId: 8, Bdev: "Malloc1"}})
+	rl3, err := c6.VirtioScsiLunUpdate(ctx, &pb.VirtioScsiLunUpdateRequest{Lun: &pb.VirtioScsiLun{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, Bdev: "Malloc1"}})
 	if err != nil {
 		log.Fatalf("could not update VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Updated: %v", rl3)
-	rl4, err := c6.VirtioScsiLunList(ctx, &pb.VirtioScsiLunListRequest{ControllerId: 8})
+	rl4, err := c6.VirtioScsiLunList(ctx, &pb.VirtioScsiLunListRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not list VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Listed: %v", rl4)
-	rl5, err := c6.VirtioScsiLunGet(ctx, &pb.VirtioScsiLunGetRequest{ControllerId: 8})
+	rl5, err := c6.VirtioScsiLunGet(ctx, &pb.VirtioScsiLunGetRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not get VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Got: %v", rl5.Bdev)
-	rl6, err := c6.VirtioScsiLunStats(ctx, &pb.VirtioScsiLunStatsRequest{ControllerId: 8})
+	rl6, err := c6.VirtioScsiLunStats(ctx, &pb.VirtioScsiLunStatsRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not stats VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Stats: %v", rl6.Stats)
-	rl2, err := c6.VirtioScsiLunDelete(ctx, &pb.VirtioScsiLunDeleteRequest{ControllerId: 8})
+	rl2, err := c6.VirtioScsiLunDelete(ctx, &pb.VirtioScsiLunDeleteRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not delete VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Deleted: %v", rl2)
 
-	rss2, err := c5.VirtioScsiControllerDelete(ctx, &pb.VirtioScsiControllerDeleteRequest{ControllerId: 8})
+	rss2, err := c5.VirtioScsiControllerDelete(ctx, &pb.VirtioScsiControllerDeleteRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not delete VirtioScsi subsystem: %v", err)
 	}
@@ -95,12 +95,12 @@ func executeVirtioScsiController(ctx context.Context, conn grpc.ClientConnInterf
 	// VirtioScsiController
 	c5 := pb.NewFrontendVirtioScsiServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioScsiServiceClient")
-	rss1, err := c5.VirtioScsiControllerCreate(ctx, &pb.VirtioScsiControllerCreateRequest{Controller: &pb.VirtioScsiController{Name: "OPI-VirtioScsi8"}})
+	rss1, err := c5.VirtioScsiControllerCreate(ctx, &pb.VirtioScsiControllerCreateRequest{Controller: &pb.VirtioScsiController{Id: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}}})
 	if err != nil {
 		log.Fatalf("could not create VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Added: %v", rss1)
-	rss3, err := c5.VirtioScsiControllerUpdate(ctx, &pb.VirtioScsiControllerUpdateRequest{Controller: &pb.VirtioScsiController{Name: "OPI-VirtioScsi8"}})
+	rss3, err := c5.VirtioScsiControllerUpdate(ctx, &pb.VirtioScsiControllerUpdateRequest{Controller: &pb.VirtioScsiController{Id: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}}})
 	if err != nil {
 		log.Fatalf("could not update VirtioScsi subsystem: %v", err)
 	}
@@ -110,12 +110,12 @@ func executeVirtioScsiController(ctx context.Context, conn grpc.ClientConnInterf
 		log.Fatalf("could not list VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Listed: %s", rss4)
-	rss5, err := c5.VirtioScsiControllerGet(ctx, &pb.VirtioScsiControllerGetRequest{ControllerId: 8})
+	rss5, err := c5.VirtioScsiControllerGet(ctx, &pb.VirtioScsiControllerGetRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not get VirtioScsi subsystem: %v", err)
 	}
-	log.Printf("Got: %s", rss5.Name)
-	rss6, err := c5.VirtioScsiControllerStats(ctx, &pb.VirtioScsiControllerStatsRequest{ControllerId: 8})
+	log.Printf("Got: %s", rss5.Id.Value)
+	rss6, err := c5.VirtioScsiControllerStats(ctx, &pb.VirtioScsiControllerStatsRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not stats VirtioScsi subsystem: %v", err)
 	}
@@ -127,32 +127,32 @@ func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error 
 	// VirtioBlk
 	c4 := pb.NewFrontendVirtioBlkServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioBlkServiceClient")
-	rv1, err := c4.VirtioBlkCreate(ctx, &pb.VirtioBlkCreateRequest{Controller: &pb.VirtioBlk{Name: "VirtioBlk8", Bdev: "Malloc1"}})
+	rv1, err := c4.VirtioBlkCreate(ctx, &pb.VirtioBlkCreateRequest{Controller: &pb.VirtioBlk{Id: &pbc.ObjectKey{Value: "VirtioBlk8"}, Bdev: "Malloc1"}})
 	if err != nil {
 		log.Fatalf("could not create VirtioBlk Controller: %v", err)
 	}
 	log.Printf("Added: %v", rv1)
-	rv3, err := c4.VirtioBlkUpdate(ctx, &pb.VirtioBlkUpdateRequest{Controller: &pb.VirtioBlk{Name: "OPI-Nvme"}})
+	rv3, err := c4.VirtioBlkUpdate(ctx, &pb.VirtioBlkUpdateRequest{Controller: &pb.VirtioBlk{Id: &pbc.ObjectKey{Value: "VirtioBlk8"}}})
 	if err != nil {
 		log.Fatalf("could not update VirtioBlk Controller: %v", err)
 	}
 	log.Printf("Updated: %v", rv3)
-	rv4, err := c4.VirtioBlkList(ctx, &pb.VirtioBlkListRequest{VirtioblkId: 8})
+	rv4, err := c4.VirtioBlkList(ctx, &pb.VirtioBlkListRequest{})
 	if err != nil {
 		log.Fatalf("could not list VirtioBlk Controller: %v", err)
 	}
 	log.Printf("Listed: %v", rv4)
-	rv5, err := c4.VirtioBlkGet(ctx, &pb.VirtioBlkGetRequest{ControllerId: 8})
+	rv5, err := c4.VirtioBlkGet(ctx, &pb.VirtioBlkGetRequest{ControllerId: &pbc.ObjectKey{Value: "VirtioBlk8"}})
 	if err != nil {
 		log.Fatalf("could not get VirtioBlk Controller: %v", err)
 	}
-	log.Printf("Got: %v", rv5.Name)
-	rv6, err := c4.VirtioBlkStats(ctx, &pb.VirtioBlkStatsRequest{ControllerId: 8})
+	log.Printf("Got: %v", rv5.Id.Value)
+	rv6, err := c4.VirtioBlkStats(ctx, &pb.VirtioBlkStatsRequest{ControllerId: &pbc.ObjectKey{Value: "VirtioBlk8"}})
 	if err != nil {
 		log.Fatalf("could not stats VirtioBlk Controller: %v", err)
 	}
 	log.Printf("Stats: %v", rv6.Stats)
-	rv2, err := c4.VirtioBlkDelete(ctx, &pb.VirtioBlkDeleteRequest{ControllerId: 8})
+	rv2, err := c4.VirtioBlkDelete(ctx, &pb.VirtioBlkDeleteRequest{ControllerId: &pbc.ObjectKey{Value: "VirtioBlk8"}})
 	if err != nil {
 		log.Fatalf("could not delete VirtioBlk Controller: %v", err)
 	}
