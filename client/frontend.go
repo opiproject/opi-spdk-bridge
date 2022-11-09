@@ -205,7 +205,7 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 	log.Printf("Added: %v", rn1)
 	rn3, err := c3.NVMeNamespaceUpdate(ctx, &pb.NVMeNamespaceUpdateRequest{
 		Namespace: &pb.NVMeNamespace{
-                        Spec: &pb.NVMeNamespaceSpec{
+			Spec: &pb.NVMeNamespaceSpec{
 				Id:           &pbc.ObjectKey{Value: "namespace-test"},
 				SubsystemId:  &pbc.ObjectKey{Value: "namespace-test-ss"},
 				ControllerId: &pbc.ObjectKey{Value: "namespace-test-ctrler"},
@@ -270,7 +270,7 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 	log.Printf("Testing NewFrontendNvmeServiceClient")
 	rc1, err := c2.NVMeControllerCreate(ctx, &pb.NVMeControllerCreateRequest{
 		Controller: &pb.NVMeController{
-                        Spec: &pb.NVMeControllerSpec{
+			Spec: &pb.NVMeControllerSpec{
 				Id:               &pbc.ObjectKey{Value: "controller-test"},
 				SubsystemId:      &pbc.ObjectKey{Value: "controller-test-ss"},
 				NvmeControllerId: 1}}})
@@ -281,7 +281,7 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 
 	rc3, err := c2.NVMeControllerUpdate(ctx, &pb.NVMeControllerUpdateRequest{
 		Controller: &pb.NVMeController{
-                        Spec: &pb.NVMeControllerSpec{
+			Spec: &pb.NVMeControllerSpec{
 				Id:               &pbc.ObjectKey{Value: "controller-test"},
 				SubsystemId:      &pbc.ObjectKey{Value: "controller-test-ss"},
 				NvmeControllerId: 2}}})
@@ -342,7 +342,7 @@ func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) er
 	log.Printf("Added: %v", rs1)
 	rs3, err := c1.NVMeSubsystemUpdate(ctx, &pb.NVMeSubsystemUpdateRequest{
 		Subsystem: &pb.NVMeSubsystem{
-                        Spec: &pb.NVMeSubsystemSpec{
+			Spec: &pb.NVMeSubsystemSpec{
 				Id:  &pbc.ObjectKey{Value: "subsystem-test"},
 				Nqn: "nqn.2022-09.io.spdk:opi3"}}})
 	if err != nil {

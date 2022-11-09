@@ -92,7 +92,7 @@ func (s *server) NVMeSubsystemList(ctx context.Context, in *pb.NVMeSubsystemList
 	Blobarray := make([]*pb.NVMeSubsystem, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NVMeSubsystem{Spec : &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}
+		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}
 	}
 	return &pb.NVMeSubsystemListResponse{Subsystem: Blobarray}, nil
 }
@@ -117,7 +117,7 @@ func (s *server) NVMeSubsystemGet(ctx context.Context, in *pb.NVMeSubsystemGetRe
 	for i := range result {
 		r := &result[i]
 		if r.Nqn == subsys.Spec.Nqn {
-			return &pb.NVMeSubsystem{ Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}, nil
+			return &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}, nil
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Spec.Nqn)
@@ -189,7 +189,7 @@ func (s *server) NVMeControllerGet(ctx context.Context, in *pb.NVMeControllerGet
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.ControllerId.Value)
 	}
-	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec {Id: in.ControllerId, NvmeControllerId: controller.Spec.NvmeControllerId}}, nil
+	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: in.ControllerId, NvmeControllerId: controller.Spec.NvmeControllerId}}, nil
 }
 
 func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
@@ -249,7 +249,7 @@ func (s *server) NVMeNamespaceDelete(ctx context.Context, in *pb.NVMeNamespaceDe
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
 		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec { Nqn: namespace.Spec.SubsystemId.Value}}
+		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: namespace.Spec.SubsystemId.Value}}
 		// return nil, err
 	}
 
@@ -307,7 +307,7 @@ func (s *server) NVMeNamespaceList(ctx context.Context, in *pb.NVMeNamespaceList
 		if rr.Nqn == nqn || nqn == "" {
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
-				Blobarray = append(Blobarray, &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec {HostNsid: int32(r.Nsid)}})
+				Blobarray = append(Blobarray, &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{HostNsid: int32(r.Nsid)}})
 			}
 		}
 	}
@@ -337,7 +337,7 @@ func (s *server) NVMeNamespaceGet(ctx context.Context, in *pb.NVMeNamespaceGetRe
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
 		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec {Nqn: namespace.Spec.SubsystemId.Value}}
+		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: namespace.Spec.SubsystemId.Value}}
 		// return nil, err
 	}
 
