@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
@@ -376,7 +377,7 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 func (s *server) VirtioBlkCreate(ctx context.Context, in *pb.VirtioBlkCreateRequest) (*pb.VirtioBlk, error) {
 	log.Printf("VirtioBlkCreate: Received from client: %v", in)
 	params := VhostCreateBlkControllerParams{
-		Ctrlr:   in.GetController().GetName(),
+		Ctrlr:   in.GetController().GetId().GetValue(),
 		DevName: in.GetController().GetBdev(),
 	}
 	var result VhostCreateBlkControllerResult
@@ -395,7 +396,7 @@ func (s *server) VirtioBlkCreate(ctx context.Context, in *pb.VirtioBlkCreateRequ
 func (s *server) VirtioBlkDelete(ctx context.Context, in *pb.VirtioBlkDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("VirtioBlkDelete: Received from client: %v", in)
 	params := VhostDeleteControllerParams{
-		Ctrlr: fmt.Sprint("VirtioBlk", in.GetControllerId()),
+		Ctrlr: in.GetControllerId().GetValue(),
 	}
 	var result VhostDeleteControllerResult
 	err := call("vhost_delete_controller", &params, &result)
@@ -427,7 +428,7 @@ func (s *server) VirtioBlkList(ctx context.Context, in *pb.VirtioBlkListRequest)
 	Blobarray := make([]*pb.VirtioBlk, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioBlk{Name: r.Ctrlr}
+		Blobarray[i] = &pb.VirtioBlk{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
 	return &pb.VirtioBlkListResponse{Controller: Blobarray}, nil
 }
@@ -435,7 +436,7 @@ func (s *server) VirtioBlkList(ctx context.Context, in *pb.VirtioBlkListRequest)
 func (s *server) VirtioBlkGet(ctx context.Context, in *pb.VirtioBlkGetRequest) (*pb.VirtioBlk, error) {
 	log.Printf("VirtioBlkGet: Received from client: %v", in)
 	params := VhostGetControllersParams{
-		Name: fmt.Sprint("VirtioBlk", in.GetControllerId()),
+		Name: in.GetControllerId().GetValue(),
 	}
 	var result []VhostGetControllersResult
 	err := call("vhost_get_controllers", &params, &result)
@@ -449,7 +450,7 @@ func (s *server) VirtioBlkGet(ctx context.Context, in *pb.VirtioBlkGetRequest) (
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioBlk{Name: result[0].Ctrlr}, nil
+	return &pb.VirtioBlk{Id: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
 }
 
 func (s *server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
@@ -462,7 +463,7 @@ func (s *server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsReques
 func (s *server) VirtioScsiControllerCreate(ctx context.Context, in *pb.VirtioScsiControllerCreateRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("VirtioScsiControllerCreate: Received from client: %v", in)
 	params := VhostCreateScsiControllerParams{
-		Ctrlr: in.GetController().GetName(),
+		Ctrlr: in.GetController().GetId().GetValue(),
 	}
 	var result VhostCreateScsiControllerResult
 	err := call("vhost_create_scsi_controller", &params, &result)
@@ -480,7 +481,7 @@ func (s *server) VirtioScsiControllerCreate(ctx context.Context, in *pb.VirtioSc
 func (s *server) VirtioScsiControllerDelete(ctx context.Context, in *pb.VirtioScsiControllerDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("VirtioScsiControllerDelete: Received from client: %v", in)
 	params := VhostDeleteControllerParams{
-		Ctrlr: fmt.Sprint("OPI-VirtioScsi", in.GetControllerId()),
+		Ctrlr: in.GetControllerId().GetValue(),
 	}
 	var result VhostDeleteControllerResult
 	err := call("vhost_delete_controller", &params, &result)
@@ -512,7 +513,7 @@ func (s *server) VirtioScsiControllerList(ctx context.Context, in *pb.VirtioScsi
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioScsiController{Name: r.Ctrlr}
+		Blobarray[i] = &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
 	return &pb.VirtioScsiControllerListResponse{Controller: Blobarray}, nil
 }
@@ -520,7 +521,7 @@ func (s *server) VirtioScsiControllerList(ctx context.Context, in *pb.VirtioScsi
 func (s *server) VirtioScsiControllerGet(ctx context.Context, in *pb.VirtioScsiControllerGetRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("VirtioScsiControllerGet: Received from client: %v", in)
 	params := VhostGetControllersParams{
-		Name: fmt.Sprint("OPI-VirtioScsi", in.GetControllerId()),
+		Name: in.GetControllerId().GetValue(),
 	}
 	var result []VhostGetControllersResult
 	err := call("vhost_get_controllers", &params, &result)
@@ -534,7 +535,7 @@ func (s *server) VirtioScsiControllerGet(ctx context.Context, in *pb.VirtioScsiC
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiController{Name: result[0].Ctrlr}, nil
+	return &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
 }
 
 func (s *server) VirtioScsiControllerStats(ctx context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
@@ -551,7 +552,7 @@ func (s *server) VirtioScsiLunCreate(ctx context.Context, in *pb.VirtioScsiLunCr
 		Num  int    `json:"scsi_target_num"`
 		Bdev string `json:"bdev_name"`
 	}{
-		Name: fmt.Sprint("OPI-VirtioScsi", in.GetLun().GetControllerId()),
+		Name: in.GetLun().GetControllerId().GetValue(),
 		Num:  5,
 		Bdev: in.GetLun().GetBdev(),
 	}
@@ -571,7 +572,7 @@ func (s *server) VirtioScsiLunDelete(ctx context.Context, in *pb.VirtioScsiLunDe
 		Name string `json:"ctrlr"`
 		Num  int    `json:"scsi_target_num"`
 	}{
-		Name: fmt.Sprint("OPI-VirtioScsi", in.GetControllerId()),
+		Name: in.GetControllerId().GetValue(),
 		Num:  5,
 	}
 	var result bool
@@ -612,7 +613,7 @@ func (s *server) VirtioScsiLunList(ctx context.Context, in *pb.VirtioScsiLunList
 func (s *server) VirtioScsiLunGet(ctx context.Context, in *pb.VirtioScsiLunGetRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("VirtioScsiLunGet: Received from client: %v", in)
 	params := VhostGetControllersParams{
-		Name: fmt.Sprint("OPI-VirtioScsi", in.GetControllerId()),
+		Name: in.GetControllerId().GetValue(),
 	}
 	var result []VhostGetControllersResult
 	err := call("vhost_get_controllers", &params, &result)
