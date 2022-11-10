@@ -11,6 +11,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -105,10 +106,10 @@ func (s *server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemot
 
 //////////////////////////////////////////////////////////
 
-func (s *server) NullDebugCreate(ctx context.Context, in *pb.NullDebugCreateRequest) (*pb.NullDebugCreateResponse, error) {
+func (s *server) NullDebugCreate(ctx context.Context, in *pb.NullDebugCreateRequest) (*pb.NullDebug, error) {
 	log.Printf("NullDebugCreate: Received from client: %v", in)
 	params := BdevNullCreateParams{
-		Name:      fmt.Sprint("OpiNull", in.GetDevice().GetId()),
+		Name:      in.Device.Handle.Value,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -119,13 +120,19 @@ func (s *server) NullDebugCreate(ctx context.Context, in *pb.NullDebugCreateRequ
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NullDebugCreateResponse{}, nil
+	response := &pb.NullDebug{}
+	err = deepcopier.Copy(in.Device).To(response)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return response, nil
 }
 
-func (s *server) NullDebugDelete(ctx context.Context, in *pb.NullDebugDeleteRequest) (*pb.NullDebugDeleteResponse, error) {
+func (s *server) NullDebugDelete(ctx context.Context, in *pb.NullDebugDeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("NullDebugDelete: Received from client: %v", in)
 	params := BdevNullDeleteParams{
-		Name: fmt.Sprint("OpiNull", in.GetId()),
+		Name: in.Handle.Value,
 	}
 	var result BdevNullDeleteResult
 	err := call("bdev_null_delete", &params, &result)
@@ -137,13 +144,13 @@ func (s *server) NullDebugDelete(ctx context.Context, in *pb.NullDebugDeleteRequ
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
-	return &pb.NullDebugDeleteResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequest) (*pb.NullDebugUpdateResponse, error) {
+func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequest) (*pb.NullDebug, error) {
 	log.Printf("NullDebugUpdate: Received from client: %v", in)
 	params1 := BdevNullDeleteParams{
-		Name: fmt.Sprint("OpiNull", in.GetDevice().GetId()),
+		Name: in.Device.Handle.Value,
 	}
 	var result1 BdevNullDeleteResult
 	err1 := call("bdev_null_delete", &params1, &result1)
@@ -156,7 +163,7 @@ func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequ
 		log.Printf("Could not delete: %v", in)
 	}
 	params2 := BdevNullCreateParams{
-		Name:      fmt.Sprint("OpiNull", in.GetDevice().GetId()),
+		Name:      in.Device.Handle.Value,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -167,7 +174,13 @@ func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequ
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
-	return &pb.NullDebugUpdateResponse{}, nil
+	response := &pb.NullDebug{}
+	err3 := deepcopier.Copy(in.Device).To(response)
+	if err3 != nil {
+		log.Printf("error: %v", err3)
+		return nil, err3
+	}
+	return response, nil
 }
 
 func (s *server) NullDebugList(ctx context.Context, in *pb.NullDebugListRequest) (*pb.NullDebugListResponse, error) {
@@ -182,16 +195,15 @@ func (s *server) NullDebugList(ctx context.Context, in *pb.NullDebugListRequest)
 	Blobarray := make([]*pb.NullDebug, len(result))
 	for i := range result {
 		r := &result[i]
-		// TODO: re-add back r.Name
-		Blobarray[i] = &pb.NullDebug{Uuid: &pc.Uuid{Value: r.UUID}}
+		Blobarray[i] = &pb.NullDebug{Handle: &pc.ObjectKey{Value: r.Name}, Uuid: &pc.Uuid{Value: r.UUID}}
 	}
 	return &pb.NullDebugListResponse{Device: Blobarray}, nil
 }
 
-func (s *server) NullDebugGet(ctx context.Context, in *pb.NullDebugGetRequest) (*pb.NullDebugGetResponse, error) {
+func (s *server) NullDebugGet(ctx context.Context, in *pb.NullDebugGetRequest) (*pb.NullDebug, error) {
 	log.Printf("NullDebugGet: Received from client: %v", in)
 	params := BdevGetBdevsParams{
-		Name: fmt.Sprint("OpiNull", in.GetId()),
+		Name: in.Handle.Value,
 	}
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", &params, &result)
@@ -205,14 +217,13 @@ func (s *server) NullDebugGet(ctx context.Context, in *pb.NullDebugGetRequest) (
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	// TODO: re-add back r.Name
-	return &pb.NullDebugGetResponse{Device: &pb.NullDebug{Uuid: &pc.Uuid{Value: result[0].UUID}}}, nil
+	return &pb.NullDebug{Handle: &pc.ObjectKey{Value: result[0].Name}, Uuid: &pc.Uuid{Value: result[0].UUID}}, nil
 }
 
 func (s *server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
 	log.Printf("NullDebugStats: Received from client: %v", in)
 	params := BdevGetIostatParams{
-		Name: fmt.Sprint("OpiNull", in.GetId()),
+		Name: in.Handle.Value,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result BdevGetIostatResult
