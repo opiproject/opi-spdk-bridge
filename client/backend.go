@@ -52,12 +52,12 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// NullDebug
 	c1 := pb.NewNullDebugServiceClient(conn)
 	log.Printf("Testing NewNullDebugServiceClient")
-	rs1, err := c1.NullDebugCreate(ctx, &pb.NullDebugCreateRequest{Device: &pb.NullDebug{Id: 9}})
+	rs1, err := c1.NullDebugCreate(ctx, &pb.NullDebugCreateRequest{Device: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
 	if err != nil {
 		log.Fatalf("could not create NULL device: %v", err)
 	}
 	log.Printf("Added: %v", rs1)
-	rs3, err := c1.NullDebugUpdate(ctx, &pb.NullDebugUpdateRequest{Device: &pb.NullDebug{Id: 9}})
+	rs3, err := c1.NullDebugUpdate(ctx, &pb.NullDebugUpdateRequest{Device: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
 	if err != nil {
 		log.Fatalf("could not update NULL device: %v", err)
 	}
@@ -67,17 +67,17 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 		log.Fatalf("could not list NULL device: %v", err)
 	}
 	log.Printf("Listed: %v", rs4)
-	rs5, err := c1.NullDebugGet(ctx, &pb.NullDebugGetRequest{Id: 9})
+	rs5, err := c1.NullDebugGet(ctx, &pb.NullDebugGetRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
 	if err != nil {
 		log.Fatalf("could not get NULL device: %v", err)
 	}
-	log.Printf("Got: %d", rs5.Device.Id)
-	rs6, err := c1.NullDebugStats(ctx, &pb.NullDebugStatsRequest{Id: 9})
+	log.Printf("Got: %s", rs5.Handle.Value)
+	rs6, err := c1.NullDebugStats(ctx, &pb.NullDebugStatsRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
 	if err != nil {
 		log.Fatalf("could not stats NULL device: %v", err)
 	}
 	log.Printf("Stats: %s", rs6.Stats)
-	rs2, err := c1.NullDebugDelete(ctx, &pb.NullDebugDeleteRequest{Id: 9})
+	rs2, err := c1.NullDebugDelete(ctx, &pb.NullDebugDeleteRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
 	if err != nil {
 		log.Fatalf("could not delete NULL device: %v", err)
 	}
