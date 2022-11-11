@@ -67,7 +67,7 @@ on X86 management VM run
 
 ```bash
 # subsystem apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1'} } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeSubsystem "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1'} } }"
 connecting to localhost:50051
 {
  "id": {
@@ -77,7 +77,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemList "{}"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 ListNVMeSubsystem "{}"
 connecting to localhost:50051
 {
  "subsystem": [
@@ -94,20 +94,20 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemGet "{'subsystem_id' : {'value' : 'subsystem1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 GetNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem1'} }"
 connecting to localhost:50051
 {
  "nqn": "nqn.2022-09.io.spdk:opitest1"
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemDelete "{'subsystem_id' : {'value' : 'subsystem1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem1'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
 
 # controller apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2'} } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeSubsystem "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2'} } }"
 connecting to localhost:50051
 {
  "id": {
@@ -117,11 +117,11 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerCreate "{'spec' : {'controller' : {'id' : {'value' : 'controller1'}, 'subsystem_id' : { 'value' : 'subsystem2' } } } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeController "{'spec' : {'controller' : {'id' : {'value' : 'controller1'}, 'subsystem_id' : { 'value' : 'subsystem2' } } } }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerList "{}"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 ListNVMeController "{}"
 connecting to localhost:50051
 {
  "id": {
@@ -133,7 +133,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerGet "{'controller_id' : {'value' : 'controller1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 GetNVMeController "{'controller_id' : {'value' : 'controller1'} }"
 connecting to localhost:50051
 {
  "id": {
@@ -142,18 +142,18 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerDelete "{'controller_id' : {'value' : 'controller1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeController "{'controller_id' : {'value' : 'controller1'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemDelete "{'subsystem_id' : {'value' : 'subsystem2'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem2'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
 
 # namespace apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemCreate "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem3'}, nqn: 'nqn.2022-09.io.spdk:opitest3'} } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeSubsystem "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem3'}, nqn: 'nqn.2022-09.io.spdk:opitest3'} } }"
 connecting to localhost:50051
 {
  "id": {
@@ -163,7 +163,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerCreate "{'spec' : {'controller' : {'id' : {'value' : 'controller2'}, 'subsystem_id' : { 'value' : 'subsystem3' } } } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeController "{'spec' : {'controller' : {'id' : {'value' : 'controller2'}, 'subsystem_id' : { 'value' : 'subsystem3' } } } }"
 connecting to localhost:50051
 {
  "id": {
@@ -175,7 +175,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeNamespaceCreate "{'spec' : {'namespace' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem3' }, 'controller_id' : { 'value' : 'controller2' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeNamespace "{'spec' : {'namespace' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem3' }, 'controller_id' : { 'value' : 'controller2' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } } }"
 connecting to localhost:50051
 {
  "id": {
@@ -194,7 +194,7 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeNamespaceList "{'subsystem_id' : { 'value' : 'subsystem3' } }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 ListNVMeNamespace "{'subsystem_id' : { 'value' : 'subsystem3' } }"
 connecting to localhost:50051
 {
  "namespace": [
@@ -204,7 +204,7 @@ connecting to localhost:50051
  ]
 }
 Rpc succeeded with OK status
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeNamespaceGet "{'namespace_id' : {'value' : 'namespace1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 GetNVMeNamespace "{'namespace_id' : {'value' : 'namespace1'} }"
 connecting to localhost:50051
 {
  "namespace": {
@@ -222,17 +222,17 @@ connecting to localhost:50051
 }
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeNamespaceDelete "{'namespace_id' : {'value' : 'namespace1'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeNamespace "{'namespace_id' : {'value' : 'namespace1'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeControllerDelete "{'controller_id' : {'value' : 'controller2'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeController "{'controller_id' : {'value' : 'controller2'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
 
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 NVMeSubsystemDelete "{'subsystem_id' : {'value' : 'subsystem3'} }"
+$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem3'} }"
 connecting to localhost:50051
 {}
 Rpc succeeded with OK status
@@ -297,23 +297,23 @@ $ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService -l
 filename: frontend_nvme_pcie.proto
 package: opi_api.storage.v1;
 service FrontendNvmeService {
-  rpc NVMeSubsystemCreate(opi_api.storage.v1.NVMeSubsystemCreateRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
-  rpc NVMeSubsystemDelete(opi_api.storage.v1.NVMeSubsystemDeleteRequest) returns (google.protobuf.Empty) {}
-  rpc NVMeSubsystemUpdate(opi_api.storage.v1.NVMeSubsystemUpdateRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
-  rpc NVMeSubsystemList(opi_api.storage.v1.NVMeSubsystemListRequest) returns (opi_api.storage.v1.NVMeSubsystemListResponse) {}
-  rpc NVMeSubsystemGet(opi_api.storage.v1.NVMeSubsystemGetRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
+  rpc CreateNVMeSubsystem(opi_api.storage.v1.CreateNVMeSubsystemRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
+  rpc DeleteNVMeSubsystem(opi_api.storage.v1.DeleteNVMeSubsystemRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateNVMeSubsystem(opi_api.storage.v1.UpdateNVMeSubsystemRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
+  rpc ListNVMeSubsystem(opi_api.storage.v1.ListNVMeSubsystemRequest) returns (opi_api.storage.v1.ListNVMeSubsystemResponse) {}
+  rpc GetNVMeSubsystem(opi_api.storage.v1.GetNVMeSubsystemRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
   rpc NVMeSubsystemStats(opi_api.storage.v1.NVMeSubsystemStatsRequest) returns (opi_api.storage.v1.NVMeSubsystemStatsResponse) {}
-  rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
-  rpc NVMeControllerDelete(opi_api.storage.v1.NVMeControllerDeleteRequest) returns (google.protobuf.Empty) {}
-  rpc NVMeControllerUpdate(opi_api.storage.v1.NVMeControllerUpdateRequest) returns (opi_api.storage.v1.NVMeController) {}
-  rpc NVMeControllerList(opi_api.storage.v1.NVMeControllerListRequest) returns (opi_api.storage.v1.NVMeControllerListResponse) {}
-  rpc NVMeControllerGet(opi_api.storage.v1.NVMeControllerGetRequest) returns (opi_api.storage.v1.NVMeController) {}
+  rpc CreateNVMeController(opi_api.storage.v1.CreateNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
+  rpc DeleteNVMeController(opi_api.storage.v1.DeleteNVMeControllerRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateNVMeController(opi_api.storage.v1.UpdateNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
+  rpc ListNVMeController(opi_api.storage.v1.ListNVMeControllerRequest) returns (opi_api.storage.v1.ListNVMeControllerResponse) {}
+  rpc GetNVMeController(opi_api.storage.v1.GetNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
   rpc NVMeControllerStats(opi_api.storage.v1.NVMeControllerStatsRequest) returns (opi_api.storage.v1.NVMeControllerStatsResponse) {}
-  rpc NVMeNamespaceCreate(opi_api.storage.v1.NVMeNamespaceCreateRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
-  rpc NVMeNamespaceDelete(opi_api.storage.v1.NVMeNamespaceDeleteRequest) returns (google.protobuf.Empty) {}
-  rpc NVMeNamespaceUpdate(opi_api.storage.v1.NVMeNamespaceUpdateRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
-  rpc NVMeNamespaceList(opi_api.storage.v1.NVMeNamespaceListRequest) returns (opi_api.storage.v1.NVMeNamespaceListResponse) {}
-  rpc NVMeNamespaceGet(opi_api.storage.v1.NVMeNamespaceGetRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
+  rpc CreateNVMeNamespace(opi_api.storage.v1.CreateNVMeNamespaceRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
+  rpc DeleteNVMeNamespace(opi_api.storage.v1.DeleteNVMeNamespaceRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateNVMeNamespace(opi_api.storage.v1.UpdateNVMeNamespaceRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
+  rpc ListNVMeNamespace(opi_api.storage.v1.ListNVMeNamespaceRequest) returns (opi_api.storage.v1.ListNVMeNamespaceResponse) {}
+  rpc GetNVMeNamespace(opi_api.storage.v1.GetNVMeNamespaceRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
   rpc NVMeNamespaceStats(opi_api.storage.v1.NVMeNamespaceStatsRequest) returns (opi_api.storage.v1.NVMeNamespaceStatsResponse) {}
 }
 ```
@@ -321,8 +321,8 @@ service FrontendNvmeService {
 See methods
 
 ```bash
-$ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService.NVMeControllerCreate -l
-  rpc NVMeControllerCreate(opi_api.storage.v1.NVMeControllerCreateRequest) returns (opi_api.storage.v1.NVMeController) {}
+$ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService.CreateNVMeController -l
+  rpc CreateNVMeController(opi_api.storage.v1.CreateNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
 ```
 
 See messages
@@ -353,7 +353,7 @@ message NvmeControllerPciId {
 Call remote method
 
 ```bash
-$ grpc_cli call --json_input --json_output opi-spdk-server:50051 NVMeControllerDelete "{subsystem_id: 8}"
+$ grpc_cli call --json_input --json_output opi-spdk-server:50051 DeleteNVMeController "{subsystem_id: 8}"
 connecting to opi-spdk-server:50051
 {}
 Rpc succeeded with OK status
@@ -363,7 +363,7 @@ Server log
 
 ```bash
 opi-spdk-server_1  | 2022/08/05 14:31:14 server listening at [::]:50051
-opi-spdk-server_1  | 2022/08/05 14:39:40 NVMeSubsystemDelete: Received from client: id:8
+opi-spdk-server_1  | 2022/08/05 14:39:40 DeleteNVMeSubsystem: Received from client: id:8
 opi-spdk-server_1  | 2022/08/05 14:39:40 Sending to SPDK: {"jsonrpc":"2.0","id":1,"method":"bdev_malloc_delete","params":{"name":"OpiMalloc8"}}
 opi-spdk-server_1  | 2022/08/05 14:39:40 Received from SPDK: {1 {-19 No such device} 0xc000029f4e}
 opi-spdk-server_1  | 2022/08/05 14:39:40 error: bdev_malloc_delete: json response error: No such device
@@ -374,7 +374,7 @@ opi-spdk-server_1  | 2022/08/05 14:39:40 Could not delete: id:8
 Another remote call example
 
 ```bash
-$ grpc_cli call --json_input --json_output opi-spdk-server:50051 NVMeSubsystemList {}
+$ grpc_cli call --json_input --json_output opi-spdk-server:50051 ListNVMeSubsystem {}
 connecting to opi-spdk-server:50051
 {
  "subsystem": [
@@ -392,7 +392,7 @@ Rpc succeeded with OK status
 Another Server log
 
 ```bash
-2022/09/21 19:38:26 NVMeSubsystemList: Received from client:
+2022/09/21 19:38:26 ListNVMeSubsystem: Received from client:
 2022/09/21 19:38:26 Sending to SPDK: {"jsonrpc":"2.0","id":1,"method":"bdev_get_bdevs"}
 2022/09/21 19:38:26 Received from SPDK: {1 {0 } 0x40003de660}
 2022/09/21 19:38:26 Received from SPDK: [{Malloc0 512 131072 08cd0d67-eb57-41c2-957b-585faed7d81a} {Malloc1 512 131072 78c4b40f-dd16-42c1-b057-f95c11db7aaf}]
