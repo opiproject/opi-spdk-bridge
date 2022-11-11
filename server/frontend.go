@@ -94,7 +94,7 @@ func (s *server) ListNVMeSubsystem(ctx context.Context, in *pb.ListNVMeSubsystem
 		r := &result[i]
 		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}
 	}
-	return &pb.ListNVMeSubsystemResponse{Subsystem: Blobarray}, nil
+	return &pb.ListNVMeSubsystemResponse{Subsystems: Blobarray}, nil
 }
 
 func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
@@ -180,7 +180,7 @@ func (s *server) ListNVMeController(ctx context.Context, in *pb.ListNVMeControll
 	for _, controller := range controllers {
 		Blobarray = append(Blobarray, controller)
 	}
-	return &pb.ListNVMeControllerResponse{Controller: Blobarray}, nil
+	return &pb.ListNVMeControllerResponse{Controllers: Blobarray}, nil
 }
 
 func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
@@ -312,7 +312,7 @@ func (s *server) ListNVMeNamespace(ctx context.Context, in *pb.ListNVMeNamespace
 		}
 	}
 	if len(Blobarray) > 0 {
-		return &pb.ListNVMeNamespaceResponse{Namespace: Blobarray}, nil
+		return &pb.ListNVMeNamespaceResponse{Namespaces: Blobarray}, nil
 	}
 
 	msg := fmt.Sprintf("Could not find any namespaces for NQN: %s", nqn)
@@ -431,7 +431,7 @@ func (s *server) ListVirtioBlk(ctx context.Context, in *pb.ListVirtioBlkRequest)
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioBlk{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
-	return &pb.ListVirtioBlkResponse{Controller: Blobarray}, nil
+	return &pb.ListVirtioBlkResponse{Controllers: Blobarray}, nil
 }
 
 func (s *server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
@@ -516,7 +516,7 @@ func (s *server) ListVirtioScsiController(ctx context.Context, in *pb.ListVirtio
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
-	return &pb.ListVirtioScsiControllerResponse{Controller: Blobarray}, nil
+	return &pb.ListVirtioScsiControllerResponse{Controllers: Blobarray}, nil
 }
 
 func (s *server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
@@ -608,7 +608,7 @@ func (s *server) ListVirtioScsiLun(ctx context.Context, in *pb.ListVirtioScsiLun
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiLun{Bdev: r.Ctrlr}
 	}
-	return &pb.ListVirtioScsiLunResponse{Lun: Blobarray}, nil
+	return &pb.ListVirtioScsiLunResponse{Luns: Blobarray}, nil
 }
 
 func (s *server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
