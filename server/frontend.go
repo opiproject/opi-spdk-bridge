@@ -378,8 +378,8 @@ func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 func (s *server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
 	params := VhostCreateBlkControllerParams{
-		Ctrlr:   in.GetController().GetId().GetValue(),
-		DevName: in.GetController().GetBdev(),
+		Ctrlr:   in.Controller.Id.Value,
+		DevName: in.Controller.VolumeId.Value,
 	}
 	var result VhostCreateBlkControllerResult
 	err := call("vhost_create_blk_controller", &params, &result)
@@ -553,9 +553,9 @@ func (s *server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScs
 		Num  int    `json:"scsi_target_num"`
 		Bdev string `json:"bdev_name"`
 	}{
-		Name: in.GetLun().GetControllerId().GetValue(),
+		Name: in.Lun.TargetId.Value,
 		Num:  5,
-		Bdev: in.GetLun().GetBdev(),
+		Bdev: in.Lun.VolumeId.Value,
 	}
 	var result int
 	err := call("vhost_scsi_controller_add_target", &params, &result)
@@ -606,7 +606,7 @@ func (s *server) ListVirtioScsiLun(ctx context.Context, in *pb.ListVirtioScsiLun
 	Blobarray := make([]*pb.VirtioScsiLun, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioScsiLun{Bdev: r.Ctrlr}
+		Blobarray[i] = &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
 	return &pb.ListVirtioScsiLunResponse{Luns: Blobarray}, nil
 }
@@ -628,7 +628,7 @@ func (s *server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRe
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiLun{Bdev: result[0].Ctrlr}, nil
+	return &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
 }
 
 func (s *server) VirtioScsiLunStats(ctx context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
