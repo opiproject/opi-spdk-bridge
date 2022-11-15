@@ -52,12 +52,12 @@ func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5
 	// VirtioScsiLun
 	c6 := pb.NewFrontendVirtioScsiServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioScsiServiceClient")
-	rl1, err := c6.CreateVirtioScsiLun(ctx, &pb.CreateVirtioScsiLunRequest{Lun: &pb.VirtioScsiLun{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, Bdev: "Malloc1"}})
+	rl1, err := c6.CreateVirtioScsiLun(ctx, &pb.CreateVirtioScsiLunRequest{Lun: &pb.VirtioScsiLun{TargetId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, VolumeId: &pbc.ObjectKey{Value: "Malloc1"}}})
 	if err != nil {
 		log.Fatalf("could not create VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Added: %v", rl1)
-	rl3, err := c6.UpdateVirtioScsiLun(ctx, &pb.UpdateVirtioScsiLunRequest{Lun: &pb.VirtioScsiLun{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, Bdev: "Malloc1"}})
+	rl3, err := c6.UpdateVirtioScsiLun(ctx, &pb.UpdateVirtioScsiLunRequest{Lun: &pb.VirtioScsiLun{TargetId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, VolumeId: &pbc.ObjectKey{Value: "Malloc1"}}})
 	if err != nil {
 		log.Fatalf("could not update VirtioScsi subsystem: %v", err)
 	}
@@ -71,7 +71,7 @@ func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5
 	if err != nil {
 		log.Fatalf("could not get VirtioScsi subsystem: %v", err)
 	}
-	log.Printf("Got: %v", rl5.Bdev)
+	log.Printf("Got: %v", rl5.VolumeId.Value)
 	rl6, err := c6.VirtioScsiLunStats(ctx, &pb.VirtioScsiLunStatsRequest{ControllerId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}})
 	if err != nil {
 		log.Fatalf("could not stats VirtioScsi subsystem: %v", err)
@@ -127,7 +127,7 @@ func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error 
 	// VirtioBlk
 	c4 := pb.NewFrontendVirtioBlkServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioBlkServiceClient")
-	rv1, err := c4.CreateVirtioBlk(ctx, &pb.CreateVirtioBlkRequest{Controller: &pb.VirtioBlk{Id: &pbc.ObjectKey{Value: "VirtioBlk8"}, Bdev: "Malloc1"}})
+	rv1, err := c4.CreateVirtioBlk(ctx, &pb.CreateVirtioBlkRequest{Controller: &pb.VirtioBlk{Id: &pbc.ObjectKey{Value: "VirtioBlk8"}, VolumeId: &pbc.ObjectKey{Value: "Malloc1"}}})
 	if err != nil {
 		log.Fatalf("could not create VirtioBlk Controller: %v", err)
 	}
