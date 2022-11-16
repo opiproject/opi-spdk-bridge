@@ -286,6 +286,7 @@ opi_api.storage.v1.AioControllerService
 opi_api.storage.v1.FrontendNvmeService
 opi_api.storage.v1.FrontendVirtioBlkService
 opi_api.storage.v1.FrontendVirtioScsiService
+opi_api.storage.v1.MiddleendService
 opi_api.storage.v1.NVMfRemoteControllerService
 opi_api.storage.v1.NullDebugService
 ```
@@ -328,25 +329,24 @@ $ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService.Creat
 See messages
 
 ```bash
-$ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NVMeController
-message NVMeController {
+$ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerSpec
+message NVMeControllerSpec {
   .opi_api.common.v1.ObjectKey id = 1 [json_name = "id"];
-  uint32 nvme_controller_id = 2 [json_name = "nvmeControllerId"];
+  int32 nvme_controller_id = 2 [json_name = "nvmeControllerId"];
   .opi_api.common.v1.ObjectKey subsystem_id = 3 [json_name = "subsystemId"];
-  .opi_api.storage.v1.NvmeControllerPciId pcie_id = 4 [json_name = "pcieId"];
-  uint32 max_nsq = 5 [json_name = "maxNsq"];
-  uint32 max_ncq = 6 [json_name = "maxNcq"];
-  uint32 sqes = 7 [json_name = "sqes"];
-  uint32 cqes = 8 [json_name = "cqes"];
-  uint32 max_ns = 9 [json_name = "maxNs"];
+  .opi_api.storage.v1.PciEndpoint pcie_id = 4 [json_name = "pcieId"];
+  int32 max_nsq = 5 [json_name = "maxNsq"];
+  int32 max_ncq = 6 [json_name = "maxNcq"];
+  int32 sqes = 7 [json_name = "sqes"];
+  int32 cqes = 8 [json_name = "cqes"];
+  int32 max_namespaces = 9 [json_name = "maxNamespaces"];
 }
 
-$ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NvmeControllerPciId
-message NvmeControllerPciId {
-  uint32 bus = 1 [json_name = "bus"];
-  uint32 device = 2 [json_name = "device"];
-  uint32 function = 3 [json_name = "function"];
-  uint32 virtual_function = 4 [json_name = "virtualFunction"];
+$ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.PciEndpoint
+message PciEndpoint {
+  int32 port_id = 1 [json_name = "portId"];
+  int32 physical_function = 2 [json_name = "physicalFunction"];
+  int32 virtual_function = 3 [json_name = "virtualFunction"];
 }
 ```
 

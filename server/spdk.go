@@ -10,6 +10,8 @@ package main
 // bdev_malloc_delete
 // bdev_null_create
 // bdev_null_delete
+// bdev_crypto_create
+// bdev_crypto_delete
 // bdev_aio_create
 // bdev_aio_delete
 // bdev_nvme_attach_controller
@@ -79,6 +81,26 @@ type BdevNullDeleteParams struct {
 
 // BdevNullDeleteResult is the result of deleting a Null Block Device
 type BdevNullDeleteResult bool
+
+// BdevCryptoCreateParams holds the parameters required to create a Crypto Block Device
+type BdevCryptoCreateParams struct {
+	BaseBdevName string `json:"base_bdev_name"`
+	Name         string `json:"name"`
+	CryptoPmd    string `json:"crypto_pmd"`
+	Key          string `json:"key"`
+	Cipher       string `json:"cipher"`
+}
+
+// BdevCryptoCreateResult is the result of creating a Crypto Block Device
+type BdevCryptoCreateResult string
+
+// BdevCryptoDeleteParams holds the parameters required to delete a Crypto Block Device
+type BdevCryptoDeleteParams struct {
+	Name string `json:"name"`
+}
+
+// BdevCryptoDeleteResult is the result of deleting a Crypto Block Device
+type BdevCryptoDeleteResult bool
 
 // BdevNvmeAttachControllerParams is the parameters required to create a block device based on an NVMe device
 type BdevNvmeAttachControllerParams struct {
