@@ -253,9 +253,11 @@ type NvmfSubsystemRemoveNsResult bool
 
 // NvmfCreateSubsystemParams holds the parameters required to create a NVMf subsystem
 type NvmfCreateSubsystemParams struct {
-	Nqn          string `json:"nqn"`
-	SerialNumber string `json:"serial_number"`
-	AllowAnyHost bool   `json:"allow_any_host"`
+	Nqn           string `json:"nqn"`
+	SerialNumber  string `json:"serial_number"`
+	ModelNumber   string `json:"model_number"`
+	AllowAnyHost  bool   `json:"allow_any_host"`
+	MaxNamespaces int    `json:"max_namespaces"`
 }
 
 // NvmfCreateSubsystemResult is the result of creating a NVMf subsystem

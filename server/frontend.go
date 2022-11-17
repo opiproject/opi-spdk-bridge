@@ -22,9 +22,11 @@ var subsystems = map[string]*pb.NVMeSubsystem{}
 func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
 	params := NvmfCreateSubsystemParams{
-		Nqn:          in.Subsystem.Spec.Nqn,
-		SerialNumber: "SPDK0",
-		AllowAnyHost: true,
+		Nqn:           in.Subsystem.Spec.Nqn,
+		SerialNumber:  in.Subsystem.Spec.SerialNumber,
+		ModelNumber:   in.Subsystem.Spec.ModelNumber,
+		AllowAnyHost:  true,
+		MaxNamespaces: int(in.Subsystem.Spec.MaxNamespaces),
 	}
 	var result NvmfCreateSubsystemResult
 	err := call("nvmf_create_subsystem", &params, &result)
