@@ -3,7 +3,7 @@ module opi.storage.v1
 go 1.19
 
 require (
-	github.com/opiproject/opi-api v0.0.0-20221115234013-ffe4aadd66ca
+	github.com/opiproject/opi-api v0.0.0-20221117170559-ca2c25b808b3
 	google.golang.org/grpc v1.50.1
 )
 
