@@ -66,176 +66,19 @@ $ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 ghcr.io/opiproject/o
 on X86 management VM run
 
 ```bash
-# subsystem apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeSubsystem "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1'} } }"
-connecting to localhost:50051
-{
- "id": {
-  "value": "subsystem1"
- },
- "nqn": "nqn.2022-09.io.spdk:opitest1"
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 ListNVMeSubsystem "{}"
-connecting to localhost:50051
-{
- "subsystem": [
-  {
-   "nqn": "nqn.2014-08.org.nvmexpress.discovery"
-  },
-  {
-   "nqn": "nqn.2016-06.io.spdk:cnode1"
-  },
-  {
-   "nqn": "nqn.2022-09.io.spdk:opitest1"
-  }
- ]
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 GetNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem1'} }"
-connecting to localhost:50051
-{
- "nqn": "nqn.2022-09.io.spdk:opitest1"
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem1'} }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
-
-# controller apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeSubsystem "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2'} } }"
-connecting to localhost:50051
-{
- "id": {
-  "value": "subsystem2"
- },
- "nqn": "nqn.2022-09.io.spdk:opitest2"
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeController "{'spec' : {'controller' : {'id' : {'value' : 'controller1'}, 'subsystem_id' : { 'value' : 'subsystem2' } } } }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 ListNVMeController "{}"
-connecting to localhost:50051
-{
- "id": {
-  "value": "controller1"
- },
- "subsystemId": {
-  "value": "subsystem2"
- }
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 GetNVMeController "{'controller_id' : {'value' : 'controller1'} }"
-connecting to localhost:50051
-{
- "id": {
-  "value": "controller1"
- }
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeController "{'controller_id' : {'value' : 'controller1'} }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem2'} }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
-
-# namespace apis
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeSubsystem "{'spec' : {'subsystem' : {'id' : {'value' : 'subsystem3'}, nqn: 'nqn.2022-09.io.spdk:opitest3'} } }"
-connecting to localhost:50051
-{
- "id": {
-  "value": "subsystem3"
- },
- "nqn": "nqn.2022-09.io.spdk:opitest3"
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeController "{'spec' : {'controller' : {'id' : {'value' : 'controller2'}, 'subsystem_id' : { 'value' : 'subsystem3' } } } }"
-connecting to localhost:50051
-{
- "id": {
-  "value": "controller2"
- },
- "subsystemId": {
-  "value": "subsystem3"
- }
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 CreateNVMeNamespace "{'spec' : {'namespace' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem3' }, 'controller_id' : { 'value' : 'controller2' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } } }"
-connecting to localhost:50051
-{
- "id": {
-  "value": "namespace1"
- },
- "subsystemId": {
-  "value": "subsystem3"
- },
- "controllerId": {
-  "value": "controller2"
- },
- "hostNsid": 1,
- "volumeId": {
-  "value": "Malloc1"
- }
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 ListNVMeNamespace "{'subsystem_id' : { 'value' : 'subsystem3' } }"
-connecting to localhost:50051
-{
- "namespace": [
-  {
-   "hostNsid": 1
-  }
- ]
-}
-Rpc succeeded with OK status
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 GetNVMeNamespace "{'namespace_id' : {'value' : 'namespace1'} }"
-connecting to localhost:50051
-{
- "namespace": {
-  "id": {
-   "value": "namespace1"
-  },
-  "subsystemId": {
-   "value": "subsystem3"
-  },
-  "controllerId": {
-   "value": "controller2"
-  },
-  "hostNsid": 1
- }
-}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeNamespace "{'namespace_id' : {'value' : 'namespace1'} }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeController "{'controller_id' : {'value' : 'controller2'} }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
-
-$ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output localhost:50051 DeleteNVMeSubsystem "{'subsystem_id' : {'value' : 'subsystem3'} }"
-connecting to localhost:50051
-{}
-Rpc succeeded with OK status
+docker run --network=host --rm -it namely/grpc-cli ls   --json_input --json_output 10.10.10.10:50051 -l
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeSubsystem "{subsystem : {spec : {id : {value : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeSubsystem "{}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeSubsystem "{subsystem_id : {value : 'subsystem2'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeController "{controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem2' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeController "{subsystem_id : { value : 'subsystem2' }}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeController "{controller_id : {value : 'controller1'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeNamespace "{namespace : {spec : {id : {value : 'namespace1'}, subsystem_id : { value : 'subsystem2' }, controller_id : { value : 'controller1' }, volume_id : { value : 'Malloc0' }, 'host_nsid' : '1', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeNamespace "{subsystem_id : { value : 'subsystem2' } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeNamespace "{namespace_id : {value : 'namespace1'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeNamespace "{namespace_id : {value : 'namespace1'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeController "{controller_id : {value : 'controller1'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeSubsystem "{subsystem_id : {value : 'subsystem2'} }"
 ```
 
 and netwok-facing APIs:
