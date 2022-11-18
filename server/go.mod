@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/opiproject/opi-api v0.0.0-20221117170559-ca2c25b808b3
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
-	google.golang.org/grpc v1.50.1
+	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 )
 
