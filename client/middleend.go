@@ -18,8 +18,8 @@ func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 	rs1, err := c1.CreateEncryptedVolume(ctx, &pb.CreateEncryptedVolumeRequest{
 		Volume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},
-			VolumeId: &pc.ObjectKey{Value: "Malloc1"},
-			Key:      []byte("0123456789abcdef0123456789abcdef"),
+			VolumeId:          &pc.ObjectKey{Value: "Malloc1"},
+			Key:               []byte("0123456789abcdef0123456789abcdef"),
 		},
 	})
 	if err != nil {
@@ -29,8 +29,8 @@ func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 	rs3, err := c1.UpdateEncryptedVolume(ctx, &pb.UpdateEncryptedVolumeRequest{
 		Volume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},
-			VolumeId: &pc.ObjectKey{Value: "Malloc1"},
-			Key:      []byte("0123456789abcdef0123456789abcdef"),
+			VolumeId:          &pc.ObjectKey{Value: "Malloc1"},
+			Key:               []byte("0123456789abcdef0123456789abcdef"),
 		},
 	})
 	if err != nil {
