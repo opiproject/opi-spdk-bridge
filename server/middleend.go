@@ -19,10 +19,10 @@ import (
 
 //////////////////////////////////////////////////////////
 
-func (s *server) CreateCrypto(ctx context.Context, in *pb.CreateCryptoRequest) (*pb.Crypto, error) {
-	log.Printf("CreateCrypto: Received from client: %v", in)
+func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 	params := BdevCryptoCreateParams{
-		Name:         in.Volume.CryptoId.Value,
+		Name:         in.Volume.EncryptedVolumeId.Value,
 		BaseBdevName: in.Volume.VolumeId.Value,
 		CryptoPmd:    "crypto_aesni_mb",
 		Key:          string(in.Volume.Key),
@@ -36,7 +36,7 @@ func (s *server) CreateCrypto(ctx context.Context, in *pb.CreateCryptoRequest) (
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	response := &pb.Crypto{}
+	response := &pb.EncryptedVolume{}
 	err = deepcopier.Copy(in.Volume).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -45,10 +45,10 @@ func (s *server) CreateCrypto(ctx context.Context, in *pb.CreateCryptoRequest) (
 	return response, nil
 }
 
-func (s *server) DeleteCrypto(ctx context.Context, in *pb.DeleteCryptoRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteCrypto: Received from client: %v", in)
+func (s *server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
+	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
 	params := BdevCryptoDeleteParams{
-		Name: in.CryptoId.Value,
+		Name: in.EncryptedVolumeId.Value,
 	}
 	var result BdevCryptoDeleteResult
 	err := call("bdev_crypto_delete", &params, &result)
@@ -63,10 +63,10 @@ func (s *server) DeleteCrypto(ctx context.Context, in *pb.DeleteCryptoRequest) (
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateCrypto(ctx context.Context, in *pb.UpdateCryptoRequest) (*pb.Crypto, error) {
-	log.Printf("UpdateCrypto: Received from client: %v", in)
+func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	params1 := BdevCryptoDeleteParams{
-		Name: in.Volume.CryptoId.Value,
+		Name: in.Volume.EncryptedVolumeId.Value,
 	}
 	var result1 BdevCryptoDeleteResult
 	err1 := call("bdev_crypto_delete", &params1, &result1)
@@ -79,7 +79,7 @@ func (s *server) UpdateCrypto(ctx context.Context, in *pb.UpdateCryptoRequest) (
 		log.Printf("Could not delete: %v", in)
 	}
 	params2 := BdevCryptoCreateParams{
-		Name:         in.Volume.CryptoId.Value,
+		Name:         in.Volume.EncryptedVolumeId.Value,
 		BaseBdevName: in.Volume.VolumeId.Value,
 		CryptoPmd:    "crypto_aesni_mb",
 		Key:          string(in.Volume.Key),
@@ -93,7 +93,7 @@ func (s *server) UpdateCrypto(ctx context.Context, in *pb.UpdateCryptoRequest) (
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
-	response := &pb.Crypto{}
+	response := &pb.EncryptedVolume{}
 	err3 := deepcopier.Copy(in.Volume).To(response)
 	if err3 != nil {
 		log.Printf("error: %v", err3)
@@ -102,8 +102,8 @@ func (s *server) UpdateCrypto(ctx context.Context, in *pb.UpdateCryptoRequest) (
 	return response, nil
 }
 
-func (s *server) ListCrypto(ctx context.Context, in *pb.ListCryptoRequest) (*pb.ListCryptoResponse, error) {
-	log.Printf("ListCrypto: Received from client: %v", in)
+func (s *server) ListEncryptedVolume(ctx context.Context, in *pb.ListEncryptedVolumeRequest) (*pb.ListEncryptedVolumeResponse, error) {
+	log.Printf("ListEncryptedVolume: Received from client: %v", in)
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", nil, &result)
 	if err != nil {
@@ -111,18 +111,18 @@ func (s *server) ListCrypto(ctx context.Context, in *pb.ListCryptoRequest) (*pb.
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	Blobarray := make([]*pb.Crypto, len(result))
+	Blobarray := make([]*pb.EncryptedVolume, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.Crypto{CryptoId: &pc.ObjectKey{Value: r.Name}}
+		Blobarray[i] = &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: r.Name}}
 	}
-	return &pb.ListCryptoResponse{Volumes: Blobarray}, nil
+	return &pb.ListEncryptedVolumeResponse{Volumes: Blobarray}, nil
 }
 
-func (s *server) GetCrypto(ctx context.Context, in *pb.GetCryptoRequest) (*pb.Crypto, error) {
-	log.Printf("GetCrypto: Received from client: %v", in)
+func (s *server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+	log.Printf("GetEncryptedVolume: Received from client: %v", in)
 	params := BdevGetBdevsParams{
-		Name: in.CryptoId.Value,
+		Name: in.EncryptedVolumeId.Value,
 	}
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", &params, &result)
@@ -136,13 +136,13 @@ func (s *server) GetCrypto(ctx context.Context, in *pb.GetCryptoRequest) (*pb.Cr
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.Crypto{CryptoId: &pc.ObjectKey{Value: result[0].Name}}, nil
+	return &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: result[0].Name}}, nil
 }
 
-func (s *server) CryptoStats(ctx context.Context, in *pb.CryptoStatsRequest) (*pb.CryptoStatsResponse, error) {
-	log.Printf("CryptoStats: Received from client: %v", in)
+func (s *server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
+	log.Printf("EncryptedVolumeStats: Received from client: %v", in)
 	params := BdevGetIostatParams{
-		Name: in.CryptoId.Value,
+		Name: in.EncryptedVolumeId.Value,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result BdevGetIostatResult
@@ -157,7 +157,7 @@ func (s *server) CryptoStats(ctx context.Context, in *pb.CryptoStatsRequest) (*p
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.CryptoStatsResponse{Stats: fmt.Sprint(result.Bdevs[0])}, nil
+	return &pb.EncryptedVolumeStatsResponse{Stats: fmt.Sprint(result.Bdevs[0])}, nil
 }
 
 //////////////////////////////////////////////////////////
