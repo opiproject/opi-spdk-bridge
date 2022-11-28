@@ -22,12 +22,13 @@ import (
 func (s *server) NVMfRemoteControllerConnect(ctx context.Context, in *pb.NVMfRemoteControllerConnectRequest) (*pb.NVMfRemoteControllerConnectResponse, error) {
 	log.Printf("NVMfRemoteControllerConnect: Received from client: %v", in)
 	params := BdevNvmeAttachControllerParams{
-		Name:      fmt.Sprint("OpiNvme", in.GetCtrl().GetId()),
-		Type:      "TCP",
-		Address:   in.GetCtrl().GetTraddr(),
-		Family:    "ipv4",
-		Port:      fmt.Sprint(in.GetCtrl().GetTrsvcid()),
-		Subsystem: in.GetCtrl().GetSubnqn(),
+		Name:    fmt.Sprint("OpiNvme", in.Ctrl.Id),
+		Trtype:  "TCP",
+		Traddr:  in.Ctrl.Traddr,
+		Adrfam:  "ipv4",
+		Trsvcid: fmt.Sprint(in.Ctrl.Trsvcid),
+		Subnqn:  in.Ctrl.Subnqn,
+		Hostnqn: in.Ctrl.Hostnqn,
 	}
 	var result []BdevNvmeAttachControllerResult
 	err := call("bdev_nvme_attach_controller", &params, &result)
