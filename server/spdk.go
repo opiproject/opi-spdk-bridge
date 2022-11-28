@@ -304,3 +304,17 @@ type NvmfGetSubsystemStatsResult struct {
 		} `json:"transports"`
 	} `json:"poll_groups"`
 }
+
+// NvmfSubsystemAddListenerParams holds the parameters required to Delete a NVMf subsystem
+type NvmfSubsystemAddListenerParams struct {
+	Nqn           string `json:"nqn"`
+	ListenAddress struct {
+		Trtype  string `json:"trtype"`
+		Traddr  string `json:"traddr"`
+		Trsvcid string `json:"trsvcid"`
+		Adrfam  string `json:"adrfam"`
+	} `json:"listen_address"`
+}
+
+// NvmfSubsystemAddListenerResult is the result of creating a NVMf subsystem
+type NvmfSubsystemAddListenerResult bool
