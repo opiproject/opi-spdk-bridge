@@ -155,6 +155,7 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	addrs, err := net.LookupIP("spdk")
 	if err != nil {
 		log.Printf("error: %v", err)
+		// assume localhost
 		addrs = []net.IP{net.ParseIP("127.0.0.1")}
 		// return nil, err
 	}
@@ -199,6 +200,7 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	addrs, err := net.LookupIP("spdk")
 	if err != nil {
 		log.Printf("error: %v", err)
+		// assume localhost
 		addrs = []net.IP{net.ParseIP("127.0.0.1")}
 		// return nil, err
 	}
