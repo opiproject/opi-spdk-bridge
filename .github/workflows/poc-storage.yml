@@ -69,7 +69,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-  docker-build:
+  storage-ci:
     runs-on: ubuntu-latest
     steps:
     - name: configure HUGE pages
