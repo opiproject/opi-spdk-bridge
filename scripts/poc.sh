@@ -57,10 +57,14 @@ tests_poc() {
     "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeSubsystem "{subsystem : {spec : {id : {value : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
     "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeController "{controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem1' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
     "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeNamespace "{'namespace' : { 'spec' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem1' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } } }"
+    "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeSubsystem "{subsystem_id : {value : 'subsystem1'} }"
+    "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeController "{controller_id : {value : 'controller1'} }"
     "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeNamespace "{'namespace_id' : {'value' : 'namespace1'} }"
     docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/opi-storage-spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444'
     docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/opi-storage-spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444' -c 0x1 -q 1 -o 4096 -w randread -t 10
     "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNVMeNamespace "{'namespace_id' : {'value' : 'namespace1'} }"
+    "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNVMeController "{controller_id : {value : 'controller1'} }"
+    "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNVMeSubsystem "{subsystem_id : {value : 'subsystem1'} }"
 
     # this is last line
     docker-compose ps -a
