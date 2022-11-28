@@ -4,9 +4,6 @@
 FROM docker.io/library/fedora:37 as build
 
 ARG TAG=v22.09
-# Pick an arch that has at least sse 4.2 but does not require newer avx
-# See https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html
-ARG ARCH=x86-64-v2
 
 WORKDIR /root
 RUN dnf install -y git rpm-build diffutils procps-ng pip && dnf clean all
@@ -15,8 +12,15 @@ RUN dnf install -y git rpm-build diffutils procps-ng pip && dnf clean all
 RUN git clone https://github.com/spdk/spdk --branch ${TAG} --depth 1 && \
     cd spdk && git submodule update --init --depth 1 && scripts/pkgdep.sh --rdma
 
+ENV GRPC_PYTHON_BUILD_EXT_COMPILER_JOBS 8
+
 # hadolint ignore=DL3003
-RUN cd spdk && ./rpmbuild/rpm.sh --target-arch=${ARCH} --without-uring --with-crypto \
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+        ARCH="generic"; \
+    elif [ "$(uname -m)" = "x86_64" ]; then \
+        ARCH="x86-64-v2"; \
+    fi; \
+    cd spdk && ./rpmbuild/rpm.sh --target-arch=${ARCH} --without-uring --with-crypto \
     --without-fio --with-raid5f --with-vhost --without-pmdk --without-rbd \
     --with-rdma --with-shared --with-iscsi-initiator --without-vtune
 
