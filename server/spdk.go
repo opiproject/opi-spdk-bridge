@@ -104,12 +104,13 @@ type BdevCryptoDeleteResult bool
 
 // BdevNvmeAttachControllerParams is the parameters required to create a block device based on an NVMe device
 type BdevNvmeAttachControllerParams struct {
-	Name      string `json:"name"`
-	Type      string `json:"trtype"`
-	Address   string `json:"traddr"`
-	Family    string `json:"adrfam"`
-	Port      string `json:"trsvcid"`
-	Subsystem string `json:"subnqn"`
+	Name    string `json:"name"`
+	Trtype  string `json:"trtype"`
+	Traddr  string `json:"traddr"`
+	Hostnqn string `json:"hostnqn"`
+	Adrfam  string `json:"adrfam"`
+	Trsvcid string `json:"trsvcid"`
+	Subnqn  string `json:"subnqn"`
 }
 
 // BdevNvmeAttachControllerResult is the result of creating a block device based on an NVMe device
