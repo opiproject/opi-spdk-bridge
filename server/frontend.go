@@ -261,9 +261,7 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", in.Namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
-		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: in.Namespace.Spec.SubsystemId.Value}}
-		// return nil, err
+		return nil, err
 	}
 
 	params := NvmfSubsystemAddNsParams{
@@ -303,9 +301,7 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
-		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: namespace.Spec.SubsystemId.Value}}
-		// return nil, err
+		return nil, err
 	}
 
 	params := NvmfSubsystemRemoveNsParams{
@@ -391,9 +387,7 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
-		// TODO: temp workaround
-		subsys = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: namespace.Spec.SubsystemId.Value}}
-		// return nil, err
+		return nil, err
 	}
 
 	var result []NvmfGetSubsystemsResult
