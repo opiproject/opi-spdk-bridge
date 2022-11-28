@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -150,22 +151,23 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// get SPDK local IP
+	addrs, err := net.LookupIP("spdk")
+	if err != nil {
+		log.Printf("error: %v", err)
+		addrs = []net.IP{net.ParseIP("127.0.0.1")}
+		// return nil, err
+	}
 	params := NvmfSubsystemAddListenerParams{
 		Nqn: subsys.Spec.Nqn,
-		ListenAddress: struct {
-			Trtype  string `json:"trtype"`
-			Traddr  string `json:"traddr"`
-			Trsvcid string `json:"trsvcid"`
-			Adrfam  string `json:"adrfam"`
-		}{
-			Trtype:  "tcp",
-			Traddr:  "127.0.0.1",
-			Trsvcid: "4444",
-			Adrfam:  "ipv4",
-		},
 	}
+	params.ListenAddress.Trtype = "tcp"
+	params.ListenAddress.Traddr = addrs[0].String()
+	params.ListenAddress.Trsvcid = "4444"
+	params.ListenAddress.Adrfam = "ipv4"
+
 	var result NvmfSubsystemAddListenerResult
-	err := call("nvmf_subsystem_add_listener", &params, &result)
+	err = call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -193,22 +195,23 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		return nil, err
 	}
 
+	// get SPDK local IP
+	addrs, err := net.LookupIP("spdk")
+	if err != nil {
+		log.Printf("error: %v", err)
+		addrs = []net.IP{net.ParseIP("127.0.0.1")}
+		// return nil, err
+	}
 	params := NvmfSubsystemAddListenerParams{
 		Nqn: subsys.Spec.Nqn,
-		ListenAddress: struct {
-			Trtype  string `json:"trtype"`
-			Traddr  string `json:"traddr"`
-			Trsvcid string `json:"trsvcid"`
-			Adrfam  string `json:"adrfam"`
-		}{
-			Trtype:  "tcp",
-			Traddr:  "127.0.0.1",
-			Trsvcid: "4444",
-			Adrfam:  "ipv4",
-		},
 	}
+	params.ListenAddress.Trtype = "tcp"
+	params.ListenAddress.Traddr = addrs[0].String()
+	params.ListenAddress.Trsvcid = "4444"
+	params.ListenAddress.Adrfam = "ipv4"
+
 	var result NvmfSubsystemAddListenerResult
-	err := call("nvmf_subsystem_remove_listener", &params, &result)
+	err = call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
