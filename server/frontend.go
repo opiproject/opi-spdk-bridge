@@ -144,9 +144,35 @@ var controllers = map[string]*pb.NVMeController{}
 
 func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.Controller)
+	subsys, ok := subsystems[in.Controller.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find subsystem %s", in.Controller.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	params := NvmfSubsystemAddListenerParams{
+		Nqn: subsys.Spec.Nqn,
+		ListenAddress: struct {
+			Trtype  string `json:"trtype"`
+			Traddr  string `json:"traddr"`
+			Trsvcid string `json:"trsvcid"`
+			Adrfam  string `json:"adrfam"`
+		}{
+			Trtype:  "tcp",
+			Traddr:  "127.0.0.1",
+			Trsvcid: "4444",
+			Adrfam:  "ipv4",
+		},
+	}
+	var result NvmfSubsystemAddListenerResult
+	err := call("nvmf_subsystem_add_listener", &params, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	controllers[in.Controller.Spec.Id.Value] = in.Controller
 	response := &pb.NVMeController{}
-	err := deepcopier.Copy(in.Controller).To(response)
+	err = deepcopier.Copy(in.Controller).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -159,6 +185,33 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	controller, ok := controllers[in.ControllerId.Value]
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.ControllerId.Value)
+	}
+	subsys, ok := subsystems[controller.Spec.SubsystemId.Value]
+	if !ok {
+		err := fmt.Errorf("unable to find subsystem %s", controller.Spec.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	params := NvmfSubsystemAddListenerParams{
+		Nqn: subsys.Spec.Nqn,
+		ListenAddress: struct {
+			Trtype  string `json:"trtype"`
+			Traddr  string `json:"traddr"`
+			Trsvcid string `json:"trsvcid"`
+			Adrfam  string `json:"adrfam"`
+		}{
+			Trtype:  "tcp",
+			Traddr:  "127.0.0.1",
+			Trsvcid: "4444",
+			Adrfam:  "ipv4",
+		},
+	}
+	var result NvmfSubsystemAddListenerResult
+	err := call("nvmf_subsystem_remove_listener", &params, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
 	}
 	delete(controllers, controller.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
