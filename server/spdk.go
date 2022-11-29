@@ -26,6 +26,17 @@ package main
 // vhost_delete_controller
 // vhost_get_controllers
 
+// GetVersionResult is the result of getting a version
+type GetVersionResult struct {
+	Version string `json:"version"`
+	Fields  struct {
+		Major  int    `json:"major"`
+		Minor  int    `json:"minor"`
+		Patch  int    `json:"patch"`
+		Suffix string `json:"suffix"`
+	} `json:"fields"`
+}
+
 // BdevAioCreateParams holds the parameters required to create an AIO Block Device
 type BdevAioCreateParams struct {
 	Name      string `json:"name"`
