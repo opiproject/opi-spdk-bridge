@@ -35,14 +35,22 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	subsystems[in.Subsystem.Spec.Id.Value] = in.Subsystem
 	log.Printf("Received from SPDK: %v", result)
+	var ver GetVersionResult
+	err = call("spdk_get_version", nil, &ver)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	log.Printf("Received from SPDK: %v", ver)
 	response := &pb.NVMeSubsystem{}
 	err = deepcopier.Copy(in.Subsystem).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	response.Status = &pb.NVMeSubsystemStatus{FirmwareRevision: ver.Version}
+	subsystems[in.Subsystem.Spec.Id.Value] = response
 	return response, nil
 }
 
