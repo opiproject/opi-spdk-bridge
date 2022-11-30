@@ -35,6 +35,8 @@ services:
             ./rpc.py nvmf_create_transport -t TCP -u 8192 -m 4 -c 0  && \
             ./rpc.py nvmf_create_subsystem nqn.2016-06.io.spdk:cnode1 -a -s SPDK00000000000001 -d SPDK_Controller1  && \
             ./rpc.py nvmf_subsystem_add_listener nqn.2016-06.io.spdk:cnode1 -t tcp -a  `hostname -i` -f ipv4 -s 4444  && \
+            ./rpc.py nvmf_subsystem_allow_any_host nqn.2016-06.io.spdk:cnode1 --disable && \
+            ./rpc.py nvmf_subsystem_add_host nqn.2016-06.io.spdk:cnode1 nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c && \
             ./rpc_http_proxy.py 0.0.0.0 9009 spdkuser spdkpass'
     healthcheck:
       test: ["CMD-SHELL", "python3 /usr/libexec/spdk/scripts/rpc.py spdk_get_version || exit 1"]
