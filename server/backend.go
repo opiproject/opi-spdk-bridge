@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -75,7 +76,15 @@ func (s *server) NVMfRemoteControllerList(ctx context.Context, in *pb.NVMfRemote
 	Blobarray := make([]*pb.NVMfRemoteController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NVMfRemoteController{Subnqn: r.Name}
+		port, _ := strconv.ParseInt(r.Ctrlrs[0].Trid.Trsvcid, 10, 64)
+		Blobarray[i] = &pb.NVMfRemoteController{
+			Subnqn:  r.Name,
+			Hostnqn: r.Ctrlrs[0].Host.Nqn,
+			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+			Traddr:  r.Ctrlrs[0].Trid.Traddr,
+			Trsvcid: port,
+		}
 	}
 	return &pb.NVMfRemoteControllerListResponse{Ctrl: Blobarray}, nil
 }
@@ -97,7 +106,15 @@ func (s *server) NVMfRemoteControllerGet(ctx context.Context, in *pb.NVMfRemoteC
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NVMfRemoteControllerGetResponse{Ctrl: &pb.NVMfRemoteController{Subnqn: result[0].Name}}, nil
+	port, _ := strconv.ParseInt(result[0].Ctrlrs[0].Trid.Trsvcid, 10, 64)
+	return &pb.NVMfRemoteControllerGetResponse{Ctrl: &pb.NVMfRemoteController{
+		Subnqn:  result[0].Name,
+		Hostnqn: result[0].Ctrlrs[0].Host.Nqn,
+		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		Traddr:  result[0].Ctrlrs[0].Trid.Traddr,
+		Trsvcid: port,
+	}}, nil
 }
 
 func (s *server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
