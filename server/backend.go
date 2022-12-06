@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -24,9 +25,9 @@ func (s *server) NVMfRemoteControllerConnect(ctx context.Context, in *pb.NVMfRem
 	log.Printf("NVMfRemoteControllerConnect: Received from client: %v", in)
 	params := BdevNvmeAttachControllerParams{
 		Name:    fmt.Sprint("OpiNvme", in.Ctrl.Id),
-		Trtype:  "TCP",
+		Trtype:  strings.ReplaceAll(in.Ctrl.Trtype.String(), "NVME_TRANSPORT_", ""),
 		Traddr:  in.Ctrl.Traddr,
-		Adrfam:  "ipv4",
+		Adrfam:  strings.ReplaceAll(in.Ctrl.Adrfam.String(), "NVMF_ADRFAM_", ""),
 		Trsvcid: fmt.Sprint(in.Ctrl.Trsvcid),
 		Subnqn:  in.Ctrl.Subnqn,
 		Hostnqn: in.Ctrl.Hostnqn,
@@ -80,8 +81,8 @@ func (s *server) NVMfRemoteControllerList(ctx context.Context, in *pb.NVMfRemote
 		Blobarray[i] = &pb.NVMfRemoteController{
 			Subnqn:  r.Name,
 			Hostnqn: r.Ctrlrs[0].Host.Nqn,
-			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+			Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(r.Ctrlrs[0].Trid.Trtype)]),
+			Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(r.Ctrlrs[0].Trid.Adrfam)]),
 			Traddr:  r.Ctrlrs[0].Trid.Traddr,
 			Trsvcid: port,
 		}
@@ -110,8 +111,8 @@ func (s *server) NVMfRemoteControllerGet(ctx context.Context, in *pb.NVMfRemoteC
 	return &pb.NVMfRemoteControllerGetResponse{Ctrl: &pb.NVMfRemoteController{
 		Subnqn:  result[0].Name,
 		Hostnqn: result[0].Ctrlrs[0].Host.Nqn,
-		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Trtype)]),
+		Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Adrfam)]),
 		Traddr:  result[0].Ctrlrs[0].Trid.Traddr,
 		Trsvcid: port,
 	}}, nil

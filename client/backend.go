@@ -18,7 +18,15 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	if err != nil {
 		log.Fatalf("could not find SPDK IP address")
 	}
-	rr0, err := c4.NVMfRemoteControllerConnect(ctx, &pb.NVMfRemoteControllerConnectRequest{Ctrl: &pb.NVMfRemoteController{Id: 8, Traddr: addr[0].String(), Trsvcid: 4444, Subnqn: "nqn.2016-06.io.spdk:cnode1", Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}})
+	rr0, err := c4.NVMfRemoteControllerConnect(ctx, &pb.NVMfRemoteControllerConnectRequest{
+		Ctrl: &pb.NVMfRemoteController{
+			Id:      8,
+			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+			Traddr:  addr[0].String(),
+			Trsvcid: 4444,
+			Subnqn:  "nqn.2016-06.io.spdk:cnode1",
+			Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}})
 	if err != nil {
 		log.Fatalf("could not connect to Remote NVMf controller: %v", err)
 	}
