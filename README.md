@@ -86,7 +86,17 @@ and netwok-facing APIs:
 ```bash
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 CreateNVMfRemoteController "{ctrl : {id: { value : 'OpiNvme12' }, traddr:'11.11.11.2', subnqn:'nqn.2016-06.com.opi.spdk.target0', trsvcid:'4444', trtype:'NVME_TRANSPORT_TCP', adrfam:'NVMF_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}"
 connecting to 10.10.10.1:50051
-{}
+{
+ "id": {
+  "value": "OpiNvme12"
+ },
+ "trtype": "NVME_TRANSPORT_TCP",
+ "adrfam": "NVMF_ADRFAM_IPV4",
+ "traddr": "11.11.11.2",
+ "trsvcid": "4444",
+ "subnqn": "nqn.2016-06.io.spdk:cnode1",
+ "hostnqn": "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"
+}
 Rpc succeeded with OK status
 
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 GetNVMfRemoteController "{id: {value : 'OpiNvme12' }}"
