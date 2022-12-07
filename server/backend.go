@@ -42,7 +42,13 @@ func (s *server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 	if len(result) != 1 {
 		log.Printf("expecting exactly 1 result")
 	}
-	return &pb.NVMfRemoteController{}, nil
+	response := &pb.NVMfRemoteController{}
+	err = deepcopier.Copy(in.Ctrl).To(response)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return response, nil
 }
 
 func (s *server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
@@ -278,7 +284,13 @@ func (s *server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.AioController{}, nil
+	response := &pb.AioController{}
+	err = deepcopier.Copy(in.Device).To(response)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return response, nil
 }
 
 func (s *server) DeleteAioController(ctx context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
