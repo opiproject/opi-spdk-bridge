@@ -18,9 +18,9 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	if err != nil {
 		log.Fatalf("could not find SPDK IP address")
 	}
-	rr0, err := c4.NVMfRemoteControllerConnect(ctx, &pb.NVMfRemoteControllerConnectRequest{
+	rr0, err := c4.CreateNVMfRemoteController(ctx, &pb.CreateNVMfRemoteControllerRequest{
 		Ctrl: &pb.NVMfRemoteController{
-			Id:      8,
+			Id:      &pc.ObjectKey{Value: "OpiNvme8"},
 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 			Traddr:  addr[0].String(),
@@ -31,27 +31,27 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 		log.Fatalf("could not connect to Remote NVMf controller: %v", err)
 	}
 	log.Printf("Connected: %v", rr0)
-	rr2, err := c4.NVMfRemoteControllerReset(ctx, &pb.NVMfRemoteControllerResetRequest{Id: 8})
+	rr2, err := c4.NVMfRemoteControllerReset(ctx, &pb.NVMfRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: "OpiNvme8"}})
 	if err != nil {
 		log.Fatalf("could not reset Remote NVMf controller: %v", err)
 	}
 	log.Printf("Reset: %v", rr2)
-	rr3, err := c4.NVMfRemoteControllerList(ctx, &pb.NVMfRemoteControllerListRequest{Id: 8})
+	rr3, err := c4.ListNVMfRemoteController(ctx, &pb.ListNVMfRemoteControllerRequest{})
 	if err != nil {
 		log.Fatalf("could not list Remote NVMf controllerd: %v", err)
 	}
 	log.Printf("List: %v", rr3)
-	rr4, err := c4.NVMfRemoteControllerGet(ctx, &pb.NVMfRemoteControllerGetRequest{Id: 8})
+	rr4, err := c4.GetNVMfRemoteController(ctx, &pb.GetNVMfRemoteControllerRequest{Id: &pc.ObjectKey{Value: "OpiNvme8"}})
 	if err != nil {
 		log.Fatalf("could not get Remote NVMf controller: %v", err)
 	}
 	log.Printf("Got: %v", rr4)
-	rr5, err := c4.NVMfRemoteControllerStats(ctx, &pb.NVMfRemoteControllerStatsRequest{Id: 8})
+	rr5, err := c4.NVMfRemoteControllerStats(ctx, &pb.NVMfRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: "OpiNvme8"}})
 	if err != nil {
 		log.Fatalf("could not stats from Remote NVMf controller: %v", err)
 	}
 	log.Printf("Stats: %v", rr5)
-	rr1, err := c4.NVMfRemoteControllerDisconnect(ctx, &pb.NVMfRemoteControllerDisconnectRequest{Id: 8})
+	rr1, err := c4.DeleteNVMfRemoteController(ctx, &pb.DeleteNVMfRemoteControllerRequest{Id: &pc.ObjectKey{Value: "OpiNvme8"}})
 	if err != nil {
 		log.Fatalf("could not disconnect from Remote NVMf controller: %v", err)
 	}
@@ -60,22 +60,22 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// NullDebug
 	c1 := pb.NewNullDebugServiceClient(conn)
 	log.Printf("Testing NewNullDebugServiceClient")
-	rs1, err := c1.NullDebugCreate(ctx, &pb.NullDebugCreateRequest{Device: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
+	rs1, err := c1.CreateNullDebug(ctx, &pb.CreateNullDebugRequest{Device: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
 	if err != nil {
 		log.Fatalf("could not create NULL device: %v", err)
 	}
 	log.Printf("Added: %v", rs1)
-	rs3, err := c1.NullDebugUpdate(ctx, &pb.NullDebugUpdateRequest{Device: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
+	rs3, err := c1.UpdateNullDebug(ctx, &pb.UpdateNullDebugRequest{Device: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
 	if err != nil {
 		log.Fatalf("could not update NULL device: %v", err)
 	}
 	log.Printf("Updated: %v", rs3)
-	rs4, err := c1.NullDebugList(ctx, &pb.NullDebugListRequest{})
+	rs4, err := c1.ListNullDebug(ctx, &pb.ListNullDebugRequest{})
 	if err != nil {
 		log.Fatalf("could not list NULL device: %v", err)
 	}
 	log.Printf("Listed: %v", rs4)
-	rs5, err := c1.NullDebugGet(ctx, &pb.NullDebugGetRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
+	rs5, err := c1.GetNullDebug(ctx, &pb.GetNullDebugRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
 	if err != nil {
 		log.Fatalf("could not get NULL device: %v", err)
 	}
@@ -85,7 +85,7 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 		log.Fatalf("could not stats NULL device: %v", err)
 	}
 	log.Printf("Stats: %s", rs6.Stats)
-	rs2, err := c1.NullDebugDelete(ctx, &pb.NullDebugDeleteRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
+	rs2, err := c1.DeleteNullDebug(ctx, &pb.DeleteNullDebugRequest{Handle: &pc.ObjectKey{Value: "OpiNull9"}})
 	if err != nil {
 		log.Fatalf("could not delete NULL device: %v", err)
 	}
@@ -94,32 +94,32 @@ func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// Aio
 	c2 := pb.NewAioControllerServiceClient(conn)
 	log.Printf("Testing NewAioControllerServiceClient")
-	ra1, err := c2.AioControllerCreate(ctx, &pb.AioControllerCreateRequest{Device: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
+	ra1, err := c2.CreateAioController(ctx, &pb.CreateAioControllerRequest{Device: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
 	if err != nil {
 		log.Fatalf("could not create Aio device: %v", err)
 	}
 	log.Printf("Added: %v", ra1)
-	ra3, err := c2.AioControllerUpdate(ctx, &pb.AioControllerUpdateRequest{Device: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
+	ra3, err := c2.UpdateAioController(ctx, &pb.UpdateAioControllerRequest{Device: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
 	if err != nil {
 		log.Fatalf("could not update Aio device: %v", err)
 	}
 	log.Printf("Updated: %v", ra3)
-	ra4, err := c2.AioControllerGetList(ctx, &pb.AioControllerGetListRequest{})
+	ra4, err := c2.ListAioController(ctx, &pb.ListAioControllerRequest{})
 	if err != nil {
 		log.Fatalf("could not list Aio device: %v", err)
 	}
 	log.Printf("Listed: %v", ra4)
-	ra5, err := c2.AioControllerGet(ctx, &pb.AioControllerGetRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
+	ra5, err := c2.GetAioController(ctx, &pb.GetAioControllerRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
 	if err != nil {
 		log.Fatalf("could not get Aio device: %v", err)
 	}
 	log.Printf("Got: %s", ra5.Handle.Value)
-	ra6, err := c2.AioControllerGetStats(ctx, &pb.AioControllerGetStatsRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
+	ra6, err := c2.AioControllerStats(ctx, &pb.AioControllerStatsRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
 	if err != nil {
 		log.Fatalf("could not stats Aio device: %v", err)
 	}
 	log.Printf("Stats: %s", ra6.Stats)
-	ra2, err := c2.AioControllerDelete(ctx, &pb.AioControllerDeleteRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
+	ra2, err := c2.DeleteAioController(ctx, &pb.DeleteAioControllerRequest{Handle: &pc.ObjectKey{Value: "OpiAio4"}})
 	if err != nil {
 		log.Fatalf("could not delete Aio device: %v", err)
 	}

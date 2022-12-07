@@ -21,10 +21,10 @@ import (
 
 //////////////////////////////////////////////////////////
 
-func (s *server) NVMfRemoteControllerConnect(ctx context.Context, in *pb.NVMfRemoteControllerConnectRequest) (*pb.NVMfRemoteControllerConnectResponse, error) {
-	log.Printf("NVMfRemoteControllerConnect: Received from client: %v", in)
+func (s *server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
+	log.Printf("CreateNVMfRemoteController: Received from client: %v", in)
 	params := BdevNvmeAttachControllerParams{
-		Name:    fmt.Sprint("OpiNvme", in.Ctrl.Id),
+		Name:    in.Ctrl.Id.Value,
 		Trtype:  strings.ReplaceAll(in.Ctrl.Trtype.String(), "NVME_TRANSPORT_", ""),
 		Traddr:  in.Ctrl.Traddr,
 		Adrfam:  strings.ReplaceAll(in.Ctrl.Adrfam.String(), "NVMF_ADRFAM_", ""),
@@ -42,13 +42,13 @@ func (s *server) NVMfRemoteControllerConnect(ctx context.Context, in *pb.NVMfRem
 	if len(result) != 1 {
 		log.Printf("expecting exactly 1 result")
 	}
-	return &pb.NVMfRemoteControllerConnectResponse{}, nil
+	return &pb.NVMfRemoteController{}, nil
 }
 
-func (s *server) NVMfRemoteControllerDisconnect(ctx context.Context, in *pb.NVMfRemoteControllerDisconnectRequest) (*pb.NVMfRemoteControllerDisconnectResponse, error) {
-	log.Printf("NVMfRemoteControllerDisconnect: Received from client: %v", in)
+func (s *server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
+	log.Printf("DeleteNVMfRemoteController: Received from client: %v", in)
 	params := BdevNvmeDetachControllerParams{
-		Name: fmt.Sprint("OpiNvme", in.GetId()),
+		Name: in.Id.Value,
 	}
 	var result BdevNvmeDetachControllerResult
 	err := call("bdev_nvme_detach_controller", &params, &result)
@@ -57,16 +57,16 @@ func (s *server) NVMfRemoteControllerDisconnect(ctx context.Context, in *pb.NVMf
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NVMfRemoteControllerDisconnectResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *server) NVMfRemoteControllerReset(ctx context.Context, in *pb.NVMfRemoteControllerResetRequest) (*pb.NVMfRemoteControllerResetResponse, error) {
+func (s *server) NVMfRemoteControllerReset(ctx context.Context, in *pb.NVMfRemoteControllerResetRequest) (*emptypb.Empty, error) {
 	log.Printf("Received: %v", in.GetId())
-	return &pb.NVMfRemoteControllerResetResponse{}, nil
+	return &emptypb.Empty{}, nil
 }
 
-func (s *server) NVMfRemoteControllerList(ctx context.Context, in *pb.NVMfRemoteControllerListRequest) (*pb.NVMfRemoteControllerListResponse, error) {
-	log.Printf("NVMfRemoteControllerList: Received from client: %v", in)
+func (s *server) ListNVMfRemoteController(ctx context.Context, in *pb.ListNVMfRemoteControllerRequest) (*pb.ListNVMfRemoteControllerResponse, error) {
+	log.Printf("ListNVMfRemoteController: Received from client: %v", in)
 	var result []BdevNvmeGetControllerResult
 	err := call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
@@ -79,21 +79,22 @@ func (s *server) NVMfRemoteControllerList(ctx context.Context, in *pb.NVMfRemote
 		r := &result[i]
 		port, _ := strconv.ParseInt(r.Ctrlrs[0].Trid.Trsvcid, 10, 64)
 		Blobarray[i] = &pb.NVMfRemoteController{
-			Subnqn:  r.Name,
+			Id:      &pc.ObjectKey{Value: r.Name},
 			Hostnqn: r.Ctrlrs[0].Host.Nqn,
 			Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(r.Ctrlrs[0].Trid.Trtype)]),
 			Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(r.Ctrlrs[0].Trid.Adrfam)]),
 			Traddr:  r.Ctrlrs[0].Trid.Traddr,
+			Subnqn:  r.Ctrlrs[0].Trid.Subnqn,
 			Trsvcid: port,
 		}
 	}
-	return &pb.NVMfRemoteControllerListResponse{Ctrl: Blobarray}, nil
+	return &pb.ListNVMfRemoteControllerResponse{Ctrls: Blobarray}, nil
 }
 
-func (s *server) NVMfRemoteControllerGet(ctx context.Context, in *pb.NVMfRemoteControllerGetRequest) (*pb.NVMfRemoteControllerGetResponse, error) {
-	log.Printf("NVMfRemoteControllerGet: Received from client: %v", in)
+func (s *server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
+	log.Printf("GetNVMfRemoteController: Received from client: %v", in)
 	params := BdevNvmeGetControllerParams{
-		Name: fmt.Sprint("OpiNvme", in.GetId()),
+		Name: in.Id.Value,
 	}
 	var result []BdevNvmeGetControllerResult
 	err := call("bdev_nvme_get_controllers", &params, &result)
@@ -108,14 +109,15 @@ func (s *server) NVMfRemoteControllerGet(ctx context.Context, in *pb.NVMfRemoteC
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	port, _ := strconv.ParseInt(result[0].Ctrlrs[0].Trid.Trsvcid, 10, 64)
-	return &pb.NVMfRemoteControllerGetResponse{Ctrl: &pb.NVMfRemoteController{
-		Subnqn:  result[0].Name,
+	return &pb.NVMfRemoteController{
+		Id:      &pc.ObjectKey{Value: result[0].Name},
 		Hostnqn: result[0].Ctrlrs[0].Host.Nqn,
 		Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Trtype)]),
 		Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Adrfam)]),
 		Traddr:  result[0].Ctrlrs[0].Trid.Traddr,
+		Subnqn:  result[0].Ctrlrs[0].Trid.Subnqn,
 		Trsvcid: port,
-	}}, nil
+	}, nil
 }
 
 func (s *server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
@@ -125,8 +127,8 @@ func (s *server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemot
 
 //////////////////////////////////////////////////////////
 
-func (s *server) NullDebugCreate(ctx context.Context, in *pb.NullDebugCreateRequest) (*pb.NullDebug, error) {
-	log.Printf("NullDebugCreate: Received from client: %v", in)
+func (s *server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
+	log.Printf("CreateNullDebug: Received from client: %v", in)
 	params := BdevNullCreateParams{
 		Name:      in.Device.Handle.Value,
 		BlockSize: 512,
@@ -148,8 +150,8 @@ func (s *server) NullDebugCreate(ctx context.Context, in *pb.NullDebugCreateRequ
 	return response, nil
 }
 
-func (s *server) NullDebugDelete(ctx context.Context, in *pb.NullDebugDeleteRequest) (*emptypb.Empty, error) {
-	log.Printf("NullDebugDelete: Received from client: %v", in)
+func (s *server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
+	log.Printf("DeleteNullDebug: Received from client: %v", in)
 	params := BdevNullDeleteParams{
 		Name: in.Handle.Value,
 	}
@@ -166,8 +168,8 @@ func (s *server) NullDebugDelete(ctx context.Context, in *pb.NullDebugDeleteRequ
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequest) (*pb.NullDebug, error) {
-	log.Printf("NullDebugUpdate: Received from client: %v", in)
+func (s *server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
+	log.Printf("UpdateNullDebug: Received from client: %v", in)
 	params1 := BdevNullDeleteParams{
 		Name: in.Device.Handle.Value,
 	}
@@ -202,8 +204,8 @@ func (s *server) NullDebugUpdate(ctx context.Context, in *pb.NullDebugUpdateRequ
 	return response, nil
 }
 
-func (s *server) NullDebugList(ctx context.Context, in *pb.NullDebugListRequest) (*pb.NullDebugListResponse, error) {
-	log.Printf("NullDebugList: Received from client: %v", in)
+func (s *server) ListNullDebug(ctx context.Context, in *pb.ListNullDebugRequest) (*pb.ListNullDebugResponse, error) {
+	log.Printf("ListNullDebug: Received from client: %v", in)
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", nil, &result)
 	if err != nil {
@@ -216,11 +218,11 @@ func (s *server) NullDebugList(ctx context.Context, in *pb.NullDebugListRequest)
 		r := &result[i]
 		Blobarray[i] = &pb.NullDebug{Handle: &pc.ObjectKey{Value: r.Name}, Uuid: &pc.Uuid{Value: r.UUID}}
 	}
-	return &pb.NullDebugListResponse{Device: Blobarray}, nil
+	return &pb.ListNullDebugResponse{Devices: Blobarray}, nil
 }
 
-func (s *server) NullDebugGet(ctx context.Context, in *pb.NullDebugGetRequest) (*pb.NullDebug, error) {
-	log.Printf("NullDebugGet: Received from client: %v", in)
+func (s *server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
+	log.Printf("GetNullDebug: Received from client: %v", in)
 	params := BdevGetBdevsParams{
 		Name: in.Handle.Value,
 	}
@@ -262,8 +264,8 @@ func (s *server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 
 //////////////////////////////////////////////////////////
 
-func (s *server) AioControllerCreate(ctx context.Context, in *pb.AioControllerCreateRequest) (*pb.AioController, error) {
-	log.Printf("AioControllerCreate: Received from client: %v", in)
+func (s *server) CreateAioController(ctx context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
+	log.Printf("CreateAioController: Received from client: %v", in)
 	params := BdevAioCreateParams{
 		Name:      in.GetDevice().GetHandle().GetValue(),
 		BlockSize: 512,
@@ -279,8 +281,8 @@ func (s *server) AioControllerCreate(ctx context.Context, in *pb.AioControllerCr
 	return &pb.AioController{}, nil
 }
 
-func (s *server) AioControllerDelete(ctx context.Context, in *pb.AioControllerDeleteRequest) (*emptypb.Empty, error) {
-	log.Printf("AioControllerDelete: Received from client: %v", in)
+func (s *server) DeleteAioController(ctx context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
+	log.Printf("DeleteAioController: Received from client: %v", in)
 	params := BdevAioDeleteParams{
 		Name: in.GetHandle().GetValue(),
 	}
@@ -297,8 +299,8 @@ func (s *server) AioControllerDelete(ctx context.Context, in *pb.AioControllerDe
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) AioControllerUpdate(ctx context.Context, in *pb.AioControllerUpdateRequest) (*pb.AioController, error) {
-	log.Printf("AioControllerUpdate: Received from client: %v", in)
+func (s *server) UpdateAioController(ctx context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
+	log.Printf("UpdateAioController: Received from client: %v", in)
 	params1 := BdevAioDeleteParams{
 		Name: in.GetDevice().GetHandle().GetValue(),
 	}
@@ -327,8 +329,8 @@ func (s *server) AioControllerUpdate(ctx context.Context, in *pb.AioControllerUp
 	return &pb.AioController{}, nil
 }
 
-func (s *server) AioControllerGetList(ctx context.Context, in *pb.AioControllerGetListRequest) (*pb.AioControllerList, error) {
-	log.Printf("AioControllerGetList: Received from client: %v", in)
+func (s *server) ListAioController(ctx context.Context, in *pb.ListAioControllerRequest) (*pb.ListAioControllerResponse, error) {
+	log.Printf("ListAioController: Received from client: %v", in)
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", nil, &result)
 	if err != nil {
@@ -341,11 +343,11 @@ func (s *server) AioControllerGetList(ctx context.Context, in *pb.AioControllerG
 		r := &result[i]
 		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}}
 	}
-	return &pb.AioControllerList{Device: Blobarray}, nil
+	return &pb.ListAioControllerResponse{Devices: Blobarray}, nil
 }
 
-func (s *server) AioControllerGet(ctx context.Context, in *pb.AioControllerGetRequest) (*pb.AioController, error) {
-	log.Printf("AioControllerGet: Received from client: %v", in)
+func (s *server) GetAioController(ctx context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
+	log.Printf("GetAioController: Received from client: %v", in)
 	params := BdevGetBdevsParams{
 		Name: in.GetHandle().GetValue(),
 	}
@@ -364,8 +366,8 @@ func (s *server) AioControllerGet(ctx context.Context, in *pb.AioControllerGetRe
 	return &pb.AioController{Handle: &pc.ObjectKey{Value: result[0].Name}}, nil
 }
 
-func (s *server) AioControllerGetStats(ctx context.Context, in *pb.AioControllerGetStatsRequest) (*pb.AioControllerStats, error) {
-	log.Printf("AioControllerGetStats: Received from client: %v", in)
+func (s *server) AioControllerStats(ctx context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
+	log.Printf("AioControllerStats: Received from client: %v", in)
 	params := BdevGetIostatParams{
 		Name: in.GetHandle().GetValue(),
 	}
@@ -382,7 +384,7 @@ func (s *server) AioControllerGetStats(ctx context.Context, in *pb.AioController
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.AioControllerStats{Stats: fmt.Sprint(result.Bdevs[0])}, nil
+	return &pb.AioControllerStatsResponse{Stats: fmt.Sprint(result.Bdevs[0])}, nil
 }
 
 //////////////////////////////////////////////////////////
