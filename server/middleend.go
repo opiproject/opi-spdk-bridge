@@ -22,13 +22,13 @@ import (
 func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 	params := BdevCryptoCreateParams{
-		Name:         in.Volume.EncryptedVolumeId.Value,
-		BaseBdevName: in.Volume.VolumeId.Value,
+		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
+		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
 		CryptoPmd:    "crypto_aesni_mb",
-		Key:          string(in.Volume.Key),
+		Key:          string(in.EncryptedVolume.Key),
 		Cipher:       "AES_CBC",
 	}
-	// TODO: use in.Volume.Cipher.String()
+	// TODO: use in.EncryptedVolume.Cipher.String()
 	var result BdevCryptoCreateResult
 	err := call("bdev_crypto_create", &params, &result)
 	if err != nil {
@@ -37,7 +37,7 @@ func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	}
 	log.Printf("Received from SPDK: %v", result)
 	response := &pb.EncryptedVolume{}
-	err = deepcopier.Copy(in.Volume).To(response)
+	err = deepcopier.Copy(in.EncryptedVolume).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -48,7 +48,7 @@ func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 func (s *server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
 	params := BdevCryptoDeleteParams{
-		Name: in.EncryptedVolumeId.Value,
+		Name: in.Name,
 	}
 	var result BdevCryptoDeleteResult
 	err := call("bdev_crypto_delete", &params, &result)
@@ -66,7 +66,7 @@ func (s *server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	params1 := BdevCryptoDeleteParams{
-		Name: in.Volume.EncryptedVolumeId.Value,
+		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
 	var result1 BdevCryptoDeleteResult
 	err1 := call("bdev_crypto_delete", &params1, &result1)
@@ -79,13 +79,13 @@ func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		log.Printf("Could not delete: %v", in)
 	}
 	params2 := BdevCryptoCreateParams{
-		Name:         in.Volume.EncryptedVolumeId.Value,
-		BaseBdevName: in.Volume.VolumeId.Value,
+		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
+		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
 		CryptoPmd:    "crypto_aesni_mb",
-		Key:          string(in.Volume.Key),
+		Key:          string(in.EncryptedVolume.Key),
 		Cipher:       "AES_CBC",
 	}
-	// TODO: use in.Volume.Cipher.String()
+	// TODO: use in.EncryptedVolume.Cipher.String()
 	var result2 BdevCryptoCreateResult
 	err2 := call("bdev_crypto_create", &params2, &result2)
 	if err2 != nil {
@@ -94,7 +94,7 @@ func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	response := &pb.EncryptedVolume{}
-	err3 := deepcopier.Copy(in.Volume).To(response)
+	err3 := deepcopier.Copy(in.EncryptedVolume).To(response)
 	if err3 != nil {
 		log.Printf("error: %v", err3)
 		return nil, err3
@@ -102,8 +102,8 @@ func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	return response, nil
 }
 
-func (s *server) ListEncryptedVolume(ctx context.Context, in *pb.ListEncryptedVolumeRequest) (*pb.ListEncryptedVolumeResponse, error) {
-	log.Printf("ListEncryptedVolume: Received from client: %v", in)
+func (s *server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
+	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", nil, &result)
 	if err != nil {
@@ -116,13 +116,13 @@ func (s *server) ListEncryptedVolume(ctx context.Context, in *pb.ListEncryptedVo
 		r := &result[i]
 		Blobarray[i] = &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: r.Name}}
 	}
-	return &pb.ListEncryptedVolumeResponse{Volumes: Blobarray}, nil
+	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: Blobarray}, nil
 }
 
 func (s *server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("GetEncryptedVolume: Received from client: %v", in)
 	params := BdevGetBdevsParams{
-		Name: in.EncryptedVolumeId.Value,
+		Name: in.Name,
 	}
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", &params, &result)
