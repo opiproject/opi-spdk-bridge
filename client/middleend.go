@@ -16,7 +16,7 @@ func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 	c1 := pb.NewMiddleendServiceClient(conn)
 	log.Printf("Testing NewEncryptedVolumeServiceClient")
 	rs1, err := c1.CreateEncryptedVolume(ctx, &pb.CreateEncryptedVolumeRequest{
-		Volume: &pb.EncryptedVolume{
+		EncryptedVolume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},
 			VolumeId:          &pc.ObjectKey{Value: "Malloc1"},
 			Key:               []byte("0123456789abcdef0123456789abcdef"),
@@ -27,7 +27,7 @@ func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 	}
 	log.Printf("Added: %v", rs1)
 	rs3, err := c1.UpdateEncryptedVolume(ctx, &pb.UpdateEncryptedVolumeRequest{
-		Volume: &pb.EncryptedVolume{
+		EncryptedVolume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},
 			VolumeId:          &pc.ObjectKey{Value: "Malloc1"},
 			Key:               []byte("0123456789abcdef0123456789abcdef"),
@@ -37,12 +37,12 @@ func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 		log.Fatalf("could not update CRYPTO device: %v", err)
 	}
 	log.Printf("Updated: %v", rs3)
-	rs4, err := c1.ListEncryptedVolume(ctx, &pb.ListEncryptedVolumeRequest{})
+	rs4, err := c1.ListEncryptedVolumes(ctx, &pb.ListEncryptedVolumesRequest{})
 	if err != nil {
 		log.Fatalf("could not list CRYPTO device: %v", err)
 	}
 	log.Printf("Listed: %v", rs4)
-	rs5, err := c1.GetEncryptedVolume(ctx, &pb.GetEncryptedVolumeRequest{EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"}})
+	rs5, err := c1.GetEncryptedVolume(ctx, &pb.GetEncryptedVolumeRequest{Name: "OpiEncryptedVolume3"})
 	if err != nil {
 		log.Fatalf("could not get CRYPTO device: %v", err)
 	}
@@ -52,7 +52,7 @@ func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 		log.Fatalf("could not stats CRYPTO device: %v", err)
 	}
 	log.Printf("Stats: %s", rs6.Stats)
-	rs2, err := c1.DeleteEncryptedVolume(ctx, &pb.DeleteEncryptedVolumeRequest{EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"}})
+	rs2, err := c1.DeleteEncryptedVolume(ctx, &pb.DeleteEncryptedVolumeRequest{Name: "OpiEncryptedVolume3"})
 	if err != nil {
 		log.Fatalf("could not delete CRYPTO device: %v", err)
 	}
