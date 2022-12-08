@@ -5,6 +5,8 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
 github.com/opiproject/opi-api v0.0.0-20221207164013-fd93b840b575 h1:qUuLJp4bRKxC21El2bg6rhlBLjD/HBta7ALSZLD2pMY=
 github.com/opiproject/opi-api v0.0.0-20221207164013-fd93b840b575/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20221208205708-b089acb781cd h1:9jPT8oOKr5VvC2oRhuoH3YStkHCLOjZuLiQBNHLK1bY=
+github.com/opiproject/opi-api v0.0.0-20221208205708-b089acb781cd/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 golang.org/x/net v0.4.0 h1:Q5QPcMlvfxFTAPV0+07Xz/MpK9NTXu2VDUuy0FeMfaU=
 golang.org/x/net v0.4.0/go.mod h1:MBQ8lrhLObU/6UmLb4fmbmk5OcyYmqtbGd/9yIeKjEE=
 golang.org/x/sys v0.3.0 h1:w8ZOecv6NaNa/zC8944JTU3vz4u6Lagfk4RPQxv92NQ=
