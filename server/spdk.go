@@ -247,6 +247,7 @@ type VhostCreateScsiControllerResult bool
 type NvmfSubsystemAddNsParams struct {
 	Nqn       string `json:"nqn"`
 	Namespace struct {
+		Nsid     int    `json:"nsid"`
 		BdevName string `json:"bdev_name"`
 	} `json:"namespace"`
 }

@@ -282,6 +282,7 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	}
 
 	// TODO: using bdev for volume id as a middle end handle for now
+	params.Namespace.Nsid = int(in.NvMeNamespace.Spec.HostNsid)
 	params.Namespace.BdevName = in.NvMeNamespace.Spec.VolumeId.Value
 
 	var result NvmfSubsystemAddNsResult
