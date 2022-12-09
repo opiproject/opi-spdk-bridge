@@ -67,57 +67,23 @@ on X86 management VM run
 
 ```bash
 docker run --network=host --rm -it namely/grpc-cli ls   --json_input --json_output 10.10.10.10:50051 -l
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeSubsystem "{subsystem : {spec : {id : {value : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeSubsystem "{}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeSubsystem "{subsystem_id : {value : 'subsystem2'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeController "{controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem2' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeController "{subsystem_id : { value : 'subsystem2' }}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeController "{controller_id : {value : 'controller1'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeNamespace "{namespace : {spec : {id : {value : 'namespace1'}, subsystem_id : { value : 'subsystem2' }, controller_id : { value : 'controller1' }, volume_id : { value : 'Malloc0' }, 'host_nsid' : '1', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeNamespace "{subsystem_id : { value : 'subsystem2' } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeNamespace "{namespace_id : {value : 'namespace1'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeNamespace "{namespace_id : {value : 'namespace1'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeController "{controller_id : {value : 'controller1'} }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeSubsystem "{subsystem_id : {value : 'subsystem2'} }"
-```
-
-and netwok-facing APIs:
-
-```bash
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 CreateNVMfRemoteController "{ctrl : {id: { value : 'OpiNvme12' }, traddr:'11.11.11.2', subnqn:'nqn.2016-06.com.opi.spdk.target0', trsvcid:'4444', trtype:'NVME_TRANSPORT_TCP', adrfam:'NVMF_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}"
-connecting to 10.10.10.1:50051
-{
- "id": {
-  "value": "OpiNvme12"
- },
- "trtype": "NVME_TRANSPORT_TCP",
- "adrfam": "NVMF_ADRFAM_IPV4",
- "traddr": "11.11.11.2",
- "trsvcid": "4444",
- "subnqn": "nqn.2016-06.io.spdk:cnode1",
- "hostnqn": "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"
-}
-Rpc succeeded with OK status
-
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 GetNVMfRemoteController "{id: {value : 'OpiNvme12' }}"
-connecting to 10.10.10.1:50051
-{
- "id": {
-  "value": "OpiNvme12"
- },
- "trtype": "NVME_TRANSPORT_TCP",
- "adrfam": "NVMF_ADRFAM_IPV4",
- "traddr": "11.11.11.2",
- "trsvcid": "4444",
- "subnqn": "nqn.2016-06.io.spdk:cnode1",
- "hostnqn": "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"
-}
-Rpc succeeded with OK status
-
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.1:50051 DeleteNVMfRemoteController "{id: {value : 'OpiNvme12' }}"
-connecting to 10.10.10.1:50051
-{}
-Rpc succeeded with OK status
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeSubsystem "{nv_me_subsystem : {spec : {id : {value : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeSubsystems "{}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeSubsystem "{name : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeController "{nv_me_controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem2' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeControllers "{parent : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeController "{name : 'controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeNamespace "{nv_me_namespace : {spec : {id : {value : 'namespace1'}, subsystem_id : { value : 'subsystem2' }, volume_id : { value : 'Malloc0' }, 'host_nsid' : '10', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeNamespaces "{parent : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeNamespace "{name : 'namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 NVMeNamespaceStats "{namespace_id : {value : 'namespace1'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMfRemoteController "{nv_mf_remote_controller : {id: '12', traddr:'11.11.11.2', subnqn:'nqn.2016-06.com.opi.spdk.target0', trsvcid:'4444', trtype:'NVME_TRANSPORT_TCP', adrfam:'NVMF_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMfRemoteControllers "{}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMfRemoteController "{name: 'NvmeTcp12'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMfRemoteController "{name: 'NvmeTcp12'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeNamespace "{name : 'namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeController "{name : 'controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeSubsystem "{name : 'subsystem2'}"
 ```
 
 ## Test SPDK is up
