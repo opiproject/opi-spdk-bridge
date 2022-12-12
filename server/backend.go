@@ -265,7 +265,17 @@ func (s *server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullDebugStatsResponse{Stats: fmt.Sprint(result.Bdevs[0])}, nil
+	return &pb.NullDebugStatsResponse{Stats: &pb.VolumeStats{
+		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
+		ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
+		WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),
+		WriteOpsCount:     int32(result.Bdevs[0].NumWriteOps),
+		UnmapBytesCount:   int32(result.Bdevs[0].BytesUnmapped),
+		UnmapOpsCount:     int32(result.Bdevs[0].NumUnmapOps),
+		ReadLatencyTicks:  int32(result.Bdevs[0].ReadLatencyTicks),
+		WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
+		UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
+	}}, nil
 }
 
 //////////////////////////////////////////////////////////
@@ -396,7 +406,17 @@ func (s *server) AioControllerStats(ctx context.Context, in *pb.AioControllerSta
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.AioControllerStatsResponse{Stats: fmt.Sprint(result.Bdevs[0])}, nil
+	return &pb.AioControllerStatsResponse{Stats: &pb.VolumeStats{
+		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
+		ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
+		WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),
+		WriteOpsCount:     int32(result.Bdevs[0].NumWriteOps),
+		UnmapBytesCount:   int32(result.Bdevs[0].BytesUnmapped),
+		UnmapOpsCount:     int32(result.Bdevs[0].NumUnmapOps),
+		ReadLatencyTicks:  int32(result.Bdevs[0].ReadLatencyTicks),
+		WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
+		UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
+	}}, nil
 }
 
 //////////////////////////////////////////////////////////

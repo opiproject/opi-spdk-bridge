@@ -145,7 +145,7 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NVMeSubsystemStatsResponse{Stats: fmt.Sprint(result.TickRate)}, nil
+	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{}}, nil
 }
 
 // ////////////////////////////////////////////////////////
