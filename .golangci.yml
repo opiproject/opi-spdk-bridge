@@ -54,6 +54,13 @@ issues:
   # Default value for this option is true.
   exclude-use-default: false
 
+  exclude-rules:
+    - path: (.+)_test.go
+      linters:
+        - funlen
+        - gocritic
+        - gocognit
+
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
 

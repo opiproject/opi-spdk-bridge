@@ -36,6 +36,11 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not create NQN: %s", in.NvMeSubsystem.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	var ver GetVersionResult
 	err = call("spdk_get_version", nil, &ver)
 	if err != nil {
@@ -73,7 +78,9 @@ func (s *server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete NQN: %s", subsys.Spec.Nqn)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(subsystems, subsys.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
@@ -81,14 +88,7 @@ func (s *server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 
 func (s *server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("UpdateNVMeSubsystem: Received from client: %v", in)
-	subsystems[in.NvMeSubsystem.Spec.Id.Value] = in.NvMeSubsystem
-	response := &pb.NVMeSubsystem{}
-	err := deepcopier.Copy(in.NvMeSubsystem).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	return response, nil
+	return nil, status.Errorf(codes.Unimplemented, "UpdateNVMeSubsystem method is not implemented")
 }
 
 func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
@@ -103,7 +103,7 @@ func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsyste
 	Blobarray := make([]*pb.NVMeSubsystem, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}
+		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn, SerialNumber: r.SerialNumber, ModelNumber: r.ModelNumber}}
 	}
 	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray}, nil
 }
@@ -128,7 +128,7 @@ func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 	for i := range result {
 		r := &result[i]
 		if r.Nqn == subsys.Spec.Nqn {
-			return &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn}}, nil
+			return &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn, SerialNumber: r.SerialNumber, ModelNumber: r.ModelNumber}, Status: &pb.NVMeSubsystemStatus{FirmwareRevision: "TBD"}}, nil
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Spec.Nqn)
@@ -145,7 +145,7 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{}}, nil
+	return &pb.NVMeSubsystemStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 // ////////////////////////////////////////////////////////
@@ -181,8 +181,16 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvMeController.Spec.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
-	response := &pb.NVMeController{}
+	controllers[in.NvMeController.Spec.Id.Value].Spec.NvmeControllerId = -1
+	controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
+	response := &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: "TBD"}}}
 	err = deepcopier.Copy(in.NvMeController).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -226,20 +234,19 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not delete NQN:ID %s:%d", subsys.Spec.Nqn, controller.Spec.NvmeControllerId)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	delete(controllers, controller.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
 func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
-	log.Printf("Received from client: %v", in.NvMeController)
-	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
-	response := &pb.NVMeController{}
-	err := deepcopier.Copy(in.NvMeController).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	return response, nil
+	log.Printf("UpdateNVMeController: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "UpdateNVMeController method is not implemented")
 }
 
 func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
@@ -257,12 +264,12 @@ func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}}, nil
+	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NVMeControllerStatus{Active: true}}, nil
 }
 
 func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
-	log.Printf("Received from client: %v", in.Id)
-	return &pb.NVMeControllerStatsResponse{}, nil
+	log.Printf("NVMeControllerStats: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "NVMeControllerStats method is not implemented")
 }
 
 // ////////////////////////////////////////////////////////
@@ -292,14 +299,19 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if result < 0 {
+		msg := fmt.Sprintf("Could not create NS: %s", in.NvMeNamespace.Spec.Id.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
-
 	response := &pb.NVMeNamespace{}
 	err = deepcopier.Copy(in.NvMeNamespace).To(response)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	response.Status = &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}
 	return response, nil
 }
 
@@ -329,20 +341,18 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not delete NS: %s", in.Name)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	delete(namespaces, namespace.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
 func (s *server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
-	log.Printf("Received from client: %v", in.NvMeNamespace)
-	namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
-	response := &pb.NVMeNamespace{}
-	err := deepcopier.Copy(in.NvMeNamespace).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	return response, nil
+	log.Printf("UpdateNVMeNamespace: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "UpdateNVMeNamespace method is not implemented")
 }
 
 func (s *server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
@@ -417,8 +427,10 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
 				if int32(r.Nsid) == namespace.Spec.HostNsid {
-					return &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{
-						Id: namespace.Spec.Id, HostNsid: namespace.Spec.HostNsid}}, nil
+					return &pb.NVMeNamespace{
+						Spec:   &pb.NVMeNamespaceSpec{Id: namespace.Spec.Id, HostNsid: namespace.Spec.HostNsid},
+						Status: &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1},
+					}, nil
 				}
 			}
 			msg := fmt.Sprintf("Could not find NSID: %d", namespace.Spec.HostNsid)
@@ -432,8 +444,8 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 }
 
 func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
-	log.Printf("Received from client: %v", in.NamespaceId)
-	return &pb.NVMeNamespaceStatsResponse{}, nil
+	log.Printf("NVMeNamespaceStats: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "NVMeNamespaceStats method is not implemented")
 }
 
 //////////////////////////////////////////////////////////
