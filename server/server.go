@@ -28,6 +28,8 @@ type server struct {
 	pb.UnimplementedMiddleendServiceServer
 }
 
+var opiSpdkServer server
+
 func main() {
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
