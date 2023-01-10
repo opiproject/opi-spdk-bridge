@@ -128,7 +128,7 @@ func (s *server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemo
 
 func (s *server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
 	log.Printf("Received: %v", in.GetId())
-	return &pb.NVMfRemoteControllerStatsResponse{}, nil
+	return &pb.NVMfRemoteControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 //////////////////////////////////////////////////////////
