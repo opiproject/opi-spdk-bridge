@@ -1,4 +1,4 @@
-module opi.storage.v1
+module github.com/opiproject/opi-spdk-bridge/client
 
 go 1.19
 
