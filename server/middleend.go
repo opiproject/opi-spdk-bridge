@@ -36,6 +36,11 @@ func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if result == "" {
+		msg := fmt.Sprintf("Could not create Crypto: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	response := &pb.EncryptedVolume{}
 	err = deepcopier.Copy(in.EncryptedVolume).To(response)
 	if err != nil {
@@ -58,7 +63,9 @@ func (s *server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete Crypto: %s", in.Name)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &emptypb.Empty{}, nil
 }

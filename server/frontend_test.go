@@ -28,6 +28,7 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 	pb.RegisterFrontendNvmeServiceServer(server, &opiSpdkServer)
+	pb.RegisterMiddleendServiceServer(server, &opiSpdkServer)
 
 	go func() {
 		if err := server.Serve(listener); err != nil {
