@@ -3,7 +3,7 @@ module github.com/opiproject/opi-spdk-bridge/client
 go 1.19
 
 require (
-	github.com/opiproject/opi-api v0.0.0-20230109175516-18c8c629ed6f
+	github.com/opiproject/opi-api v0.0.0-20230111150933-e4b3480e8ee9
 	google.golang.org/grpc v1.52.0
 )
 
