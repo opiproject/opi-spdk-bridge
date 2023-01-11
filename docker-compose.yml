@@ -59,6 +59,8 @@ services:
       spdk:
         condition: service_healthy
     command: /opi-spdk-bridge -port=50051
+    healthcheck:
+      test: grpcurl -plaintext localhost:50051 list || exit 1
 
   opi-spdk-client:
     build:
@@ -66,7 +68,8 @@ services:
     networks:
       - opi
     depends_on:
-      - opi-spdk-server
+      opi-spdk-server:
+        condition: service_healthy
     command: /opi-storage-client -addr=opi-spdk-server:50051
 
 networks:
