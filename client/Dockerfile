@@ -1,8 +1,7 @@
-# syntax=docker/dockerfile:1
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-# Alpine is chosen for its small footprint
-# compared to Ubuntu
-FROM docker.io/library/golang:1.19.5-alpine
+FROM docker.io/library/golang:1.19.5-alpine as builder
 
 WORKDIR /app
 
@@ -15,5 +14,8 @@ RUN go mod download
 COPY *.go ./
 RUN go build -v -o /opi-storage-client && CGO_ENABLED=0 go test -v ./...
 
+# second stage to reduce image size
+FROM alpine:3.17
+COPY --from=builder /opi-storage-client /
 EXPOSE 50051
-CMD [ "/opi-storage-client" ]
+CMD [ "/opi-storage-client"]
