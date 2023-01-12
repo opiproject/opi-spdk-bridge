@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -12,6 +13,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"google.golang.org/protobuf/proto"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -77,6 +80,12 @@ func spdkMockServer(l net.Listener, toSend []string) {
 }
 
 func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
+	spec := &pb.NVMeSubsystemSpec{
+		Id:           &pc.ObjectKey{Value: "subsystem-test"},
+		Nqn:          "nqn.2022-09.io.spdk:opi3",
+		SerialNumber: "OpiSerialNumber",
+		ModelNumber:  "OpiModelNumber",
+	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMeSubsystem
@@ -89,12 +98,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		{
 			"valid request with invalid SPDK response",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -105,12 +109,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		{
 			"valid request with empty SPDK response",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{""},
@@ -121,12 +120,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		{
 			"valid request with ID mismatch SPDK response",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -137,12 +131,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		{
 			"valid request with error code from SPDK response",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -153,20 +142,10 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		{
 			"valid request with valid SPDK response",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 			},
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 				Status: &pb.NVMeSubsystemStatus{
 					FirmwareRevision: "SPDK v20.10",
 				},
@@ -178,12 +157,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -192,14 +166,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -216,7 +183,12 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
 			response, err := client.CreateNVMeSubsystem(ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out.Spec)
+				mResponse, _ := proto.Marshal(response.Spec)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
 				}
 				if !reflect.DeepEqual(response.Status, tt.out.Status) {
@@ -238,7 +210,35 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	}
 }
 
+func startSpdkMockupServer() net.Listener {
+	// start SPDK mockup server
+	if err := os.RemoveAll(*rpcSock); err != nil {
+		log.Fatal(err)
+	}
+	ln, err := net.Listen("unix", *rpcSock)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	return ln
+}
+
+func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
+	// start GRPC mockup server
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ctx, conn
+}
+
 func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
+	spec := &pb.NVMeSubsystemSpec{
+		Id:           &pc.ObjectKey{Value: "subsystem-test"},
+		Nqn:          "nqn.2022-09.io.spdk:opi3",
+		SerialNumber: "OpiSerialNumber",
+		ModelNumber:  "OpiModelNumber",
+	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMeSubsystem
@@ -251,20 +251,10 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 		{
 			"valid request without SPDK",
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 			},
 			&pb.NVMeSubsystem{
-				Spec: &pb.NVMeSubsystemSpec{
-					Id:           &pc.ObjectKey{Value: "subsystem-test"},
-					Nqn:          "nqn.2022-09.io.spdk:opi3",
-					SerialNumber: "OpiSerialNumber",
-					ModelNumber:  "OpiModelNumber",
-				},
+				Spec: spec,
 				Status: &pb.NVMeSubsystemStatus{
 					FirmwareRevision: "TBD",
 				},
@@ -276,12 +266,8 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -296,7 +282,12 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 			request := &pb.UpdateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
 			response, err := client.UpdateNVMeSubsystem(ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out.Spec)
+				mResponse, _ := proto.Marshal(response.Spec)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
 				}
 				if !reflect.DeepEqual(response.Status, tt.out.Status) {
@@ -392,12 +383,8 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -406,14 +393,8 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -525,12 +506,8 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -539,14 +516,8 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -645,12 +616,8 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -659,14 +626,8 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -804,12 +765,8 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -818,14 +775,8 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -865,6 +816,12 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNVMeController(t *testing.T) {
+	spec := &pb.NVMeControllerSpec{
+		Id:               &pc.ObjectKey{Value: "controller-test"},
+		SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
+		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
+		NvmeControllerId: 17,
+	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMeController
@@ -877,20 +834,10 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 		{
 			"valid request without SPDK",
 			&pb.NVMeController{
-				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{Value: "controller-test"},
-					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 17,
-				},
+				Spec: spec,
 			},
 			&pb.NVMeController{
-				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{Value: "controller-test"},
-					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 17,
-				},
+				Spec: spec,
 				Status: &pb.NVMeControllerStatus{
 					Active: true,
 				},
@@ -902,12 +849,8 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -922,7 +865,12 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 			request := &pb.UpdateNVMeControllerRequest{NvMeController: tt.in}
 			response, err := client.UpdateNVMeController(ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out.Spec)
+				mResponse, _ := proto.Marshal(response.Spec)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
 				}
 				if !reflect.DeepEqual(response.Status, tt.out.Status) {
@@ -977,12 +925,8 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -991,14 +935,8 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1072,12 +1010,8 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1086,14 +1020,8 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1156,12 +1084,8 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1170,14 +1094,8 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1214,6 +1132,24 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 }
 
 func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
+	spec := &pb.NVMeNamespaceSpec{
+		Id:          &pc.ObjectKey{Value: "namespace-test"},
+		SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
+		HostNsid:    0,
+		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
+		Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:       1967554867335598546,
+	}
+	namespaceSpec := &pb.NVMeNamespaceSpec{
+		Id:          &pc.ObjectKey{Value: "namespace-test"},
+		SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
+		HostNsid:    22,
+		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
+		Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:       1967554867335598546,
+	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMeNamespace
@@ -1226,15 +1162,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		{
 			"valid request with invalid SPDK response",
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    0,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":-1}`},
@@ -1245,15 +1173,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		{
 			"valid request with empty SPDK response",
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    0,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{""},
@@ -1264,15 +1184,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		{
 			"valid request with ID mismatch SPDK response",
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    0,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":-1}`},
@@ -1283,15 +1195,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		{
 			"valid request with error code from SPDK response",
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    0,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: spec,
 			},
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":-1}`},
@@ -1302,26 +1206,10 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		{
 			"valid request with valid SPDK response",
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    22,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: namespaceSpec,
 			},
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    22,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: namespaceSpec,
 				Status: &pb.NVMeNamespaceStatus{
 					PciState:     2,
 					PciOperState: 1,
@@ -1334,12 +1222,8 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1348,14 +1232,8 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1372,7 +1250,12 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in}
 			response, err := client.CreateNVMeNamespace(ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out.Spec)
+				mResponse, _ := proto.Marshal(response.Spec)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
 				}
 				if !reflect.DeepEqual(response.Status, tt.out.Status) {
@@ -1395,6 +1278,15 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
+	spec := &pb.NVMeNamespaceSpec{
+		Id:          &pc.ObjectKey{Value: "namespace-test"},
+		SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
+		HostNsid:    22,
+		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
+		Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:       1967554867335598546,
+	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMeNamespace
@@ -1407,26 +1299,10 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 		{
 			"valid request without SPDK",
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    22,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: spec,
 			},
 			&pb.NVMeNamespace{
-				Spec: &pb.NVMeNamespaceSpec{
-					Id:          &pc.ObjectKey{Value: "namespace-test"},
-					SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
-					HostNsid:    22,
-					VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:        &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-					Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-					Eui64:       1967554867335598546,
-				},
+				Spec: spec,
 				Status: &pb.NVMeNamespaceStatus{
 					PciState:     2,
 					PciOperState: 1,
@@ -1439,12 +1315,8 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1459,7 +1331,12 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 			request := &pb.UpdateNVMeNamespaceRequest{NvMeNamespace: tt.in}
 			response, err := client.UpdateNVMeNamespace(ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out.Spec)
+				mResponse, _ := proto.Marshal(response.Spec)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
 				}
 				if !reflect.DeepEqual(response.Status, tt.out.Status) {
@@ -1572,12 +1449,8 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1586,14 +1459,8 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1713,12 +1580,8 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1727,14 +1590,8 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1797,12 +1654,8 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1811,14 +1664,8 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -1920,12 +1767,8 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -1934,14 +1777,8 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -2040,12 +1877,8 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -2054,14 +1887,8 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -2160,12 +1987,8 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -2174,14 +1997,8 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
