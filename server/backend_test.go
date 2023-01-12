@@ -5,17 +5,14 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"reflect"
 	"testing"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -25,6 +22,15 @@ import (
 )
 
 func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
+	controller := &pb.NVMfRemoteController{
+		Id:      &pc.ObjectKey{Value: "OpiNvme8"},
+		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		Traddr:  "127.0.0.1",
+		Trsvcid: 4444,
+		Subnqn:  "nqn.2016-06.io.spdk:cnode1",
+		Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMfRemoteController
@@ -36,15 +42,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}{
 		{
 			"valid request with invalid marshal SPDK response",
-			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme8"},
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-			},
+			controller,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -53,15 +51,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 		{
 			"valid request with empty SPDK response",
-			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme8"},
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-			},
+			controller,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -70,15 +60,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 		{
 			"valid request with ID mismatch SPDK response",
-			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme8"},
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-			},
+			controller,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -87,15 +69,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 		{
 			"valid request with error code from SPDK response",
-			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme8"},
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-			},
+			controller,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
 			codes.Unknown,
@@ -104,24 +78,8 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 		{
 			"valid request with valid SPDK response",
-			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme8"},
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-			},
-			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme8"},
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-			},
+			controller,
+			controller,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":["my_remote_nvmf_bdev"]}`},
 			codes.OK,
 			"",
@@ -129,12 +87,8 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -143,14 +97,8 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -210,12 +158,8 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -337,12 +281,8 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -351,14 +291,8 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -468,12 +402,8 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -482,14 +412,8 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -552,12 +476,8 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -566,14 +486,8 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -675,12 +589,8 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -689,14 +599,8 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {

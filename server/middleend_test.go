@@ -4,17 +4,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"reflect"
 	"testing"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -23,6 +20,11 @@ import (
 )
 
 func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
+	encryptedVolume := &pb.EncryptedVolume{
+		EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
+		VolumeId:          &pc.ObjectKey{Value: "volume-test"},
+		Key:               []byte("0123456789abcdef0123456789abcdef"),
+	}
 	tests := []struct {
 		name    string
 		in      *pb.EncryptedVolume
@@ -34,11 +36,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	}{
 		{
 			"valid request with invalid SPDK response",
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
+			encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
@@ -47,11 +45,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with invalid marshal SPDK response",
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
+			encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -60,11 +54,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with empty SPDK response",
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
+			encryptedVolume,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -73,11 +63,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with ID mismatch SPDK response",
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
+			encryptedVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
@@ -86,11 +72,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with error code from SPDK response",
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
+			encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
@@ -99,16 +81,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with valid SPDK response",
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
-			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-				VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
-			},
+			encryptedVolume,
+			encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"my_crypto_bdev"}`},
 			codes.OK,
 			"",
@@ -116,12 +90,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -131,13 +101,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -305,12 +270,8 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -320,13 +281,8 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -430,12 +386,8 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -445,13 +397,8 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -561,12 +508,8 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -576,13 +519,8 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
@@ -684,12 +622,8 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		},
 	}
 
-	// start GRPC mockup server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, conn := startGrpcMockupServer()
+
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
@@ -699,13 +633,8 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
+	ln := startSpdkMockupServer()
+
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {
