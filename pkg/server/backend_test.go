@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-package main
+package server
 
 import (
 	"bytes"
@@ -46,7 +46,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.BdevNvmeAttachControllerResult"),
+			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.BdevNvmeAttachControllerResult"),
 			true,
 		},
 		{
@@ -221,7 +221,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.BdevNvmeGetControllerResult"),
+			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.BdevNvmeGetControllerResult"),
 			true,
 		},
 		{
@@ -353,7 +353,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.BdevNvmeGetControllerResult"),
+			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.BdevNvmeGetControllerResult"),
 			true,
 		},
 		{
@@ -548,7 +548,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go struct field .result of type main.BdevNvmeDetachControllerResult"),
+			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go struct field .result of type server.BdevNvmeDetachControllerResult"),
 			true,
 		},
 		{

@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func doMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
+func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 	log.Printf("Test middleend")
 
 	// EncryptedVolume

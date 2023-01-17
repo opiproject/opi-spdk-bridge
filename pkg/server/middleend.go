@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-// The main package of the storage server
-package main
+// The main package of the storage Server
+package server
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 
 //////////////////////////////////////////////////////////
 
-func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 	params := BdevCryptoCreateParams{
 		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
@@ -50,7 +50,7 @@ func (s *server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	return response, nil
 }
 
-func (s *server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
 	params := BdevCryptoDeleteParams{
 		Name: in.Name,
@@ -70,7 +70,7 @@ func (s *server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	params1 := BdevCryptoDeleteParams{
 		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
@@ -109,7 +109,7 @@ func (s *server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	return response, nil
 }
 
-func (s *server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
+func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
 	var result []BdevGetBdevsResult
 	err := call("bdev_get_bdevs", nil, &result)
@@ -126,7 +126,7 @@ func (s *server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedV
 	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: Blobarray}, nil
 }
 
-func (s *server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("GetEncryptedVolume: Received from client: %v", in)
 	params := BdevGetBdevsParams{
 		Name: in.Name,
@@ -146,7 +146,7 @@ func (s *server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolu
 	return &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: result[0].Name}}, nil
 }
 
-func (s *server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
+func (s *Server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
 	log.Printf("EncryptedVolumeStats: Received from client: %v", in)
 	params := BdevGetIostatParams{
 		Name: in.EncryptedVolumeId.Value,

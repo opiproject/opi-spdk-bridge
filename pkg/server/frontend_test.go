@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-package main
+package server
 
 import (
 	"bytes"
@@ -27,7 +27,10 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
+var opiSpdkServer Server
+
 func dialer() func(context.Context, string) (net.Conn, error) {
+
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 	pb.RegisterFrontendNvmeServiceServer(server, &opiSpdkServer)
@@ -51,7 +54,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 		if err != nil {
 			log.Fatal("accept error:", err)
 		}
-		log.Printf("SPDK mockup server: client connected [%s]", fd.RemoteAddr().Network())
+		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
 		log.Printf("SPDK ID [%d]", rpcID)
 
 		buf := make([]byte, 512)
@@ -65,8 +68,8 @@ func spdkMockServer(l net.Listener, toSend []string) {
 			spdk = fmt.Sprintf(spdk, rpcID)
 		}
 
-		log.Printf("SPDK mockup server: got : %s", string(data))
-		log.Printf("SPDK mockup server: snd : %s", spdk)
+		log.Printf("SPDK mockup Server: got : %s", string(data))
+		log.Printf("SPDK mockup Server: snd : %s", spdk)
 
 		_, err = fd.Write([]byte(spdk))
 		if err != nil {
@@ -211,7 +214,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 }
 
 func startSpdkMockupServer() net.Listener {
-	// start SPDK mockup server
+	// start SPDK mockup Server
 	if err := os.RemoveAll(*rpcSock); err != nil {
 		log.Fatal(err)
 	}
@@ -223,7 +226,7 @@ func startSpdkMockupServer() net.Listener {
 }
 
 func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	// start GRPC mockup server
+	// start GRPC mockup Server
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
 	if err != nil {
@@ -572,7 +575,7 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("nvmf_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type main.NvmfGetSubsystemStatsResult"),
+			fmt.Sprintf("nvmf_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type server.NvmfGetSubsystemStatsResult"),
 			true,
 		},
 		{
@@ -1383,7 +1386,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.NvmfGetSubsystemsResult"),
+			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.NvmfGetSubsystemsResult"),
 			true,
 		},
 		{
@@ -1521,7 +1524,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.NvmfGetSubsystemsResult"),
+			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.NvmfGetSubsystemsResult"),
 			true,
 		},
 		{

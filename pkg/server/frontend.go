@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-package main
+package server
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 // ////////////////////////////////////////////////////////
 var subsystems = map[string]*pb.NVMeSubsystem{}
 
-func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
+func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
 	params := NvmfCreateSubsystemParams{
 		Nqn:           in.NvMeSubsystem.Spec.Nqn,
@@ -59,7 +59,7 @@ func (s *server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 	return response, nil
 }
 
-func (s *server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsystemRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsystemRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMeSubsystem: Received from client: %v", in)
 	subsys, ok := subsystems[in.Name]
 	if !ok {
@@ -86,7 +86,7 @@ func (s *server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
+func (s *Server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("UpdateNVMeSubsystem: Received from client: %v", in)
 	subsystems[in.NvMeSubsystem.Spec.Id.Value] = in.NvMeSubsystem
 	response := &pb.NVMeSubsystem{}
@@ -99,7 +99,7 @@ func (s *server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsy
 	return response, nil
 }
 
-func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
+func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
 	var result []NvmfGetSubsystemsResult
 	err := call("nvmf_get_subsystems", nil, &result)
@@ -116,7 +116,7 @@ func (s *server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsyste
 	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray}, nil
 }
 
-func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
+func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("GetNVMeSubsystem: Received from client: %v", in)
 	subsys, ok := subsystems[in.Name]
 	if !ok {
@@ -144,7 +144,7 @@ func (s *server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
-func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
+func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
 	var result NvmfGetSubsystemStatsResult
 	err := call("nvmf_get_stats", nil, &result)
@@ -159,7 +159,7 @@ func (s *server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 // ////////////////////////////////////////////////////////
 var controllers = map[string]*pb.NVMeController{}
 
-func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
+func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.NvMeController)
 	subsys, ok := subsystems[in.NvMeController.Spec.SubsystemId.Value]
 	if !ok {
@@ -207,7 +207,7 @@ func (s *server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	return response, nil
 }
 
-func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := controllers[in.Name]
 	if !ok {
@@ -252,7 +252,7 @@ func (s *server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
+func (s *Server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("UpdateNVMeController: Received from client: %v", in)
 	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
 	controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
@@ -265,7 +265,7 @@ func (s *server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 	return response, nil
 }
 
-func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
+func (s *Server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("Received from client: %v", in.Parent)
 	Blobarray := []*pb.NVMeController{}
 	for _, controller := range controllers {
@@ -274,7 +274,7 @@ func (s *server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControl
 	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray}, nil
 }
 
-func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
+func (s *Server) GetNVMeController(ctx context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := controllers[in.Name]
 	if !ok {
@@ -283,7 +283,7 @@ func (s *server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NVMeControllerStatus{Active: true}}, nil
 }
 
-func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
+func (s *Server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
 	log.Printf("NVMeControllerStats: Received from client: %v", in)
 	return &pb.NVMeControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
@@ -291,7 +291,7 @@ func (s *server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 // ////////////////////////////////////////////////////////
 var namespaces = map[string]*pb.NVMeNamespace{}
 
-func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
+func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("CreateNVMeNamespace: Received from client: %v", in)
 	subsys, ok := subsystems[in.NvMeNamespace.Spec.SubsystemId.Value]
 	if !ok {
@@ -332,7 +332,7 @@ func (s *server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	return response, nil
 }
 
-func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNamespaceRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNamespaceRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMeNamespace: Received from client: %v", in)
 	namespace, ok := namespaces[in.Name]
 	if !ok {
@@ -367,7 +367,7 @@ func (s *server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
+func (s *Server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("UpdateNVMeNamespace: Received from client: %v", in)
 	namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
 	namespaces[in.NvMeNamespace.Spec.Id.Value].Status = &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}
@@ -381,7 +381,7 @@ func (s *server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNames
 	return response, nil
 }
 
-func (s *server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
+func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
 	log.Printf("ListNVMeNamespaces: Received from client: %v", in)
 
 	nqn := ""
@@ -421,7 +421,7 @@ func (s *server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
-func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
+func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("GetNVMeNamespace: Received from client: %v", in)
 	namespace, ok := namespaces[in.Name]
 	if !ok {
@@ -432,7 +432,7 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 	// TODO: do we even query SPDK to confirm if namespace is present?
 	// return namespace, nil
 
-	// fetch subsystems -> namespaces from server, match the nsid to find the corresponding namespace
+	// fetch subsystems -> namespaces from Server, match the nsid to find the corresponding namespace
 	subsys, ok := subsystems[namespace.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
@@ -469,14 +469,14 @@ func (s *server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
-func (s *server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
+func (s *Server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
 	log.Printf("NVMeNamespaceStats: Received from client: %v", in)
 	return &pb.NVMeNamespaceStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 //////////////////////////////////////////////////////////
 
-func (s *server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
 	params := VhostCreateBlkControllerParams{
 		Ctrlr:   in.VirtioBlk.Id.Value,
@@ -495,7 +495,7 @@ func (s *server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	return &pb.VirtioBlk{}, nil
 }
 
-func (s *server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
 	params := VhostDeleteControllerParams{
 		Ctrlr: in.Name,
@@ -513,12 +513,12 @@ func (s *server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioBlk{}, nil
 }
 
-func (s *server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
+func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
 	log.Printf("ListVirtioBlks: Received from client: %v", in)
 	var result []VhostGetControllersResult
 	err := call("vhost_get_controllers", nil, &result)
@@ -535,7 +535,7 @@ func (s *server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 	return &pb.ListVirtioBlksResponse{VirtioBlks: Blobarray}, nil
 }
 
-func (s *server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("GetVirtioBlk: Received from client: %v", in)
 	params := VhostGetControllersParams{
 		Name: in.Name,
@@ -555,14 +555,14 @@ func (s *server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (
 	return &pb.VirtioBlk{Id: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
 }
 
-func (s *server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
+func (s *Server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioBlkStatsResponse{}, nil
 }
 
 //////////////////////////////////////////////////////////
 
-func (s *server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
 	params := VhostCreateScsiControllerParams{
 		Ctrlr: in.VirtioScsiController.Id.Value,
@@ -580,7 +580,7 @@ func (s *server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVi
 	return &pb.VirtioScsiController{}, nil
 }
 
-func (s *server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiController: Received from client: %v", in)
 	params := VhostDeleteControllerParams{
 		Ctrlr: in.Name,
@@ -598,12 +598,12 @@ func (s *server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVi
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiController{}, nil
 }
 
-func (s *server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
+func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
 	var result []VhostGetControllersResult
 	err := call("vhost_get_controllers", nil, &result)
@@ -620,7 +620,7 @@ func (s *server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirti
 	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray}, nil
 }
 
-func (s *server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("GetVirtioScsiController: Received from client: %v", in)
 	params := VhostGetControllersParams{
 		Name: in.Name,
@@ -640,14 +640,14 @@ func (s *server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioSc
 	return &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
 }
 
-func (s *server) VirtioScsiControllerStats(ctx context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
+func (s *Server) VirtioScsiControllerStats(ctx context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiControllerStatsResponse{}, nil
 }
 
 //////////////////////////////////////////////////////////
 
-func (s *server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("CreateVirtioScsiLun: Received from client: %v", in)
 	params := struct {
 		Name string `json:"ctrlr"`
@@ -668,7 +668,7 @@ func (s *server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScs
 	return &pb.VirtioScsiLun{}, nil
 }
 
-func (s *server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiLun: Received from client: %v", in)
 	params := struct {
 		Name string `json:"ctrlr"`
@@ -690,12 +690,12 @@ func (s *server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScs
 	return &emptypb.Empty{}, nil
 }
 
-func (s *server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiLun{}, nil
 }
 
-func (s *server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
+func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
 	var result []VhostGetControllersResult
 	err := call("vhost_get_controllers", nil, &result)
@@ -712,7 +712,7 @@ func (s *server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLu
 	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray}, nil
 }
 
-func (s *server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("GetVirtioScsiLun: Received from client: %v", in)
 	params := VhostGetControllersParams{
 		Name: in.Name,
@@ -732,7 +732,7 @@ func (s *server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRe
 	return &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
 }
 
-func (s *server) VirtioScsiLunStats(ctx context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
+func (s *Server) VirtioScsiLunStats(ctx context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiLunStatsResponse{}, nil
 }

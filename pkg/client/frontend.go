@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func doFrontend(ctx context.Context, conn grpc.ClientConnInterface) {
+func DoFrontend(ctx context.Context, conn grpc.ClientConnInterface) {
 	err := executeNVMeSubsystem(ctx, conn)
 	if err != nil {
 		log.Fatalf("Error executeNVMeSubsystem: %v", err)
