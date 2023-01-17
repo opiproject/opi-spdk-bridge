@@ -50,7 +50,13 @@ jobs:
       - uses: actions/setup-go@v3
       - uses: golangci/golangci-lint-action@v3
         with:
-          working-directory: server
+          working-directory: cmd/server
       - uses: golangci/golangci-lint-action@v3
         with:
-          working-directory: client
+          working-directory: cmd/client
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: pkg/server
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: pkg/client
