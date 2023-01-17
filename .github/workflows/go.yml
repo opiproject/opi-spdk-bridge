@@ -26,11 +26,11 @@ jobs:
 
     - name: Build
       run: go build -v ./...
-      working-directory: server
+      working-directory: cmd/server
 
     - name: Test
       run: go test -race -coverprofile=coverage.out -covermode=atomic -v ./...
-      working-directory: server
+      working-directory: .
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
