@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/opiproject/opi-spdk-bridge/pkg/client"
 	"log"
 	"time"
 
@@ -36,11 +37,11 @@ func main() {
 	defer cancel()
 
 	log.Printf("Test frontend")
-	doFrontend(ctx, conn)
+	client.DoFrontend(ctx, conn)
 
 	log.Printf("Test backend")
-	doBackend(ctx, conn)
+	client.DoBackend(ctx, conn)
 
 	log.Printf("Test middleend")
-	doMiddleend(ctx, conn)
+	client.DoMiddleend(ctx, conn)
 }

@@ -1,4 +1,4 @@
-module github.com/opiproject/opi-spdk-bridge/server
+module github.com/opiproject/opi-spdk-bridge
 
 go 1.19
 

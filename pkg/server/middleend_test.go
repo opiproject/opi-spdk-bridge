@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-package main
+package server
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go struct field .result of type main.BdevCryptoCreateResult"),
+			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go struct field .result of type server.BdevCryptoCreateResult"),
 			true,
 		},
 		{
@@ -100,7 +100,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	}(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup server
+	// start SPDK mockup Server
 	ln := startSpdkMockupServer()
 
 	defer func(ln net.Listener) {
@@ -160,7 +160,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 // 		},
 // 	}
 
-// 	// start GRPC mockup server
+// 	// start GRPC mockup Server
 // 	ctx := context.Background()
 // 	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
 // 	if err != nil {
@@ -222,7 +222,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.BdevGetBdevsResult"),
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.BdevGetBdevsResult"),
 			true,
 		},
 		{
@@ -280,7 +280,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 	}(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup server
+	// start SPDK mockup Server
 	ln := startSpdkMockupServer()
 
 	defer func(ln net.Listener) {
@@ -343,7 +343,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go struct field .result of type []main.BdevGetBdevsResult"),
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.BdevGetBdevsResult"),
 			true,
 		},
 		{
@@ -396,7 +396,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 	}(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup server
+	// start SPDK mockup Server
 	ln := startSpdkMockupServer()
 
 	defer func(ln net.Listener) {
@@ -460,7 +460,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go struct field .result of type main.BdevGetIostatResult"),
+			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go struct field .result of type server.BdevGetIostatResult"),
 			true,
 		},
 		{
@@ -518,7 +518,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 	}(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup server
+	// start SPDK mockup Server
 	ln := startSpdkMockupServer()
 
 	defer func(ln net.Listener) {
@@ -581,7 +581,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_crypto_delete: %v", "json: cannot unmarshal array into Go struct field .result of type main.BdevCryptoDeleteResult"),
+			fmt.Sprintf("bdev_crypto_delete: %v", "json: cannot unmarshal array into Go struct field .result of type server.BdevCryptoDeleteResult"),
 			true,
 		},
 		{
@@ -632,7 +632,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 	}(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup server
+	// start SPDK mockup Server
 	ln := startSpdkMockupServer()
 
 	defer func(ln net.Listener) {

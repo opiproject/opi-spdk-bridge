@@ -1,5 +1,5 @@
 // The main package of the storage client
-package main
+package client
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func doBackend(ctx context.Context, conn grpc.ClientConnInterface) {
+func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// NVMfRemoteController
 	c4 := pb.NewNVMfRemoteControllerServiceClient(conn)
 	addr, err := net.LookupIP("spdk")
