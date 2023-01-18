@@ -1,3 +1,4 @@
+// Package client implements the storage client
 package client
 
 import (
@@ -9,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// DoMiddleend executes the middle end code
 func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 	log.Printf("Test middleend")
 

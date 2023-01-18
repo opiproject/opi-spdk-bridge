@@ -1,4 +1,4 @@
-// The main package of the storage client
+// Package client implements the storage client
 package client
 
 import (
@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// DoBackend executes the back end code
 func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// NVMfRemoteController
 	c4 := pb.NewNVMfRemoteControllerServiceClient(conn)
