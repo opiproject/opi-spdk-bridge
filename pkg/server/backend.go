@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-// The main package of the storage Server
+// Package server is the main package of the storage Server
 package server
 
 import (
@@ -21,6 +21,7 @@ import (
 
 //////////////////////////////////////////////////////////
 
+// CreateNVMfRemoteController creates an NVMf remote controller
 func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("CreateNVMfRemoteController: Received from client: %v", in)
 	params := BdevNvmeAttachControllerParams{
@@ -51,6 +52,7 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 	return response, nil
 }
 
+// DeleteNVMfRemoteController deletes an NVMf remote controller
 func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMfRemoteController: Received from client: %v", in)
 	params := BdevNvmeDetachControllerParams{
@@ -66,11 +68,13 @@ func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNV
 	return &emptypb.Empty{}, nil
 }
 
+// NVMfRemoteControllerReset resets an NVMf remote controller
 func (s *Server) NVMfRemoteControllerReset(ctx context.Context, in *pb.NVMfRemoteControllerResetRequest) (*emptypb.Empty, error) {
 	log.Printf("Received: %v", in.GetId())
 	return &emptypb.Empty{}, nil
 }
 
+// ListNVMfRemoteControllers lists an NVMf remote controllers
 func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfRemoteControllersRequest) (*pb.ListNVMfRemoteControllersResponse, error) {
 	log.Printf("ListNVMfRemoteControllers: Received from client: %v", in)
 	var result []BdevNvmeGetControllerResult
@@ -97,6 +101,7 @@ func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfR
 	return &pb.ListNVMfRemoteControllersResponse{NvMfRemoteControllers: Blobarray}, nil
 }
 
+// GetNVMfRemoteController gets an NVMf remote controller
 func (s *Server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("GetNVMfRemoteController: Received from client: %v", in)
 	params := BdevNvmeGetControllerParams{
@@ -126,6 +131,7 @@ func (s *Server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemo
 	}, nil
 }
 
+// NVMfRemoteControllerStats gets NVMf remote controller stats
 func (s *Server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
 	log.Printf("Received: %v", in.GetId())
 	return &pb.NVMfRemoteControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
@@ -133,6 +139,7 @@ func (s *Server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemot
 
 //////////////////////////////////////////////////////////
 
+// CreateNullDebug creates a Null Debug instance
 func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
 	params := BdevNullCreateParams{
@@ -156,6 +163,7 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 	return response, nil
 }
 
+// DeleteNullDebug deletes a Null Debug instance
 func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNullDebug: Received from client: %v", in)
 	params := BdevNullDeleteParams{
@@ -174,6 +182,7 @@ func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequ
 	return &emptypb.Empty{}, nil
 }
 
+// UpdateNullDebug updates a Null Debug instance
 func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
 	params1 := BdevNullDeleteParams{
@@ -210,6 +219,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 	return response, nil
 }
 
+// ListNullDebugs lists Null Debug instances
 func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
 	var result []BdevGetBdevsResult
@@ -227,6 +237,7 @@ func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsReques
 	return &pb.ListNullDebugsResponse{NullDebugs: Blobarray}, nil
 }
 
+// GetNullDebug gets a a Null Debug instance
 func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("GetNullDebug: Received from client: %v", in)
 	params := BdevGetBdevsParams{
@@ -247,6 +258,7 @@ func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (
 	return &pb.NullDebug{Handle: &pc.ObjectKey{Value: result[0].Name}, Uuid: &pc.Uuid{Value: result[0].UUID}}, nil
 }
 
+// NullDebugStats gets a Null Debug instance stats
 func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
 	log.Printf("NullDebugStats: Received from client: %v", in)
 	params := BdevGetIostatParams{
@@ -280,6 +292,7 @@ func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 
 //////////////////////////////////////////////////////////
 
+// CreateAioController creates an Aio controller
 func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
 	params := BdevAioCreateParams{
@@ -303,6 +316,7 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 	return response, nil
 }
 
+// DeleteAioController deletes an Aio controller
 func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteAioController: Received from client: %v", in)
 	params := BdevAioDeleteParams{
@@ -321,6 +335,7 @@ func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioContro
 	return &emptypb.Empty{}, nil
 }
 
+// UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
 	params1 := BdevAioDeleteParams{
@@ -351,6 +366,7 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 	return &pb.AioController{}, nil
 }
 
+// ListAioControllers lists Aio controllers
 func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
 	var result []BdevGetBdevsResult
@@ -368,6 +384,7 @@ func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControlle
 	return &pb.ListAioControllersResponse{AioControllers: Blobarray}, nil
 }
 
+// GetAioController gets an Aio controller
 func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("GetAioController: Received from client: %v", in)
 	params := BdevGetBdevsParams{
@@ -388,6 +405,7 @@ func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRe
 	return &pb.AioController{Handle: &pc.ObjectKey{Value: result[0].Name}}, nil
 }
 
+// AioControllerStats gets an Aio controller stats
 func (s *Server) AioControllerStats(ctx context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
 	log.Printf("AioControllerStats: Received from client: %v", in)
 	params := BdevGetIostatParams{

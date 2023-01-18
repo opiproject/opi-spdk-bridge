@@ -27,9 +27,8 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
-var opiSpdkServer Server
-
 func dialer() func(context.Context, string) (net.Conn, error) {
+	var opiSpdkServer Server
 
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()

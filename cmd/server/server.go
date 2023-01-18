@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
-
 package main
 
 import (
@@ -17,8 +16,7 @@ import (
 )
 
 var (
-	port          = flag.Int("port", 50051, "The Server port")
-	opiSpdkServer server.Server
+	port = flag.Int("port", 50051, "The Server port")
 )
 
 func main() {

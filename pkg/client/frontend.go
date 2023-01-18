@@ -1,3 +1,4 @@
+// Package client implements the storage client
 package client
 
 import (
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// DoFrontend executes the front end code
 func DoFrontend(ctx context.Context, conn grpc.ClientConnInterface) {
 	err := executeNVMeSubsystem(ctx, conn)
 	if err != nil {
