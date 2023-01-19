@@ -13,7 +13,7 @@ RUN go mod download
 # build an app
 COPY cmd/server/*.go cmd/server/
 COPY pkg/server/*.go pkg/server/
-WORKDIR cmd/server
+WORKDIR /app/cmd/server
 RUN go build -v -o /opi-spdk-bridge && CGO_ENABLED=0 go test -v ./...
 
 # second stage to reduce image size
