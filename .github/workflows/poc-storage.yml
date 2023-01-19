@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         package:
-          - cmd/server
-          - cmd/client
+          - server
+          - client
           - spdk
     steps:
     - uses: actions/checkout@v3
