@@ -13,7 +13,7 @@ RUN go mod download
 # build an app
 COPY cmd/client/*.go cmd/client/
 COPY pkg/client/*.go pkg/client/
-WORKDIR cmd/client
+WORKDIR /app/cmd/client
 RUN go build -v -o /opi-storage-client && CGO_ENABLED=0 go test -v ./...
 
 # second stage to reduce image size
