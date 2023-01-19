@@ -48,7 +48,8 @@ services:
 
   opi-spdk-server:
     build:
-      context: server
+      context: .
+      dockerfile: cmd/server/Dockerfile
     volumes_from:
       - spdk:rw
     ports:
@@ -64,7 +65,8 @@ services:
 
   opi-spdk-client:
     build:
-      context: client
+      context: .
+      dockerfile: cmd/client/Dockerfile
     networks:
       - opi
     depends_on:
