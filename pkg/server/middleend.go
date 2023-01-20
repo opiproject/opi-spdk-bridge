@@ -17,8 +17,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// ////////////////////////////////////////////////////////
-
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
@@ -182,5 +180,3 @@ func (s *Server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolum
 		UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
 	}}, nil
 }
-
-// ////////////////////////////////////////////////////////
