@@ -292,6 +292,11 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 			Spec: &pb.NVMeControllerSpec{
 				Id:               &pbc.ObjectKey{Value: "controller-test"},
 				SubsystemId:      &pbc.ObjectKey{Value: "controller-test-ss"},
+				PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2, PortId: 3},
+				MaxNsq:           5,
+				MaxNcq:           6,
+				Sqes:             7,
+				Cqes:             8,
 				NvmeControllerId: 2}}})
 	if err != nil {
 		log.Fatalf("could not update NVMe controller: %v", err)
