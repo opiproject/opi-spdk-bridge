@@ -169,8 +169,11 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 	rs1, err := c1.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
 		NvMeSubsystem: &pb.NVMeSubsystem{
 			Spec: &pb.NVMeSubsystemSpec{
-				Id:  &pbc.ObjectKey{Value: "namespace-test-ss"},
-				Nqn: "nqn.2022-09.io.spdk:opi1"}}})
+				Id:            &pbc.ObjectKey{Value: "namespace-test-ss"},
+				ModelNumber:   "OPI Model",
+				SerialNumber:  "OPI SN",
+				MaxNamespaces: 10,
+				Nqn:           "nqn.2022-09.io.spdk:opi1"}}})
 	if err != nil {
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
@@ -268,8 +271,11 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 	rs1, err := c1.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
 		NvMeSubsystem: &pb.NVMeSubsystem{
 			Spec: &pb.NVMeSubsystemSpec{
-				Id:  &pbc.ObjectKey{Value: "controller-test-ss"},
-				Nqn: "nqn.2022-09.io.spdk:opi2"}}})
+				Id:            &pbc.ObjectKey{Value: "controller-test-ss"},
+				ModelNumber:   "OPI Model",
+				SerialNumber:  "OPI SN",
+				MaxNamespaces: 10,
+				Nqn:           "nqn.2022-09.io.spdk:opi2"}}})
 	if err != nil {
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
@@ -350,8 +356,11 @@ func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) er
 	rs1, err := c1.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
 		NvMeSubsystem: &pb.NVMeSubsystem{
 			Spec: &pb.NVMeSubsystemSpec{
-				Id:  &pbc.ObjectKey{Value: "subsystem-test"},
-				Nqn: "nqn.2022-09.io.spdk:opi3"}}})
+				Id:            &pbc.ObjectKey{Value: "subsystem-test"},
+				ModelNumber:   "OPI Model",
+				SerialNumber:  "OPI SN",
+				MaxNamespaces: 10,
+				Nqn:           "nqn.2022-09.io.spdk:opi3"}}})
 	if err != nil {
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
