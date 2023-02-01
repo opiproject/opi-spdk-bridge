@@ -204,6 +204,9 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 				Id:          &pbc.ObjectKey{Value: "namespace-test"},
 				SubsystemId: &pbc.ObjectKey{Value: "namespace-test-ss"},
 				VolumeId:    &pbc.ObjectKey{Value: "Malloc1"},
+				Uuid:        &pbc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+				Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+				Eui64:       1967554867335598546,
 				HostNsid:    1}}})
 	if err != nil {
 		log.Fatalf("could not create NVMe namespace: %v", err)
@@ -214,6 +217,10 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 			Spec: &pb.NVMeNamespaceSpec{
 				Id:          &pbc.ObjectKey{Value: "namespace-test"},
 				SubsystemId: &pbc.ObjectKey{Value: "namespace-test-ss"},
+				VolumeId:    &pbc.ObjectKey{Value: "Malloc1"},
+				Uuid:        &pbc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+				Nguid:       "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+				Eui64:       1967554867335598546,
 				HostNsid:    1}}})
 	if err != nil {
 		log.Fatalf("could not update NVMe namespace: %v", err)
