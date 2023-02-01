@@ -20,14 +20,32 @@ import (
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
+	// first create a key
+	params1 := AccelCryptoKeyCreateParams{
+		Cipher: "AES_XTS",
+		Name:   "super_key",
+		Key:    string(in.EncryptedVolume.Key),
+	}
+	// TODO: use in.EncryptedVolume.Cipher.String()
+	// TODO: don't use hard-coded key name
+	var result1 AccelCryptoKeyCreateResult
+	err1 := call("accel_crypto_key_create", &params1, &result1)
+	if err1 != nil {
+		log.Printf("error: %v", err1)
+		return nil, err1
+	}
+	log.Printf("Received from SPDK: %v", result1)
+	if !result1 {
+		msg := fmt.Sprintf("Could not create Crypto Key: %s", string(in.EncryptedVolume.Key))
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	// create bdev now
 	params := BdevCryptoCreateParams{
 		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		CryptoPmd:    "crypto_aesni_mb",
-		Key:          string(in.EncryptedVolume.Key),
-		Cipher:       "AES_CBC",
+		KeyName:      "super_key",
 	}
-	// TODO: use in.EncryptedVolume.Cipher.String()
 	var result BdevCryptoCreateResult
 	err := call("bdev_crypto_create", &params, &result)
 	if err != nil {
@@ -86,26 +104,44 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	if !result1 {
 		log.Printf("Could not delete: %v", in)
 	}
-	params2 := BdevCryptoCreateParams{
-		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
-		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		CryptoPmd:    "crypto_aesni_mb",
-		Key:          string(in.EncryptedVolume.Key),
-		Cipher:       "AES_CBC",
+	// first create a key
+	params2 := AccelCryptoKeyCreateParams{
+		Cipher: "AES_XTS",
+		Name:   "super_key",
+		Key:    string(in.EncryptedVolume.Key),
 	}
 	// TODO: use in.EncryptedVolume.Cipher.String()
-	var result2 BdevCryptoCreateResult
-	err2 := call("bdev_crypto_create", &params2, &result2)
+	// TODO: don't use hard-coded key name
+	var result2 AccelCryptoKeyCreateResult
+	err2 := call("accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
-	response := &pb.EncryptedVolume{}
-	err3 := deepcopier.Copy(in.EncryptedVolume).To(response)
+	if !result2 {
+		msg := fmt.Sprintf("Could not create Crypto Key: %s", string(in.EncryptedVolume.Key))
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	// create bdev now
+	params3 := BdevCryptoCreateParams{
+		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
+		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
+		KeyName:      "super_key",
+	}
+	var result3 BdevCryptoCreateResult
+	err3 := call("bdev_crypto_create", &params3, &result3)
 	if err3 != nil {
 		log.Printf("error: %v", err3)
 		return nil, err3
+	}
+	log.Printf("Received from SPDK: %v", result3)
+	response := &pb.EncryptedVolume{}
+	err4 := deepcopier.Copy(in.EncryptedVolume).To(response)
+	if err4 != nil {
+		log.Printf("error: %v", err4)
+		return nil, err4
 	}
 	return response, nil
 }

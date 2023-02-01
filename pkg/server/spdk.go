@@ -26,6 +26,17 @@ package server
 // vhost_delete_controller
 // vhost_get_controllers
 
+// AccelCryptoKeyCreateParams holds the parameters required to create an AIO Block Device
+type AccelCryptoKeyCreateParams struct {
+	Cipher string `json:"cipher"`
+	Key    string `json:"key"`
+	Key2   string `json:"key2"`
+	Name   string `json:"name"`
+}
+
+// AccelCryptoKeyCreateResult is the result of deleting an AIO Block Device
+type AccelCryptoKeyCreateResult bool
+
 // GetVersionResult is the result of getting a version
 type GetVersionResult struct {
 	Version string `json:"version"`
@@ -97,9 +108,7 @@ type BdevNullDeleteResult bool
 type BdevCryptoCreateParams struct {
 	BaseBdevName string `json:"base_bdev_name"`
 	Name         string `json:"name"`
-	CryptoPmd    string `json:"crypto_pmd"`
-	Key          string `json:"key"`
-	Cipher       string `json:"cipher"`
+	KeyName      string `json:"key_name"`
 }
 
 // BdevCryptoCreateResult is the result of creating a Crypto Block Device
