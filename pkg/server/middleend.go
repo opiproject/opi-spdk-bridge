@@ -54,7 +54,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result == "" {
-		msg := fmt.Sprintf("Could not create Crypto: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -137,6 +137,11 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		return nil, err3
 	}
 	log.Printf("Received from SPDK: %v", result3)
+	if result3 == "" {
+		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	response := &pb.EncryptedVolume{}
 	err4 := deepcopier.Copy(in.EncryptedVolume).To(response)
 	if err4 != nil {
