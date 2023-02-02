@@ -382,7 +382,7 @@ func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) er
 				Id:  &pbc.ObjectKey{Value: "subsystem-test"},
 				Nqn: "nqn.2022-09.io.spdk:opi3"}}})
 	if err != nil {
-		log.Fatalf("could not update NVMe subsystem: %v", err)
+		log.Printf("could not update NVMe subsystem: %v", err)
 	}
 	log.Printf("Updated: %v", rs3)
 	rs4, err := c1.ListNVMeSubsystems(ctx, &pb.ListNVMeSubsystemsRequest{})

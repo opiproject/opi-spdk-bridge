@@ -91,15 +91,7 @@ func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 // UpdateNVMeSubsystem updates an NVMe Subsystem
 func (s *Server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("UpdateNVMeSubsystem: Received from client: %v", in)
-	subsystems[in.NvMeSubsystem.Spec.Id.Value] = in.NvMeSubsystem
-	response := &pb.NVMeSubsystem{}
-	err := deepcopier.Copy(in.NvMeSubsystem).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	response.Status = &pb.NVMeSubsystemStatus{FirmwareRevision: "TBD"}
-	return response, nil
+	return nil, status.Errorf(codes.Unimplemented, "UpdateNVMeSubsystem method is not implemented")
 }
 
 // ListNVMeSubsystems lists NVMe Subsystems
