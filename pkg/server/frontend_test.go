@@ -235,35 +235,20 @@ func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
 }
 
 func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
-	spec := &pb.NVMeSubsystemSpec{
-		Id:           &pc.ObjectKey{Value: "subsystem-test"},
-		Nqn:          "nqn.2022-09.io.spdk:opi3",
-		SerialNumber: "OpiSerialNumber",
-		ModelNumber:  "OpiModelNumber",
-	}
 	tests := []struct {
 		name    string
 		in      *pb.NVMeSubsystem
 		out     *pb.NVMeSubsystem
-		spdk    []string
 		errCode codes.Code
 		errMsg  string
 		start   bool
 	}{
 		{
-			"valid request without SPDK",
-			&pb.NVMeSubsystem{
-				Spec: spec,
-			},
-			&pb.NVMeSubsystem{
-				Spec: spec,
-				Status: &pb.NVMeSubsystemStatus{
-					FirmwareRevision: "TBD",
-				},
-			},
-			[]string{""},
-			codes.OK,
-			"",
+			"unimplemented method",
+			&pb.NVMeSubsystem{},
+			nil,
+			codes.Unimplemented,
+			fmt.Sprintf("%v method is not implemented", "UpdateNVMeSubsystem"),
 			false,
 		},
 	}
