@@ -36,12 +36,18 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	log.Printf("==============================================================================")
 	log.Printf("Test frontend")
+	log.Printf("==============================================================================")
 	client.DoFrontend(ctx, conn)
 
+	log.Printf("==============================================================================")
 	log.Printf("Test backend")
+	log.Printf("==============================================================================")
 	client.DoBackend(ctx, conn)
 
+	log.Printf("==============================================================================")
 	log.Printf("Test middleend")
+	log.Printf("==============================================================================")
 	client.DoMiddleend(ctx, conn)
 }

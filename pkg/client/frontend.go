@@ -13,17 +13,22 @@ import (
 
 // DoFrontend executes the front end code
 func DoFrontend(ctx context.Context, conn grpc.ClientConnInterface) {
+	log.Printf("==============================================================================")
+
 	err := executeNVMeSubsystem(ctx, conn)
 	if err != nil {
 		log.Fatalf("Error executeNVMeSubsystem: %v", err)
 		return
 	}
+	log.Printf("==============================================================================")
 
 	err = executeNVMeController(ctx, conn)
 	if err != nil {
 		log.Fatalf("Error executeNVMeController: %v", err)
 		return
 	}
+
+	log.Printf("==============================================================================")
 
 	err = executeNVMeNamespace(ctx, conn)
 	if err != nil {
@@ -37,17 +42,23 @@ func DoFrontend(ctx context.Context, conn grpc.ClientConnInterface) {
 		return
 	}
 
+	log.Printf("==============================================================================")
+
 	c5, err := executeVirtioScsiController(ctx, conn)
 	if err != nil {
 		log.Fatalf("Error executeVirtioScsiController: %v", err)
 		return
 	}
 
+	log.Printf("==============================================================================")
+
 	err = executeVirtioScsiLun(ctx, conn, c5)
 	if err != nil {
 		log.Fatalf("Error executeVirtioScsiLun: %v", err)
 		return
 	}
+
+	log.Printf("==============================================================================")
 }
 
 func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5 pb.FrontendVirtioScsiServiceClient) error {
