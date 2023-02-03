@@ -15,6 +15,9 @@ import (
 func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 	// NVMfRemoteController
 	c4 := pb.NewNVMfRemoteControllerServiceClient(conn)
+	log.Printf("==============================================================================")
+	log.Printf("Testing NewNVMfRemoteControllerServiceClient")
+
 	addr, err := net.LookupIP("spdk")
 	if err != nil {
 		log.Fatalf("could not find SPDK IP address")
@@ -60,6 +63,7 @@ func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 
 	// NullDebug
 	c1 := pb.NewNullDebugServiceClient(conn)
+	log.Printf("==============================================================================")
 	log.Printf("Testing NewNullDebugServiceClient")
 	rs1, err := c1.CreateNullDebug(ctx, &pb.CreateNullDebugRequest{NullDebug: &pb.NullDebug{Handle: &pc.ObjectKey{Value: "OpiNull9"}}})
 	if err != nil {
@@ -94,6 +98,7 @@ func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) {
 
 	// Aio
 	c2 := pb.NewAioControllerServiceClient(conn)
+	log.Printf("==============================================================================")
 	log.Printf("Testing NewAioControllerServiceClient")
 	ra1, err := c2.CreateAioController(ctx, &pb.CreateAioControllerRequest{AioController: &pb.AioController{Handle: &pc.ObjectKey{Value: "OpiAio4"}, Filename: "/tmp/aio_bdev_file"}})
 	if err != nil {
