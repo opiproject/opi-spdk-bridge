@@ -13,8 +13,26 @@ import (
 
 // DoBackend executes the back end code
 func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) error {
-	// NVMfRemoteController
-	c4 := pb.NewNVMfRemoteControllerServiceClient(conn)
+	nvme := pb.NewNVMfRemoteControllerServiceClient(conn)
+	null := pb.NewNullDebugServiceClient(conn)
+	aio := pb.NewAioControllerServiceClient(conn)
+
+	err := executeNVMfRemoteController(ctx, nvme)
+	if err != nil {
+		return err
+	}
+	err = executeNullDebug(ctx, null)
+	if err != nil {
+		return err
+	}
+	err = executeAioController(ctx, aio)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func executeNVMfRemoteController(ctx context.Context, c4 pb.NVMfRemoteControllerServiceClient) error {
 	log.Printf("=======================================")
 	log.Printf("Testing NewNVMfRemoteControllerServiceClient")
 	log.Printf("=======================================")
@@ -61,9 +79,10 @@ func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) error {
 		return err
 	}
 	log.Printf("Disconnected NVMf: %v -> %v", rr0, rr1)
+	return nil
+}
 
-	// NullDebug
-	c1 := pb.NewNullDebugServiceClient(conn)
+func executeNullDebug(ctx context.Context, c1 pb.NullDebugServiceClient) error {
 	log.Printf("=======================================")
 	log.Printf("Testing NewNullDebugServiceClient")
 	log.Printf("=======================================")
@@ -97,9 +116,10 @@ func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) error {
 		return err
 	}
 	log.Printf("Deleted Null: %v -> %v", rs1, rs2)
+	return nil
+}
 
-	// Aio
-	c2 := pb.NewAioControllerServiceClient(conn)
+func executeAioController(ctx context.Context, c2 pb.AioControllerServiceClient) error {
 	log.Printf("=======================================")
 	log.Printf("Testing NewAioControllerServiceClient")
 	log.Printf("=======================================")
@@ -134,5 +154,4 @@ func DoBackend(ctx context.Context, conn grpc.ClientConnInterface) error {
 	}
 	log.Printf("Deleted Aio: %v -> %v", ra1, ra2)
 	return nil
-
 }
