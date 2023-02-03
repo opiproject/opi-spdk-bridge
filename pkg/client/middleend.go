@@ -12,11 +12,10 @@ import (
 
 // DoMiddleend executes the middle end code
 func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
-	log.Printf("Test middleend")
-
 	// EncryptedVolume
 	c1 := pb.NewMiddleendServiceClient(conn)
-	log.Printf("Testing NewEncryptedVolumeServiceClient")
+	log.Printf("==============================================================================")
+	log.Printf("Testing NewMiddleendServiceClient")
 	rs1, err := c1.CreateEncryptedVolume(ctx, &pb.CreateEncryptedVolumeRequest{
 		EncryptedVolume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},

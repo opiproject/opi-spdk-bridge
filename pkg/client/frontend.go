@@ -13,57 +13,56 @@ import (
 
 // DoFrontend executes the front end code
 func DoFrontend(ctx context.Context, conn grpc.ClientConnInterface) {
+	nvme := pb.NewFrontendNvmeServiceClient(conn)
+	blk := pb.NewFrontendVirtioBlkServiceClient(conn)
+	scsi := pb.NewFrontendVirtioScsiServiceClient(conn)
 	log.Printf("==============================================================================")
-
-	err := executeNVMeSubsystem(ctx, conn)
+	log.Printf("Testing NVMeSubsystem")
+	err := executeNVMeSubsystem(ctx, nvme)
 	if err != nil {
 		log.Fatalf("Error executeNVMeSubsystem: %v", err)
 		return
 	}
 	log.Printf("==============================================================================")
-
-	err = executeNVMeController(ctx, conn)
+	log.Printf("Testing NVMeController")
+	err = executeNVMeController(ctx, nvme)
 	if err != nil {
 		log.Fatalf("Error executeNVMeController: %v", err)
 		return
 	}
-
 	log.Printf("==============================================================================")
-
-	err = executeNVMeNamespace(ctx, conn)
+	log.Printf("Testing NVMeNamespace")
+	err = executeNVMeNamespace(ctx, nvme)
 	if err != nil {
 		log.Fatalf("Error executeNVMeNamespace: %v", err)
 		return
 	}
-
-	err = executeVirtioBlk(ctx, conn)
+	log.Printf("==============================================================================")
+	log.Printf("Testing VirtioBlk")
+	err = executeVirtioBlk(ctx, blk)
 	if err != nil {
 		log.Fatalf("Error executeVirtioBlk: %v", err)
 		return
 	}
-
 	log.Printf("==============================================================================")
-
-	c5, err := executeVirtioScsiController(ctx, conn)
+	log.Printf("Testing VirtioScsiController")
+	err = executeVirtioScsiController(ctx, scsi)
 	if err != nil {
 		log.Fatalf("Error executeVirtioScsiController: %v", err)
 		return
 	}
-
 	log.Printf("==============================================================================")
-
-	err = executeVirtioScsiLun(ctx, conn, c5)
+	log.Printf("Testing VirtioScsiLun")
+	err = executeVirtioScsiLun(ctx, scsi)
 	if err != nil {
 		log.Fatalf("Error executeVirtioScsiLun: %v", err)
 		return
 	}
-
 	log.Printf("==============================================================================")
 }
 
-func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5 pb.FrontendVirtioScsiServiceClient) error {
+func executeVirtioScsiLun(ctx context.Context, c6 pb.FrontendVirtioScsiServiceClient) error {
 	// VirtioScsiLun
-	c6 := pb.NewFrontendVirtioScsiServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioScsiServiceClient")
 	rl1, err := c6.CreateVirtioScsiLun(ctx, &pb.CreateVirtioScsiLunRequest{VirtioScsiLun: &pb.VirtioScsiLun{TargetId: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}, VolumeId: &pbc.ObjectKey{Value: "Malloc1"}}})
 	if err != nil {
@@ -95,8 +94,7 @@ func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5
 		log.Fatalf("could not delete VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Deleted: %v", rl2)
-
-	rss2, err := c5.DeleteVirtioScsiController(ctx, &pb.DeleteVirtioScsiControllerRequest{Name: "OPI-VirtioScsi8"})
+	rss2, err := c6.DeleteVirtioScsiController(ctx, &pb.DeleteVirtioScsiControllerRequest{Name: "OPI-VirtioScsi8"})
 	if err != nil {
 		log.Fatalf("could not delete VirtioScsi subsystem: %v", err)
 	}
@@ -104,9 +102,8 @@ func executeVirtioScsiLun(ctx context.Context, conn grpc.ClientConnInterface, c5
 	return err
 }
 
-func executeVirtioScsiController(ctx context.Context, conn grpc.ClientConnInterface) (pb.FrontendVirtioScsiServiceClient, error) {
+func executeVirtioScsiController(ctx context.Context, c5 pb.FrontendVirtioScsiServiceClient) error {
 	// VirtioScsiController
-	c5 := pb.NewFrontendVirtioScsiServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioScsiServiceClient")
 	rss1, err := c5.CreateVirtioScsiController(ctx, &pb.CreateVirtioScsiControllerRequest{VirtioScsiController: &pb.VirtioScsiController{Id: &pbc.ObjectKey{Value: "OPI-VirtioScsi8"}}})
 	if err != nil {
@@ -133,12 +130,11 @@ func executeVirtioScsiController(ctx context.Context, conn grpc.ClientConnInterf
 		log.Fatalf("could not stats VirtioScsi subsystem: %v", err)
 	}
 	log.Printf("Stats: %s", rss6.Stats)
-	return c5, err
+	return err
 }
 
-func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error {
+func executeVirtioBlk(ctx context.Context, c4 pb.FrontendVirtioBlkServiceClient) error {
 	// VirtioBlk
-	c4 := pb.NewFrontendVirtioBlkServiceClient(conn)
 	log.Printf("Testing NewFrontendVirtioBlkServiceClient")
 	rv1, err := c4.CreateVirtioBlk(ctx, &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{Id: &pbc.ObjectKey{Value: "VirtioBlk8"}, VolumeId: &pbc.ObjectKey{Value: "Malloc1"}}})
 	if err != nil {
@@ -174,10 +170,9 @@ func executeVirtioBlk(ctx context.Context, conn grpc.ClientConnInterface) error 
 	return err
 }
 
-func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) error {
+func executeNVMeNamespace(ctx context.Context, c2 pb.FrontendNvmeServiceClient) error {
 	// pre create: subsystem and controller
-	c1 := pb.NewFrontendNvmeServiceClient(conn)
-	rs1, err := c1.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
+	rs1, err := c2.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
 		NvMeSubsystem: &pb.NVMeSubsystem{
 			Spec: &pb.NVMeSubsystemSpec{
 				Id:            &pbc.ObjectKey{Value: "namespace-test-ss"},
@@ -189,7 +184,6 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 		log.Fatalf("could not create NVMe subsystem: %v", err)
 	}
 	log.Printf("Added subsystem: %v", rs1)
-	c2 := pb.NewFrontendNvmeServiceClient(conn)
 	rc1, err := c2.CreateNVMeController(ctx, &pb.CreateNVMeControllerRequest{
 		NvMeController: &pb.NVMeController{
 			Spec: &pb.NVMeControllerSpec{
@@ -210,9 +204,7 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 	time.Sleep(time.Second)
 
 	// NVMeNamespace
-	c3 := pb.NewFrontendNvmeServiceClient(conn)
-	log.Printf("Testing NewFrontendNvmeServiceClient")
-	rn1, err := c3.CreateNVMeNamespace(ctx, &pb.CreateNVMeNamespaceRequest{
+	rn1, err := c2.CreateNVMeNamespace(ctx, &pb.CreateNVMeNamespaceRequest{
 		NvMeNamespace: &pb.NVMeNamespace{
 			Spec: &pb.NVMeNamespaceSpec{
 				Id:          &pbc.ObjectKey{Value: "namespace-test"},
@@ -226,7 +218,7 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 		log.Fatalf("could not create NVMe namespace: %v", err)
 	}
 	log.Printf("Added: %v", rn1)
-	rn3, err := c3.UpdateNVMeNamespace(ctx, &pb.UpdateNVMeNamespaceRequest{
+	rn3, err := c2.UpdateNVMeNamespace(ctx, &pb.UpdateNVMeNamespaceRequest{
 		NvMeNamespace: &pb.NVMeNamespace{
 			Spec: &pb.NVMeNamespaceSpec{
 				Id:          &pbc.ObjectKey{Value: "namespace-test"},
@@ -240,22 +232,22 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 		log.Fatalf("could not update NVMe namespace: %v", err)
 	}
 	log.Printf("Updated: %v", rn3)
-	rn4, err := c3.ListNVMeNamespaces(ctx, &pb.ListNVMeNamespacesRequest{Parent: "namespace-test-ss"})
+	rn4, err := c2.ListNVMeNamespaces(ctx, &pb.ListNVMeNamespacesRequest{Parent: "namespace-test-ss"})
 	if err != nil {
 		log.Fatalf("could not list NVMe namespace: %v", err)
 	}
 	log.Printf("Listed: %v", rn4)
-	rn5, err := c3.GetNVMeNamespace(ctx, &pb.GetNVMeNamespaceRequest{Name: "namespace-test"})
+	rn5, err := c2.GetNVMeNamespace(ctx, &pb.GetNVMeNamespaceRequest{Name: "namespace-test"})
 	if err != nil {
 		log.Fatalf("could not get NVMe namespace: %v", err)
 	}
 	log.Printf("Got: %v", rn5.Spec.Id.Value)
-	rn6, err := c3.NVMeNamespaceStats(ctx, &pb.NVMeNamespaceStatsRequest{NamespaceId: &pbc.ObjectKey{Value: "namespace-test"}})
+	rn6, err := c2.NVMeNamespaceStats(ctx, &pb.NVMeNamespaceStatsRequest{NamespaceId: &pbc.ObjectKey{Value: "namespace-test"}})
 	if err != nil {
 		log.Fatalf("could not stats NVMe namespace: %v", err)
 	}
 	log.Printf("Stats: %v", rn6.Stats)
-	rn2, err := c3.DeleteNVMeNamespace(ctx, &pb.DeleteNVMeNamespaceRequest{Name: "namespace-test"})
+	rn2, err := c2.DeleteNVMeNamespace(ctx, &pb.DeleteNVMeNamespaceRequest{Name: "namespace-test"})
 	if err != nil {
 		log.Fatalf("could not delete NVMe namespace: %v", err)
 	}
@@ -268,7 +260,7 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 	}
 	log.Printf("Deleted: %v", rc2)
 
-	rs2, err := c1.DeleteNVMeSubsystem(ctx, &pb.DeleteNVMeSubsystemRequest{Name: "namespace-test-ss"})
+	rs2, err := c2.DeleteNVMeSubsystem(ctx, &pb.DeleteNVMeSubsystemRequest{Name: "namespace-test-ss"})
 	if err != nil {
 		log.Fatalf("could not delete NVMe subsystem: %v", err)
 	}
@@ -276,10 +268,9 @@ func executeNVMeNamespace(ctx context.Context, conn grpc.ClientConnInterface) er
 	return err
 }
 
-func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) error {
+func executeNVMeController(ctx context.Context, c2 pb.FrontendNvmeServiceClient) error {
 	// pre create: subsystem
-	c1 := pb.NewFrontendNvmeServiceClient(conn)
-	rs1, err := c1.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
+	rs1, err := c2.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
 		NvMeSubsystem: &pb.NVMeSubsystem{
 			Spec: &pb.NVMeSubsystemSpec{
 				Id:            &pbc.ObjectKey{Value: "controller-test-ss"},
@@ -293,8 +284,6 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 	log.Printf("Added subsystem: %v", rs1)
 
 	// NVMeController
-	c2 := pb.NewFrontendNvmeServiceClient(conn)
-	log.Printf("Testing NewFrontendNvmeServiceClient")
 	rc1, err := c2.CreateNVMeController(ctx, &pb.CreateNVMeControllerRequest{
 		NvMeController: &pb.NVMeController{
 			Spec: &pb.NVMeControllerSpec{
@@ -352,7 +341,7 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 	log.Printf("Deleted: %v", rc2)
 
 	// post cleanup: subsystem
-	rs2, err := c1.DeleteNVMeSubsystem(ctx, &pb.DeleteNVMeSubsystemRequest{Name: "controller-test-ss"})
+	rs2, err := c2.DeleteNVMeSubsystem(ctx, &pb.DeleteNVMeSubsystemRequest{Name: "controller-test-ss"})
 	if err != nil {
 		log.Fatalf("could not delete NVMe subsystem: %v", err)
 	}
@@ -360,10 +349,8 @@ func executeNVMeController(ctx context.Context, conn grpc.ClientConnInterface) e
 	return err
 }
 
-func executeNVMeSubsystem(ctx context.Context, conn grpc.ClientConnInterface) error {
+func executeNVMeSubsystem(ctx context.Context, c1 pb.FrontendNvmeServiceClient) error {
 	// NVMeSubsystem
-	c1 := pb.NewFrontendNvmeServiceClient(conn)
-	log.Printf("Testing NewFrontendNvmeServiceClient")
 	rs1, err := c1.CreateNVMeSubsystem(ctx, &pb.CreateNVMeSubsystemRequest{
 		NvMeSubsystem: &pb.NVMeSubsystem{
 			Spec: &pb.NVMeSubsystemSpec{
