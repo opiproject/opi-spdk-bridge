@@ -39,15 +39,24 @@ func main() {
 	log.Printf("==============================================================================")
 	log.Printf("Test frontend")
 	log.Printf("==============================================================================")
-	client.DoFrontend(ctx, conn)
+	err = client.DoFrontend(ctx, conn)
+	if err != nil {
+		log.Panicf("DoFrontend tests failed with error: %v", err)
+	}
 
 	log.Printf("==============================================================================")
 	log.Printf("Test backend")
 	log.Printf("==============================================================================")
-	client.DoBackend(ctx, conn)
+	err = client.DoBackend(ctx, conn)
+	if err != nil {
+		log.Panicf("DoFrontend tests failed with error: %v", err)
+	}
 
 	log.Printf("==============================================================================")
 	log.Printf("Test middleend")
 	log.Printf("==============================================================================")
-	client.DoMiddleend(ctx, conn)
+	err = client.DoMiddleend(ctx, conn)
+	if err != nil {
+		log.Panicf("DoFrontend tests failed with error: %v", err)
+	}
 }

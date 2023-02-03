@@ -11,11 +11,12 @@ import (
 )
 
 // DoMiddleend executes the middle end code
-func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
+func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) error {
 	// EncryptedVolume
 	c1 := pb.NewMiddleendServiceClient(conn)
-	log.Printf("==============================================================================")
+	log.Printf("=======================================")
 	log.Printf("Testing NewMiddleendServiceClient")
+	log.Printf("=======================================")
 	rs1, err := c1.CreateEncryptedVolume(ctx, &pb.CreateEncryptedVolumeRequest{
 		EncryptedVolume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},
@@ -24,9 +25,9 @@ func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 		},
 	})
 	if err != nil {
-		log.Fatalf("could not create CRYPTO device: %v", err)
+		return err
 	}
-	log.Printf("Added: %v", rs1)
+	log.Printf("Added EncryptedVolume: %v", rs1)
 	rs3, err := c1.UpdateEncryptedVolume(ctx, &pb.UpdateEncryptedVolumeRequest{
 		EncryptedVolume: &pb.EncryptedVolume{
 			EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"},
@@ -35,27 +36,28 @@ func DoMiddleend(ctx context.Context, conn grpc.ClientConnInterface) {
 		},
 	})
 	if err != nil {
-		log.Fatalf("could not update CRYPTO device: %v", err)
+		return err
 	}
-	log.Printf("Updated: %v", rs3)
+	log.Printf("Updated EncryptedVolume: %v", rs3)
 	rs4, err := c1.ListEncryptedVolumes(ctx, &pb.ListEncryptedVolumesRequest{})
 	if err != nil {
-		log.Fatalf("could not list CRYPTO device: %v", err)
+		return err
 	}
-	log.Printf("Listed: %v", rs4)
+	log.Printf("Listed EncryptedVolume: %v", rs4)
 	rs5, err := c1.GetEncryptedVolume(ctx, &pb.GetEncryptedVolumeRequest{Name: "OpiEncryptedVolume3"})
 	if err != nil {
-		log.Fatalf("could not get CRYPTO device: %v", err)
+		return err
 	}
-	log.Printf("Got: %s", rs5.EncryptedVolumeId.Value)
+	log.Printf("Got EncryptedVolume: %s", rs5.EncryptedVolumeId.Value)
 	rs6, err := c1.EncryptedVolumeStats(ctx, &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: "OpiEncryptedVolume3"}})
 	if err != nil {
-		log.Fatalf("could not stats CRYPTO device: %v", err)
+		return err
 	}
-	log.Printf("Stats: %s", rs6.Stats)
+	log.Printf("Stats EncryptedVolume: %s", rs6.Stats)
 	rs2, err := c1.DeleteEncryptedVolume(ctx, &pb.DeleteEncryptedVolumeRequest{Name: "OpiEncryptedVolume3"})
 	if err != nil {
-		log.Fatalf("could not delete CRYPTO device: %v", err)
+		return err
 	}
-	log.Printf("Deleted: %v", rs2)
+	log.Printf("Deleted EncryptedVolume: %v -> %v", rs1, rs2)
+	return nil
 }
