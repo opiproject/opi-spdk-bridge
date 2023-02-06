@@ -1,9 +1,21 @@
 // Package server implements the server
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 package server
 
 import _go "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+
+// OpiServer interface represents server which implements storage OPI API
+type OpiServer interface {
+	_go.FrontendNvmeServiceServer
+	_go.NVMfRemoteControllerServiceServer
+	_go.FrontendVirtioBlkServiceServer
+	_go.FrontendVirtioScsiServiceServer
+	_go.NullDebugServiceServer
+	_go.AioControllerServiceServer
+	_go.MiddleendServiceServer
+}
 
 // Server represents the Server object
 type Server struct {

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2022 Dell Inc, or its subsidiaries.
+# Copyright (C) 2023 Intel Corporation
 
 FROM docker.io/library/golang:1.20.1-alpine as builder
 
@@ -13,7 +14,7 @@ RUN go mod download
 # build an app
 COPY cmd/ cmd/
 COPY pkg/ pkg/
-RUN go build -v -o /opi-spdk-bridge ./cmd/... && CGO_ENABLED=0 go test -v ./...
+RUN go build -v -o /opi-spdk-bridge ./cmd && CGO_ENABLED=0 go test -v ./...
 
 # second stage to reduce image size
 FROM alpine:3.17

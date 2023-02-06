@@ -20,6 +20,11 @@ This project welcomes contributions and suggestions.  We are happy to have the C
 
 See [CONTRIBUTING](https://github.com/opiproject/opi/blob/main/CONTRIBUTING.md) and [GitHub Basic Process](https://github.com/opiproject/opi/blob/main/doc-github-rules.md) for more details.
 
+## Extensions
+
+If your xPU uses a standard SPDK JSON RPC call set, this bridge can be extended to exercise dedicated JSON rpc calls and by this provide means for xPU-specific behavior customization.
+To extend this bridge, add your source code as explained in [`extension.go`](./pkg/server/extension/extension.go), and build your own binary.
+
 ## Docs
 
 * [JSON RPC Proxy](https://spdk.io/doc/jsonrpc_proxy.html)
