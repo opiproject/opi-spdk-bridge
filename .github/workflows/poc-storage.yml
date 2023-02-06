@@ -29,7 +29,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: docker/setup-qemu-action@v2
-    - uses: docker/setup-buildx-action@11e8a2e2910826a92412015c515187a2d6750279
+    - uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7
 
     - name: Log into registry ${{ env.REGISTRY }}
       if: github.event_name != 'pull_request'
@@ -85,7 +85,7 @@ jobs:
 
     - uses: actions/checkout@v3
     - uses: docker/setup-qemu-action@v2
-    - uses: docker/setup-buildx-action@11e8a2e2910826a92412015c515187a2d6750279
+    - uses: docker/setup-buildx-action@f03ac48505955848960e80bbb68046aa35c7b9e7
 
     - name: Start containers
       run: SPDK_TAG=sha-$(git rev-parse --short ${{ github.sha }}) ./scripts/poc.sh start
