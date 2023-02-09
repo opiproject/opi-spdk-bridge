@@ -99,6 +99,7 @@ func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 // UpdateEncryptedVolume updates an encrypted volume
 func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
+	// first delete old bdev
 	params1 := BdevCryptoDeleteParams{
 		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
@@ -112,7 +113,21 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	if !result1 {
 		log.Printf("Could not delete: %v", in)
 	}
-	// first create a key
+	// now delete a key
+	params0 := AccelCryptoKeyDestroyParams{
+		KeyName: "super_key",
+	}
+	var result0 AccelCryptoKeyDestroyResult
+	err0 := call("accel_crypto_key_destroy", &params0, &result0)
+	if err0 != nil {
+		log.Printf("error: %v", err0)
+		return nil, err0
+	}
+	log.Printf("Received from SPDK: %v", result0)
+	if !result0 {
+		log.Printf("Could not destroy Crypto Key: %v", in)
+	}
+	// now create a new key
 	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
 	if !r.MatchString(in.EncryptedVolume.Cipher.String()) {
 		msg := fmt.Sprintf("Could not parse Crypto Cipher: %s", in.EncryptedVolume.Cipher.String())
@@ -121,7 +136,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	}
 	params2 := AccelCryptoKeyCreateParams{
 		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
-		Name:   "super_key2",
+		Name:   "super_key",
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("b", len(in.EncryptedVolume.Key)),
 	}
@@ -156,6 +171,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
+	// return result
 	response := &pb.EncryptedVolume{}
 	err4 := deepcopier.Copy(in.EncryptedVolume).To(response)
 	if err4 != nil {

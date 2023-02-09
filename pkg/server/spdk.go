@@ -37,6 +37,14 @@ type AccelCryptoKeyCreateParams struct {
 // AccelCryptoKeyCreateResult is the result of deleting an AIO Block Device
 type AccelCryptoKeyCreateResult bool
 
+// AccelCryptoKeyDestroyParams holds the parameters required to create an AIO Block Device
+type AccelCryptoKeyDestroyParams struct {
+	KeyName string `json:"key_name"`
+}
+
+// AccelCryptoKeyDestroyResult is the result of deleting an AIO Block Device
+type AccelCryptoKeyDestroyResult bool
+
 // GetVersionResult is the result of getting a version
 type GetVersionResult struct {
 	Version string `json:"version"`
