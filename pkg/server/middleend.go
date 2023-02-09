@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -25,6 +26,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 		Cipher: "AES_XTS",
 		Name:   "super_key",
 		Key:    string(in.EncryptedVolume.Key),
+		Key2:   strings.Repeat("a", len(in.EncryptedVolume.Key)),
 	}
 	// TODO: use in.EncryptedVolume.Cipher.String()
 	// TODO: don't use hard-coded key name
@@ -107,8 +109,9 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	// first create a key
 	params2 := AccelCryptoKeyCreateParams{
 		Cipher: "AES_XTS",
-		Name:   "super_key",
+		Name:   "super_key2",
 		Key:    string(in.EncryptedVolume.Key),
+		Key2:   strings.Repeat("b", len(in.EncryptedVolume.Key)),
 	}
 	// TODO: use in.EncryptedVolume.Cipher.String()
 	// TODO: don't use hard-coded key name
