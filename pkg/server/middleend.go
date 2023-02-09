@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -22,13 +23,18 @@ import (
 func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 	// first create a key
+	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
+	if !r.MatchString(in.EncryptedVolume.Cipher.String()) {
+		msg := fmt.Sprintf("Could not parse Crypto Cipher: %s", in.EncryptedVolume.Cipher.String())
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	params1 := AccelCryptoKeyCreateParams{
-		Cipher: "AES_XTS",
+		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
 		Name:   "super_key",
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("a", len(in.EncryptedVolume.Key)),
 	}
-	// TODO: use in.EncryptedVolume.Cipher.String()
 	// TODO: don't use hard-coded key name
 	var result1 AccelCryptoKeyCreateResult
 	err1 := call("accel_crypto_key_create", &params1, &result1)
@@ -107,13 +113,18 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		log.Printf("Could not delete: %v", in)
 	}
 	// first create a key
+	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
+	if !r.MatchString(in.EncryptedVolume.Cipher.String()) {
+		msg := fmt.Sprintf("Could not parse Crypto Cipher: %s", in.EncryptedVolume.Cipher.String())
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	params2 := AccelCryptoKeyCreateParams{
-		Cipher: "AES_XTS",
+		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
 		Name:   "super_key2",
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("b", len(in.EncryptedVolume.Key)),
 	}
-	// TODO: use in.EncryptedVolume.Cipher.String()
 	// TODO: don't use hard-coded key name
 	var result2 AccelCryptoKeyCreateResult
 	err2 := call("accel_crypto_key_create", &params2, &result2)

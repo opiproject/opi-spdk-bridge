@@ -24,6 +24,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
 		VolumeId:          &pc.ObjectKey{Value: "volume-test"},
 		Key:               []byte("0123456789abcdef0123456789abcdef"),
+		Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
 	}
 	tests := []struct {
 		name    string
