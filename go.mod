@@ -3,7 +3,7 @@ module github.com/opiproject/opi-spdk-bridge
 go 1.19
 
 require (
-	github.com/opiproject/opi-api v0.0.0-20230209185339-49817ff57038
+	github.com/opiproject/opi-api v0.0.0-20230210163817-993fdd8940ca
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
