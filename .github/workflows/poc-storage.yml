@@ -24,7 +24,6 @@ jobs:
       matrix:
         package:
           - server
-          - client
           - spdk
     steps:
     - uses: actions/checkout@v3
