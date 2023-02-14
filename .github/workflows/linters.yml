@@ -49,10 +49,4 @@ jobs:
           working-directory: cmd/server
       - uses: golangci/golangci-lint-action@v3
         with:
-          working-directory: cmd/client
-      - uses: golangci/golangci-lint-action@v3
-        with:
           working-directory: pkg/server
-      - uses: golangci/golangci-lint-action@v3
-        with:
-          working-directory: pkg/client

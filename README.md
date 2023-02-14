@@ -12,7 +12,7 @@ This is a simple SPDK based storage API PoC.
 
 * SPDK - container with SPDK app that is running on xPU
 * Server - container with OPI gRPC storage APIs to SPDK json-rpc APIs bridge
-* Client - container with OPI gRPC client for testing of the above server/bridge
+* Client - use [goDPU](https://github.com/opiproject/godpu) for testing of the above server/bridge
 
 ## I Want To Contribute
 
