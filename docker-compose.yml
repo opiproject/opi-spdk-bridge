@@ -49,7 +49,6 @@ services:
   opi-spdk-server:
     build:
       context: .
-      dockerfile: cmd/server/Dockerfile
     volumes_from:
       - spdk:rw
     ports:
