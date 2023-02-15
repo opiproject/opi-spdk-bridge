@@ -1,5 +1,5 @@
 ---
-name: 'OPI Storage PoC CI'
+name: Docker
 
 on:
   workflow_dispatch:
