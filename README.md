@@ -61,7 +61,7 @@ It is just an example and implies SPDK just as example, not mandated by OPI.
 on DPU/IPU (i.e. with IP=10.10.10.1) run
 
 ```bash
-$ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 ghcr.io/opiproject/opi-storage-server:main
+$ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 ghcr.io/opiproject/opi-spdk-bridge:main
 2022/09/21 21:39:49 server listening at [::]:50051
 ```
 
