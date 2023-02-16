@@ -6,9 +6,7 @@ version: "3.7"
 services:
 
   spdk:
-    image: "ghcr.io/opiproject/opi-storage-spdk:${SPDK_TAG-main}"
-    build:
-      context: spdk
+    image: ghcr.io/opiproject/spdk:main@sha256:64a72ab8aea082c919b83f33d6ddce4d2c15bdf05861974174fa1485ccc3300b
     volumes:
       - /dev/hugepages:/dev/hugepages
       - /dev/shm:/dev/shm
@@ -50,7 +48,7 @@ services:
     build:
       context: .
     volumes_from:
-      - spdk:rw
+      - spdk
     ports:
       - "50051:50051"
     networks:
