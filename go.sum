@@ -29,6 +29,8 @@ github.com/opiproject/opi-api v0.0.0-20230213143425-2cf625ef7bed h1:LR9mYjnkhz5+
 github.com/opiproject/opi-api v0.0.0-20230213143425-2cf625ef7bed/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20230217002127-6b5ca335938e h1:D8vWoYCiR85g8305umXx+OIxBCCsvsI/vHvMUjSAKOE=
 github.com/opiproject/opi-api v0.0.0-20230217002127-6b5ca335938e/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20230217231118-136a80b2cf1a h1:U/NwI1UBE0aPZDe3vGaYrUW5sr5zsihWg705VFo0m6c=
+github.com/opiproject/opi-api v0.0.0-20230217231118-136a80b2cf1a/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6 h1:TtyC78WMafNW8QFfv3TeP3yWNDG+uxNkk9vOrnDu6JA=
 github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6/go.mod h1:h8272+G2omSmi30fBXiZDMkmHuOgonplfKIKjQWzlfs=
 golang.org/x/net v0.4.0 h1:Q5QPcMlvfxFTAPV0+07Xz/MpK9NTXu2VDUuy0FeMfaU=
