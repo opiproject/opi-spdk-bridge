@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-// Package server is the main package of the storage Server
-package server
+// Package backend implememnts the BackEnd APIs (network facing) of the storage Server
+package backend
 
 import (
 	"context"
@@ -13,18 +13,27 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// Server represents the Server object
+type Server struct {
+	pb.UnimplementedNVMfRemoteControllerServiceServer
+	pb.UnimplementedNullDebugServiceServer
+	pb.UnimplementedAioControllerServiceServer
+}
+
 //////////////////////////////////////////////////////////
 
 // CreateNVMfRemoteController creates an NVMf remote controller
 func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("CreateNVMfRemoteController: Received from client: %v", in)
-	params := BdevNvmeAttachControllerParams{
+	params := server.BdevNvmeAttachControllerParams{
 		Name:    in.NvMfRemoteController.Id.Value,
 		Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
 		Traddr:  in.NvMfRemoteController.Traddr,
@@ -33,8 +42,8 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 		Subnqn:  in.NvMfRemoteController.Subnqn,
 		Hostnqn: in.NvMfRemoteController.Hostnqn,
 	}
-	var result []BdevNvmeAttachControllerResult
-	err := call("bdev_nvme_attach_controller", &params, &result)
+	var result []server.BdevNvmeAttachControllerResult
+	err := server.Call("bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -55,11 +64,11 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 // DeleteNVMfRemoteController deletes an NVMf remote controller
 func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMfRemoteController: Received from client: %v", in)
-	params := BdevNvmeDetachControllerParams{
+	params := server.BdevNvmeDetachControllerParams{
 		Name: in.Name,
 	}
-	var result BdevNvmeDetachControllerResult
-	err := call("bdev_nvme_detach_controller", &params, &result)
+	var result server.BdevNvmeDetachControllerResult
+	err := server.Call("bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -77,8 +86,8 @@ func (s *Server) NVMfRemoteControllerReset(ctx context.Context, in *pb.NVMfRemot
 // ListNVMfRemoteControllers lists an NVMf remote controllers
 func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfRemoteControllersRequest) (*pb.ListNVMfRemoteControllersResponse, error) {
 	log.Printf("ListNVMfRemoteControllers: Received from client: %v", in)
-	var result []BdevNvmeGetControllerResult
-	err := call("bdev_nvme_get_controllers", nil, &result)
+	var result []server.BdevNvmeGetControllerResult
+	err := server.Call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -104,11 +113,11 @@ func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfR
 // GetNVMfRemoteController gets an NVMf remote controller
 func (s *Server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("GetNVMfRemoteController: Received from client: %v", in)
-	params := BdevNvmeGetControllerParams{
+	params := server.BdevNvmeGetControllerParams{
 		Name: in.Name,
 	}
-	var result []BdevNvmeGetControllerResult
-	err := call("bdev_nvme_get_controllers", &params, &result)
+	var result []server.BdevNvmeGetControllerResult
+	err := server.Call("bdev_nvme_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -142,13 +151,13 @@ func (s *Server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemot
 // CreateNullDebug creates a Null Debug instance
 func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
-	params := BdevNullCreateParams{
+	params := server.BdevNullCreateParams{
 		Name:      in.NullDebug.Handle.Value,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
-	var result BdevNullCreateResult
-	err := call("bdev_null_create", &params, &result)
+	var result server.BdevNullCreateResult
+	err := server.Call("bdev_null_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -166,11 +175,11 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 // DeleteNullDebug deletes a Null Debug instance
 func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNullDebug: Received from client: %v", in)
-	params := BdevNullDeleteParams{
+	params := server.BdevNullDeleteParams{
 		Name: in.Name,
 	}
-	var result BdevNullDeleteResult
-	err := call("bdev_null_delete", &params, &result)
+	var result server.BdevNullDeleteResult
+	err := server.Call("bdev_null_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -185,11 +194,11 @@ func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequ
 // UpdateNullDebug updates a Null Debug instance
 func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
-	params1 := BdevNullDeleteParams{
+	params1 := server.BdevNullDeleteParams{
 		Name: in.NullDebug.Handle.Value,
 	}
-	var result1 BdevNullDeleteResult
-	err1 := call("bdev_null_delete", &params1, &result1)
+	var result1 server.BdevNullDeleteResult
+	err1 := server.Call("bdev_null_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -198,13 +207,13 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 	if !result1 {
 		log.Printf("Could not delete: %v", in)
 	}
-	params2 := BdevNullCreateParams{
+	params2 := server.BdevNullCreateParams{
 		Name:      in.NullDebug.Handle.Value,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
-	var result2 BdevNullCreateResult
-	err2 := call("bdev_null_create", &params2, &result2)
+	var result2 server.BdevNullCreateResult
+	err2 := server.Call("bdev_null_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
@@ -222,8 +231,8 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 // ListNullDebugs lists Null Debug instances
 func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
-	var result []BdevGetBdevsResult
-	err := call("bdev_get_bdevs", nil, &result)
+	var result []server.BdevGetBdevsResult
+	err := server.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -240,11 +249,11 @@ func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsReques
 // GetNullDebug gets a a Null Debug instance
 func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("GetNullDebug: Received from client: %v", in)
-	params := BdevGetBdevsParams{
+	params := server.BdevGetBdevsParams{
 		Name: in.Name,
 	}
-	var result []BdevGetBdevsResult
-	err := call("bdev_get_bdevs", &params, &result)
+	var result []server.BdevGetBdevsResult
+	err := server.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -261,12 +270,12 @@ func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (
 // NullDebugStats gets a Null Debug instance stats
 func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
 	log.Printf("NullDebugStats: Received from client: %v", in)
-	params := BdevGetIostatParams{
+	params := server.BdevGetIostatParams{
 		Name: in.Handle.Value,
 	}
 	// See https://mholt.github.io/json-to-go/
-	var result BdevGetIostatResult
-	err := call("bdev_get_iostat", &params, &result)
+	var result server.BdevGetIostatResult
+	err := server.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -295,13 +304,13 @@ func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 // CreateAioController creates an Aio controller
 func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
-	params := BdevAioCreateParams{
+	params := server.BdevAioCreateParams{
 		Name:      in.AioController.Handle.Value,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
-	var result BdevAioCreateResult
-	err := call("bdev_aio_create", &params, &result)
+	var result server.BdevAioCreateResult
+	err := server.Call("bdev_aio_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -319,11 +328,11 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 // DeleteAioController deletes an Aio controller
 func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteAioController: Received from client: %v", in)
-	params := BdevAioDeleteParams{
+	params := server.BdevAioDeleteParams{
 		Name: in.Name,
 	}
-	var result BdevAioDeleteResult
-	err := call("bdev_aio_delete", &params, &result)
+	var result server.BdevAioDeleteResult
+	err := server.Call("bdev_aio_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -338,11 +347,11 @@ func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioContro
 // UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
-	params1 := BdevAioDeleteParams{
+	params1 := server.BdevAioDeleteParams{
 		Name: in.AioController.Handle.Value,
 	}
-	var result1 BdevAioDeleteResult
-	err1 := call("bdev_aio_delete", &params1, &result1)
+	var result1 server.BdevAioDeleteResult
+	err1 := server.Call("bdev_aio_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -351,13 +360,13 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 	if !result1 {
 		log.Printf("Could not delete: %v", in)
 	}
-	params2 := BdevAioCreateParams{
+	params2 := server.BdevAioCreateParams{
 		Name:      in.AioController.Handle.Value,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
-	var result2 BdevAioCreateResult
-	err2 := call("bdev_aio_create", &params2, &result2)
+	var result2 server.BdevAioCreateResult
+	err2 := server.Call("bdev_aio_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
@@ -369,8 +378,8 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 // ListAioControllers lists Aio controllers
 func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
-	var result []BdevGetBdevsResult
-	err := call("bdev_get_bdevs", nil, &result)
+	var result []server.BdevGetBdevsResult
+	err := server.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -387,11 +396,11 @@ func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControlle
 // GetAioController gets an Aio controller
 func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("GetAioController: Received from client: %v", in)
-	params := BdevGetBdevsParams{
+	params := server.BdevGetBdevsParams{
 		Name: in.Name,
 	}
-	var result []BdevGetBdevsResult
-	err := call("bdev_get_bdevs", &params, &result)
+	var result []server.BdevGetBdevsResult
+	err := server.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -408,12 +417,12 @@ func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRe
 // AioControllerStats gets an Aio controller stats
 func (s *Server) AioControllerStats(ctx context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
 	log.Printf("AioControllerStats: Received from client: %v", in)
-	params := BdevGetIostatParams{
+	params := server.BdevGetIostatParams{
 		Name: in.GetHandle().GetValue(),
 	}
 	// See https://mholt.github.io/json-to-go/
-	var result BdevGetIostatResult
-	err := call("bdev_get_iostat", &params, &result)
+	var result server.BdevGetIostatResult
+	err := server.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
