@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Server represents the Server object
+// Server contains middleend related OPI services
 type Server struct {
 	pb.UnimplementedMiddleendServiceServer
 }
