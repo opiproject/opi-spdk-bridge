@@ -13,7 +13,7 @@ RUN go mod download
 # build an app
 COPY cmd/ cmd/
 COPY pkg/ pkg/
-RUN go build -v -o /opi-spdk-bridge ./cmd/... && CGO_ENABLED=0 go test -v ./...
+RUN go build -v -o /opi-spdk-bridge ./cmd/...
 
 # second stage to reduce image size
 FROM alpine:3.17

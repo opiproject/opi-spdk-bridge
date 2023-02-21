@@ -16,11 +16,13 @@ import (
 )
 
 var (
-	RpcID   int32 // json request message ID, auto incremented
-	RpcSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
+	// RPCID is json request message ID, auto incremented
+	RPCID int32
+	// RPCSock is unix domain socket to communicate with SPDK app or Vendor SDK
+	RPCSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 )
 
-// low level rpc request/response handling
+// Call implements low level rpc request/response handling
 func Call(method string, args, result interface{}) error {
 	type rpcRequest struct {
 		Ver    string `json:"jsonrpc"`
@@ -28,7 +30,7 @@ func Call(method string, args, result interface{}) error {
 		Method string `json:"method"`
 	}
 
-	id := atomic.AddInt32(&RpcID, 1)
+	id := atomic.AddInt32(&RPCID, 1)
 	request := rpcRequest{
 		Ver:    "2.0",
 		ID:     id,
@@ -57,7 +59,7 @@ func Call(method string, args, result interface{}) error {
 	log.Printf("Sending to SPDK: %s", data)
 
 	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
-	resp, _ := unixSocketCom(*RpcSock, data)
+	resp, _ := unixSocketCom(*RPCSock, data)
 
 	response := struct {
 		ID    int32 `json:"id"`
