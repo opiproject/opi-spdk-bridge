@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-package server
+// Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
+package frontend
 
 import (
 	"bytes"
@@ -25,16 +26,16 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
+// TODO: move to a separate (test/server) package to avoid duplication
 func dialer() func(context.Context, string) (net.Conn, error) {
 	var opiSpdkServer Server
 
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 	pb.RegisterFrontendNvmeServiceServer(server, &opiSpdkServer)
-	pb.RegisterMiddleendServiceServer(server, &opiSpdkServer)
-	pb.RegisterNVMfRemoteControllerServiceServer(server, &opiSpdkServer)
 
 	go func() {
 		if err := server.Serve(listener); err != nil {
@@ -47,6 +48,7 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	}
 }
 
+// TODO: move to a separate (test/server) package to avoid duplication
 func spdkMockServer(l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
 		fd, err := l.Accept()
@@ -54,7 +56,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", rpcID)
+		log.Printf("SPDK ID [%d]", server.RpcID)
 
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
@@ -64,7 +66,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, rpcID)
+			spdk = fmt.Sprintf(spdk, server.RpcID)
 		}
 
 		log.Printf("SPDK mockup Server: got : %s", string(data))
@@ -79,6 +81,30 @@ func spdkMockServer(l net.Listener, toSend []string) {
 			log.Fatal(err)
 		}
 	}
+}
+
+// TODO: move to a separate (test/server) package to avoid duplication
+func startSpdkMockupServer() net.Listener {
+	// start SPDK mockup Server
+	if err := os.RemoveAll(*server.RpcSock); err != nil {
+		log.Fatal(err)
+	}
+	ln, err := net.Listen("unix", *server.RpcSock)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	return ln
+}
+
+// TODO: move to a separate (test/server) package to avoid duplication
+func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
+	// start GRPC mockup Server
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ctx, conn
 }
 
 func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
@@ -210,28 +236,6 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			}
 		})
 	}
-}
-
-func startSpdkMockupServer() net.Listener {
-	// start SPDK mockup Server
-	if err := os.RemoveAll(*rpcSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *rpcSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	return ln
-}
-
-func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	// start GRPC mockup Server
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return ctx, conn
 }
 
 func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {

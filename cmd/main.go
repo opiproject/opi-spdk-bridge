@@ -8,7 +8,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc"
@@ -27,13 +29,13 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	pb.RegisterFrontendNvmeServiceServer(s, &server.Server{})
-	pb.RegisterNVMfRemoteControllerServiceServer(s, &server.Server{})
-	pb.RegisterFrontendVirtioBlkServiceServer(s, &server.Server{})
-	pb.RegisterFrontendVirtioScsiServiceServer(s, &server.Server{})
-	pb.RegisterNullDebugServiceServer(s, &server.Server{})
-	pb.RegisterAioControllerServiceServer(s, &server.Server{})
-	pb.RegisterMiddleendServiceServer(s, &server.Server{})
+	pb.RegisterFrontendNvmeServiceServer(s, &frontend.Server{})
+	pb.RegisterFrontendVirtioBlkServiceServer(s, &frontend.Server{})
+	pb.RegisterFrontendVirtioScsiServiceServer(s, &frontend.Server{})
+	pb.RegisterNVMfRemoteControllerServiceServer(s, &backend.Server{})
+	pb.RegisterNullDebugServiceServer(s, &backend.Server{})
+	pb.RegisterAioControllerServiceServer(s, &backend.Server{})
+	pb.RegisterMiddleendServiceServer(s, &middleend.Server{})
 
 	reflection.Register(s)
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
+// Package server implements the server
 package server
 
 import (
@@ -15,19 +16,19 @@ import (
 )
 
 var (
-	rpcID   int32 // json request message ID, auto incremented
-	rpcSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
+	RpcID   int32 // json request message ID, auto incremented
+	RpcSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 )
 
 // low level rpc request/response handling
-func call(method string, args, result interface{}) error {
+func Call(method string, args, result interface{}) error {
 	type rpcRequest struct {
 		Ver    string `json:"jsonrpc"`
 		ID     int32  `json:"id"`
 		Method string `json:"method"`
 	}
 
-	id := atomic.AddInt32(&rpcID, 1)
+	id := atomic.AddInt32(&RpcID, 1)
 	request := rpcRequest{
 		Ver:    "2.0",
 		ID:     id,
@@ -56,7 +57,7 @@ func call(method string, args, result interface{}) error {
 	log.Printf("Sending to SPDK: %s", data)
 
 	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
-	resp, _ := unixSocketCom(*rpcSock, data)
+	resp, _ := unixSocketCom(*RpcSock, data)
 
 	response := struct {
 		ID    int32 `json:"id"`
@@ -84,8 +85,8 @@ func call(method string, args, result interface{}) error {
 	return nil
 }
 
-func unixSocketCom(rpcSock string, buf []byte) (io.Reader, error) {
-	conn, err := net.Dial("unix", rpcSock)
+func unixSocketCom(lrpcSock string, buf []byte) (io.Reader, error) {
+	conn, err := net.Dial("unix", lrpcSock)
 	if err != nil {
 		log.Fatal(err)
 	}

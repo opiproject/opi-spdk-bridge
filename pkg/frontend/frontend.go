@@ -1,7 +1,8 @@
-// Package server implements the server
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
-package server
+
+// Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
+package frontend
 
 import (
 	"context"
@@ -11,11 +12,20 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+// Server represents the Server object
+type Server struct {
+	pb.UnimplementedFrontendNvmeServiceServer
+	pb.UnimplementedFrontendVirtioBlkServiceServer
+	pb.UnimplementedFrontendVirtioScsiServiceServer
+}
 
 // ////////////////////////////////////////////////////////
 var subsystems = map[string]*pb.NVMeSubsystem{}
@@ -23,15 +33,15 @@ var subsystems = map[string]*pb.NVMeSubsystem{}
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
-	params := NvmfCreateSubsystemParams{
+	params := server.NvmfCreateSubsystemParams{
 		Nqn:           in.NvMeSubsystem.Spec.Nqn,
 		SerialNumber:  in.NvMeSubsystem.Spec.SerialNumber,
 		ModelNumber:   in.NvMeSubsystem.Spec.ModelNumber,
 		AllowAnyHost:  true,
 		MaxNamespaces: int(in.NvMeSubsystem.Spec.MaxNamespaces),
 	}
-	var result NvmfCreateSubsystemResult
-	err := call("nvmf_create_subsystem", &params, &result)
+	var result server.NvmfCreateSubsystemResult
+	err := server.Call("nvmf_create_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -42,8 +52,8 @@ func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	var ver GetVersionResult
-	err = call("spdk_get_version", nil, &ver)
+	var ver server.GetVersionResult
+	err = server.Call("spdk_get_version", nil, &ver)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -69,11 +79,11 @@ func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := NvmfDeleteSubsystemParams{
+	params := server.NvmfDeleteSubsystemParams{
 		Nqn: subsys.Spec.Nqn,
 	}
-	var result NvmfDeleteSubsystemResult
-	err := call("nvmf_delete_subsystem", &params, &result)
+	var result server.NvmfDeleteSubsystemResult
+	err := server.Call("nvmf_delete_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -97,8 +107,8 @@ func (s *Server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsy
 // ListNVMeSubsystems lists NVMe Subsystems
 func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
-	var result []NvmfGetSubsystemsResult
-	err := call("nvmf_get_subsystems", nil, &result)
+	var result []server.NvmfGetSubsystemsResult
+	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -122,8 +132,8 @@ func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 		return nil, err
 	}
 
-	var result []NvmfGetSubsystemsResult
-	err := call("nvmf_get_subsystems", nil, &result)
+	var result []server.NvmfGetSubsystemsResult
+	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -144,8 +154,8 @@ func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 // NVMeSubsystemStats gets NVMe Subsystem stats
 func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
-	var result NvmfGetSubsystemStatsResult
-	err := call("nvmf_get_stats", nil, &result)
+	var result server.NvmfGetSubsystemStatsResult
+	err := server.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -174,7 +184,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		addrs = []net.IP{net.ParseIP("127.0.0.1")}
 		// return nil, err
 	}
-	params := NvmfSubsystemAddListenerParams{
+	params := server.NvmfSubsystemAddListenerParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 	params.ListenAddress.Trtype = "tcp"
@@ -182,8 +192,8 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	params.ListenAddress.Trsvcid = "4444"
 	params.ListenAddress.Adrfam = "ipv4"
 
-	var result NvmfSubsystemAddListenerResult
-	err = call("nvmf_subsystem_add_listener", &params, &result)
+	var result server.NvmfSubsystemAddListenerResult
+	err = server.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -228,7 +238,7 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		addrs = []net.IP{net.ParseIP("127.0.0.1")}
 		// return nil, err
 	}
-	params := NvmfSubsystemAddListenerParams{
+	params := server.NvmfSubsystemAddListenerParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 	params.ListenAddress.Trtype = "tcp"
@@ -236,8 +246,8 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	params.ListenAddress.Trsvcid = "4444"
 	params.ListenAddress.Adrfam = "ipv4"
 
-	var result NvmfSubsystemAddListenerResult
-	err = call("nvmf_subsystem_remove_listener", &params, &result)
+	var result server.NvmfSubsystemAddListenerResult
+	err = server.Call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -305,7 +315,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		return nil, err
 	}
 
-	params := NvmfSubsystemAddNsParams{
+	params := server.NvmfSubsystemAddNsParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 
@@ -313,8 +323,8 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	params.Namespace.Nsid = int(in.NvMeNamespace.Spec.HostNsid)
 	params.Namespace.BdevName = in.NvMeNamespace.Spec.VolumeId.Value
 
-	var result NvmfSubsystemAddNsResult
-	err := call("nvmf_subsystem_add_ns", &params, &result)
+	var result server.NvmfSubsystemAddNsResult
+	err := server.Call("nvmf_subsystem_add_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -353,12 +363,12 @@ func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		return nil, err
 	}
 
-	params := NvmfSubsystemRemoveNsParams{
+	params := server.NvmfSubsystemRemoveNsParams{
 		Nqn:  subsys.Spec.Nqn,
 		Nsid: int(namespace.Spec.HostNsid),
 	}
-	var result NvmfSubsystemRemoveNsResult
-	err := call("nvmf_subsystem_remove_ns", &params, &result)
+	var result server.NvmfSubsystemRemoveNsResult
+	err := server.Call("nvmf_subsystem_remove_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -402,8 +412,8 @@ func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 		}
 		nqn = subsys.Spec.Nqn
 	}
-	var result []NvmfGetSubsystemsResult
-	err := call("nvmf_get_subsystems", nil, &result)
+	var result []server.NvmfGetSubsystemsResult
+	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -449,8 +459,8 @@ func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 		return nil, err
 	}
 
-	var result []NvmfGetSubsystemsResult
-	err := call("nvmf_get_subsystems", nil, &result)
+	var result []server.NvmfGetSubsystemsResult
+	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -489,12 +499,12 @@ func (s *Server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceSta
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
-	params := VhostCreateBlkControllerParams{
+	params := server.VhostCreateBlkControllerParams{
 		Ctrlr:   in.VirtioBlk.Id.Value,
 		DevName: in.VirtioBlk.VolumeId.Value,
 	}
-	var result VhostCreateBlkControllerResult
-	err := call("vhost_create_blk_controller", &params, &result)
+	var result server.VhostCreateBlkControllerResult
+	err := server.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -509,11 +519,11 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 // DeleteVirtioBlk deletes a Virtio block device
 func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
-	params := VhostDeleteControllerParams{
+	params := server.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
-	var result VhostDeleteControllerResult
-	err := call("vhost_delete_controller", &params, &result)
+	var result server.VhostDeleteControllerResult
+	err := server.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -534,8 +544,8 @@ func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequ
 // ListVirtioBlks lists Virtio block devices
 func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
 	log.Printf("ListVirtioBlks: Received from client: %v", in)
-	var result []VhostGetControllersResult
-	err := call("vhost_get_controllers", nil, &result)
+	var result []server.VhostGetControllersResult
+	err := server.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -552,11 +562,11 @@ func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 // GetVirtioBlk gets a Virtio block device
 func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("GetVirtioBlk: Received from client: %v", in)
-	params := VhostGetControllersParams{
+	params := server.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []VhostGetControllersResult
-	err := call("vhost_get_controllers", &params, &result)
+	var result []server.VhostGetControllersResult
+	err := server.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -581,11 +591,11 @@ func (s *Server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsReques
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
-	params := VhostCreateScsiControllerParams{
+	params := server.VhostCreateScsiControllerParams{
 		Ctrlr: in.VirtioScsiController.Id.Value,
 	}
-	var result VhostCreateScsiControllerResult
-	err := call("vhost_create_scsi_controller", &params, &result)
+	var result server.VhostCreateScsiControllerResult
+	err := server.Call("vhost_create_scsi_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -600,11 +610,11 @@ func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVi
 // DeleteVirtioScsiController deletes a Virtio SCSI controller
 func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiController: Received from client: %v", in)
-	params := VhostDeleteControllerParams{
+	params := server.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
-	var result VhostDeleteControllerResult
-	err := call("vhost_delete_controller", &params, &result)
+	var result server.VhostDeleteControllerResult
+	err := server.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -625,8 +635,8 @@ func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVi
 // ListVirtioScsiControllers lists Virtio SCSI controllers
 func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
-	var result []VhostGetControllersResult
-	err := call("vhost_get_controllers", nil, &result)
+	var result []server.VhostGetControllersResult
+	err := server.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -643,11 +653,11 @@ func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirti
 // GetVirtioScsiController gets a Virtio SCSI controller
 func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("GetVirtioScsiController: Received from client: %v", in)
-	params := VhostGetControllersParams{
+	params := server.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []VhostGetControllersResult
-	err := call("vhost_get_controllers", &params, &result)
+	var result []server.VhostGetControllersResult
+	err := server.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -682,7 +692,7 @@ func (s *Server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScs
 		Bdev: in.VirtioScsiLun.VolumeId.Value,
 	}
 	var result int
-	err := call("vhost_scsi_controller_add_target", &params, &result)
+	err := server.Call("vhost_scsi_controller_add_target", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -702,7 +712,7 @@ func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScs
 		Num:  5,
 	}
 	var result bool
-	err := call("vhost_scsi_controller_remove_target", &params, &result)
+	err := server.Call("vhost_scsi_controller_remove_target", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -723,8 +733,8 @@ func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScs
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
 func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
-	var result []VhostGetControllersResult
-	err := call("vhost_get_controllers", nil, &result)
+	var result []server.VhostGetControllersResult
+	err := server.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -741,11 +751,11 @@ func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLu
 // GetVirtioScsiLun gets a Virtio SCSI LUN
 func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("GetVirtioScsiLun: Received from client: %v", in)
-	params := VhostGetControllersParams{
+	params := server.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []VhostGetControllersResult
-	err := call("vhost_get_controllers", &params, &result)
+	var result []server.VhostGetControllersResult
+	err := server.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
