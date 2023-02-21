@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// Server represents the Server object
+// Server contains backend related OPI services
 type Server struct {
 	pb.UnimplementedNVMfRemoteControllerServiceServer
 	pb.UnimplementedNullDebugServiceServer
