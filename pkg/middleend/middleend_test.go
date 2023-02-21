@@ -53,7 +53,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", server.RpcID)
+		log.Printf("SPDK ID [%d]", server.RPCID)
 
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
@@ -63,7 +63,7 @@ func spdkMockServer(l net.Listener, toSend []string) {
 
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, server.RpcID)
+			spdk = fmt.Sprintf(spdk, server.RPCID)
 		}
 
 		log.Printf("SPDK mockup Server: got : %s", string(data))
@@ -83,10 +83,10 @@ func spdkMockServer(l net.Listener, toSend []string) {
 // TODO: move to a separate (test/server) package to avoid duplication
 func startSpdkMockupServer() net.Listener {
 	// start SPDK mockup Server
-	if err := os.RemoveAll(*server.RpcSock); err != nil {
+	if err := os.RemoveAll(*server.RPCSock); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *server.RpcSock)
+	ln, err := net.Listen("unix", *server.RPCSock)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
