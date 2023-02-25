@@ -509,8 +509,8 @@ nvme0n1 259:0    0  512M  0 disk
 Start without vfio-user now but adding QMP management
 
 ```bash
-taskset -c 2,3 /usr/libexec/qemu-kvm \
-  -cpu host -smp 2 \
+taskset -c 2,3 qemu-orcl/build/qemu-system-x86_64 \
+  -smp 2 \
   -cdrom init.iso \
   -m 1G -object memory-backend-file,id=mem0,size=1G,mem-path=/dev/hugepages,share=on -numa node,memdev=mem0 \
   -drive file=guest_os_image.qcow2,if=none,id=disk \
