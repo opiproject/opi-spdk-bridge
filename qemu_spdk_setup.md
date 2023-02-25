@@ -610,4 +610,3 @@ nvme0n1 nvme0n1 SPDK bdev Controller       64M        block:nvme:pci
 4+0 records out
 16384 bytes (16 kB, 16 KiB) copied, 0.00753424 s, 2.2 MB/s
 ```
-
