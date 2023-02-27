@@ -10,7 +10,6 @@ import (
 	"context"
 	"log"
 	"net"
-	"os"
 	"strings"
 	"testing"
 
@@ -44,19 +43,6 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startSpdkMockupServer() net.Listener {
-	// start SPDK mockup Server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	return ln
 }
 
 // TODO: move to a separate (test/server) package to avoid duplication
@@ -112,7 +98,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 	}(conn)
 	client := pb.NewFrontendVirtioBlkServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 	defer func(ln net.Listener) {
 		err := ln.Close()
 		if err != nil {

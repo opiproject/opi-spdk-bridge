@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"reflect"
 	"testing"
 
@@ -47,19 +46,6 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startSpdkMockupServer() net.Listener {
-	// start SPDK mockup Server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	return ln
 }
 
 // TODO: move to a separate (test/server) package to avoid duplication
@@ -149,7 +135,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -343,7 +329,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -464,7 +450,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -538,7 +524,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -651,7 +637,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	}(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
