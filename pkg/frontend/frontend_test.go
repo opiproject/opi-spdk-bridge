@@ -33,6 +33,7 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	server := grpc.NewServer()
 	pb.RegisterFrontendNvmeServiceServer(server, &opiSpdkServer)
 	pb.RegisterFrontendVirtioBlkServiceServer(server, &opiSpdkServer)
+	pb.RegisterFrontendVirtioScsiServiceServer(server, &opiSpdkServer)
 
 	go func() {
 		if err := server.Serve(listener); err != nil {
