@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"reflect"
 	"testing"
 
@@ -42,19 +41,6 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startSpdkMockupServer() net.Listener {
-	// start SPDK mockup Server
-	if err := os.RemoveAll(*server.RPCSock); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", *server.RPCSock)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	return ln
 }
 
 // TODO: move to a separate (test/server) package to avoid duplication
@@ -187,7 +173,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup Server
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -367,7 +353,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup Server
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -483,7 +469,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup Server
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -605,7 +591,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup Server
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()
@@ -719,7 +705,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 	client := pb.NewMiddleendServiceClient(conn)
 
 	// start SPDK mockup Server
-	ln := startSpdkMockupServer()
+	ln := server.StartSpdkMockupServer()
 
 	defer func(ln net.Listener) {
 		err := ln.Close()

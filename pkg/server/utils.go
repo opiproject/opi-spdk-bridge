@@ -8,8 +8,22 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 )
+
+// StartSpdkMockupServer cleans unix socket and listens again, used in testing
+func StartSpdkMockupServer() net.Listener {
+	// start SPDK mockup Server
+	if err := os.RemoveAll(*RPCSock); err != nil {
+		log.Fatal(err)
+	}
+	ln, err := net.Listen("unix", *RPCSock)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	return ln
+}
 
 // SpdkMockServer implements mock function to send data instead of real SPDK app, used in testing
 func SpdkMockServer(l net.Listener, toSend []string) {
