@@ -71,7 +71,7 @@ jobs:
 
     - uses: actions/checkout@v3
     - uses: docker/setup-qemu-action@v2
-    - uses: docker/setup-buildx-action@2dd22fa31c04297d369158eb483250f578504a9f
+    - uses: docker/setup-buildx-action@a19c1710881d7ce3cf668865cc8459bba5b912aa
 
     - name: Start containers
       run: SPDK_TAG=sha-$(git rev-parse --short ${{ github.sha }}) ./scripts/poc.sh start
