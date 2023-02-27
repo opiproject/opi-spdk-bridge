@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
 package frontend
@@ -12,10 +13,16 @@ import (
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"github.com/ulule/deepcopier"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+var (
+	errFailedSpdkCall           = status.Error(codes.Unknown, "Failed to execute SPDK call")
+	errUnexpectedSpdkCallResult = status.Error(codes.FailedPrecondition, "Unexpected SPDK call result.")
 )
 
 // Server contains frontend related OPI services
@@ -36,13 +43,21 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	err := server.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("%w for %v", errFailedSpdkCall, in)
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		log.Printf("Could not create: %v", in)
+		return nil, fmt.Errorf("%w for %v", errUnexpectedSpdkCallResult, in)
 	}
-	return &pb.VirtioBlk{}, nil
+
+	response := &pb.VirtioBlk{}
+	err = deepcopier.Copy(in.VirtioBlk).To(response)
+	if err != nil {
+		log.Printf("Error at response creation: %v", err)
+		return nil, status.Error(codes.Internal, "Failed to construct device create response")
+	}
+	return response, nil
 }
 
 // DeleteVirtioBlk deletes a Virtio block device
