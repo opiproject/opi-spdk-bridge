@@ -12,7 +12,6 @@ import (
 	"net"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -47,41 +46,6 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
-	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func spdkMockServer(l net.Listener, toSend []string) {
-	for _, spdk := range toSend {
-		fd, err := l.Accept()
-		if err != nil {
-			log.Fatal("accept error:", err)
-		}
-		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", server.RPCID)
-
-		buf := make([]byte, 512)
-		nr, err := fd.Read(buf)
-		if err != nil {
-			return
-		}
-
-		data := buf[0:nr]
-		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, server.RPCID)
-		}
-
-		log.Printf("SPDK mockup Server: got : %s", string(data))
-		log.Printf("SPDK mockup Server: snd : %s", spdk)
-
-		_, err = fd.Write([]byte(spdk))
-		if err != nil {
-			log.Fatal("Write: ", err)
-		}
-		err = fd.(*net.UnixConn).CloseWrite()
-		if err != nil {
-			log.Fatal(err)
-		}
 	}
 }
 
@@ -198,7 +162,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.start {
-				go spdkMockServer(ln, tt.spdk)
+				go server.SpdkMockServer(ln, tt.spdk)
 			}
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in}
 			response, err := client.CreateNVMfRemoteController(ctx, request)
@@ -392,7 +356,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.start {
-				go spdkMockServer(ln, tt.spdk)
+				go server.SpdkMockServer(ln, tt.spdk)
 			}
 			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in}
 			response, err := client.ListNVMfRemoteControllers(ctx, request)
@@ -513,7 +477,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.start {
-				go spdkMockServer(ln, tt.spdk)
+				go server.SpdkMockServer(ln, tt.spdk)
 			}
 			request := &pb.GetNVMfRemoteControllerRequest{Name: tt.in}
 			response, err := client.GetNVMfRemoteController(ctx, request)
@@ -587,7 +551,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.start {
-				go spdkMockServer(ln, tt.spdk)
+				go server.SpdkMockServer(ln, tt.spdk)
 			}
 			request := &pb.NVMfRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := client.NVMfRemoteControllerStats(ctx, request)
@@ -700,7 +664,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.start {
-				go spdkMockServer(ln, tt.spdk)
+				go server.SpdkMockServer(ln, tt.spdk)
 			}
 			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in}
 			response, err := client.DeleteNVMfRemoteController(ctx, request)
