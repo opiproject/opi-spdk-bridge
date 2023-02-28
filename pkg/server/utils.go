@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package server implements the server
 package server
@@ -10,6 +11,8 @@ import (
 	"net"
 	"os"
 	"strings"
+
+	"google.golang.org/grpc"
 )
 
 // StartSpdkMockupServer cleans unix socket and listens again, used in testing
@@ -57,5 +60,21 @@ func SpdkMockServer(l net.Listener, toSend []string) {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+}
+
+// CloseGrpcConnection is utility function used to defer grpc connection close is tests
+func CloseGrpcConnection(conn *grpc.ClientConn) {
+	err := conn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// CloseListener is utility function used to defer listener close in tests
+func CloseListener(ln net.Listener) {
+	err := ln.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
 }

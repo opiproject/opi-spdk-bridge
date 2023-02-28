@@ -97,21 +97,11 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendVirtioBlkServiceClient(conn)
 
 	ln := server.StartSpdkMockupServer()
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
@@ -126,23 +127,11 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -197,13 +186,7 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
 	// run tests
@@ -320,23 +303,11 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -441,23 +412,11 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -515,23 +474,11 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -628,23 +575,11 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
