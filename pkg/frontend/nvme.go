@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
 package frontend
@@ -19,11 +20,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
-
-// TODO: avoid globals
-var subsystems = map[string]*pb.NVMeSubsystem{}
-var controllers = map[string]*pb.NVMeController{}
-var namespaces = map[string]*pb.NVMeNamespace{}
 
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
@@ -61,14 +57,14 @@ func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		return nil, err
 	}
 	response.Status = &pb.NVMeSubsystemStatus{FirmwareRevision: ver.Version}
-	subsystems[in.NvMeSubsystem.Spec.Id.Value] = response
+	s.Nvme.Subsystems[in.NvMeSubsystem.Spec.Id.Value] = response
 	return response, nil
 }
 
 // DeleteNVMeSubsystem deletes an NVMe Subsystem
 func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsystemRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMeSubsystem: Received from client: %v", in)
-	subsys, ok := subsystems[in.Name]
+	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
@@ -89,7 +85,7 @@ func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(subsystems, subsys.Spec.Id.Value)
+	delete(s.Nvme.Subsystems, subsys.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
@@ -120,7 +116,7 @@ func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsyste
 // GetNVMeSubsystem gets NVMe Subsystems
 func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("GetNVMeSubsystem: Received from client: %v", in)
-	subsys, ok := subsystems[in.Name]
+	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
@@ -162,7 +158,7 @@ func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 // CreateNVMeController creates an NVMe controller
 func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.NvMeController)
-	subsys, ok := subsystems[in.NvMeController.Spec.SubsystemId.Value]
+	subsys, ok := s.Nvme.Subsystems[in.NvMeController.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", in.NvMeController.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
@@ -196,9 +192,9 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
-	controllers[in.NvMeController.Spec.Id.Value].Spec.NvmeControllerId = -1
-	controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
+	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
+	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value].Spec.NvmeControllerId = -1
+	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
 	response := &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: "TBD"}}}
 	err = deepcopier.Copy(in.NvMeController).To(response)
 	if err != nil {
@@ -211,11 +207,11 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 // DeleteNVMeController deletes an NVMe controller
 func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received from client: %v", in.Name)
-	controller, ok := controllers[in.Name]
+	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
-	subsys, ok := subsystems[controller.Spec.SubsystemId.Value]
+	subsys, ok := s.Nvme.Subsystems[controller.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", controller.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
@@ -250,15 +246,15 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(controllers, controller.Spec.Id.Value)
+	delete(s.Nvme.Controllers, controller.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
 // UpdateNVMeController updates an NVMe controller
 func (s *Server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("UpdateNVMeController: Received from client: %v", in)
-	controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
-	controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
+	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
+	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
 	response := &pb.NVMeController{}
 	err := deepcopier.Copy(in.NvMeController).To(response)
 	if err != nil {
@@ -272,7 +268,7 @@ func (s *Server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 func (s *Server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("Received from client: %v", in.Parent)
 	Blobarray := []*pb.NVMeController{}
-	for _, controller := range controllers {
+	for _, controller := range s.Nvme.Controllers {
 		Blobarray = append(Blobarray, controller)
 	}
 	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray}, nil
@@ -281,7 +277,7 @@ func (s *Server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControl
 // GetNVMeController gets an NVMe controller
 func (s *Server) GetNVMeController(ctx context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.Name)
-	controller, ok := controllers[in.Name]
+	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
@@ -297,7 +293,7 @@ func (s *Server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerS
 // CreateNVMeNamespace creates an NVMe namespace
 func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("CreateNVMeNamespace: Received from client: %v", in)
-	subsys, ok := subsystems[in.NvMeNamespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Nvme.Subsystems[in.NvMeNamespace.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", in.NvMeNamespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
@@ -324,7 +320,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
+	s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
 
 	response := &pb.NVMeNamespace{}
 	err = deepcopier.Copy(in.NvMeNamespace).To(response)
@@ -339,13 +335,13 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 // DeleteNVMeNamespace deletes an NVMe namespace
 func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNamespaceRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMeNamespace: Received from client: %v", in)
-	namespace, ok := namespaces[in.Name]
+	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	subsys, ok := subsystems[namespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Nvme.Subsystems[namespace.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)
@@ -368,15 +364,15 @@ func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(namespaces, namespace.Spec.Id.Value)
+	delete(s.Nvme.Namespaces, namespace.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
 // UpdateNVMeNamespace updates an NVMe namespace
 func (s *Server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("UpdateNVMeNamespace: Received from client: %v", in)
-	namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
-	namespaces[in.NvMeNamespace.Spec.Id.Value].Status = &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}
+	s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
+	s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value].Status = &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}
 
 	response := &pb.NVMeNamespace{}
 	err := deepcopier.Copy(in.NvMeNamespace).To(response)
@@ -393,7 +389,7 @@ func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 
 	nqn := ""
 	if in.Parent != "" {
-		subsys, ok := subsystems[in.Parent]
+		subsys, ok := s.Nvme.Subsystems[in.Parent]
 		if !ok {
 			err := fmt.Errorf("unable to find subsystem %s", in.Parent)
 			log.Printf("error: %v", err)
@@ -431,7 +427,7 @@ func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 // GetNVMeNamespace gets an NVMe namespace
 func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("GetNVMeNamespace: Received from client: %v", in)
-	namespace, ok := namespaces[in.Name]
+	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
@@ -441,7 +437,7 @@ func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 	// return namespace, nil
 
 	// fetch subsystems -> namespaces from Server, match the nsid to find the corresponding namespace
-	subsys, ok := subsystems[namespace.Spec.SubsystemId.Value]
+	subsys, ok := s.Nvme.Subsystems[namespace.Spec.SubsystemId.Value]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemId.Value)
 		log.Printf("error: %v", err)

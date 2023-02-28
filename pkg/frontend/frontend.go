@@ -2,7 +2,7 @@
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
-// Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
+// Package frontend implements the FrontEnd APIs (host facing) of the storage Server
 package frontend
 
 import (
@@ -25,11 +25,31 @@ var (
 	errUnexpectedSpdkCallResult = status.Error(codes.FailedPrecondition, "Unexpected SPDK call result.")
 )
 
+// NvmeParameters contains all NVMe related structures
+type NvmeParameters struct {
+	Subsystems  map[string]*pb.NVMeSubsystem
+	Controllers map[string]*pb.NVMeController
+	Namespaces  map[string]*pb.NVMeNamespace
+}
+
 // Server contains frontend related OPI services
 type Server struct {
 	pb.UnimplementedFrontendNvmeServiceServer
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
+
+	Nvme NvmeParameters
+}
+
+// NewServer creates initialized instance of NVMe server
+func NewServer() *Server {
+	return &Server{
+		Nvme: NvmeParameters{
+			Subsystems:  make(map[string]*pb.NVMeSubsystem),
+			Controllers: make(map[string]*pb.NVMeController),
+			Namespaces:  make(map[string]*pb.NVMeNamespace),
+		},
+	}
 }
 
 // CreateVirtioBlk creates a Virtio block device

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 package main
 
 import (
@@ -29,9 +30,11 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	pb.RegisterFrontendNvmeServiceServer(s, &frontend.Server{})
-	pb.RegisterFrontendVirtioBlkServiceServer(s, &frontend.Server{})
-	pb.RegisterFrontendVirtioScsiServiceServer(s, &frontend.Server{})
+	frontendServer := frontend.NewServer()
+
+	pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
+	pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
+	pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)
 	pb.RegisterNVMfRemoteControllerServiceServer(s, &backend.Server{})
 	pb.RegisterNullDebugServiceServer(s, &backend.Server{})
 	pb.RegisterAioControllerServiceServer(s, &backend.Server{})
