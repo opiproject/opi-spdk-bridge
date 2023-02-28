@@ -86,7 +86,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
-			fmt.Sprintf("accel_crypto_key_create: %v", "json: cannot unmarshal string into Go struct field .result of type models.AccelCryptoKeyCreateResult"),
+			fmt.Sprintf("accel_crypto_key_create: %v", "json: cannot unmarshal string into Go value of type models.AccelCryptoKeyCreateResult"),
 			true,
 		},
 		{
@@ -131,7 +131,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go struct field .result of type models.BdevCryptoCreateResult"),
+			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go value of type models.BdevCryptoCreateResult"),
 			true,
 		},
 		{
@@ -282,7 +282,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.BdevGetBdevsResult"),
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
 			true,
 		},
 		{
@@ -390,7 +390,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.BdevGetBdevsResult"),
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
 			true,
 		},
 		{
@@ -494,7 +494,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go struct field .result of type models.BdevGetIostatResult"),
+			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type models.BdevGetIostatResult"),
 			true,
 		},
 		{
@@ -602,7 +602,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_crypto_delete: %v", "json: cannot unmarshal array into Go struct field .result of type models.BdevCryptoDeleteResult"),
+			fmt.Sprintf("bdev_crypto_delete: %v", "json: cannot unmarshal array into Go value of type models.BdevCryptoDeleteResult"),
 			true,
 		},
 		{
