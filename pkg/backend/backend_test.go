@@ -85,7 +85,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.BdevNvmeAttachControllerResult"),
+			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeAttachControllerResult"),
 			true,
 		},
 		{
@@ -248,7 +248,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.BdevNvmeGetControllerResult"),
+			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeGetControllerResult"),
 			true,
 		},
 		{
@@ -368,7 +368,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.BdevNvmeGetControllerResult"),
+			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeGetControllerResult"),
 			true,
 		},
 		{
@@ -539,7 +539,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go struct field .result of type models.BdevNvmeDetachControllerResult"),
+			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go value of type models.BdevNvmeDetachControllerResult"),
 			true,
 		},
 		{
