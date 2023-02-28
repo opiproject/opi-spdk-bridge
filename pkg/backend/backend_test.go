@@ -189,9 +189,15 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewNVMfRemoteControllerServiceClient(conn)
 
+	ln := server.StartSpdkMockupServer()
+	defer server.CloseListener(ln)
+
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.start {
+				go server.SpdkMockServer(ln, tt.spdk)
+			}
 			request := &pb.NVMfRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := client.NVMfRemoteControllerReset(ctx, request)
 			if response != nil {
