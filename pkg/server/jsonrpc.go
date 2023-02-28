@@ -13,6 +13,8 @@ import (
 	"log"
 	"net"
 	"sync/atomic"
+
+	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 )
 
 var (
@@ -24,34 +26,14 @@ var (
 
 // Call implements low level rpc request/response handling
 func Call(method string, args, result interface{}) error {
-	type rpcRequest struct {
-		Ver    string `json:"jsonrpc"`
-		ID     int32  `json:"id"`
-		Method string `json:"method"`
-	}
-
 	id := atomic.AddInt32(&RPCID, 1)
-	request := rpcRequest{
-		Ver:    "2.0",
-		ID:     id,
-		Method: method,
+	request := models.RPCRequest{
+		RPCVersion: models.JSONRPCVersion,
+		ID:         id,
+		Method:     method,
+		Params:     args,
 	}
-
-	var data []byte
-	var err error
-
-	if args == nil {
-		data, err = json.Marshal(request)
-	} else {
-		requestWithParams := struct {
-			rpcRequest
-			Params interface{} `json:"params"`
-		}{
-			request,
-			args,
-		}
-		data, err = json.Marshal(requestWithParams)
-	}
+	data, err := json.Marshal(request)
 	if err != nil {
 		return fmt.Errorf("%s: %s", method, err)
 	}
@@ -61,16 +43,7 @@ func Call(method string, args, result interface{}) error {
 	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
 	resp, _ := unixSocketCom(*RPCSock, data)
 
-	response := struct {
-		ID    int32 `json:"id"`
-		Error struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
-		} `json:"error"`
-		Result interface{} `json:"result"`
-	}{
-		Result: result,
-	}
+	var response models.RPCResponse
 	err = json.NewDecoder(resp).Decode(&response)
 	jsonresponse, _ := json.Marshal(response)
 	log.Printf("Received from SPDK: %s", jsonresponse)
@@ -83,7 +56,10 @@ func Call(method string, args, result interface{}) error {
 	if response.Error.Code != 0 {
 		return fmt.Errorf("%s: json response error: %s", method, response.Error.Message)
 	}
-
+	err = json.Unmarshal(response.Result, &result)
+	if err != nil {
+		return fmt.Errorf("%s: %s", method, err)
+	}
 	return nil
 }
 
