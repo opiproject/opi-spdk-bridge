@@ -11,6 +11,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/ulule/deepcopier"
@@ -22,10 +23,10 @@ import (
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
-	params := server.VhostCreateScsiControllerParams{
+	params := models.VhostCreateScsiControllerParams{
 		Ctrlr: in.VirtioScsiController.Id.Value,
 	}
-	var result server.VhostCreateScsiControllerResult
+	var result models.VhostCreateScsiControllerResult
 	err := server.Call("vhost_create_scsi_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -47,10 +48,10 @@ func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVi
 // DeleteVirtioScsiController deletes a Virtio SCSI controller
 func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiController: Received from client: %v", in)
-	params := server.VhostDeleteControllerParams{
+	params := models.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
-	var result server.VhostDeleteControllerResult
+	var result models.VhostDeleteControllerResult
 	err := server.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -72,7 +73,7 @@ func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVi
 // ListVirtioScsiControllers lists Virtio SCSI controllers
 func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
-	var result []server.VhostGetControllersResult
+	var result []models.VhostGetControllersResult
 	err := server.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -90,10 +91,10 @@ func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirti
 // GetVirtioScsiController gets a Virtio SCSI controller
 func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("GetVirtioScsiController: Received from client: %v", in)
-	params := server.VhostGetControllersParams{
+	params := models.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []server.VhostGetControllersResult
+	var result []models.VhostGetControllersResult
 	err := server.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -168,7 +169,7 @@ func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScs
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
 func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
-	var result []server.VhostGetControllersResult
+	var result []models.VhostGetControllersResult
 	err := server.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -186,10 +187,10 @@ func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLu
 // GetVirtioScsiLun gets a Virtio SCSI LUN
 func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("GetVirtioScsiLun: Received from client: %v", in)
-	params := server.VhostGetControllersParams{
+	params := models.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []server.VhostGetControllersResult
+	var result []models.VhostGetControllersResult
 	err := server.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

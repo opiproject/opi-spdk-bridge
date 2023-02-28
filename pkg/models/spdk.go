@@ -1,34 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
 
-// Package server implements the server
-package server
-
-// Block Device Abstraction Layer
-
-// Generated via https://mholt.github.io/json-to-go/
-
-// bdev_get_bdevs
-// bdev_get_iostat
-// bdev_malloc_create
-// bdev_malloc_delete
-// bdev_null_create
-// bdev_null_delete
-// bdev_crypto_create
-// bdev_crypto_delete
-// bdev_aio_create
-// bdev_aio_delete
-// bdev_nvme_attach_controller
-// bdev_nvme_get_controllers
-// bdev_nvme_detach_controller
-// bdev_nvme_reset_controller
-// bdev_nvme_get_transport_statistics
-// bdev_nvme_get_controller_health_info
-// bdev_iscsi_create
-// bdev_iscsi_delete
-// vhost_create_blk_controller
-// vhost_delete_controller
-// vhost_get_controllers
+// Package models holds definitions for SPDK json RPC structs
+package models
 
 // AccelCryptoKeyCreateParams holds the parameters required to create an AIO Block Device
 type AccelCryptoKeyCreateParams struct {

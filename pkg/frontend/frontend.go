@@ -12,6 +12,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"github.com/ulule/deepcopier"
 
@@ -55,11 +56,11 @@ func NewServer() *Server {
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
-	params := server.VhostCreateBlkControllerParams{
+	params := models.VhostCreateBlkControllerParams{
 		Ctrlr:   in.VirtioBlk.Id.Value,
 		DevName: in.VirtioBlk.VolumeId.Value,
 	}
-	var result server.VhostCreateBlkControllerResult
+	var result models.VhostCreateBlkControllerResult
 	err := server.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -83,10 +84,10 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 // DeleteVirtioBlk deletes a Virtio block device
 func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
-	params := server.VhostDeleteControllerParams{
+	params := models.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
-	var result server.VhostDeleteControllerResult
+	var result models.VhostDeleteControllerResult
 	err := server.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -108,7 +109,7 @@ func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequ
 // ListVirtioBlks lists Virtio block devices
 func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
 	log.Printf("ListVirtioBlks: Received from client: %v", in)
-	var result []server.VhostGetControllersResult
+	var result []models.VhostGetControllersResult
 	err := server.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -126,10 +127,10 @@ func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 // GetVirtioBlk gets a Virtio block device
 func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("GetVirtioBlk: Received from client: %v", in)
-	params := server.VhostGetControllersParams{
+	params := models.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []server.VhostGetControllersResult
+	var result []models.VhostGetControllersResult
 	err := server.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
