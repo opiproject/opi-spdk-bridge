@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package middleend implememnts the MiddleEnd APIs (service) of the storage Server
 package middleend
@@ -163,24 +164,11 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup Server
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -343,24 +331,11 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup Server
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -459,24 +434,11 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup Server
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -581,24 +543,11 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup Server
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
@@ -695,24 +644,11 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 	}
 
 	ctx, conn := startGrpcMockupServer()
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
+	defer server.CloseGrpcConnection(conn)
 	client := pb.NewMiddleendServiceClient(conn)
 
-	// start SPDK mockup Server
 	ln := server.StartSpdkMockupServer()
-
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(ln)
+	defer server.CloseListener(ln)
 
 	// run tests
 	for _, tt := range tests {
