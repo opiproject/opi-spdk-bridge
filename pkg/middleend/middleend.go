@@ -13,6 +13,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/ulule/deepcopier"
@@ -36,14 +37,14 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params1 := server.AccelCryptoKeyCreateParams{
+	params1 := models.AccelCryptoKeyCreateParams{
 		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
 		Name:   "super_key",
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("a", len(in.EncryptedVolume.Key)),
 	}
 	// TODO: don't use hard-coded key name
-	var result1 server.AccelCryptoKeyCreateResult
+	var result1 models.AccelCryptoKeyCreateResult
 	err1 := server.Call("accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
@@ -56,12 +57,12 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// create bdev now
-	params := server.BdevCryptoCreateParams{
+	params := models.BdevCryptoCreateParams{
 		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
 		KeyName:      "super_key",
 	}
-	var result server.BdevCryptoCreateResult
+	var result models.BdevCryptoCreateResult
 	err := server.Call("bdev_crypto_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -85,10 +86,10 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 // DeleteEncryptedVolume deletes an encrypted volume
 func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
-	params := server.BdevCryptoDeleteParams{
+	params := models.BdevCryptoDeleteParams{
 		Name: in.Name,
 	}
-	var result server.BdevCryptoDeleteResult
+	var result models.BdevCryptoDeleteResult
 	err := server.Call("bdev_crypto_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -107,10 +108,10 @@ func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	// first delete old bdev
-	params1 := server.BdevCryptoDeleteParams{
+	params1 := models.BdevCryptoDeleteParams{
 		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
-	var result1 server.BdevCryptoDeleteResult
+	var result1 models.BdevCryptoDeleteResult
 	err1 := server.Call("bdev_crypto_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
@@ -121,10 +122,10 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		log.Printf("Could not delete: %v", in)
 	}
 	// now delete a key
-	params0 := server.AccelCryptoKeyDestroyParams{
+	params0 := models.AccelCryptoKeyDestroyParams{
 		KeyName: "super_key",
 	}
-	var result0 server.AccelCryptoKeyDestroyResult
+	var result0 models.AccelCryptoKeyDestroyResult
 	err0 := server.Call("accel_crypto_key_destroy", &params0, &result0)
 	if err0 != nil {
 		log.Printf("error: %v", err0)
@@ -141,14 +142,14 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params2 := server.AccelCryptoKeyCreateParams{
+	params2 := models.AccelCryptoKeyCreateParams{
 		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
 		Name:   "super_key",
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("b", len(in.EncryptedVolume.Key)),
 	}
 	// TODO: don't use hard-coded key name
-	var result2 server.AccelCryptoKeyCreateResult
+	var result2 models.AccelCryptoKeyCreateResult
 	err2 := server.Call("accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
@@ -161,12 +162,12 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// create bdev now
-	params3 := server.BdevCryptoCreateParams{
+	params3 := models.BdevCryptoCreateParams{
 		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
 		KeyName:      "super_key",
 	}
-	var result3 server.BdevCryptoCreateResult
+	var result3 models.BdevCryptoCreateResult
 	err3 := server.Call("bdev_crypto_create", &params3, &result3)
 	if err3 != nil {
 		log.Printf("error: %v", err3)
@@ -191,7 +192,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 // ListEncryptedVolumes lists encrypted volumes
 func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
-	var result []server.BdevGetBdevsResult
+	var result []models.BdevGetBdevsResult
 	err := server.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -209,10 +210,10 @@ func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedV
 // GetEncryptedVolume gets an encrypted volume
 func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("GetEncryptedVolume: Received from client: %v", in)
-	params := server.BdevGetBdevsParams{
+	params := models.BdevGetBdevsParams{
 		Name: in.Name,
 	}
-	var result []server.BdevGetBdevsResult
+	var result []models.BdevGetBdevsResult
 	err := server.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -230,11 +231,11 @@ func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolu
 // EncryptedVolumeStats gets an encrypted volume stats
 func (s *Server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
 	log.Printf("EncryptedVolumeStats: Received from client: %v", in)
-	params := server.BdevGetIostatParams{
+	params := models.BdevGetIostatParams{
 		Name: in.EncryptedVolumeId.Value,
 	}
 	// See https://mholt.github.io/json-to-go/
-	var result server.BdevGetIostatResult
+	var result models.BdevGetIostatResult
 	err := server.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

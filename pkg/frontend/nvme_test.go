@@ -474,7 +474,7 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
-			fmt.Sprintf("nvmf_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type server.NvmfGetSubsystemStatsResult"),
+			fmt.Sprintf("nvmf_get_stats: %v", "json: cannot unmarshal array into Go struct field .result of type models.NvmfGetSubsystemStatsResult"),
 			true,
 		},
 		{
@@ -1229,7 +1229,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.NvmfGetSubsystemsResult"),
+			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.NvmfGetSubsystemsResult"),
 			true,
 		},
 		{
@@ -1349,7 +1349,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []server.NvmfGetSubsystemsResult"),
+			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go struct field .result of type []models.NvmfGetSubsystemsResult"),
 			true,
 		},
 		{

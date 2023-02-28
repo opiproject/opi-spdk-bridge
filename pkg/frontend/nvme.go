@@ -13,6 +13,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/ulule/deepcopier"
@@ -24,14 +25,14 @@ import (
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
-	params := server.NvmfCreateSubsystemParams{
+	params := models.NvmfCreateSubsystemParams{
 		Nqn:           in.NvMeSubsystem.Spec.Nqn,
 		SerialNumber:  in.NvMeSubsystem.Spec.SerialNumber,
 		ModelNumber:   in.NvMeSubsystem.Spec.ModelNumber,
 		AllowAnyHost:  true,
 		MaxNamespaces: int(in.NvMeSubsystem.Spec.MaxNamespaces),
 	}
-	var result server.NvmfCreateSubsystemResult
+	var result models.NvmfCreateSubsystemResult
 	err := server.Call("nvmf_create_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -43,7 +44,7 @@ func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	var ver server.GetVersionResult
+	var ver models.GetVersionResult
 	err = server.Call("spdk_get_version", nil, &ver)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -70,10 +71,10 @@ func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := server.NvmfDeleteSubsystemParams{
+	params := models.NvmfDeleteSubsystemParams{
 		Nqn: subsys.Spec.Nqn,
 	}
-	var result server.NvmfDeleteSubsystemResult
+	var result models.NvmfDeleteSubsystemResult
 	err := server.Call("nvmf_delete_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -98,7 +99,7 @@ func (s *Server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsy
 // ListNVMeSubsystems lists NVMe Subsystems
 func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
-	var result []server.NvmfGetSubsystemsResult
+	var result []models.NvmfGetSubsystemsResult
 	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -123,7 +124,7 @@ func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 		return nil, err
 	}
 
-	var result []server.NvmfGetSubsystemsResult
+	var result []models.NvmfGetSubsystemsResult
 	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -145,7 +146,7 @@ func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 // NVMeSubsystemStats gets NVMe Subsystem stats
 func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
-	var result server.NvmfGetSubsystemStatsResult
+	var result models.NvmfGetSubsystemStatsResult
 	err := server.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -172,7 +173,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		addrs = []net.IP{net.ParseIP("127.0.0.1")}
 		// return nil, err
 	}
-	params := server.NvmfSubsystemAddListenerParams{
+	params := models.NvmfSubsystemAddListenerParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 	params.ListenAddress.Trtype = "tcp"
@@ -180,7 +181,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	params.ListenAddress.Trsvcid = "4444"
 	params.ListenAddress.Adrfam = "ipv4"
 
-	var result server.NvmfSubsystemAddListenerResult
+	var result models.NvmfSubsystemAddListenerResult
 	err = server.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -226,7 +227,7 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		addrs = []net.IP{net.ParseIP("127.0.0.1")}
 		// return nil, err
 	}
-	params := server.NvmfSubsystemAddListenerParams{
+	params := models.NvmfSubsystemAddListenerParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 	params.ListenAddress.Trtype = "tcp"
@@ -234,7 +235,7 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	params.ListenAddress.Trsvcid = "4444"
 	params.ListenAddress.Adrfam = "ipv4"
 
-	var result server.NvmfSubsystemAddListenerResult
+	var result models.NvmfSubsystemAddListenerResult
 	err = server.Call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -300,7 +301,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 		return nil, err
 	}
 
-	params := server.NvmfSubsystemAddNsParams{
+	params := models.NvmfSubsystemAddNsParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 
@@ -308,7 +309,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 	params.Namespace.Nsid = int(in.NvMeNamespace.Spec.HostNsid)
 	params.Namespace.BdevName = in.NvMeNamespace.Spec.VolumeId.Value
 
-	var result server.NvmfSubsystemAddNsResult
+	var result models.NvmfSubsystemAddNsResult
 	err := server.Call("nvmf_subsystem_add_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -348,11 +349,11 @@ func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 		return nil, err
 	}
 
-	params := server.NvmfSubsystemRemoveNsParams{
+	params := models.NvmfSubsystemRemoveNsParams{
 		Nqn:  subsys.Spec.Nqn,
 		Nsid: int(namespace.Spec.HostNsid),
 	}
-	var result server.NvmfSubsystemRemoveNsResult
+	var result models.NvmfSubsystemRemoveNsResult
 	err := server.Call("nvmf_subsystem_remove_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -397,7 +398,7 @@ func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 		}
 		nqn = subsys.Spec.Nqn
 	}
-	var result []server.NvmfGetSubsystemsResult
+	var result []models.NvmfGetSubsystemsResult
 	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -444,7 +445,7 @@ func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 		return nil, err
 	}
 
-	var result []server.NvmfGetSubsystemsResult
+	var result []models.NvmfGetSubsystemsResult
 	err := server.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
