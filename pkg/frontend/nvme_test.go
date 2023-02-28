@@ -181,6 +181,7 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 		name    string
 		in      *pb.NVMeSubsystem
 		out     *pb.NVMeSubsystem
+		spdk    []string
 		errCode codes.Code
 		errMsg  string
 		start   bool
@@ -189,6 +190,7 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 			"unimplemented method",
 			&pb.NVMeSubsystem{},
 			nil,
+			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateNVMeSubsystem"),
 			false,
@@ -199,9 +201,15 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
+	ln := server.StartSpdkMockupServer()
+	defer server.CloseListener(ln)
+
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.start {
+				go server.SpdkMockServer(ln, tt.spdk)
+			}
 			request := &pb.UpdateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
 			response, err := client.UpdateNVMeSubsystem(ctx, request)
 			if response != nil {
@@ -733,9 +741,15 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
+	ln := server.StartSpdkMockupServer()
+	defer server.CloseListener(ln)
+
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.start {
+				go server.SpdkMockServer(ln, tt.spdk)
+			}
 			request := &pb.UpdateNVMeControllerRequest{NvMeController: tt.in}
 			response, err := client.UpdateNVMeController(ctx, request)
 			if response != nil {
@@ -1154,9 +1168,15 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 	defer server.CloseGrpcConnection(conn)
 	client := pb.NewFrontendNvmeServiceClient(conn)
 
+	ln := server.StartSpdkMockupServer()
+	defer server.CloseListener(ln)
+
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.start {
+				go server.SpdkMockServer(ln, tt.spdk)
+			}
 			request := &pb.UpdateNVMeNamespaceRequest{NvMeNamespace: tt.in}
 			response, err := client.UpdateNVMeNamespace(ctx, request)
 			if response != nil {
