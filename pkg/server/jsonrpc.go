@@ -19,14 +19,14 @@ import (
 
 var (
 	// RPCID is json request message ID, auto incremented
-	RPCID int32
+	RPCID uint64
 	// RPCSock is unix domain socket to communicate with SPDK app or Vendor SDK
 	RPCSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 )
 
 // Call implements low level rpc request/response handling
 func Call(method string, args, result interface{}) error {
-	id := atomic.AddInt32(&RPCID, 1)
+	id := atomic.AddUint64(&RPCID, 1)
 	request := models.RPCRequest{
 		RPCVersion: models.JSONRPCVersion,
 		ID:         id,

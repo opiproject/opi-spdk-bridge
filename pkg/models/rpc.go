@@ -16,14 +16,14 @@ const JSONRPCVersion = "2.0"
 type RPCRequest struct {
 	RPCVersion string      `json:"jsonrpc"`
 	Method     string      `json:"method"`
-	ID         int32       `json:"id"`
+	ID         uint64      `json:"id"`
 	Params     interface{} `json:"params,omitempty"`
 }
 
 // RPCResponse holds the parameters of the response struct
 type RPCResponse struct {
 	JSONRPCVersion string          `json:"jsonrpc"`
-	ID             int32           `json:"id"`
+	ID             uint64          `json:"id"`
 	Result         json.RawMessage `json:"result"`
 	Error          RPCError        `json:"error"`
 }
