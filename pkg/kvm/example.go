@@ -25,6 +25,7 @@ func Communicate() {
 			log.Fatal(err)
 		}
 	}(mon)
+	// qmp_capabilities MUST be first
 	commands := []string{`{ "execute": "qmp_capabilities" }`, `{ "execute": "query-commands" }`, `{ "execute": "query-pci" }`}
 	for _, s := range commands {
 		cmd := []byte(s)
@@ -32,4 +33,10 @@ func Communicate() {
 		raw, _ := mon.Run(cmd)
 		log.Printf("got %v", string(raw))
 	}
+	// TODO:
+	// {"execute": "chardev-add", "id": 3, "arguments": {"id": "spdk_vhost_blk0", "backend": {"type": "socket", "data":{ "addr": {"type": "unix", "data": {"path": "/var/tmp/vhost.1"} } , "server": false } } }}
+	// {"execute": "device_add",  "id": 4, "arguments": { "driver": "vhost-user-blk-pci", "chardev": "spdk_vhost_blk0"  } }
+	// {"execute": "chardev-add", "id": 5, "arguments": {"id": "spdk_vhost_scsi0", "backend": {"type": "socket", "data":{ "addr": {"type": "unix", "data": {"path": "/var/tmp/vhost.0"} } , "server": false } } }}
+	// {"execute": "device_add",  "id": 6, "arguments": { "driver": "vhost-user-scsi-pci", "chardev": "spdk_vhost_scsi0"  } }
+	// {"execute": "device_add",  "id": 7, "arguments": { "driver": "vfio-user-pci", "socket": "/var/tmp/cntrl"  } }
 }
