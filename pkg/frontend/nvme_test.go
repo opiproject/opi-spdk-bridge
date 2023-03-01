@@ -425,7 +425,7 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
 
@@ -663,7 +663,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)
@@ -813,7 +813,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
@@ -889,7 +889,7 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
@@ -1080,7 +1080,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
@@ -1303,7 +1303,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	opiSpdkServer.Nvme.Namespaces["ns0"] = &testNamespaces[0]
@@ -1428,7 +1428,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
@@ -1595,7 +1595,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
@@ -1697,7 +1697,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
@@ -1798,7 +1798,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServer()
+	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
 	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
 	defer server.CloseGrpcConnection(conn)

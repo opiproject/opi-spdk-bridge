@@ -18,10 +18,10 @@ import (
 // StartSpdkMockupServer cleans unix socket and listens again, used in testing
 func StartSpdkMockupServer() net.Listener {
 	// start SPDK mockup Server
-	if err := os.RemoveAll(*RPCSock); err != nil {
+	if err := os.RemoveAll(DefaultJSONRPC.socket); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *RPCSock)
+	ln, err := net.Listen("unix", DefaultJSONRPC.socket)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -36,7 +36,7 @@ func SpdkMockServer(l net.Listener, toSend []string) {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", RPCID)
+		log.Printf("SPDK ID [%d]", DefaultJSONRPC.id)
 
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
@@ -46,7 +46,7 @@ func SpdkMockServer(l net.Listener, toSend []string) {
 
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, RPCID)
+			spdk = fmt.Sprintf(spdk, DefaultJSONRPC.id)
 		}
 
 		log.Printf("SPDK mockup Server: got : %s", string(data))

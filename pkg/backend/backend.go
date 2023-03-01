@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
@@ -25,11 +26,21 @@ type Server struct {
 	pb.UnimplementedNVMfRemoteControllerServiceServer
 	pb.UnimplementedNullDebugServiceServer
 	pb.UnimplementedAioControllerServiceServer
+
+	RPC *server.JSONRPC
 }
 
 // NewServer creates initialized instance of BackEnd server
 func NewServer() *Server {
-	return &Server{}
+	return NewServerWithJSONRPC(server.DefaultJSONRPC)
+}
+
+// NewServerWithJSONRPC creates initialized instance of BackEnd server communicating
+// with provided jsonRPC
+func NewServerWithJSONRPC(jsonRPC *server.JSONRPC) *Server {
+	return &Server{
+		RPC: jsonRPC,
+	}
 }
 
 // CreateNullDebug creates a Null Debug instance
@@ -41,7 +52,7 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 		NumBlocks: 64,
 	}
 	var result models.BdevNullCreateResult
-	err := server.Call("bdev_null_create", &params, &result)
+	err := s.RPC.Call("bdev_null_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -63,7 +74,7 @@ func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequ
 		Name: in.Name,
 	}
 	var result models.BdevNullDeleteResult
-	err := server.Call("bdev_null_delete", &params, &result)
+	err := s.RPC.Call("bdev_null_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -82,7 +93,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 		Name: in.NullDebug.Handle.Value,
 	}
 	var result1 models.BdevNullDeleteResult
-	err1 := server.Call("bdev_null_delete", &params1, &result1)
+	err1 := s.RPC.Call("bdev_null_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -97,7 +108,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 		NumBlocks: 64,
 	}
 	var result2 models.BdevNullCreateResult
-	err2 := server.Call("bdev_null_create", &params2, &result2)
+	err2 := s.RPC.Call("bdev_null_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
@@ -116,7 +127,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
-	err := server.Call("bdev_get_bdevs", nil, &result)
+	err := s.RPC.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -137,7 +148,7 @@ func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (
 		Name: in.Name,
 	}
 	var result []models.BdevGetBdevsResult
-	err := server.Call("bdev_get_bdevs", &params, &result)
+	err := s.RPC.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -159,7 +170,7 @@ func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result models.BdevGetIostatResult
-	err := server.Call("bdev_get_iostat", &params, &result)
+	err := s.RPC.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
