@@ -18,13 +18,12 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var (
-	port = flag.Int("port", 50051, "The Server port")
-)
-
 func main() {
+	var port int
+	flag.IntVar(&port, "port", 50051, "The Server port")
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
