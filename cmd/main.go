@@ -12,6 +12,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc"
@@ -21,6 +22,7 @@ import (
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 50051, "The Server port")
+	spdkSocket := *server.RPCSock
 	flag.Parse()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -29,17 +31,18 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	fe := frontend.NewServer()
-	be := backend.NewServer()
-	me := middleend.NewServer()
+	jsonRPC := server.NewJSONRPC(spdkSocket)
+	frontendServer := frontend.NewServerWithJSONRPC(jsonRPC)
+	backendServer := backend.NewServerWithJSONRPC(jsonRPC)
+	middleendServer := middleend.NewServerWithJSONRPC(jsonRPC)
 
-	pb.RegisterFrontendNvmeServiceServer(s, fe)
-	pb.RegisterFrontendVirtioBlkServiceServer(s, fe)
-	pb.RegisterFrontendVirtioScsiServiceServer(s, fe)
-	pb.RegisterNVMfRemoteControllerServiceServer(s, be)
-	pb.RegisterNullDebugServiceServer(s, be)
-	pb.RegisterAioControllerServiceServer(s, be)
-	pb.RegisterMiddleendServiceServer(s, me)
+	pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
+	pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
+	pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)
+	pb.RegisterNVMfRemoteControllerServiceServer(s, backendServer)
+	pb.RegisterNullDebugServiceServer(s, backendServer)
+	pb.RegisterAioControllerServiceServer(s, backendServer)
+	pb.RegisterMiddleendServiceServer(s, middleendServer)
 
 	reflection.Register(s)
 

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
-// Package middleend implememnts the MiddleEnd APIs (service) of the storage Server
+// Package middleend implements the MiddleEnd APIs (service) of the storage Server
 package middleend
 
 import (
@@ -25,11 +26,21 @@ import (
 // Server contains middleend related OPI services
 type Server struct {
 	pb.UnimplementedMiddleendServiceServer
+
+	RPC *server.JSONRPC
 }
 
 // NewServer creates initialized instance of MiddleEnd server
 func NewServer() *Server {
-	return &Server{}
+	return NewServerWithJSONRPC(server.DefaultJSONRPC)
+}
+
+// NewServerWithJSONRPC creates initialized instance of MiddleEnd server communicating
+// with provided jsonRPC
+func NewServerWithJSONRPC(jsonRPC *server.JSONRPC) *Server {
+	return &Server{
+		RPC: jsonRPC,
+	}
 }
 
 // CreateEncryptedVolume creates an encrypted volume
@@ -50,7 +61,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	}
 	// TODO: don't use hard-coded key name
 	var result1 models.AccelCryptoKeyCreateResult
-	err1 := server.Call("accel_crypto_key_create", &params1, &result1)
+	err1 := s.RPC.Call("accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -68,7 +79,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 		KeyName:      "super_key",
 	}
 	var result models.BdevCryptoCreateResult
-	err := server.Call("bdev_crypto_create", &params, &result)
+	err := s.RPC.Call("bdev_crypto_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -95,7 +106,7 @@ func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 		Name: in.Name,
 	}
 	var result models.BdevCryptoDeleteResult
-	err := server.Call("bdev_crypto_delete", &params, &result)
+	err := s.RPC.Call("bdev_crypto_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -117,7 +128,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
 	var result1 models.BdevCryptoDeleteResult
-	err1 := server.Call("bdev_crypto_delete", &params1, &result1)
+	err1 := s.RPC.Call("bdev_crypto_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -131,7 +142,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		KeyName: "super_key",
 	}
 	var result0 models.AccelCryptoKeyDestroyResult
-	err0 := server.Call("accel_crypto_key_destroy", &params0, &result0)
+	err0 := s.RPC.Call("accel_crypto_key_destroy", &params0, &result0)
 	if err0 != nil {
 		log.Printf("error: %v", err0)
 		return nil, err0
@@ -155,7 +166,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	}
 	// TODO: don't use hard-coded key name
 	var result2 models.AccelCryptoKeyCreateResult
-	err2 := server.Call("accel_crypto_key_create", &params2, &result2)
+	err2 := s.RPC.Call("accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
@@ -173,7 +184,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 		KeyName:      "super_key",
 	}
 	var result3 models.BdevCryptoCreateResult
-	err3 := server.Call("bdev_crypto_create", &params3, &result3)
+	err3 := s.RPC.Call("bdev_crypto_create", &params3, &result3)
 	if err3 != nil {
 		log.Printf("error: %v", err3)
 		return nil, err3
@@ -198,7 +209,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
-	err := server.Call("bdev_get_bdevs", nil, &result)
+	err := s.RPC.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -219,7 +230,7 @@ func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolu
 		Name: in.Name,
 	}
 	var result []models.BdevGetBdevsResult
-	err := server.Call("bdev_get_bdevs", &params, &result)
+	err := s.RPC.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -241,7 +252,7 @@ func (s *Server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolum
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result models.BdevGetIostatResult
-	err := server.Call("bdev_get_iostat", &params, &result)
+	err := s.RPC.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

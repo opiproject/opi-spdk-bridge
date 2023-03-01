@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
@@ -12,7 +13,6 @@ import (
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
@@ -29,7 +29,7 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 		Filename:  in.AioController.Filename,
 	}
 	var result models.BdevAioCreateResult
-	err := server.Call("bdev_aio_create", &params, &result)
+	err := s.RPC.Call("bdev_aio_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -51,7 +51,7 @@ func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioContro
 		Name: in.Name,
 	}
 	var result models.BdevAioDeleteResult
-	err := server.Call("bdev_aio_delete", &params, &result)
+	err := s.RPC.Call("bdev_aio_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -70,7 +70,7 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 		Name: in.AioController.Handle.Value,
 	}
 	var result1 models.BdevAioDeleteResult
-	err1 := server.Call("bdev_aio_delete", &params1, &result1)
+	err1 := s.RPC.Call("bdev_aio_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -85,7 +85,7 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 		Filename:  in.AioController.Filename,
 	}
 	var result2 models.BdevAioCreateResult
-	err2 := server.Call("bdev_aio_create", &params2, &result2)
+	err2 := s.RPC.Call("bdev_aio_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
@@ -98,7 +98,7 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
-	err := server.Call("bdev_get_bdevs", nil, &result)
+	err := s.RPC.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -119,7 +119,7 @@ func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRe
 		Name: in.Name,
 	}
 	var result []models.BdevGetBdevsResult
-	err := server.Call("bdev_get_bdevs", &params, &result)
+	err := s.RPC.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -141,7 +141,7 @@ func (s *Server) AioControllerStats(ctx context.Context, in *pb.AioControllerSta
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result models.BdevGetIostatResult
-	err := server.Call("bdev_get_iostat", &params, &result)
+	err := s.RPC.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
