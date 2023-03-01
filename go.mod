@@ -10,6 +10,8 @@ require (
 )
 
 require (
+	github.com/digitalocean/go-libvirt v0.0.0-20220804181439-8648fbde413e // indirect
+	github.com/digitalocean/go-qemu v0.0.0-20221209210016-f035778c97f7 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
