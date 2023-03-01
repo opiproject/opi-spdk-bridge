@@ -6,22 +6,25 @@
 package server
 
 import (
+	"crypto/rand"
 	"fmt"
 	"log"
+	"math/big"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"google.golang.org/grpc"
 )
 
 // StartSpdkMockupServer cleans unix socket and listens again, used in testing
-func StartSpdkMockupServer() net.Listener {
+func StartSpdkMockupServer(rpc *JSONRPC) net.Listener {
 	// start SPDK mockup Server
-	if err := os.RemoveAll(DefaultJSONRPC.socket); err != nil {
+	if err := os.RemoveAll(rpc.socket); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", DefaultJSONRPC.socket)
+	ln, err := net.Listen("unix", rpc.socket)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
@@ -29,14 +32,14 @@ func StartSpdkMockupServer() net.Listener {
 }
 
 // SpdkMockServer implements mock function to send data instead of real SPDK app, used in testing
-func SpdkMockServer(l net.Listener, toSend []string) {
+func SpdkMockServer(rpc *JSONRPC, l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
 		fd, err := l.Accept()
 		if err != nil {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", DefaultJSONRPC.id)
+		log.Printf("SPDK ID [%d]", rpc.id)
 
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
@@ -46,7 +49,7 @@ func SpdkMockServer(l net.Listener, toSend []string) {
 
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, DefaultJSONRPC.id)
+			spdk = fmt.Sprintf(spdk, rpc.id)
 		}
 
 		log.Printf("SPDK mockup Server: got : %s", string(data))
@@ -77,4 +80,14 @@ func CloseListener(ln net.Listener) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// GenerateSocketName generates unique socket names for tests
+func GenerateSocketName(testType string) string {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(9223372036854775807))
+	if err != nil {
+		panic(err)
+	}
+	n := nBig.Uint64()
+	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
 }

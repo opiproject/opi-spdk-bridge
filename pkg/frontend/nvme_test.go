@@ -19,7 +19,6 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 var (
@@ -133,21 +132,14 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
-			response, err := client.CreateNVMeSubsystem(ctx, request)
+			response, err := testEnv.client.CreateNVMeSubsystem(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out.Spec)
@@ -197,21 +189,14 @@ func TestFrontEnd_UpdateNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.UpdateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
-			response, err := client.UpdateNVMeSubsystem(ctx, request)
+			response, err := testEnv.client.UpdateNVMeSubsystem(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out.Spec)
@@ -314,21 +299,14 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.ListNVMeSubsystemsRequest{}
-			response, err := client.ListNVMeSubsystems(ctx, request)
+			response, err := testEnv.client.ListNVMeSubsystems(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeSubsystems, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.NvMeSubsystems)
@@ -425,24 +403,15 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+
 			request := &pb.GetNVMeSubsystemRequest{Name: tt.in}
-			response, err := client.GetNVMeSubsystem(ctx, request)
+			response, err := testEnv.client.GetNVMeSubsystem(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
@@ -526,21 +495,15 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+
 			request := &pb.NVMeSubsystemStatsRequest{SubsystemId: &pc.ObjectKey{Value: tt.in}}
-			response, err := client.NVMeSubsystemStats(ctx, request)
+			response, err := testEnv.client.NVMeSubsystemStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.Stats)
@@ -663,23 +626,15 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+
 			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in}
-			response, err := client.CreateNVMeController(ctx, request)
+			response, err := testEnv.client.CreateNVMeController(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
@@ -737,21 +692,14 @@ func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.UpdateNVMeControllerRequest{NvMeController: tt.in}
-			response, err := client.UpdateNVMeController(ctx, request)
+			response, err := testEnv.client.UpdateNVMeController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out.Spec)
@@ -813,24 +761,16 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+
 			request := &pb.ListNVMeControllersRequest{Parent: tt.in}
-			response, err := client.ListNVMeControllers(ctx, request)
+			response, err := testEnv.client.ListNVMeControllers(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeControllers, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.NvMeControllers)
@@ -889,24 +829,16 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+
 			request := &pb.GetNVMeControllerRequest{Name: tt.in}
-			response, err := client.GetNVMeController(ctx, request)
+			response, err := testEnv.client.GetNVMeController(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
@@ -954,21 +886,14 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.NVMeControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
-			response, err := client.NVMeControllerStats(ctx, request)
+			response, err := testEnv.client.NVMeControllerStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.Stats)
@@ -1080,24 +1005,16 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in}
-			response, err := client.CreateNVMeNamespace(ctx, request)
+			response, err := testEnv.client.CreateNVMeNamespace(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out.Spec)
@@ -1164,21 +1081,14 @@ func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.UpdateNVMeNamespaceRequest{NvMeNamespace: tt.in}
-			response, err := client.UpdateNVMeNamespace(ctx, request)
+			response, err := testEnv.client.UpdateNVMeNamespace(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out.Spec)
@@ -1303,27 +1213,19 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	opiSpdkServer.Nvme.Namespaces["ns0"] = &testNamespaces[0]
-	opiSpdkServer.Nvme.Namespaces["ns1"] = &testNamespaces[1]
-	opiSpdkServer.Nvme.Namespaces["ns2"] = &testNamespaces[2]
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Namespaces["ns0"] = &testNamespaces[0]
+			testEnv.opiSpdkServer.Nvme.Namespaces["ns1"] = &testNamespaces[1]
+			testEnv.opiSpdkServer.Nvme.Namespaces["ns2"] = &testNamespaces[2]
+
 			request := &pb.ListNVMeNamespacesRequest{Parent: tt.in}
-			response, err := client.ListNVMeNamespaces(ctx, request)
+			response, err := testEnv.client.ListNVMeNamespaces(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeNamespaces, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.NvMeNamespaces)
@@ -1428,25 +1330,17 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+
 			request := &pb.GetNVMeNamespaceRequest{Name: tt.in}
-			response, err := client.GetNVMeNamespace(ctx, request)
+			response, err := testEnv.client.GetNVMeNamespace(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
 					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
@@ -1494,21 +1388,14 @@ func TestFrontEnd_NVMeNamespaceStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.NVMeNamespaceStatsRequest{NamespaceId: &pc.ObjectKey{Value: tt.in}}
-			response, err := client.NVMeNamespaceStats(ctx, request)
+			response, err := testEnv.client.NVMeNamespaceStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.Stats)
@@ -1595,25 +1482,17 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+
 			request := &pb.DeleteNVMeNamespaceRequest{Name: tt.in}
-			response, err := client.DeleteNVMeNamespace(ctx, request)
+			response, err := testEnv.client.DeleteNVMeNamespace(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
@@ -1697,24 +1576,16 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+
 			request := &pb.DeleteNVMeControllerRequest{Name: tt.in}
-			response, err := client.DeleteNVMeController(ctx, request)
+			response, err := testEnv.client.DeleteNVMeController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
@@ -1798,23 +1669,15 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 		},
 	}
 
-	opiSpdkServer := NewServerWithJSONRPC(server.DefaultJSONRPC)
-	opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-	ctx, conn := startPreConfiguredGrpcMockupServer(opiSpdkServer)
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendNvmeServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+
 			request := &pb.DeleteNVMeSubsystemRequest{Name: tt.in}
-			response, err := client.DeleteNVMeSubsystem(ctx, request)
+			response, err := testEnv.client.DeleteNVMeSubsystem(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {

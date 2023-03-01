@@ -10,6 +10,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"testing"
 
@@ -25,7 +26,62 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
-// TODO: move to a separate (test/server) package to avoid duplication
+// TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
+
+type frontendClient struct {
+	pb.FrontendNvmeServiceClient
+	pb.FrontendVirtioBlkServiceClient
+	pb.FrontendVirtioScsiServiceClient
+}
+
+type testEnv struct {
+	opiSpdkServer *Server
+	client        *frontendClient
+	ln            net.Listener
+	testSocket    string
+	ctx           context.Context
+	conn          *grpc.ClientConn
+	jsonRPC       *server.JSONRPC
+}
+
+func (e *testEnv) Close() {
+	server.CloseListener(e.ln)
+	server.CloseGrpcConnection(e.conn)
+	if err := os.RemoveAll(e.testSocket); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
+	env := &testEnv{}
+	env.testSocket = server.GenerateSocketName("frontend")
+	env.jsonRPC = server.NewJSONRPC(env.testSocket)
+	env.opiSpdkServer = NewServerWithJSONRPC(env.jsonRPC)
+
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx,
+		"",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialer(env.opiSpdkServer)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	env.ctx = ctx
+	env.conn = conn
+
+	env.ln = server.StartSpdkMockupServer(env.jsonRPC)
+	env.client = &frontendClient{
+		pb.NewFrontendNvmeServiceClient(env.conn),
+		pb.NewFrontendVirtioBlkServiceClient(env.conn),
+		pb.NewFrontendVirtioScsiServiceClient(env.conn),
+	}
+
+	if startSpdkServer {
+		go server.SpdkMockServer(env.jsonRPC, env.ln, spdkResponses)
+	}
+	return env
+}
+
 func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
@@ -42,25 +98,6 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	opiSpdkServer := NewServer()
-	return startPreConfiguredGrpcMockupServer(opiSpdkServer)
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startPreConfiguredGrpcMockupServer(opiSpdkServer *Server) (context.Context, *grpc.ClientConn) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx,
-		"",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer(opiSpdkServer)))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return ctx, conn
 }
 
 func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
@@ -96,18 +133,13 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewFrontendVirtioBlkServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			go server.SpdkMockServer(ln, test.spdk)
+			testEnv := createTestEnvironment(true, test.spdk)
+			defer testEnv.Close()
+
 			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in}
-			response, err := client.CreateVirtioBlk(ctx, request)
+			response, err := testEnv.client.CreateVirtioBlk(testEnv.ctx, request)
 			if response != nil {
 				wantOut, _ := proto.Marshal(test.out)
 				gotOut, _ := proto.Marshal(response)

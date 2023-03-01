@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"reflect"
 	"testing"
 
@@ -25,7 +26,58 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
-// TODO: move to a separate (test/server) package to avoid duplication
+// TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
+
+type middleendClient struct {
+	pb.MiddleendServiceClient
+}
+
+type testEnv struct {
+	opiSpdkServer *Server
+	client        *middleendClient
+	ln            net.Listener
+	testSocket    string
+	ctx           context.Context
+	conn          *grpc.ClientConn
+	jsonRPC       *server.JSONRPC
+}
+
+func (e *testEnv) Close() {
+	server.CloseListener(e.ln)
+	if err := os.RemoveAll(e.testSocket); err != nil {
+		log.Fatal(err)
+	}
+	server.CloseGrpcConnection(e.conn)
+}
+
+func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
+	env := &testEnv{}
+	env.testSocket = server.GenerateSocketName("middleend")
+	env.jsonRPC = server.NewJSONRPC(env.testSocket)
+	env.opiSpdkServer = NewServerWithJSONRPC(env.jsonRPC)
+
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx,
+		"",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialer(env.opiSpdkServer)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	env.ctx = ctx
+	env.conn = conn
+
+	env.ln = server.StartSpdkMockupServer(env.jsonRPC)
+	env.client = &middleendClient{
+		pb.NewMiddleendServiceClient(env.conn),
+	}
+
+	if startSpdkServer {
+		go server.SpdkMockServer(env.jsonRPC, env.ln, spdkResponses)
+	}
+	return env
+}
+
 func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
@@ -40,25 +92,6 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	opiSpdkServer := NewServer()
-	return startPreConfiguredGrpcMockupServer(opiSpdkServer)
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startPreConfiguredGrpcMockupServer(opiSpdkServer *Server) (context.Context, *grpc.ClientConn) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx,
-		"",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer(opiSpdkServer)))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return ctx, conn
 }
 
 func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
@@ -169,21 +202,14 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewMiddleendServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in}
-			response, err := client.CreateEncryptedVolume(ctx, request)
+			response, err := testEnv.client.CreateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if string(response.Key) != string(tt.out.Key) &&
 					response.EncryptedVolumeId.Value != tt.out.EncryptedVolumeId.Value &&
@@ -244,7 +270,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 // 	for _, tt := range tests {
 // 		t.Run(tt.name, func(t *testing.T) {
 // 			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in}
-// 			response, err := client.UpdateEncryptedVolume(ctx, request)
+// 			response, err := testEnv.client.UpdateEncryptedVolume(ctx, request)
 // 			if response != nil {
 // 				t.Error("response: expected", codes.Unimplemented, "received", response)
 // 			}
@@ -336,21 +362,14 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewMiddleendServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in}
-			response, err := client.ListEncryptedVolumes(ctx, request)
+			response, err := testEnv.client.ListEncryptedVolumes(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.EncryptedVolumes, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.EncryptedVolumes)
@@ -439,21 +458,14 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewMiddleendServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
-			response, err := client.GetEncryptedVolume(ctx, request)
+			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if response.EncryptedVolumeId.Value != tt.out.EncryptedVolumeId.Value {
 					// if !reflect.DeepEqual(response, tt.out) {
@@ -548,21 +560,14 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewMiddleendServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: tt.in}}
-			response, err := client.EncryptedVolumeStats(ctx, request)
+			response, err := testEnv.client.EncryptedVolumeStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response)
@@ -649,21 +654,14 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewMiddleendServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in}
-			response, err := client.DeleteEncryptedVolume(ctx, request)
+			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {

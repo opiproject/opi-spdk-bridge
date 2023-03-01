@@ -9,15 +9,73 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
-// TODO: move to a separate (test/server) package to avoid duplication
+// TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
+
+type backendClient struct {
+	pb.NVMfRemoteControllerServiceClient
+	pb.NullDebugServiceClient
+	pb.AioControllerServiceClient
+}
+
+type testEnv struct {
+	opiSpdkServer *Server
+	client        *backendClient
+	ln            net.Listener
+	testSocket    string
+	ctx           context.Context
+	conn          *grpc.ClientConn
+	jsonRPC       *server.JSONRPC
+}
+
+func (e *testEnv) Close() {
+	server.CloseListener(e.ln)
+	if err := os.RemoveAll(e.testSocket); err != nil {
+		log.Fatal(err)
+	}
+	server.CloseGrpcConnection(e.conn)
+}
+
+func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
+	env := &testEnv{}
+	env.testSocket = server.GenerateSocketName("backend")
+	env.jsonRPC = server.NewJSONRPC(env.testSocket)
+	env.opiSpdkServer = NewServerWithJSONRPC(env.jsonRPC)
+
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx,
+		"",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialer(env.opiSpdkServer)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	env.ctx = ctx
+	env.conn = conn
+
+	env.ln = server.StartSpdkMockupServer(env.jsonRPC)
+	env.client = &backendClient{
+		pb.NewNVMfRemoteControllerServiceClient(env.conn),
+		pb.NewNullDebugServiceClient(env.conn),
+		pb.NewAioControllerServiceClient(env.conn),
+	}
+
+	if startSpdkServer {
+		go server.SpdkMockServer(env.jsonRPC, env.ln, spdkResponses)
+	}
+	return env
+}
+
 func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
@@ -34,23 +92,4 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	opiSpdkServer := NewServer()
-	return startPreConfiguredGrpcMockupServer(opiSpdkServer)
-}
-
-// TODO: move to a separate (test/server) package to avoid duplication
-func startPreConfiguredGrpcMockupServer(opiSpdkServer *Server) (context.Context, *grpc.ClientConn) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx,
-		"",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer(opiSpdkServer)))
-	if err != nil {
-		log.Fatal(err)
-	}
-	return ctx, conn
 }

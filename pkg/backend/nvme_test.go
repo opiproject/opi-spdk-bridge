@@ -19,7 +19,6 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
@@ -88,21 +87,14 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewNVMfRemoteControllerServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in}
-			response, err := client.CreateNVMfRemoteController(ctx, request)
+			response, err := testEnv.client.CreateNVMfRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
 				mtt, _ := proto.Marshal(tt.out)
@@ -147,21 +139,14 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewNVMfRemoteControllerServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.NVMfRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
-			response, err := client.NVMfRemoteControllerReset(ctx, request)
+			response, err := testEnv.client.NVMfRemoteControllerReset(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
 				mtt, _ := proto.Marshal(tt.out)
@@ -270,21 +255,14 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewNVMfRemoteControllerServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in}
-			response, err := client.ListNVMfRemoteControllers(ctx, request)
+			response, err := testEnv.client.ListNVMfRemoteControllers(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMfRemoteControllers, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.NvMfRemoteControllers)
@@ -379,21 +357,14 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewNVMfRemoteControllerServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.GetNVMfRemoteControllerRequest{Name: tt.in}
-			response, err := client.GetNVMfRemoteController(ctx, request)
+			response, err := testEnv.client.GetNVMfRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
 				mtt, _ := proto.Marshal(tt.out)
@@ -441,21 +412,14 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewNVMfRemoteControllerServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.NVMfRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
-			response, err := client.NVMfRemoteControllerStats(ctx, request)
+			response, err := testEnv.client.NVMfRemoteControllerStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response)
@@ -542,21 +506,14 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 		},
 	}
 
-	ctx, conn := startGrpcMockupServer()
-	defer server.CloseGrpcConnection(conn)
-	client := pb.NewNVMfRemoteControllerServiceClient(conn)
-
-	ln := server.StartSpdkMockupServer()
-	defer server.CloseListener(ln)
-
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.start {
-				go server.SpdkMockServer(ln, tt.spdk)
-			}
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
 			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in}
-			response, err := client.DeleteNVMfRemoteController(ctx, request)
+			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
 					if er.Code() != tt.errCode {
