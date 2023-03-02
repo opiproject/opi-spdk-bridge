@@ -21,33 +21,69 @@ import (
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
 	jsonRPC := &unixSocketJSONRPC{
-		socket: socket,
+		socket: &socket,
 		id:     0,
 	}
 
-	ln := StartSpdkMockupServer(jsonRPC)
+	ln := startSpdkMockupServerOnUnixSocket(jsonRPC)
 
 	if startSpdkServer {
-		go SpdkMockServer(jsonRPC, ln, spdkResponses)
+		go spdkMockServerOnUnixSocket(jsonRPC, ln, spdkResponses)
 	}
 	return ln, jsonRPC
 }
 
 // StartSpdkMockupServer cleans unix socket and listens again, used in testing
-func StartSpdkMockupServer(rpc *unixSocketJSONRPC) net.Listener {
-	// start SPDK mockup Server
-	if err := os.RemoveAll(rpc.socket); err != nil {
+// Deprecated: CreateTestSpdkServer should be used to bring up test spdk server
+func StartSpdkMockupServer() net.Listener {
+	return startSpdkMockupServerOnUnixSocket(DefaultJSONRPC)
+}
+
+// SpdkMockServer implements mock function to send data instead of real SPDK app, used in testing
+// Deprecated: CreateTestSpdkServer should be used to bring up test spdk server
+func SpdkMockServer(l net.Listener, toSend []string) {
+	spdkMockServerOnUnixSocket(DefaultJSONRPC, l, toSend)
+}
+
+// CloseGrpcConnection is utility function used to defer grpc connection close is tests
+func CloseGrpcConnection(conn *grpc.ClientConn) {
+	err := conn.Close()
+	if err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", rpc.socket)
+}
+
+// CloseListener is utility function used to defer listener close in tests
+func CloseListener(ln net.Listener) {
+	err := ln.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// GenerateSocketName generates unique socket names for tests
+func GenerateSocketName(testType string) string {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(9223372036854775807))
+	if err != nil {
+		panic(err)
+	}
+	n := nBig.Uint64()
+	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
+}
+
+func startSpdkMockupServerOnUnixSocket(rpc *unixSocketJSONRPC) net.Listener {
+	// start SPDK mockup Server
+	if err := os.RemoveAll(*rpc.socket); err != nil {
+		log.Fatal(err)
+	}
+	ln, err := net.Listen("unix", *rpc.socket)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
 	return ln
 }
 
-// SpdkMockServer implements mock function to send data instead of real SPDK app, used in testing
-func SpdkMockServer(rpc *unixSocketJSONRPC, l net.Listener, toSend []string) {
+func spdkMockServerOnUnixSocket(rpc *unixSocketJSONRPC, l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
 		fd, err := l.Accept()
 		if err != nil {
@@ -79,30 +115,4 @@ func SpdkMockServer(rpc *unixSocketJSONRPC, l net.Listener, toSend []string) {
 			log.Fatal(err)
 		}
 	}
-}
-
-// CloseGrpcConnection is utility function used to defer grpc connection close is tests
-func CloseGrpcConnection(conn *grpc.ClientConn) {
-	err := conn.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// CloseListener is utility function used to defer listener close in tests
-func CloseListener(ln net.Listener) {
-	err := ln.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// GenerateSocketName generates unique socket names for tests
-func GenerateSocketName(testType string) string {
-	nBig, err := rand.Int(rand.Reader, big.NewInt(9223372036854775807))
-	if err != nil {
-		panic(err)
-	}
-	n := nBig.Uint64()
-	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
 }
