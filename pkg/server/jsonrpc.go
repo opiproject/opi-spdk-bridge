@@ -24,7 +24,7 @@ type JSONRPC interface {
 }
 
 type unixSocketJSONRPC struct {
-	socket string
+	socket *string
 	id     uint64
 }
 
@@ -32,7 +32,7 @@ type unixSocketJSONRPC struct {
 // interact with unix domain socket
 func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
 	return &unixSocketJSONRPC{
-		socket: socketPath,
+		socket: &socketPath,
 		id:     0,
 	}
 }
@@ -41,9 +41,13 @@ func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
 var RPCSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 
 // DefaultJSONRPC is a default JSON RPC provider
-var DefaultJSONRPC = NewUnixSocketJSONRPC("/var/tmp/spdk.sock")
+var DefaultJSONRPC = &unixSocketJSONRPC{
+	socket: RPCSock,
+	id:     0,
+}
 
 // Call implements low level rpc request/response handling
+// Deprecated: JSONRPC structure should be instantiated and used.
 func Call(method string, args, result interface{}) error {
 	return DefaultJSONRPC.Call(method, args, result)
 }
@@ -65,7 +69,7 @@ func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error 
 	log.Printf("Sending to SPDK: %s", data)
 
 	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
-	resp, _ := unixSocketCom(r.socket, data)
+	resp, _ := unixSocketCom(*r.socket, data)
 
 	var response models.RPCResponse
 	err = json.NewDecoder(resp).Decode(&response)

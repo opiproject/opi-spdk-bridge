@@ -22,8 +22,8 @@ import (
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 50051, "The Server port")
-	spdkSocket := *server.RPCSock
 	flag.Parse()
+	spdkSocket := *server.RPCSock
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
