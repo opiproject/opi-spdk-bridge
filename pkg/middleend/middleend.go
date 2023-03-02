@@ -27,7 +27,7 @@ import (
 type Server struct {
 	pb.UnimplementedMiddleendServiceServer
 
-	RPC *server.JSONRPC
+	RPC server.JSONRPC
 }
 
 // NewServer creates initialized instance of MiddleEnd server
@@ -37,7 +37,7 @@ func NewServer() *Server {
 
 // NewServerWithJSONRPC creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
-func NewServerWithJSONRPC(jsonRPC *server.JSONRPC) *Server {
+func NewServerWithJSONRPC(jsonRPC server.JSONRPC) *Server {
 	return &Server{
 		RPC: jsonRPC,
 	}

@@ -31,7 +31,7 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	jsonRPC := server.NewJSONRPC(spdkSocket)
+	jsonRPC := server.NewUnixSocketJSONRPC(spdkSocket)
 	frontendServer := frontend.NewServerWithJSONRPC(jsonRPC)
 	backendServer := backend.NewServerWithJSONRPC(jsonRPC)
 	middleendServer := middleend.NewServerWithJSONRPC(jsonRPC)

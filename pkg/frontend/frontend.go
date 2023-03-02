@@ -39,7 +39,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	RPC  *server.JSONRPC
+	RPC  server.JSONRPC
 	Nvme NvmeParameters
 }
 
@@ -50,7 +50,7 @@ func NewServer() *Server {
 
 // NewServerWithJSONRPC creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServerWithJSONRPC(jsonRPC *server.JSONRPC) *Server {
+func NewServerWithJSONRPC(jsonRPC server.JSONRPC) *Server {
 	return &Server{
 		RPC: jsonRPC,
 		Nvme: NvmeParameters{

@@ -18,15 +18,20 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 )
 
-// JSONRPC represents a structure to execute JSON RPC to SPDK
-type JSONRPC struct {
+// JSONRPC represents an interface to execute JSON RPC to SPDK
+type JSONRPC interface {
+	Call(method string, args, result interface{}) error
+}
+
+type unixSocketJSONRPC struct {
 	socket string
 	id     uint64
 }
 
-// NewJSONRPC creates a new instance of JsonRpc
-func NewJSONRPC(socketPath string) *JSONRPC {
-	return &JSONRPC{
+// NewUnixSocketJSONRPC creates a new instance of JSONRPC which is capable to
+// interact with unix domain socket
+func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
+	return &unixSocketJSONRPC{
 		socket: socketPath,
 		id:     0,
 	}
@@ -36,7 +41,7 @@ func NewJSONRPC(socketPath string) *JSONRPC {
 var RPCSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
 
 // DefaultJSONRPC is a default JSON RPC provider
-var DefaultJSONRPC = NewJSONRPC("/var/tmp/spdk.sock")
+var DefaultJSONRPC = NewUnixSocketJSONRPC("/var/tmp/spdk.sock")
 
 // Call implements low level rpc request/response handling
 func Call(method string, args, result interface{}) error {
@@ -44,7 +49,7 @@ func Call(method string, args, result interface{}) error {
 }
 
 // Call implements low level rpc request/response handling
-func (r *JSONRPC) Call(method string, args, result interface{}) error {
+func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error {
 	id := atomic.AddUint64(&r.id, 1)
 	request := models.RPCRequest{
 		RPCVersion: models.JSONRPCVersion,

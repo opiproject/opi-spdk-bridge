@@ -18,8 +18,23 @@ import (
 	"google.golang.org/grpc"
 )
 
+// CreateTestSpdkServer creates a mock spdk server for testing
+func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
+	jsonRPC := &unixSocketJSONRPC{
+		socket: socket,
+		id:     0,
+	}
+
+	ln := StartSpdkMockupServer(jsonRPC)
+
+	if startSpdkServer {
+		go SpdkMockServer(jsonRPC, ln, spdkResponses)
+	}
+	return ln, jsonRPC
+}
+
 // StartSpdkMockupServer cleans unix socket and listens again, used in testing
-func StartSpdkMockupServer(rpc *JSONRPC) net.Listener {
+func StartSpdkMockupServer(rpc *unixSocketJSONRPC) net.Listener {
 	// start SPDK mockup Server
 	if err := os.RemoveAll(rpc.socket); err != nil {
 		log.Fatal(err)
@@ -32,7 +47,7 @@ func StartSpdkMockupServer(rpc *JSONRPC) net.Listener {
 }
 
 // SpdkMockServer implements mock function to send data instead of real SPDK app, used in testing
-func SpdkMockServer(rpc *JSONRPC, l net.Listener, toSend []string) {
+func SpdkMockServer(rpc *unixSocketJSONRPC, l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
 		fd, err := l.Accept()
 		if err != nil {
