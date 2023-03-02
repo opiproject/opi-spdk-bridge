@@ -39,7 +39,7 @@ type testEnv struct {
 	testSocket    string
 	ctx           context.Context
 	conn          *grpc.ClientConn
-	jsonRPC       *server.JSONRPC
+	jsonRPC       server.JSONRPC
 }
 
 func (e *testEnv) Close() {
@@ -53,7 +53,7 @@ func (e *testEnv) Close() {
 func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("middleend")
-	env.jsonRPC = server.NewJSONRPC(env.testSocket)
+	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, startSpdkServer, spdkResponses)
 	env.opiSpdkServer = NewServerWithJSONRPC(env.jsonRPC)
 
 	ctx := context.Background()
@@ -67,14 +67,10 @@ func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEn
 	env.ctx = ctx
 	env.conn = conn
 
-	env.ln = server.StartSpdkMockupServer(env.jsonRPC)
 	env.client = &middleendClient{
 		pb.NewMiddleendServiceClient(env.conn),
 	}
 
-	if startSpdkServer {
-		go server.SpdkMockServer(env.jsonRPC, env.ln, spdkResponses)
-	}
 	return env
 }
 
