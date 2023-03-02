@@ -27,7 +27,7 @@ func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVi
 		Ctrlr: in.VirtioScsiController.Id.Value,
 	}
 	var result models.VhostCreateScsiControllerResult
-	err := s.RPC.Call("vhost_create_scsi_controller", &params, &result)
+	err := s.rpc.Call("vhost_create_scsi_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -52,7 +52,7 @@ func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVi
 		Ctrlr: in.Name,
 	}
 	var result models.VhostDeleteControllerResult
-	err := s.RPC.Call("vhost_delete_controller", &params, &result)
+	err := s.rpc.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -74,7 +74,7 @@ func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVi
 func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
 	var result []models.VhostGetControllersResult
-	err := s.RPC.Call("vhost_get_controllers", nil, &result)
+	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -95,7 +95,7 @@ func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioSc
 		Name: in.Name,
 	}
 	var result []models.VhostGetControllersResult
-	err := s.RPC.Call("vhost_get_controllers", &params, &result)
+	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -128,7 +128,7 @@ func (s *Server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScs
 		Bdev: in.VirtioScsiLun.VolumeId.Value,
 	}
 	var result int
-	err := s.RPC.Call("vhost_scsi_controller_add_target", &params, &result)
+	err := s.rpc.Call("vhost_scsi_controller_add_target", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -148,7 +148,7 @@ func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScs
 		Num:  5,
 	}
 	var result bool
-	err := s.RPC.Call("vhost_scsi_controller_remove_target", &params, &result)
+	err := s.rpc.Call("vhost_scsi_controller_remove_target", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -170,7 +170,7 @@ func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScs
 func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
 	var result []models.VhostGetControllersResult
-	err := s.RPC.Call("vhost_get_controllers", nil, &result)
+	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -191,7 +191,7 @@ func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRe
 		Name: in.Name,
 	}
 	var result []models.VhostGetControllersResult
-	err := s.RPC.Call("vhost_get_controllers", &params, &result)
+	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

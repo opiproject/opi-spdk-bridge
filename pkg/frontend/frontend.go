@@ -39,7 +39,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	RPC  server.JSONRPC
+	rpc  server.JSONRPC
 	Nvme NvmeParameters
 }
 
@@ -52,7 +52,7 @@ func NewServer() *Server {
 // with provided jsonRPC
 func NewServerWithJSONRPC(jsonRPC server.JSONRPC) *Server {
 	return &Server{
-		RPC: jsonRPC,
+		rpc: jsonRPC,
 		Nvme: NvmeParameters{
 			Subsystems:  make(map[string]*pb.NVMeSubsystem),
 			Controllers: make(map[string]*pb.NVMeController),
@@ -69,7 +69,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 		DevName: in.VirtioBlk.VolumeId.Value,
 	}
 	var result models.VhostCreateBlkControllerResult
-	err := s.RPC.Call("vhost_create_blk_controller", &params, &result)
+	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, fmt.Errorf("%w for %v", errFailedSpdkCall, in)
@@ -96,7 +96,7 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 		Ctrlr: in.Name,
 	}
 	var result models.VhostDeleteControllerResult
-	err := s.RPC.Call("vhost_delete_controller", &params, &result)
+	err := s.rpc.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -118,7 +118,7 @@ func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequ
 func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
 	log.Printf("ListVirtioBlks: Received from client: %v", in)
 	var result []models.VhostGetControllersResult
-	err := s.RPC.Call("vhost_get_controllers", nil, &result)
+	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -139,7 +139,7 @@ func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (
 		Name: in.Name,
 	}
 	var result []models.VhostGetControllersResult
-	err := s.RPC.Call("vhost_get_controllers", &params, &result)
+	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
