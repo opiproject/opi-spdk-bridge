@@ -34,7 +34,7 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 		Hostnqn: in.NvMfRemoteController.Hostnqn,
 	}
 	var result []models.BdevNvmeAttachControllerResult
-	err := s.RPC.Call("bdev_nvme_attach_controller", &params, &result)
+	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -59,7 +59,7 @@ func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNV
 		Name: in.Name,
 	}
 	var result models.BdevNvmeDetachControllerResult
-	err := s.RPC.Call("bdev_nvme_detach_controller", &params, &result)
+	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -78,7 +78,7 @@ func (s *Server) NVMfRemoteControllerReset(ctx context.Context, in *pb.NVMfRemot
 func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfRemoteControllersRequest) (*pb.ListNVMfRemoteControllersResponse, error) {
 	log.Printf("ListNVMfRemoteControllers: Received from client: %v", in)
 	var result []models.BdevNvmeGetControllerResult
-	err := s.RPC.Call("bdev_nvme_get_controllers", nil, &result)
+	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -108,7 +108,7 @@ func (s *Server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemo
 		Name: in.Name,
 	}
 	var result []models.BdevNvmeGetControllerResult
-	err := s.RPC.Call("bdev_nvme_get_controllers", &params, &result)
+	err := s.rpc.Call("bdev_nvme_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err

@@ -27,7 +27,7 @@ type Server struct {
 	pb.UnimplementedNullDebugServiceServer
 	pb.UnimplementedAioControllerServiceServer
 
-	RPC server.JSONRPC
+	rpc server.JSONRPC
 }
 
 // NewServer creates initialized instance of BackEnd server
@@ -39,7 +39,7 @@ func NewServer() *Server {
 // with provided jsonRPC
 func NewServerWithJSONRPC(jsonRPC server.JSONRPC) *Server {
 	return &Server{
-		RPC: jsonRPC,
+		rpc: jsonRPC,
 	}
 }
 
@@ -52,7 +52,7 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 		NumBlocks: 64,
 	}
 	var result models.BdevNullCreateResult
-	err := s.RPC.Call("bdev_null_create", &params, &result)
+	err := s.rpc.Call("bdev_null_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -74,7 +74,7 @@ func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequ
 		Name: in.Name,
 	}
 	var result models.BdevNullDeleteResult
-	err := s.RPC.Call("bdev_null_delete", &params, &result)
+	err := s.rpc.Call("bdev_null_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -93,7 +93,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 		Name: in.NullDebug.Handle.Value,
 	}
 	var result1 models.BdevNullDeleteResult
-	err1 := s.RPC.Call("bdev_null_delete", &params1, &result1)
+	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		return nil, err1
@@ -108,7 +108,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 		NumBlocks: 64,
 	}
 	var result2 models.BdevNullCreateResult
-	err2 := s.RPC.Call("bdev_null_create", &params2, &result2)
+	err2 := s.rpc.Call("bdev_null_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
 		return nil, err2
@@ -127,7 +127,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
-	err := s.RPC.Call("bdev_get_bdevs", nil, &result)
+	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -148,7 +148,7 @@ func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (
 		Name: in.Name,
 	}
 	var result []models.BdevGetBdevsResult
-	err := s.RPC.Call("bdev_get_bdevs", &params, &result)
+	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -170,7 +170,7 @@ func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsReques
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result models.BdevGetIostatResult
-	err := s.RPC.Call("bdev_get_iostat", &params, &result)
+	err := s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
