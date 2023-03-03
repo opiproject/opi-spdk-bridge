@@ -33,18 +33,6 @@ func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []s
 	return ln, jsonRPC
 }
 
-// StartSpdkMockupServer cleans unix socket and listens again, used in testing
-// Deprecated: CreateTestSpdkServer should be used to bring up test spdk server
-func StartSpdkMockupServer() net.Listener {
-	return startSpdkMockupServerOnUnixSocket(DefaultJSONRPC)
-}
-
-// SpdkMockServer implements mock function to send data instead of real SPDK app, used in testing
-// Deprecated: CreateTestSpdkServer should be used to bring up test spdk server
-func SpdkMockServer(l net.Listener, toSend []string) {
-	spdkMockServerOnUnixSocket(DefaultJSONRPC, l, toSend)
-}
-
 // CloseGrpcConnection is utility function used to defer grpc connection close is tests
 func CloseGrpcConnection(conn *grpc.ClientConn) {
 	err := conn.Close()

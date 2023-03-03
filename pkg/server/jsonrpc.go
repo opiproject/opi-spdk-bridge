@@ -8,7 +8,6 @@ package server
 import (
 	"bufio"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -35,21 +34,6 @@ func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
 		socket: &socketPath,
 		id:     0,
 	}
-}
-
-// RPCSock is unix domain socket to communicate with SPDK app or Vendor SDK
-var RPCSock = flag.String("rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
-
-// DefaultJSONRPC is a default JSON RPC provider
-var DefaultJSONRPC = &unixSocketJSONRPC{
-	socket: RPCSock,
-	id:     0,
-}
-
-// Call implements low level rpc request/response handling
-// Deprecated: JSONRPC structure should be instantiated and used.
-func Call(method string, args, result interface{}) error {
-	return DefaultJSONRPC.Call(method, args, result)
 }
 
 // Call implements low level rpc request/response handling
