@@ -42,7 +42,7 @@ type Server struct {
 	Nvme NvmeParameters
 }
 
-// NewServer creates initialized instance of NVMe server
+// NewServer creates initialized instance of FrontEnd server
 func NewServer() *Server {
 	return &Server{
 		Nvme: NvmeParameters{

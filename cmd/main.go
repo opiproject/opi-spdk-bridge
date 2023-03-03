@@ -29,15 +29,17 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	frontendServer := frontend.NewServer()
+	fe := frontend.NewServer()
+	be := backend.NewServer()
+	me := middleend.NewServer()
 
-	pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
-	pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
-	pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)
-	pb.RegisterNVMfRemoteControllerServiceServer(s, &backend.Server{})
-	pb.RegisterNullDebugServiceServer(s, &backend.Server{})
-	pb.RegisterAioControllerServiceServer(s, &backend.Server{})
-	pb.RegisterMiddleendServiceServer(s, &middleend.Server{})
+	pb.RegisterFrontendNvmeServiceServer(s, fe)
+	pb.RegisterFrontendVirtioBlkServiceServer(s, fe)
+	pb.RegisterFrontendVirtioScsiServiceServer(s, fe)
+	pb.RegisterNVMfRemoteControllerServiceServer(s, be)
+	pb.RegisterNullDebugServiceServer(s, be)
+	pb.RegisterAioControllerServiceServer(s, be)
+	pb.RegisterMiddleendServiceServer(s, me)
 
 	reflection.Register(s)
 
