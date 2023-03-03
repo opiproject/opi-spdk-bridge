@@ -27,6 +27,11 @@ type Server struct {
 	pb.UnimplementedAioControllerServiceServer
 }
 
+// NewServer creates initialized instance of BackEnd server
+func NewServer() *Server {
+	return &Server{}
+}
+
 // CreateNullDebug creates a Null Debug instance
 func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)

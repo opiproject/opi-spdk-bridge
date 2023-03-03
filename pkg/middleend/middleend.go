@@ -27,6 +27,11 @@ type Server struct {
 	pb.UnimplementedMiddleendServiceServer
 }
 
+// NewServer creates initialized instance of MiddleEnd server
+func NewServer() *Server {
+	return &Server{}
+}
+
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
