@@ -26,12 +26,10 @@ import (
 )
 
 // TODO: move to a separate (test/server) package to avoid duplication
-func dialer() func(context.Context, string) (net.Conn, error) {
-	var opiSpdkServer Server
-
+func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
-	pb.RegisterMiddleendServiceServer(server, &opiSpdkServer)
+	pb.RegisterMiddleendServiceServer(server, opiSpdkServer)
 
 	go func() {
 		if err := server.Serve(listener); err != nil {
@@ -46,9 +44,17 @@ func dialer() func(context.Context, string) (net.Conn, error) {
 
 // TODO: move to a separate (test/server) package to avoid duplication
 func startGrpcMockupServer() (context.Context, *grpc.ClientConn) {
-	// start GRPC mockup Server
+	opiSpdkServer := NewServer()
+	return startPreConfiguredGrpcMockupServer(opiSpdkServer)
+}
+
+// TODO: move to a separate (test/server) package to avoid duplication
+func startPreConfiguredGrpcMockupServer(opiSpdkServer *Server) (context.Context, *grpc.ClientConn) {
 	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
+	conn, err := grpc.DialContext(ctx,
+		"",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialer(opiSpdkServer)))
 	if err != nil {
 		log.Fatal(err)
 	}
