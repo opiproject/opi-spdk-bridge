@@ -319,8 +319,8 @@ type NvmfSubsystemAddListenerParams struct {
 	ListenAddress struct {
 		Trtype  string `json:"trtype"`
 		Traddr  string `json:"traddr"`
-		Trsvcid string `json:"trsvcid"`
-		Adrfam  string `json:"adrfam"`
+		Trsvcid string `json:"trsvcid,omitempty"`
+		Adrfam  string `json:"adrfam,omitempty"`
 	} `json:"listen_address"`
 }
 
