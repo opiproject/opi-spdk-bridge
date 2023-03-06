@@ -74,15 +74,15 @@ jobs:
     - uses: docker/setup-buildx-action@03a7a3d9fbee4f8ab73454ce02879cbaeb94fff8
 
     - name: Start containers
-      run: SPDK_TAG=sha-$(git rev-parse --short ${{ github.sha }}) ./scripts/poc.sh start
+      run: docker-compose up --build --force-recreate --detach
 
     - name: Run Tests
-      run: SPDK_TAG=sha-$(git rev-parse --short ${{ github.sha }}) ./scripts/poc.sh tests
+      run: ./scripts/tests.sh
 
     - name: Logs
-      if: failure()
-      run: ./scripts/poc.sh logs
+      if: always()
+      run: docker-compose logs
 
     - name: Stop containers
       if: always()
-      run: ./scripts/poc.sh stop
+      run: docker-compose down --volumes --remove-orphans
