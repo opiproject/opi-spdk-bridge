@@ -11,6 +11,7 @@ import (
 
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/kvm"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
@@ -22,8 +23,18 @@ import (
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 50051, "The Server port")
+
 	var spdkSocket string
 	flag.StringVar(&spdkSocket, "rpc_sock", "/var/tmp/spdk.sock", "Path to SPDK JSON RPC socket")
+
+	var useKvm bool
+	flag.BoolVar(&useKvm, "kvm", false, "Automates interaction with QEMU to plug/unplug SPDK devices")
+
+	var qmpAddress string
+	flag.StringVar(&qmpAddress, "qmp_addr", "127.0.0.1:5555", "Points to QMP unix socket/tcp socket to interact with. Valid only with -kvm option")
+
+	var ctrlrDir string
+	flag.StringVar(&ctrlrDir, "ctrlr_dir", "/var/tmp", "Directory with created SPDK device unix sockets. Valid only with -kvm option")
 	flag.Parse()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -37,9 +48,19 @@ func main() {
 	backendServer := backend.NewServerWithJSONRPC(jsonRPC)
 	middleendServer := middleend.NewServerWithJSONRPC(jsonRPC)
 
-	pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
-	pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
-	pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)
+	if useKvm {
+		log.Println("Creating KVM server.")
+		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir)
+
+		pb.RegisterFrontendNvmeServiceServer(s, kvmServer)
+		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
+		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
+	} else {
+		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
+		pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
+		pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)
+	}
+
 	pb.RegisterNVMfRemoteControllerServiceServer(s, backendServer)
 	pb.RegisterNullDebugServiceServer(s, backendServer)
 	pb.RegisterAioControllerServiceServer(s, backendServer)
