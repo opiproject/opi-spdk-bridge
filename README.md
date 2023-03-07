@@ -38,14 +38,14 @@ We recongnise, not all companies use SPDK, so for them only PROTOBUF definitions
 are going to be the OPI conumable product. For those that wish to use SPDK, this
 is a refernce implementation not intended to use in production.
 
-![OPI Storage SPDK bridge/server](OPI-storage-SPDK-bridge.png)
+![OPI Storage SPDK bridge/server](doc/OPI-storage-SPDK-bridge.png)
 
 ## OPI-SPDK Bridge Sequence Diagram
 
 The following is the example sequence diagram for OPI-SPDK bridge APIs.
 It is just an example and implies SPDK just as example, not mandated by OPI.
 
-![OPI Storage SPDK bridge/server](OPI-Storage-Sequence.png)
+![OPI Storage SPDK bridge/server](doc/OPI-Storage-Sequence.png)
 
 ## Getting started
 
