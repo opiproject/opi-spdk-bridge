@@ -105,8 +105,8 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 
 // UpdateVirtioBlk updates a Virtio block device
 func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
-	log.Printf("Received from client: %v", in)
-	return &pb.VirtioBlk{}, nil
+	log.Printf("UpdateVirtioBlk: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "UpdateVirtioBlk method is not implemented")
 }
 
 // ListVirtioBlks lists Virtio block devices
@@ -122,7 +122,10 @@ func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 	Blobarray := make([]*pb.VirtioBlk, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioBlk{Id: &pc.ObjectKey{Value: r.Ctrlr}}
+		Blobarray[i] = &pb.VirtioBlk{
+			Id:       &pc.ObjectKey{Value: r.Ctrlr},
+			PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
+			VolumeId: &pc.ObjectKey{Value: "TBD"}}
 	}
 	return &pb.ListVirtioBlksResponse{VirtioBlks: Blobarray}, nil
 }
@@ -145,11 +148,14 @@ func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioBlk{Id: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
+	return &pb.VirtioBlk{
+		Id:       &pc.ObjectKey{Value: result[0].Ctrlr},
+		PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
+		VolumeId: &pc.ObjectKey{Value: "TBD"}}, nil
 }
 
 // VirtioBlkStats gets a Virtio block device stats
 func (s *Server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
-	log.Printf("Received from client: %v", in)
-	return &pb.VirtioBlkStatsResponse{}, nil
+	log.Printf("VirtioBlkStats: Received from client: %v", in)
+	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
 }
