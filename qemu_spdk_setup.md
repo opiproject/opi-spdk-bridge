@@ -4,6 +4,7 @@
 ## Docs
 
 From <https://spdk.io/doc/vhost.html>
+See <https://github.com/opiproject/opi-spdk-bridge/blob/main/vhost_user.md>
 
 ## Virtualization support
 
