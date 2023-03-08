@@ -7,7 +7,7 @@ require (
 	github.com/opiproject/opi-api v0.0.0-20230303162737-328ef45a14b7
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.29.0
 )
 
 require (
