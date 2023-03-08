@@ -23,6 +23,13 @@ import (
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	controller, ok := s.Virt.BlkCtrls[in.VirtioBlk.Id.Value]
+	if ok {
+		log.Printf("Already existing NVMeController with id %v", in.VirtioBlk.Id.Value)
+		return controller, nil
+	}
+	// not found, so create a new one
 	params := models.VhostCreateBlkControllerParams{
 		Ctrlr:   in.VirtioBlk.Id.Value,
 		DevName: in.VirtioBlk.VolumeId.Value,
@@ -38,7 +45,8 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 		log.Printf("Could not create: %v", in)
 		return nil, fmt.Errorf("%w for %v", errUnexpectedSpdkCallResult, in)
 	}
-
+	s.Virt.BlkCtrls[in.VirtioBlk.Id.Value] = in.VirtioBlk
+	// s.VirtioCtrls[in.VirtioBlk.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
 	response := &pb.VirtioBlk{}
 	err = deepcopier.Copy(in.VirtioBlk).To(response)
 	if err != nil {
@@ -51,6 +59,10 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 // DeleteVirtioBlk deletes a Virtio block device
 func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
+	controller, ok := s.Virt.BlkCtrls[in.Name]
+	if !ok {
+		return nil, fmt.Errorf("error finding controller %s", in.Name)
+	}
 	params := models.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
@@ -64,6 +76,7 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
+	delete(s.Virt.BlkCtrls, controller.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
@@ -97,6 +110,12 @@ func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 // GetVirtioBlk gets a Virtio block device
 func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("GetVirtioBlk: Received from client: %v", in)
+	_, ok := s.Virt.BlkCtrls[in.Name]
+	if !ok {
+		msg := fmt.Sprintf("Could not find Controller: %s", in.Name)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	params := models.VhostGetControllersParams{
 		Name: in.Name,
 	}
