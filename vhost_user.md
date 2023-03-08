@@ -13,6 +13,7 @@ virtio, vhost and vhost-user:
 guests. It is most commonly used in QEMU VMs, where the VM itself exposes a
 virtual PCI device and the guest OS communicates with it using a specific virtio
 PCI driver. Its diagram is:
+
 ```
 +---------+------+--------+----------+--+
 |         +------+-------------------+  |
@@ -43,6 +44,7 @@ uses the same virtio queue layout as virtio to allow vhost devices to be mapped
 directly to virtio devices. The initial vhost implementation is a part of the
 Linux kernel and uses an ioctl interface to communicate with userspace
 applications. Its diagram is:
+
 ```
 +---------+------+--------+----------+--+
 |         +------+-------------------+  |
@@ -71,6 +73,7 @@ applications. Its diagram is:
 - vhost-user implements the control plane through Unix domain socket to establish
 virtio queue sharing with a user space process on the same host. SPDK exposes
 vhost devices via the vhost-user protocol. Its diagram is:
+
 ```
 +----------------+------+--+----------+-+
 |                +------+-------------+ |
