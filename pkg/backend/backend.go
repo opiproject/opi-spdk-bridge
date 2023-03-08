@@ -30,9 +30,9 @@ type Server struct {
 	rpc server.JSONRPC
 }
 
-// NewServerWithJSONRPC creates initialized instance of BackEnd server communicating
+// NewServer creates initialized instance of BackEnd server communicating
 // with provided jsonRPC
-func NewServerWithJSONRPC(jsonRPC server.JSONRPC) *Server {
+func NewServer(jsonRPC server.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 	}

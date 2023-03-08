@@ -44,9 +44,9 @@ func main() {
 	s := grpc.NewServer()
 
 	jsonRPC := server.NewUnixSocketJSONRPC(spdkSocket)
-	frontendServer := frontend.NewServerWithJSONRPC(jsonRPC)
-	backendServer := backend.NewServerWithJSONRPC(jsonRPC)
-	middleendServer := middleend.NewServerWithJSONRPC(jsonRPC)
+	frontendServer := frontend.NewServer(jsonRPC)
+	backendServer := backend.NewServer(jsonRPC)
+	middleendServer := middleend.NewServer(jsonRPC)
 
 	if useKvm {
 		log.Println("Creating KVM server.")

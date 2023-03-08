@@ -54,7 +54,7 @@ func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEn
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("middleend")
 	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, startSpdkServer, spdkResponses)
-	env.opiSpdkServer = NewServerWithJSONRPC(env.jsonRPC)
+	env.opiSpdkServer = NewServer(env.jsonRPC)
 
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx,

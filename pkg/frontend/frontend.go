@@ -35,9 +35,9 @@ type Server struct {
 	Nvme NvmeParameters
 }
 
-// NewServerWithJSONRPC creates initialized instance of FrontEnd server communicating
+// NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServerWithJSONRPC(jsonRPC server.JSONRPC) *Server {
+func NewServer(jsonRPC server.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
