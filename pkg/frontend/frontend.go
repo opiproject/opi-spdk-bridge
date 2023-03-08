@@ -25,6 +25,13 @@ type NvmeParameters struct {
 	Namespaces  map[string]*pb.NVMeNamespace
 }
 
+// VirtioParameters contains all VirtIO related structures
+type VirtioParameters struct {
+	BlkCtrls  map[string]*pb.VirtioBlk
+	ScsiCtrls map[string]*pb.VirtioScsiController
+	ScsiLuns  map[string]*pb.VirtioScsiLun
+}
+
 // Server contains frontend related OPI services
 type Server struct {
 	pb.UnimplementedFrontendNvmeServiceServer
@@ -33,6 +40,7 @@ type Server struct {
 
 	rpc  server.JSONRPC
 	Nvme NvmeParameters
+	Virt VirtioParameters
 }
 
 // NewServer creates initialized instance of FrontEnd server communicating
@@ -44,6 +52,11 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 			Subsystems:  make(map[string]*pb.NVMeSubsystem),
 			Controllers: make(map[string]*pb.NVMeController),
 			Namespaces:  make(map[string]*pb.NVMeNamespace),
+		},
+		Virt: VirtioParameters{
+			BlkCtrls:  make(map[string]*pb.VirtioBlk),
+			ScsiCtrls: make(map[string]*pb.VirtioScsiController),
+			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
 		},
 	}
 }
