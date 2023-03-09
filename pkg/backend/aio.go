@@ -23,6 +23,13 @@ import (
 // CreateAioController creates an Aio controller
 func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	volume, ok := s.Volumes.AioVolumes[in.AioController.Handle.Value]
+	if ok {
+		log.Printf("Already existing AioController with id %v", in.AioController.Handle.Value)
+		return volume, nil
+	}
+	// not found, so create a new one
 	params := models.BdevAioCreateParams{
 		Name:      in.AioController.Handle.Value,
 		BlockSize: 512,
@@ -41,6 +48,7 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	s.Volumes.AioVolumes[in.AioController.Handle.Value] = response
 	return response, nil
 }
 

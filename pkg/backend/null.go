@@ -23,6 +23,13 @@ import (
 // CreateNullDebug creates a Null Debug instance
 func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
+	if ok {
+		log.Printf("Already existing NullDebug with id %v", in.NullDebug.Handle.Value)
+		return volume, nil
+	}
+	// not found, so create a new one
 	params := models.BdevNullCreateParams{
 		Name:      in.NullDebug.Handle.Value,
 		BlockSize: 512,
@@ -41,6 +48,7 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	s.Volumes.NullVolumes[in.NullDebug.Handle.Value] = response
 	return response, nil
 }
 
