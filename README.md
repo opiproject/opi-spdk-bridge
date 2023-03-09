@@ -54,8 +54,8 @@ It is just an example and implies SPDK just as example, not mandated by OPI.
 
 ## QEMU example
 
-* [OPI Storage QEMU SPDK Setup](qemu_spdk_setup.md)
-* [SPDK vhost-user Target Overview](vhost_user.md)
+* [OPI Storage QEMU SPDK Setup](doc/qemu_spdk_setup.md)
+* [SPDK vhost-user Target Overview](doc/vhost_user.md)
 
 ## Real DPU/IPU example
 
