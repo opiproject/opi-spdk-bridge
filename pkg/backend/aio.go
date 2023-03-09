@@ -42,6 +42,11 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if result == "" {
+		msg := fmt.Sprintf("Could not create Aio Dev: %s", in.AioController.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	response := &pb.AioController{}
 	err = deepcopier.Copy(in.AioController).To(response)
 	if err != nil {

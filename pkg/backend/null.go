@@ -42,6 +42,11 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if result == "" {
+		msg := fmt.Sprintf("Could not create Null Dev: %s", in.NullDebug.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	response := &pb.NullDebug{}
 	err = deepcopier.Copy(in.NullDebug).To(response)
 	if err != nil {
