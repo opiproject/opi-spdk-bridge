@@ -55,6 +55,12 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 // DeleteNullDebug deletes a Null Debug instance
 func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNullDebug: Received from client: %v", in)
+	volume, ok := s.Volumes.NullVolumes[in.Name]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	params := models.BdevNullDeleteParams{
 		Name: in.Name,
 	}
@@ -68,6 +74,7 @@ func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequ
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
+	delete(s.Volumes.NullVolumes, volume.Handle.Value)
 	return &emptypb.Empty{}, nil
 }
 
