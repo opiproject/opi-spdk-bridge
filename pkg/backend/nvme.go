@@ -24,6 +24,13 @@ import (
 // CreateNVMfRemoteController creates an NVMf remote controller
 func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("CreateNVMfRemoteController: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Id.Value]
+	if ok {
+		log.Printf("Already existing NVMfRemoteController with id %v", in.NvMfRemoteController.Id.Value)
+		return volume, nil
+	}
+	// not found, so create a new one
 	params := models.BdevNvmeAttachControllerParams{
 		Name:    in.NvMfRemoteController.Id.Value,
 		Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
@@ -49,6 +56,7 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	s.Volumes.NvmeVolumes[in.NvMfRemoteController.Id.Value] = response
 	return response, nil
 }
 
