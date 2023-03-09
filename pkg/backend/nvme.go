@@ -63,6 +63,12 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 // DeleteNVMfRemoteController deletes an NVMf remote controller
 func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMfRemoteController: Received from client: %v", in)
+	volume, ok := s.Volumes.NvmeVolumes[in.Name]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", in.Name)
+		log.Printf("error: %v -> %v", err, volume)
+		// return nil, err
+	}
 	params := models.BdevNvmeDetachControllerParams{
 		Name: in.Name,
 	}
@@ -73,6 +79,8 @@ func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNV
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	// delete(s.Volumes.NvmeVolumes, volume.Id.Value)
+	delete(s.Volumes.NvmeVolumes, in.Name)
 	return &emptypb.Empty{}, nil
 }
 

@@ -55,6 +55,12 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 // DeleteAioController deletes an Aio controller
 func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteAioController: Received from client: %v", in)
+	volume, ok := s.Volumes.AioVolumes[in.Name]
+	if !ok {
+		err := fmt.Errorf("unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	params := models.BdevAioDeleteParams{
 		Name: in.Name,
 	}
@@ -68,6 +74,7 @@ func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioContro
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
+	delete(s.Volumes.AioVolumes, volume.Handle.Value)
 	return &emptypb.Empty{}, nil
 }
 
