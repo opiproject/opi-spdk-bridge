@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/digitalocean/go-qemu v0.0.0-20221209210016-f035778c97f7
-	github.com/opiproject/opi-api v0.0.0-20230308182040-4d50cc36139e
+	github.com/opiproject/opi-api v0.0.0-20230310172447-05176c3f7750
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.29.0
