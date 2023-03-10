@@ -30,6 +30,8 @@ var (
 	errAddChardevFailed       = status.Error(codes.FailedPrecondition, "couldn't add chardev")
 	errMonitorCreation        = status.Error(codes.Internal, "failed to create QEMU monitor")
 	errAddDeviceFailed        = status.Error(codes.FailedPrecondition, "couldn't add device")
+	errDeviceNotDeleted       = status.Error(codes.FailedPrecondition, "device is not deleted")
+	errDevicePartiallyDeleted = status.Error(codes.Internal, "device is partially deleted")
 )
 
 // Server is a wrapper for default opi-spdk-bridge frontend which automates
@@ -103,10 +105,37 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 
 // DeleteVirtioBlk deletes a virtio-blk device and detaches it from QEMU instance
 func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
-	ctrlr := filepath.Join(s.ctrlrDir, in.Name)
-	log.Printf("Unplugging virtio-blk %v from qemu over %v", ctrlr, s.qmpAddress)
-	log.Println("virtio-blk is unplugged.")
-	return s.Server.DeleteVirtioBlk(ctx, in)
+	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	if monErr != nil {
+		log.Println("Couldn't create QEMU monitor")
+		return nil, errMonitorCreation
+	}
+	defer mon.Disconnect()
+
+	id := in.Name
+	delDevErr := mon.DeleteVirtioBlkDevice(id)
+	if delDevErr != nil {
+		log.Printf("Couldn't delete virtio-blk: %v", delDevErr)
+	}
+
+	delChardevErr := mon.DeleteChardev(id)
+	if delChardevErr != nil {
+		log.Printf("Couldn't delete chardev for virtio-blk: %v. Device is partially deleted", delChardevErr)
+	}
+
+	response, spdkErr := s.Server.DeleteVirtioBlk(ctx, in)
+	if spdkErr != nil {
+		log.Println("Error running underlying cmd on opi-spdk bridge:", spdkErr)
+	}
+
+	var err error
+	if delDevErr != nil && delChardevErr != nil && spdkErr != nil {
+		err = errDeviceNotDeleted
+	} else if delDevErr != nil || delChardevErr != nil || spdkErr != nil {
+		err = errDevicePartiallyDeleted
+	}
+
+	return response, err
 }
 
 func getProtocol(qmpAddress string) (string, error) {

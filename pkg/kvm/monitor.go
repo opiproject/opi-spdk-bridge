@@ -5,6 +5,7 @@
 package kvm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -93,4 +94,65 @@ func (m *monitor) AddVirtioBlkDevice(id string, chardevID string) error {
 	}
 
 	return nil
+}
+
+func (m *monitor) DeleteVirtioBlkDevice(id string) error {
+	err := m.rmon.DeviceDel(id)
+	if err != nil {
+		return fmt.Errorf("couldn't delete device: %w", err)
+	}
+	return m.waitForEvent("DEVICE_DELETED", id)
+}
+
+func (m *monitor) waitForEvent(event string, dataTag string) error {
+	stream, err := m.mon.Events(context.Background())
+	if err != nil {
+		return fmt.Errorf("couldn't get event channel: %v", err)
+	}
+
+	waitChan := make(chan bool, 1)
+	go func() {
+		timeoutTimer := time.NewTimer(m.timeout)
+		for {
+			select {
+			case e := <-stream:
+				log.Println("qemu event:", e)
+				if !strings.Contains(e.Event, event) {
+					continue
+				}
+
+				if dataTag != "" && !m.containsTag(e.Data, dataTag) {
+					continue
+				}
+				waitChan <- true
+				return
+			case <-timeoutTimer.C:
+				log.Println("Event timeout:", event, ",", dataTag)
+				return
+			}
+		}
+	}()
+
+	timeoutTimer := time.NewTimer(m.timeout)
+	select {
+	case <-waitChan:
+		log.Println("Event:", event, "found")
+		return nil
+	case <-timeoutTimer.C:
+		return fmt.Errorf("qemu event not found: %v", event)
+	}
+}
+
+func (m *monitor) containsTag(eventData map[string]interface{}, dataTag string) bool {
+	for _, v := range eventData {
+		value, ok := v.(string)
+		if !ok {
+			continue
+		}
+
+		if strings.Contains(value, dataTag) {
+			return true
+		}
+	}
+	return false
 }
