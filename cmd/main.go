@@ -34,7 +34,7 @@ func main() {
 	flag.StringVar(&qmpAddress, "qmp_addr", "127.0.0.1:5555", "Points to QMP unix socket/tcp socket to interact with. Valid only with -kvm option")
 
 	var ctrlrDir string
-	flag.StringVar(&ctrlrDir, "ctrlr_dir", "/var/tmp", "Directory with created SPDK device unix sockets. Valid only with -kvm option")
+	flag.StringVar(&ctrlrDir, "ctrlr_dir", "", "Directory with created SPDK device unix sockets (-S option in SPDK). Valid only with -kvm option")
 	flag.Parse()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
