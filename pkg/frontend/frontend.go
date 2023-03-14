@@ -11,14 +11,6 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-)
-
-var (
-	errFailedSpdkCall           = status.Error(codes.Unknown, "Failed to execute SPDK call")
-	errUnexpectedSpdkCallResult = status.Error(codes.FailedPrecondition, "Unexpected SPDK call result.")
 )
 
 // SubsystemListener interface is used to provide SPDK call params to create/delete

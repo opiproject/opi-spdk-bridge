@@ -19,6 +19,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 var (
@@ -47,13 +48,13 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			in:          &testVirtioCtrl,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":false}`},
-			expectedErr: errFailedSpdkCall,
+			expectedErr: server.ErrFailedSpdkCall,
 		},
 		"spdk virtio-blk creation returned false response with no error": {
 			in:          &testVirtioCtrl,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			expectedErr: errUnexpectedSpdkCallResult,
+			expectedErr: server.ErrUnexpectedSpdkCallResult,
 		},
 	}
 
