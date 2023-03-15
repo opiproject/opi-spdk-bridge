@@ -20,19 +20,23 @@ import (
 // JSONRPC represents an interface to execute JSON RPC to SPDK
 type JSONRPC interface {
 	Call(method string, args, result interface{}) error
+	communicate(buf []byte) (io.Reader, error)
 }
 
 type unixSocketJSONRPC struct {
-	socket *string
-	id     uint64
+	transport string
+	socket    *string
+	id        uint64
 }
 
 // NewUnixSocketJSONRPC creates a new instance of JSONRPC which is capable to
 // interact with unix domain socket
 func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
+	// TODO: get transport from socketPath automatically
 	return &unixSocketJSONRPC{
-		socket: &socketPath,
-		id:     0,
+		transport: "unix",
+		socket:    &socketPath,
+		id:        0,
 	}
 }
 
@@ -52,8 +56,7 @@ func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error 
 
 	log.Printf("Sending to SPDK: %s", data)
 
-	// TODO: add also web option: resp, _ = webSocketCom(rpcClient, data)
-	resp, _ := unixSocketCom(*r.socket, data)
+	resp, _ := r.communicate(data)
 
 	var response models.RPCResponse
 	err = json.NewDecoder(resp).Decode(&response)
@@ -75,9 +78,9 @@ func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error 
 	return nil
 }
 
-func unixSocketCom(lrpcSock string, buf []byte) (io.Reader, error) {
+func (r *unixSocketJSONRPC) communicate(buf []byte) (io.Reader, error) {
 	// connect
-	conn, err := net.Dial("unix", lrpcSock)
+	conn, err := net.Dial(r.transport, *r.socket)
 	if err != nil {
 		log.Fatal(err)
 	}
