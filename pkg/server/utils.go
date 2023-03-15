@@ -21,8 +21,9 @@ import (
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
 	jsonRPC := &unixSocketJSONRPC{
-		socket: &socket,
-		id:     0,
+		transport: "unix",
+		socket:    &socket,
+		id:        0,
 	}
 
 	ln := startSpdkMockupServerOnUnixSocket(jsonRPC)
