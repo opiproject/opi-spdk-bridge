@@ -23,6 +23,7 @@ type JSONRPC interface {
 	communicate(buf []byte) (io.Reader, error)
 }
 
+// TODO: rename to remove unix since now this is generic (last commit)
 type unixSocketJSONRPC struct {
 	transport string
 	socket    *string
@@ -30,11 +31,16 @@ type unixSocketJSONRPC struct {
 }
 
 // NewUnixSocketJSONRPC creates a new instance of JSONRPC which is capable to
-// interact with unix domain socket
+// interact with either unix domain socket, e.g.: /var/tmp/spdk.sock
+// or with tcp connection ip and port tuple, e.g.: 10.1.1.2:1234
 func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
-	// TODO: get transport from socketPath automatically
+	protocol := "tcp"
+	if _, _, err := net.SplitHostPort(socketPath); err != nil {
+		protocol = "unix"
+	}
+	log.Printf("Connection to SPDK will be via: %s detected from %s", protocol, socketPath)
 	return &unixSocketJSONRPC{
-		transport: "unix",
+		transport: protocol,
 		socket:    &socketPath,
 		id:        0,
 	}
