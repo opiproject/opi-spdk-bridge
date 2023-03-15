@@ -76,21 +76,28 @@ func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error 
 }
 
 func unixSocketCom(lrpcSock string, buf []byte) (io.Reader, error) {
+	// connect
 	conn, err := net.Dial("unix", lrpcSock)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// write
 	_, err = conn.Write(buf)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
-
-	err = conn.(*net.UnixConn).CloseWrite()
+	// close
+	switch conn := conn.(type) {
+	case *net.TCPConn:
+		err = conn.CloseWrite()
+	case *net.UnixConn:
+		err = conn.CloseWrite()
+	}
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
-
+	// read
 	return bufio.NewReader(conn), nil
 }
