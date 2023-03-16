@@ -32,6 +32,9 @@ type spdkJSONRPC struct {
 // interact with either unix domain socket, e.g.: /var/tmp/spdk.sock
 // or with tcp connection ip and port tuple, e.g.: 10.1.1.2:1234
 func NewSpdkJSONRPC(socketPath string) JSONRPC {
+	if socketPath == "" {
+		log.Panic("empty socketPath is not allowed")
+	}
 	protocol := "tcp"
 	if _, _, err := net.SplitHostPort(socketPath); err != nil {
 		protocol = "unix"
