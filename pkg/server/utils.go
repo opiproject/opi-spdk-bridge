@@ -20,16 +20,10 @@ import (
 
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
-	jsonRPC := &spdkJSONRPC{
-		transport: "unix",
-		socket:    &socket,
-		id:        0,
-	}
-
+	jsonRPC := NewSpdkJSONRPC(socket).(*spdkJSONRPC)
 	ln := startSpdkMockupServerOnUnixSocket(jsonRPC)
-
 	if startSpdkServer {
-		go spdkMockServerOnUnixSocket(jsonRPC, ln, spdkResponses)
+		go spdkMockServerCommunicate(jsonRPC, ln, spdkResponses)
 	}
 	return ln, jsonRPC
 }
@@ -72,34 +66,41 @@ func startSpdkMockupServerOnUnixSocket(rpc *spdkJSONRPC) net.Listener {
 	return ln
 }
 
-func spdkMockServerOnUnixSocket(rpc *spdkJSONRPC, l net.Listener, toSend []string) {
+func spdkMockServerCommunicate(rpc *spdkJSONRPC, l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
+		// wait for client to connect (accept stage)
 		fd, err := l.Accept()
 		if err != nil {
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
 		log.Printf("SPDK ID [%d]", rpc.id)
-
+		// read from client
+		// we just read to extract ID, rest of the data is discarded here
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
 		if err != nil {
 			return
 		}
-
+		// fill in ID, since client expects the same ID in the response
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
 			spdk = fmt.Sprintf(spdk, rpc.id)
 		}
-
 		log.Printf("SPDK mockup Server: got : %s", string(data))
 		log.Printf("SPDK mockup Server: snd : %s", spdk)
-
+		// send data back to client
 		_, err = fd.Write([]byte(spdk))
 		if err != nil {
 			log.Fatal("Write: ", err)
 		}
-		err = fd.(*net.UnixConn).CloseWrite()
+		// close connection
+		switch fd := fd.(type) {
+		case *net.TCPConn:
+			err = fd.CloseWrite()
+		case *net.UnixConn:
+			err = fd.CloseWrite()
+		}
 		if err != nil {
 			log.Fatal(err)
 		}
