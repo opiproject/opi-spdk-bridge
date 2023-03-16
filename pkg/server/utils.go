@@ -20,7 +20,7 @@ import (
 
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
-	jsonRPC := &unixSocketJSONRPC{
+	jsonRPC := &spdkJSONRPC{
 		transport: "unix",
 		socket:    &socket,
 		id:        0,
@@ -60,7 +60,7 @@ func GenerateSocketName(testType string) string {
 	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
 }
 
-func startSpdkMockupServerOnUnixSocket(rpc *unixSocketJSONRPC) net.Listener {
+func startSpdkMockupServerOnUnixSocket(rpc *spdkJSONRPC) net.Listener {
 	// start SPDK mockup Server
 	if err := os.RemoveAll(*rpc.socket); err != nil {
 		log.Fatal(err)
@@ -72,7 +72,7 @@ func startSpdkMockupServerOnUnixSocket(rpc *unixSocketJSONRPC) net.Listener {
 	return ln
 }
 
-func spdkMockServerOnUnixSocket(rpc *unixSocketJSONRPC, l net.Listener, toSend []string) {
+func spdkMockServerOnUnixSocket(rpc *spdkJSONRPC, l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
 		fd, err := l.Accept()
 		if err != nil {

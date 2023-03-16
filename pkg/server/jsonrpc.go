@@ -23,23 +23,22 @@ type JSONRPC interface {
 	communicate(buf []byte) (io.Reader, error)
 }
 
-// TODO: rename to remove unix since now this is generic (last commit)
-type unixSocketJSONRPC struct {
+type spdkJSONRPC struct {
 	transport string
 	socket    *string
 	id        uint64
 }
 
-// NewUnixSocketJSONRPC creates a new instance of JSONRPC which is capable to
+// NewSpdkJSONRPC creates a new instance of JSONRPC which is capable to
 // interact with either unix domain socket, e.g.: /var/tmp/spdk.sock
 // or with tcp connection ip and port tuple, e.g.: 10.1.1.2:1234
-func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
+func NewSpdkJSONRPC(socketPath string) JSONRPC {
 	protocol := "tcp"
 	if _, _, err := net.SplitHostPort(socketPath); err != nil {
 		protocol = "unix"
 	}
 	log.Printf("Connection to SPDK will be via: %s detected from %s", protocol, socketPath)
-	return &unixSocketJSONRPC{
+	return &spdkJSONRPC{
 		transport: protocol,
 		socket:    &socketPath,
 		id:        0,
@@ -47,7 +46,7 @@ func NewUnixSocketJSONRPC(socketPath string) JSONRPC {
 }
 
 // Call implements low level rpc request/response handling
-func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error {
+func (r *spdkJSONRPC) Call(method string, args, result interface{}) error {
 	id := atomic.AddUint64(&r.id, 1)
 	request := models.RPCRequest{
 		RPCVersion: models.JSONRPCVersion,
@@ -84,7 +83,7 @@ func (r *unixSocketJSONRPC) Call(method string, args, result interface{}) error 
 	return nil
 }
 
-func (r *unixSocketJSONRPC) communicate(buf []byte) (io.Reader, error) {
+func (r *spdkJSONRPC) communicate(buf []byte) (io.Reader, error) {
 	// connect
 	conn, err := net.Dial(r.transport, *r.socket)
 	if err != nil {

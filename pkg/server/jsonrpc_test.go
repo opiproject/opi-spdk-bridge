@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestSpdk_NewUnixSocketJSONRPC(t *testing.T) {
+func TestSpdk_NewSpdkJSONRPC(t *testing.T) {
 	tests := []struct {
 		name      string
 		address   string
@@ -35,8 +35,8 @@ func TestSpdk_NewUnixSocketJSONRPC(t *testing.T) {
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			before := NewUnixSocketJSONRPC(tt.address)
-			after := &unixSocketJSONRPC{
+			before := NewSpdkJSONRPC(tt.address)
+			after := &spdkJSONRPC{
 				transport: tt.transport,
 				socket:    &tt.address,
 				id:        0,
