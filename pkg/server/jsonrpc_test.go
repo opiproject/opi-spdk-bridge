@@ -14,27 +14,43 @@ func TestSpdk_NewSpdkJSONRPC(t *testing.T) {
 		name      string
 		address   string
 		transport string
+		wantPanic bool
 	}{
 		{
 			"testing unix",
 			"/var/tmp/spdk.sock",
 			"unix",
+			false,
 		},
 		{
 			"testing tcp",
 			"10.10.10.1:1234",
 			"tcp",
+			false,
+		},
+		{
+			"testing empty",
+			"",
+			"",
+			true,
 		},
 		{
 			"testing nonsense assuming unix",
 			"nonsense",
 			"unix",
+			false,
 		},
 	}
 
 	// run tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("NewSpdkJSONRPC() recover = %v, wantPanic = %v", r, tt.wantPanic)
+				}
+			}()
 			before := NewSpdkJSONRPC(tt.address)
 			after := &spdkJSONRPC{
 				transport: tt.transport,
