@@ -6,7 +6,10 @@
 package frontend
 
 import (
+	"log"
+
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"google.golang.org/grpc/codes"
@@ -18,11 +21,18 @@ var (
 	errUnexpectedSpdkCallResult = status.Error(codes.FailedPrecondition, "Unexpected SPDK call result.")
 )
 
+// SubsystemListener interface is used to provide SPDK call params to create/delete
+// NVMe controllers depending on used transport type.
+type SubsystemListener interface {
+	Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams
+}
+
 // NvmeParameters contains all NVMe related structures
 type NvmeParameters struct {
-	Subsystems  map[string]*pb.NVMeSubsystem
-	Controllers map[string]*pb.NVMeController
-	Namespaces  map[string]*pb.NVMeNamespace
+	Subsystems     map[string]*pb.NVMeSubsystem
+	Controllers    map[string]*pb.NVMeController
+	Namespaces     map[string]*pb.NVMeNamespace
+	subsysListener SubsystemListener
 }
 
 // VirtioParameters contains all VirtIO related structures
@@ -49,9 +59,10 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
-			Subsystems:  make(map[string]*pb.NVMeSubsystem),
-			Controllers: make(map[string]*pb.NVMeController),
-			Namespaces:  make(map[string]*pb.NVMeNamespace),
+			Subsystems:     make(map[string]*pb.NVMeSubsystem),
+			Controllers:    make(map[string]*pb.NVMeController),
+			Namespaces:     make(map[string]*pb.NVMeNamespace),
+			subsysListener: NewTCPSubsystemListener(),
 		},
 		Virt: VirtioParameters{
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),
@@ -59,4 +70,15 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
 		},
 	}
+}
+
+// NewServerWithSubsystemListener creates initialized instance of FrontEnd server communicating
+// with provided jsonRPC and externally created SubsystemListener instead default one.
+func NewServerWithSubsystemListener(jsonRPC server.JSONRPC, sysListener SubsystemListener) *Server {
+	if sysListener == nil {
+		log.Panic("nil for SubsystemListener is not allowed")
+	}
+	server := NewServer(jsonRPC)
+	server.Nvme.subsysListener = sysListener
+	return server
 }

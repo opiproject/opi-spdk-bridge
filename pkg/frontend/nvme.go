@@ -21,6 +21,30 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type tcpSubsystemListener struct{}
+
+// NewTCPSubsystemListener creates a new instance of tcpSubsystemListener
+func NewTCPSubsystemListener() SubsystemListener {
+	return &tcpSubsystemListener{}
+}
+
+func (c *tcpSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams {
+	result := models.NvmfSubsystemAddListenerParams{}
+	addrs, err := net.LookupIP("spdk")
+	if err != nil {
+		log.Printf("error: %v", err)
+		// assume localhost
+		addrs = []net.IP{net.ParseIP("127.0.0.1")}
+	}
+	result.Nqn = nqn
+	result.ListenAddress.Trtype = "tcp"
+	result.ListenAddress.Traddr = addrs[0].String()
+	result.ListenAddress.Trsvcid = "4444"
+	result.ListenAddress.Adrfam = "ipv4"
+
+	return result
+}
+
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
@@ -178,24 +202,10 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// get SPDK local IP
-	addrs, err := net.LookupIP("spdk")
-	if err != nil {
-		log.Printf("error: %v", err)
-		// assume localhost
-		addrs = []net.IP{net.ParseIP("127.0.0.1")}
-		// return nil, err
-	}
-	params := models.NvmfSubsystemAddListenerParams{
-		Nqn: subsys.Spec.Nqn,
-	}
-	params.ListenAddress.Trtype = "tcp"
-	params.ListenAddress.Traddr = addrs[0].String()
-	params.ListenAddress.Trsvcid = "4444"
-	params.ListenAddress.Adrfam = "ipv4"
 
+	params := s.Nvme.subsysListener.Params(in.NvMeController, subsys.Spec.Nqn)
 	var result models.NvmfSubsystemAddListenerResult
-	err = s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
+	err := s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -232,24 +242,9 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		return nil, err
 	}
 
-	// get SPDK local IP
-	addrs, err := net.LookupIP("spdk")
-	if err != nil {
-		log.Printf("error: %v", err)
-		// assume localhost
-		addrs = []net.IP{net.ParseIP("127.0.0.1")}
-		// return nil, err
-	}
-	params := models.NvmfSubsystemAddListenerParams{
-		Nqn: subsys.Spec.Nqn,
-	}
-	params.ListenAddress.Trtype = "tcp"
-	params.ListenAddress.Traddr = addrs[0].String()
-	params.ListenAddress.Trsvcid = "4444"
-	params.ListenAddress.Adrfam = "ipv4"
-
+	params := s.Nvme.subsysListener.Params(controller, subsys.Spec.Nqn)
 	var result models.NvmfSubsystemAddListenerResult
-	err = s.rpc.Call("nvmf_subsystem_remove_listener", &params, &result)
+	err := s.rpc.Call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
