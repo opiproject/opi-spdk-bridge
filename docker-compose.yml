@@ -56,7 +56,7 @@ services:
     depends_on:
       spdk:
         condition: service_healthy
-    command: /opi-spdk-bridge -port=50051
+    command: /opi-spdk-bridge -port=50051 -spdk_addr /var/tmp/spdk.sock
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 
