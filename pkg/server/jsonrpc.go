@@ -20,7 +20,6 @@ import (
 // JSONRPC represents an interface to execute JSON RPC to SPDK
 type JSONRPC interface {
 	Call(method string, args, result interface{}) error
-	communicate(buf []byte) (io.Reader, error)
 }
 
 type spdkJSONRPC struct {
