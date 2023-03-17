@@ -35,6 +35,9 @@ func main() {
 
 	var ctrlrDir string
 	flag.StringVar(&ctrlrDir, "ctrlr_dir", "", "Directory with created SPDK device unix sockets (-S option in SPDK). Valid only with -kvm option")
+
+	var tcpTransportListenAddr string
+	flag.StringVar(&tcpTransportListenAddr, "tcp_traddr", "127.0.0.1", "ipv4 address to listen on for TCP transport")
 	flag.Parse()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -44,7 +47,8 @@ func main() {
 	s := grpc.NewServer()
 
 	jsonRPC := server.NewSpdkJSONRPC(spdkAddress)
-	frontendServer := frontend.NewServer(jsonRPC)
+	frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
+		frontend.NewTCPSubsystemListener(tcpTransportListenAddr))
 	backendServer := backend.NewServer(jsonRPC)
 	middleendServer := middleend.NewServer(jsonRPC)
 

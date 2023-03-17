@@ -54,7 +54,7 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 			Subsystems:     make(map[string]*pb.NVMeSubsystem),
 			Controllers:    make(map[string]*pb.NVMeController),
 			Namespaces:     make(map[string]*pb.NVMeNamespace),
-			subsysListener: NewTCPSubsystemListener(),
+			subsysListener: NewTCPSubsystemListener("127.0.0.1"),
 		},
 		Virt: VirtioParameters{
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),
