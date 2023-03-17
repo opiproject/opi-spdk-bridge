@@ -21,24 +21,31 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type tcpSubsystemListener struct{}
+type tcpSubsystemListener struct {
+	listenAddr net.IP
+}
 
 // NewTCPSubsystemListener creates a new instance of tcpSubsystemListener
-func NewTCPSubsystemListener() SubsystemListener {
-	return &tcpSubsystemListener{}
+func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
+	parsedAddr := net.ParseIP(listenAddr)
+	if parsedAddr == nil {
+		log.Panicf("Invalid ip address: %v", listenAddr)
+	}
+
+	if parsedAddr.To4() == nil {
+		log.Panicf("Only ipv4 supported for TCP transport")
+	}
+
+	return &tcpSubsystemListener{
+		listenAddr: parsedAddr,
+	}
 }
 
 func (c *tcpSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams {
 	result := models.NvmfSubsystemAddListenerParams{}
-	addrs, err := net.LookupIP("spdk")
-	if err != nil {
-		log.Printf("error: %v", err)
-		// assume localhost
-		addrs = []net.IP{net.ParseIP("127.0.0.1")}
-	}
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "tcp"
-	result.ListenAddress.Traddr = addrs[0].String()
+	result.ListenAddress.Traddr = c.listenAddr.String()
 	result.ListenAddress.Trsvcid = "4444"
 	result.ListenAddress.Adrfam = "ipv4"
 
