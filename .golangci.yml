@@ -26,6 +26,7 @@ linters:
     - errcheck
     - exportloopref
     - funlen
+    - gochecknoglobals
     - gochecknoinits
     - gocognit
     - goconst
@@ -58,6 +59,7 @@ issues:
     - path: (.+)_test.go
       linters:
         - funlen
+        - gochecknoglobals
         - gocritic
         - gocognit
 
