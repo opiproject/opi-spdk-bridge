@@ -80,7 +80,7 @@ func spdkMockServerCommunicate(rpc *spdkJSONRPC, l net.Listener, toSend []string
 		buf := make([]byte, 512)
 		nr, err := fd.Read(buf)
 		if err != nil {
-			return
+			log.Panic("Read: ", err)
 		}
 		// fill in ID, since client expects the same ID in the response
 		data := buf[0:nr]
@@ -92,7 +92,7 @@ func spdkMockServerCommunicate(rpc *spdkJSONRPC, l net.Listener, toSend []string
 		// send data back to client
 		_, err = fd.Write([]byte(spdk))
 		if err != nil {
-			log.Fatal("Write: ", err)
+			log.Panic("Write: ", err)
 		}
 		// close connection
 		switch fd := fd.(type) {
