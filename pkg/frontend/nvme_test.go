@@ -8,6 +8,7 @@ package frontend
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"reflect"
 	"testing"
 
@@ -1690,6 +1691,50 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			}
 			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
 				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
+			}
+		})
+	}
+}
+
+func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
+	tests := map[string]struct {
+		listenAddress string
+		wantPanic     bool
+	}{
+		"ipv4 valid address": {
+			listenAddress: "10.10.10.10",
+			wantPanic:     false,
+		},
+		"valid ipv6 addresses": {
+			listenAddress: "2002:0db0:8833:0000:0000:8a8a:0330:7337",
+			wantPanic:     true,
+		},
+		"empty string as listen address": {
+			listenAddress: "",
+			wantPanic:     true,
+		},
+		"meaningless listen address": {
+			listenAddress: "some string which is not ip address",
+			wantPanic:     true,
+		},
+	}
+
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("NewTCPSubsystemListener() recover = %v, wantPanic = %v", r, tt.wantPanic)
+				}
+			}()
+
+			gotSubsysListener := NewTCPSubsystemListener(tt.listenAddress)
+			wantSubsysListener := &tcpSubsystemListener{
+				listenAddr: net.ParseIP(tt.listenAddress),
+			}
+
+			if !reflect.DeepEqual(gotSubsysListener, wantSubsysListener) {
+				t.Errorf("Expect %v subsystem listener, received %v", wantSubsysListener, gotSubsysListener)
 			}
 		})
 	}
