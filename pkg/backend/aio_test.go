@@ -326,8 +326,105 @@ func TestBackEnd_GetAioController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_AioControllerStats(_ *testing.T) {
+func TestBackEnd_AioControllerStats(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      string
+		out     *pb.VolumeStats
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+	}{
+		{
+			"valid request with invalid SPDK response",
+			"mytest",
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
+			true,
+		},
+		{
+			"valid request with invalid marshal SPDK response",
+			"mytest",
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type models.BdevGetIostatResult"),
+			true,
+		},
+		{
+			"valid request with empty SPDK response",
+			"mytest",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_iostat: %v", "EOF"),
+			true,
+		},
+		{
+			"valid request with ID mismatch SPDK response",
+			"mytest",
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_iostat: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"valid request with error code from SPDK response",
+			"mytest",
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_iostat: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"valid request with valid SPDK response",
+			"Malloc0",
+			&pb.VolumeStats{
+				ReadBytesCount:    1,
+				ReadOpsCount:      2,
+				WriteBytesCount:   3,
+				WriteOpsCount:     4,
+				ReadLatencyTicks:  7,
+				WriteLatencyTicks: 8,
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"tick_rate":2490000000,"ticks":18787040917434338,"bdevs":[{"name":"Malloc0","bytes_read":1,"num_read_ops":2,"bytes_written":3,"num_write_ops":4,"bytes_unmapped":0,"num_unmap_ops":0,"read_latency_ticks":7,"write_latency_ticks":8,"unmap_latency_ticks":0}]}}`},
+			codes.OK,
+			"",
+			true,
+		},
+	}
 
+	// run tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
+			request := &pb.AioControllerStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
+			response, err := testEnv.client.AioControllerStats(testEnv.ctx, request)
+			if response != nil {
+				if !reflect.DeepEqual(response.Stats, tt.out) {
+					t.Error("response: expected", tt.out, "received", response)
+				}
+			}
+
+			if err != nil {
+				if er, ok := status.FromError(err); ok {
+					if er.Code() != tt.errCode {
+						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+					}
+					if er.Message() != tt.errMsg {
+						t.Error("error message: expected", tt.errMsg, "received", er.Message())
+					}
+				}
+			}
+		})
+	}
 }
 
 func TestBackEnd_DeleteAioController(t *testing.T) {
