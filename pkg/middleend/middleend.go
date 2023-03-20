@@ -39,7 +39,7 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 }
 
 // CreateEncryptedVolume creates an encrypted volume
-func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 	// first create a key
 	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
@@ -95,7 +95,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 }
 
 // DeleteEncryptedVolume deletes an encrypted volume
-func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
 	params := models.BdevCryptoDeleteParams{
 		Name: in.Name,
@@ -116,7 +116,7 @@ func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncrypt
 }
 
 // UpdateEncryptedVolume updates an encrypted volume
-func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	// first delete old bdev
 	params1 := models.BdevCryptoDeleteParams{
@@ -201,7 +201,7 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 }
 
 // ListEncryptedVolumes lists encrypted volumes
-func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
+func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
@@ -219,7 +219,7 @@ func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedV
 }
 
 // GetEncryptedVolume gets an encrypted volume
-func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("GetEncryptedVolume: Received from client: %v", in)
 	params := models.BdevGetBdevsParams{
 		Name: in.Name,
@@ -240,7 +240,7 @@ func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolu
 }
 
 // EncryptedVolumeStats gets an encrypted volume stats
-func (s *Server) EncryptedVolumeStats(ctx context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
+func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
 	log.Printf("EncryptedVolumeStats: Received from client: %v", in)
 	params := models.BdevGetIostatParams{
 		Name: in.EncryptedVolumeId.Value,

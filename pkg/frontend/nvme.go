@@ -28,7 +28,7 @@ func NewTCPSubsystemListener() SubsystemListener {
 	return &tcpSubsystemListener{}
 }
 
-func (c *tcpSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams {
+func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams {
 	result := models.NvmfSubsystemAddListenerParams{}
 	addrs, err := net.LookupIP("spdk")
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *tcpSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) mode
 }
 
 // CreateNVMeSubsystem creates an NVMe Subsystem
-func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
+func (s *Server) CreateNVMeSubsystem(_ context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
 	subsys, ok := s.Nvme.Subsystems[in.NvMeSubsystem.Spec.Id.Value]
@@ -93,7 +93,7 @@ func (s *Server) CreateNVMeSubsystem(ctx context.Context, in *pb.CreateNVMeSubsy
 }
 
 // DeleteNVMeSubsystem deletes an NVMe Subsystem
-func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsystemRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMeSubsystem(_ context.Context, in *pb.DeleteNVMeSubsystemRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMeSubsystem: Received from client: %v", in)
 	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
@@ -121,13 +121,13 @@ func (s *Server) DeleteNVMeSubsystem(ctx context.Context, in *pb.DeleteNVMeSubsy
 }
 
 // UpdateNVMeSubsystem updates an NVMe Subsystem
-func (s *Server) UpdateNVMeSubsystem(ctx context.Context, in *pb.UpdateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
+func (s *Server) UpdateNVMeSubsystem(_ context.Context, in *pb.UpdateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("UpdateNVMeSubsystem: Received from client: %v", in)
 	return nil, status.Errorf(codes.Unimplemented, "UpdateNVMeSubsystem method is not implemented")
 }
 
 // ListNVMeSubsystems lists NVMe Subsystems
-func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
+func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
 	var result []models.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
@@ -145,7 +145,7 @@ func (s *Server) ListNVMeSubsystems(ctx context.Context, in *pb.ListNVMeSubsyste
 }
 
 // GetNVMeSubsystem gets NVMe Subsystems
-func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
+func (s *Server) GetNVMeSubsystem(_ context.Context, in *pb.GetNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("GetNVMeSubsystem: Received from client: %v", in)
 	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
@@ -174,7 +174,7 @@ func (s *Server) GetNVMeSubsystem(ctx context.Context, in *pb.GetNVMeSubsystemRe
 }
 
 // NVMeSubsystemStats gets NVMe Subsystem stats
-func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
+func (s *Server) NVMeSubsystemStats(_ context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
 	var result models.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
@@ -187,7 +187,7 @@ func (s *Server) NVMeSubsystemStats(ctx context.Context, in *pb.NVMeSubsystemSta
 }
 
 // CreateNVMeController creates an NVMe controller
-func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
+func (s *Server) CreateNVMeController(_ context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.NvMeController)
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Nvme.Controllers[in.NvMeController.Spec.Id.Value]
@@ -229,7 +229,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 }
 
 // DeleteNVMeController deletes an NVMe controller
-func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
@@ -260,7 +260,7 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 }
 
 // UpdateNVMeController updates an NVMe controller
-func (s *Server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
+func (s *Server) UpdateNVMeController(_ context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("UpdateNVMeController: Received from client: %v", in)
 	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
 	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
@@ -274,7 +274,7 @@ func (s *Server) UpdateNVMeController(ctx context.Context, in *pb.UpdateNVMeCont
 }
 
 // ListNVMeControllers lists NVMe controllers
-func (s *Server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
+func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("Received from client: %v", in.Parent)
 	Blobarray := []*pb.NVMeController{}
 	for _, controller := range s.Nvme.Controllers {
@@ -284,7 +284,7 @@ func (s *Server) ListNVMeControllers(ctx context.Context, in *pb.ListNVMeControl
 }
 
 // GetNVMeController gets an NVMe controller
-func (s *Server) GetNVMeController(ctx context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
+func (s *Server) GetNVMeController(_ context.Context, in *pb.GetNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
@@ -294,13 +294,13 @@ func (s *Server) GetNVMeController(ctx context.Context, in *pb.GetNVMeController
 }
 
 // NVMeControllerStats gets an NVMe controller stats
-func (s *Server) NVMeControllerStats(ctx context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
+func (s *Server) NVMeControllerStats(_ context.Context, in *pb.NVMeControllerStatsRequest) (*pb.NVMeControllerStatsResponse, error) {
 	log.Printf("NVMeControllerStats: Received from client: %v", in)
 	return &pb.NVMeControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 // CreateNVMeNamespace creates an NVMe namespace
-func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
+func (s *Server) CreateNVMeNamespace(_ context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("CreateNVMeNamespace: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
 	namespace, ok := s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value]
@@ -349,7 +349,7 @@ func (s *Server) CreateNVMeNamespace(ctx context.Context, in *pb.CreateNVMeNames
 }
 
 // DeleteNVMeNamespace deletes an NVMe namespace
-func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNamespaceRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMeNamespace(_ context.Context, in *pb.DeleteNVMeNamespaceRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMeNamespace: Received from client: %v", in)
 	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
@@ -385,7 +385,7 @@ func (s *Server) DeleteNVMeNamespace(ctx context.Context, in *pb.DeleteNVMeNames
 }
 
 // UpdateNVMeNamespace updates an NVMe namespace
-func (s *Server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
+func (s *Server) UpdateNVMeNamespace(_ context.Context, in *pb.UpdateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("UpdateNVMeNamespace: Received from client: %v", in)
 	s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value] = in.NvMeNamespace
 	s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value].Status = &pb.NVMeNamespaceStatus{PciState: 2, PciOperState: 1}
@@ -400,7 +400,7 @@ func (s *Server) UpdateNVMeNamespace(ctx context.Context, in *pb.UpdateNVMeNames
 }
 
 // ListNVMeNamespaces lists NVMe namespaces
-func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
+func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
 	log.Printf("ListNVMeNamespaces: Received from client: %v", in)
 
 	nqn := ""
@@ -441,7 +441,7 @@ func (s *Server) ListNVMeNamespaces(ctx context.Context, in *pb.ListNVMeNamespac
 }
 
 // GetNVMeNamespace gets an NVMe namespace
-func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
+func (s *Server) GetNVMeNamespace(_ context.Context, in *pb.GetNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("GetNVMeNamespace: Received from client: %v", in)
 	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
@@ -490,7 +490,7 @@ func (s *Server) GetNVMeNamespace(ctx context.Context, in *pb.GetNVMeNamespaceRe
 }
 
 // NVMeNamespaceStats gets an NVMe namespace stats
-func (s *Server) NVMeNamespaceStats(ctx context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
+func (s *Server) NVMeNamespaceStats(_ context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
 	log.Printf("NVMeNamespaceStats: Received from client: %v", in)
 	return &pb.NVMeNamespaceStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

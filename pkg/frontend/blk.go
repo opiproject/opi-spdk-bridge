@@ -22,7 +22,7 @@ import (
 )
 
 // CreateVirtioBlk creates a Virtio block device
-func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.BlkCtrls[in.VirtioBlk.Id.Value]
@@ -58,7 +58,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 }
 
 // DeleteVirtioBlk deletes a Virtio block device
-func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
 	controller, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
@@ -82,13 +82,13 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 }
 
 // UpdateVirtioBlk updates a Virtio block device
-func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("UpdateVirtioBlk: Received from client: %v", in)
 	return nil, status.Errorf(codes.Unimplemented, "UpdateVirtioBlk method is not implemented")
 }
 
 // ListVirtioBlks lists Virtio block devices
-func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
+func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
 	log.Printf("ListVirtioBlks: Received from client: %v", in)
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
@@ -109,7 +109,7 @@ func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 }
 
 // GetVirtioBlk gets a Virtio block device
-func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("GetVirtioBlk: Received from client: %v", in)
 	_, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
@@ -139,7 +139,7 @@ func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (
 }
 
 // VirtioBlkStats gets a Virtio block device stats
-func (s *Server) VirtioBlkStats(ctx context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
+func (s *Server) VirtioBlkStats(_ context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
 	log.Printf("VirtioBlkStats: Received from client: %v", in)
 	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
 }

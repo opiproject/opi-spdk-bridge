@@ -118,7 +118,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateNullDebug(t *testing.T) {
+func TestBackEnd_UpdateNullDebug(_ *testing.T) {
 
 }
 
@@ -225,11 +225,11 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetNullDebug(t *testing.T) {
+func TestBackEnd_GetNullDebug(_ *testing.T) {
 
 }
 
-func TestBackEnd_NullDebugStats(t *testing.T) {
+func TestBackEnd_NullDebugStats(_ *testing.T) {
 
 }
 

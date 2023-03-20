@@ -119,7 +119,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateAioController(t *testing.T) {
+func TestBackEnd_UpdateAioController(_ *testing.T) {
 
 }
 
@@ -224,11 +224,11 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetAioController(t *testing.T) {
+func TestBackEnd_GetAioController(_ *testing.T) {
 
 }
 
-func TestBackEnd_AioControllerStats(t *testing.T) {
+func TestBackEnd_AioControllerStats(_ *testing.T) {
 
 }
 

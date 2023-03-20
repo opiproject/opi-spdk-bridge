@@ -64,6 +64,6 @@ func TestSpdk_NewSpdkJSONRPC(t *testing.T) {
 	}
 }
 
-func TestSpdk_Call(t *testing.T) {
+func TestSpdk_Call(_ *testing.T) {
 
 }

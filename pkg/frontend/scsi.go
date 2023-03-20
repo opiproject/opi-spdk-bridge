@@ -21,7 +21,7 @@ import (
 )
 
 // CreateVirtioScsiController creates a Virtio SCSI controller
-func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
 	params := models.VhostCreateScsiControllerParams{
 		Ctrlr: in.VirtioScsiController.Id.Value,
@@ -46,7 +46,7 @@ func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVi
 }
 
 // DeleteVirtioScsiController deletes a Virtio SCSI controller
-func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiController: Received from client: %v", in)
 	params := models.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
@@ -65,13 +65,13 @@ func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVi
 }
 
 // UpdateVirtioScsiController updates a Virtio SCSI controller
-func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiController{}, nil
 }
 
 // ListVirtioScsiControllers lists Virtio SCSI controllers
-func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
+func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
@@ -89,7 +89,7 @@ func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirti
 }
 
 // GetVirtioScsiController gets a Virtio SCSI controller
-func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("GetVirtioScsiController: Received from client: %v", in)
 	params := models.VhostGetControllersParams{
 		Name: in.Name,
@@ -110,13 +110,13 @@ func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioSc
 }
 
 // VirtioScsiControllerStats gets a Virtio SCSI controller stats
-func (s *Server) VirtioScsiControllerStats(ctx context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
+func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiControllerStatsResponse{}, nil
 }
 
 // CreateVirtioScsiLun creates a Virtio SCSI LUN
-func (s *Server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("CreateVirtioScsiLun: Received from client: %v", in)
 	params := struct {
 		Name string `json:"ctrlr"`
@@ -138,7 +138,7 @@ func (s *Server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScs
 }
 
 // DeleteVirtioScsiLun deletes a Virtio SCSI LUN
-func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiLun: Received from client: %v", in)
 	params := struct {
 		Name string `json:"ctrlr"`
@@ -161,13 +161,13 @@ func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScs
 }
 
 // UpdateVirtioScsiLun updates a Virtio SCSI LUN
-func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiLun{}, nil
 }
 
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
-func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
+func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
@@ -185,7 +185,7 @@ func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLu
 }
 
 // GetVirtioScsiLun gets a Virtio SCSI LUN
-func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("GetVirtioScsiLun: Received from client: %v", in)
 	params := models.VhostGetControllersParams{
 		Name: in.Name,
@@ -206,7 +206,7 @@ func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRe
 }
 
 // VirtioScsiLunStats gets a Virtio SCSI LUN stats
-func (s *Server) VirtioScsiLunStats(ctx context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
+func (s *Server) VirtioScsiLunStats(_ context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
 	return &pb.VirtioScsiLunStatsResponse{}, nil
 }

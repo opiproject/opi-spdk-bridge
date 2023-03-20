@@ -48,7 +48,7 @@ type stubJSONRRPC struct {
 	err error
 }
 
-func (s stubJSONRRPC) Call(method string, args, result interface{}) error {
+func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
 	if method == "vhost_create_blk_controller" {
 		if s.err == nil {
 			resultCreateVirtioBLk, ok := result.(*models.VhostCreateBlkControllerResult)
