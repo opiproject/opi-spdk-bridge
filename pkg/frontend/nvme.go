@@ -52,6 +52,10 @@ func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) models.N
 	return result
 }
 
+func (*tcpSubsystemListener) PreAdd(_ *pb.NVMeController) error { return nil }
+
+func (*tcpSubsystemListener) PostRemove(_ *pb.NVMeController) error { return nil }
+
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(_ context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
@@ -210,17 +214,26 @@ func (s *Server) CreateNVMeController(_ context.Context, in *pb.CreateNVMeContro
 		return nil, err
 	}
 
+	if preAddErr := s.Nvme.subsysListener.PreAdd(in.NvMeController); preAddErr != nil {
+		log.Print(preAddErr)
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"failed to execute pre subsystem listener add operation")
+	}
 	params := s.Nvme.subsysListener.Params(in.NvMeController, subsys.Spec.Nqn)
 	var result models.NvmfSubsystemAddListenerResult
 	err := s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
+		postRemoveErr := s.Nvme.subsysListener.PostRemove(in.NvMeController)
+		log.Printf("Post-remove operation for subsysListener %T: %v", s.Nvme.subsysListener, postRemoveErr)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvMeController.Spec.Id.Value)
 		log.Print(msg)
+		postRemoveErr := s.Nvme.subsysListener.PostRemove(in.NvMeController)
+		log.Printf("Post-remove operation for subsysListener %T: %v", s.Nvme.subsysListener, postRemoveErr)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
@@ -262,6 +275,12 @@ func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
+
+	if err := s.Nvme.subsysListener.PostRemove(controller); err != nil {
+		log.Print(err)
+		return nil, status.Errorf(codes.Internal, "Failed to execute post subsystem listener remove operation")
+	}
+
 	delete(s.Nvme.Controllers, controller.Spec.Id.Value)
 	return &emptypb.Empty{}, nil
 }

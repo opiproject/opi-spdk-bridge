@@ -17,6 +17,8 @@ import (
 // NVMe controllers depending on used transport type.
 type SubsystemListener interface {
 	Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams
+	PreAdd(ctrlr *pb.NVMeController) error
+	PostRemove(ctrlr *pb.NVMeController) error
 }
 
 // NvmeParameters contains all NVMe related structures
