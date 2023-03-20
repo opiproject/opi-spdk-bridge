@@ -21,7 +21,7 @@ import (
 )
 
 // CreateAioController creates an Aio controller
-func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
+func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Handle.Value]
@@ -58,7 +58,7 @@ func (s *Server) CreateAioController(ctx context.Context, in *pb.CreateAioContro
 }
 
 // DeleteAioController deletes an Aio controller
-func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteAioController: Received from client: %v", in)
 	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
@@ -84,7 +84,7 @@ func (s *Server) DeleteAioController(ctx context.Context, in *pb.DeleteAioContro
 }
 
 // UpdateAioController updates an Aio controller
-func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
+func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
 	params1 := models.BdevAioDeleteParams{
 		Name: in.AioController.Handle.Value,
@@ -115,7 +115,7 @@ func (s *Server) UpdateAioController(ctx context.Context, in *pb.UpdateAioContro
 }
 
 // ListAioControllers lists Aio controllers
-func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
+func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
@@ -133,7 +133,7 @@ func (s *Server) ListAioControllers(ctx context.Context, in *pb.ListAioControlle
 }
 
 // GetAioController gets an Aio controller
-func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
+func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("GetAioController: Received from client: %v", in)
 	params := models.BdevGetBdevsParams{
 		Name: in.Name,
@@ -154,7 +154,7 @@ func (s *Server) GetAioController(ctx context.Context, in *pb.GetAioControllerRe
 }
 
 // AioControllerStats gets an Aio controller stats
-func (s *Server) AioControllerStats(ctx context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
+func (s *Server) AioControllerStats(_ context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
 	log.Printf("AioControllerStats: Received from client: %v", in)
 	params := models.BdevGetIostatParams{
 		Name: in.GetHandle().GetValue(),

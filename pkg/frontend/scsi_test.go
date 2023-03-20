@@ -8,50 +8,50 @@ import (
 	"testing"
 )
 
-func TestFrontEnd_CreateVirtioScsiController(t *testing.T) {
+func TestFrontEnd_CreateVirtioScsiController(_ *testing.T) {
 
 }
 
-func TestFrontEnd_DeleteVirtioScsiController(t *testing.T) {
+func TestFrontEnd_DeleteVirtioScsiController(_ *testing.T) {
 
 }
 
-func TestFrontEnd_UpdateVirtioScsiController(t *testing.T) {
+func TestFrontEnd_UpdateVirtioScsiController(_ *testing.T) {
 
 }
 
-func TestFrontEnd_ListVirtioScsiControllers(t *testing.T) {
+func TestFrontEnd_ListVirtioScsiControllers(_ *testing.T) {
 
 }
 
-func TestFrontEnd_GetVirtioScsiController(t *testing.T) {
+func TestFrontEnd_GetVirtioScsiController(_ *testing.T) {
 
 }
 
-func TestFrontEnd_VirtioScsiControllerStats(t *testing.T) {
+func TestFrontEnd_VirtioScsiControllerStats(_ *testing.T) {
 
 }
 
-func TestFrontEnd_CreateVirtioScsiLun(t *testing.T) {
+func TestFrontEnd_CreateVirtioScsiLun(_ *testing.T) {
 
 }
 
-func TestFrontEnd_DeleteVirtioScsiLun(t *testing.T) {
+func TestFrontEnd_DeleteVirtioScsiLun(_ *testing.T) {
 
 }
 
-func TestFrontEnd_UpdateVirtioScsiLun(t *testing.T) {
+func TestFrontEnd_UpdateVirtioScsiLun(_ *testing.T) {
 
 }
 
-func TestFrontEnd_ListVirtioScsiLuns(t *testing.T) {
+func TestFrontEnd_ListVirtioScsiLuns(_ *testing.T) {
 
 }
 
-func TestFrontEnd_GetVirtioScsiLun(t *testing.T) {
+func TestFrontEnd_GetVirtioScsiLun(_ *testing.T) {
 
 }
 
-func TestFrontEnd_VirtioScsiLunStats(t *testing.T) {
+func TestFrontEnd_VirtioScsiLunStats(_ *testing.T) {
 
 }

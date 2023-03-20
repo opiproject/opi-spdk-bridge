@@ -21,7 +21,7 @@ import (
 )
 
 // CreateNullDebug creates a Null Debug instance
-func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
+func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
@@ -58,7 +58,7 @@ func (s *Server) CreateNullDebug(ctx context.Context, in *pb.CreateNullDebugRequ
 }
 
 // DeleteNullDebug deletes a Null Debug instance
-func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNullDebug: Received from client: %v", in)
 	volume, ok := s.Volumes.NullVolumes[in.Name]
 	if !ok {
@@ -84,7 +84,7 @@ func (s *Server) DeleteNullDebug(ctx context.Context, in *pb.DeleteNullDebugRequ
 }
 
 // UpdateNullDebug updates a Null Debug instance
-func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
+func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
 	params1 := models.BdevNullDeleteParams{
 		Name: in.NullDebug.Handle.Value,
@@ -121,7 +121,7 @@ func (s *Server) UpdateNullDebug(ctx context.Context, in *pb.UpdateNullDebugRequ
 }
 
 // ListNullDebugs lists Null Debug instances
-func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
+func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
@@ -139,7 +139,7 @@ func (s *Server) ListNullDebugs(ctx context.Context, in *pb.ListNullDebugsReques
 }
 
 // GetNullDebug gets a a Null Debug instance
-func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
+func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("GetNullDebug: Received from client: %v", in)
 	params := models.BdevGetBdevsParams{
 		Name: in.Name,
@@ -160,7 +160,7 @@ func (s *Server) GetNullDebug(ctx context.Context, in *pb.GetNullDebugRequest) (
 }
 
 // NullDebugStats gets a Null Debug instance stats
-func (s *Server) NullDebugStats(ctx context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
+func (s *Server) NullDebugStats(_ context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
 	log.Printf("NullDebugStats: Received from client: %v", in)
 	params := models.BdevGetIostatParams{
 		Name: in.Handle.Value,

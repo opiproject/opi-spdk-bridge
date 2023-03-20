@@ -22,7 +22,7 @@ import (
 )
 
 // CreateNVMfRemoteController creates an NVMf remote controller
-func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
+func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("CreateNVMfRemoteController: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Id.Value]
@@ -61,7 +61,7 @@ func (s *Server) CreateNVMfRemoteController(ctx context.Context, in *pb.CreateNV
 }
 
 // DeleteNVMfRemoteController deletes an NVMf remote controller
-func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMfRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMfRemoteController: Received from client: %v", in)
 	volume, ok := s.Volumes.NvmeVolumes[in.Name]
 	if !ok {
@@ -85,13 +85,13 @@ func (s *Server) DeleteNVMfRemoteController(ctx context.Context, in *pb.DeleteNV
 }
 
 // NVMfRemoteControllerReset resets an NVMf remote controller
-func (s *Server) NVMfRemoteControllerReset(ctx context.Context, in *pb.NVMfRemoteControllerResetRequest) (*emptypb.Empty, error) {
+func (s *Server) NVMfRemoteControllerReset(_ context.Context, in *pb.NVMfRemoteControllerResetRequest) (*emptypb.Empty, error) {
 	log.Printf("Received: %v", in.GetId())
 	return &emptypb.Empty{}, nil
 }
 
 // ListNVMfRemoteControllers lists an NVMf remote controllers
-func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfRemoteControllersRequest) (*pb.ListNVMfRemoteControllersResponse, error) {
+func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRemoteControllersRequest) (*pb.ListNVMfRemoteControllersResponse, error) {
 	log.Printf("ListNVMfRemoteControllers: Received from client: %v", in)
 	var result []models.BdevNvmeGetControllerResult
 	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
@@ -118,7 +118,7 @@ func (s *Server) ListNVMfRemoteControllers(ctx context.Context, in *pb.ListNVMfR
 }
 
 // GetNVMfRemoteController gets an NVMf remote controller
-func (s *Server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
+func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("GetNVMfRemoteController: Received from client: %v", in)
 	params := models.BdevNvmeGetControllerParams{
 		Name: in.Name,
@@ -148,7 +148,7 @@ func (s *Server) GetNVMfRemoteController(ctx context.Context, in *pb.GetNVMfRemo
 }
 
 // NVMfRemoteControllerStats gets NVMf remote controller stats
-func (s *Server) NVMfRemoteControllerStats(ctx context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
+func (s *Server) NVMfRemoteControllerStats(_ context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
 	log.Printf("Received: %v", in.GetId())
 	return &pb.NVMfRemoteControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
