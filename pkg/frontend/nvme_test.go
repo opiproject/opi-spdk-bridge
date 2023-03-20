@@ -1702,7 +1702,7 @@ func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
 		wantPanic     bool
 	}{
 		"ipv4 valid address": {
-			listenAddress: "10.10.10.10",
+			listenAddress: "10.10.10.10:12345",
 			wantPanic:     false,
 		},
 		"valid ipv6 addresses": {
@@ -1711,6 +1711,14 @@ func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
 		},
 		"empty string as listen address": {
 			listenAddress: "",
+			wantPanic:     true,
+		},
+		"missing port": {
+			listenAddress: "10.10.10.10",
+			wantPanic:     true,
+		},
+		"valid port invalid ip": {
+			listenAddress: "wrong:12345",
 			wantPanic:     true,
 		},
 		"meaningless listen address": {
@@ -1729,8 +1737,10 @@ func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
 			}()
 
 			gotSubsysListener := NewTCPSubsystemListener(tt.listenAddress)
+			host, port, _ := net.SplitHostPort(tt.listenAddress)
 			wantSubsysListener := &tcpSubsystemListener{
-				listenAddr: net.ParseIP(tt.listenAddress),
+				listenAddr: net.ParseIP(host),
+				listenPort: port,
 			}
 
 			if !reflect.DeepEqual(gotSubsysListener, wantSubsysListener) {

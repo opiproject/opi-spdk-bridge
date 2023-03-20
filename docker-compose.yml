@@ -56,7 +56,7 @@ services:
     depends_on:
       spdk:
         condition: service_healthy
-    command: sh -c "/opi-spdk-bridge -port=50051 -spdk_addr /var/tmp/spdk.sock -tcp_traddr=$$(getent hosts spdk | awk '{ print $$1 }')"
+    command: sh -c "/opi-spdk-bridge -port=50051 -spdk_addr=/var/tmp/spdk.sock -tcp_trid=$$(getent hosts spdk | awk '{ print $$1 }'):4444"
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 
