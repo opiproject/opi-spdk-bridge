@@ -21,15 +21,22 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// TODO: consider using https://pkg.go.dev/net#TCPAddr
 type tcpSubsystemListener struct {
 	listenAddr net.IP
+	listenPort string
 }
 
 // NewTCPSubsystemListener creates a new instance of tcpSubsystemListener
 func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
-	parsedAddr := net.ParseIP(listenAddr)
+	host, port, err := net.SplitHostPort(listenAddr)
+	if err != nil {
+		log.Panicf("Invalid ip:port tuple: %v", listenAddr)
+	}
+
+	parsedAddr := net.ParseIP(host)
 	if parsedAddr == nil {
-		log.Panicf("Invalid ip address: %v", listenAddr)
+		log.Panicf("Invalid ip address: %v", host)
 	}
 
 	if parsedAddr.To4() == nil {
@@ -38,6 +45,7 @@ func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
 
 	return &tcpSubsystemListener{
 		listenAddr: parsedAddr,
+		listenPort: port,
 	}
 }
 
@@ -46,7 +54,7 @@ func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) models.N
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "tcp"
 	result.ListenAddress.Traddr = c.listenAddr.String()
-	result.ListenAddress.Trsvcid = "4444"
+	result.ListenAddress.Trsvcid = c.listenPort
 	result.ListenAddress.Adrfam = "ipv4"
 
 	return result
