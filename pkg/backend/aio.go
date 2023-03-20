@@ -127,7 +127,7 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 	Blobarray := make([]*pb.AioController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}}
+		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
 	return &pb.ListAioControllersResponse{AioControllers: Blobarray}, nil
 }
@@ -150,7 +150,7 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.AioController{Handle: &pc.ObjectKey{Value: result[0].Name}}, nil
+	return &pb.AioController{Handle: &pc.ObjectKey{Value: result[0].Name}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
 // AioControllerStats gets an Aio controller stats
