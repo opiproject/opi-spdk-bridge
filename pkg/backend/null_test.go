@@ -182,12 +182,16 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
-					Handle: &pc.ObjectKey{Value: "Malloc0"},
-					Uuid:   &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
+					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
+					BlockSize:   512,
+					BlocksCount: 131072,
 				},
 				{
-					Handle: &pc.ObjectKey{Value: "Malloc1"},
-					Uuid:   &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+					BlockSize:   512,
+					BlocksCount: 131072,
 				},
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
@@ -225,8 +229,107 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetNullDebug(_ *testing.T) {
+func TestBackEnd_GetNullDebug(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      string
+		out     *pb.NullDebug
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+	}{
+		{
+			"valid request with invalid SPDK response",
+			"volume-test",
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
+			true,
+		},
+		{
+			"valid request with invalid marshal SPDK response",
+			"volume-test",
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
+			true,
+		},
+		{
+			"valid request with empty SPDK response",
+			"volume-test",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
+			true,
+		},
+		{
+			"valid request with ID mismatch SPDK response",
+			"volume-test",
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"valid request with error code from SPDK response",
+			"volume-test",
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"valid request with valid SPDK response",
+			"volume-test",
+			&pb.NullDebug{
+				Handle:      &pc.ObjectKey{Value: "Malloc1"},
+				Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+				BlockSize:   512,
+				BlocksCount: 131072,
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
+			codes.OK,
+			"",
+			true,
+		},
+	}
 
+	// run tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
+			request := &pb.GetNullDebugRequest{Name: tt.in}
+			response, err := testEnv.client.GetNullDebug(testEnv.ctx, request)
+			if response != nil {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
+					t.Error("response: expected", tt.out, "received", response)
+				}
+			}
+
+			if err != nil {
+				if er, ok := status.FromError(err); ok {
+					if er.Code() != tt.errCode {
+						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+					}
+					if er.Message() != tt.errMsg {
+						t.Error("error message: expected", tt.errMsg, "received", er.Message())
+					}
+				}
+			}
+		})
+	}
 }
 
 func TestBackEnd_NullDebugStats(_ *testing.T) {
