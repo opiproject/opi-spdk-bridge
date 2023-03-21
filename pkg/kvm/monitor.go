@@ -100,6 +100,11 @@ func (m *monitor) DeleteVirtioBlkDevice(id string) error {
 	return m.waitForEvent("DEVICE_DELETED", id)
 }
 
+func (m *monitor) DeleteNvmeControllerDevice(id string) error {
+	// TODO: check that device does not exist before return
+	return m.rmon.DeviceDel(id)
+}
+
 func (m *monitor) addDevice(qmpCmd interface{}) error {
 	bs, err := json.Marshal(map[string]interface{}{
 		"execute":   "device_add",
