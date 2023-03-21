@@ -442,6 +442,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -451,6 +452,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
 			true,
+			false,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -460,6 +462,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "EOF"),
 			true,
+			false,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -469,6 +472,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -478,6 +482,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -487,6 +492,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		{
 			"valid request with unknown key",
@@ -496,6 +502,17 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
+			false,
+		},
+		{
+			"unknown key with missing allowed",
+			"unknown-id",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -507,7 +524,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolume.Handle.Value] = &testNullVolume
 
-			request := &pb.DeleteNullDebugRequest{Name: tt.in, AllowMissing: false}
+			request := &pb.DeleteNullDebugRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {

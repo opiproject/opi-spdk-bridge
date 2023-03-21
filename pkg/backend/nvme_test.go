@@ -449,6 +449,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -458,6 +459,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete Crypto: %v", "volume-test"),
 			true,
+			false,
 		},
 		{
 			"valid request with invalid marshal SPDK response",
@@ -467,6 +469,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go value of type models.BdevNvmeDetachControllerResult"),
 			true,
+			false,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -476,6 +479,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_detach_controller: %v", "EOF"),
 			true,
+			false,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -485,6 +489,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -494,6 +499,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -503,6 +509,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		// {
 		// 	"valid request with unknown key",
@@ -512,6 +519,17 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("unable to find key %v", "unknown-id"),
 		// 	false,
+		//  false,
+		// },
+		// {
+		// 	"unknown key with missing allowed",
+		// 	"unknown-id",
+		// 	&emptypb.Empty{},
+		// 	[]string{""},
+		// 	codes.OK,
+		// 	"",
+		// 	false,
+		// 	true,
 		// },
 	}
 
@@ -521,7 +539,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in, AllowMissing: false}
+			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
