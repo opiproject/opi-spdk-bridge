@@ -62,6 +62,9 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
 	controller, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
 	params := models.VhostDeleteControllerParams{

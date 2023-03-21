@@ -62,6 +62,9 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 	log.Printf("DeleteNullDebug: Received from client: %v", in)
 	volume, ok := s.Volumes.NullVolumes[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
