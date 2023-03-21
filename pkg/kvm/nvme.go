@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
@@ -81,6 +83,39 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		return nil, errAddDeviceFailed
 	}
 	return out, nil
+}
+
+// DeleteNVMeController deletes an NVMe controller device and detaches it from QEMU instance
+func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
+	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	if monErr != nil {
+		log.Println("Couldn't create QEMU monitor")
+		return nil, errMonitorCreation
+	}
+	defer mon.Disconnect()
+
+	delNvmeErr := mon.DeleteNvmeControllerDevice(in.Name)
+	if delNvmeErr != nil {
+		log.Printf("Couldn't delete NVMe controller: %v", delNvmeErr)
+	}
+
+	response, spdkErr := s.Server.DeleteNVMeController(ctx, in)
+	if spdkErr != nil {
+		log.Println("Error running underlying cmd on opi-spdk bridge:", spdkErr)
+	}
+
+	delDirErr := deleteControllerDir(s.ctrlrDir, in.Name)
+	if delDirErr != nil {
+		log.Println("Failed to delete NVMe controller directory:", delDirErr)
+	}
+
+	var err error
+	if delNvmeErr != nil && spdkErr != nil && delDirErr != nil {
+		err = errDeviceNotDeleted
+	} else if delNvmeErr != nil || spdkErr != nil || delDirErr != nil {
+		err = errDevicePartiallyDeleted
+	}
+	return response, err
 }
 
 func createControllerDir(ctrlrDir string, ctrlrID string) error {
