@@ -254,7 +254,7 @@ func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeContro
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		return nil, fmt.Errorf("error finding controller %s", in.Name)
+		return nil, fmt.Errorf("unable to find key %s", in.Name)
 	}
 	subsys, ok := s.Nvme.Subsystems[controller.Spec.SubsystemId.Value]
 	if !ok {
@@ -309,7 +309,7 @@ func (s *Server) GetNVMeController(_ context.Context, in *pb.GetNVMeControllerRe
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
-		return nil, fmt.Errorf("error finding controller %s", in.Name)
+		return nil, fmt.Errorf("unable to find key %s", in.Name)
 	}
 	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NVMeControllerStatus{Active: true}}, nil
 }

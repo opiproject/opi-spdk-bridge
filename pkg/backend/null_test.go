@@ -488,6 +488,15 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			"",
 			true,
 		},
+		{
+			"valid request with unknown key",
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -498,7 +507,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolume.Handle.Value] = &testNullVolume
 
-			request := &pb.DeleteNullDebugRequest{Name: tt.in}
+			request := &pb.DeleteNullDebugRequest{Name: tt.in, AllowMissing: false}
 			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {

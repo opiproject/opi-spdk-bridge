@@ -825,7 +825,7 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("error finding controller %s", "unknown-controller-id"),
+			fmt.Sprintf("unable to find key %s", "unknown-controller-id"),
 			false,
 		},
 	}
@@ -1492,7 +1492,7 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 
-			request := &pb.DeleteNVMeNamespaceRequest{Name: tt.in}
+			request := &pb.DeleteNVMeNamespaceRequest{Name: tt.in, AllowMissing: false}
 			response, err := testEnv.client.DeleteNVMeNamespace(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
@@ -1572,7 +1572,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.Unknown,
-			fmt.Sprintf("error finding controller %v", "unknown-controller-id"),
+			fmt.Sprintf("unable to find key %v", "unknown-controller-id"),
 			false,
 		},
 	}
@@ -1585,7 +1585,7 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 
-			request := &pb.DeleteNVMeControllerRequest{Name: tt.in}
+			request := &pb.DeleteNVMeControllerRequest{Name: tt.in, AllowMissing: false}
 			response, err := testEnv.client.DeleteNVMeController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
@@ -1677,7 +1677,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 
-			request := &pb.DeleteNVMeSubsystemRequest{Name: tt.in}
+			request := &pb.DeleteNVMeSubsystemRequest{Name: tt.in, AllowMissing: false}
 			response, err := testEnv.client.DeleteNVMeSubsystem(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {

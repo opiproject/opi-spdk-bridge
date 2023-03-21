@@ -504,6 +504,15 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			"",
 			true,
 		},
+		// {
+		// 	"valid request with unknown key",
+		// 	"unknown-id",
+		// 	nil,
+		// 	[]string{""},
+		// 	codes.Unknown,
+		// 	fmt.Sprintf("unable to find key %v", "unknown-id"),
+		// 	false,
+		// },
 	}
 
 	// run tests
@@ -512,7 +521,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in}
+			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in, AllowMissing: false}
 			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {

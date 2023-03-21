@@ -435,6 +435,15 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			"",
 			true,
 		},
+		{
+			"valid request with unknown key",
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -445,7 +454,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrl.Id.Value] = &testVirtioCtrl
 
-			request := &pb.DeleteVirtioBlkRequest{Name: tt.in}
+			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: false}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
