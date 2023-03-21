@@ -65,6 +65,9 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 	log.Printf("DeleteNVMfRemoteController: Received from client: %v", in)
 	volume, ok := s.Volumes.NvmeVolumes[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v -> %v", err, volume)
 		// return nil, err

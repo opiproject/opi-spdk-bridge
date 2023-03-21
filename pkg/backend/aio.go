@@ -62,6 +62,9 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 	log.Printf("DeleteAioController: Received from client: %v", in)
 	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err

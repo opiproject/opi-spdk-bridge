@@ -112,6 +112,9 @@ func (s *Server) DeleteNVMeSubsystem(_ context.Context, in *pb.DeleteNVMeSubsyst
 	log.Printf("DeleteNVMeSubsystem: Received from client: %v", in)
 	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
@@ -248,6 +251,9 @@ func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeContro
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		return nil, fmt.Errorf("error finding controller %s", in.Name)
 	}
 	subsys, ok := s.Nvme.Subsystems[controller.Spec.SubsystemId.Value]
@@ -368,6 +374,9 @@ func (s *Server) DeleteNVMeNamespace(_ context.Context, in *pb.DeleteNVMeNamespa
 	log.Printf("DeleteNVMeNamespace: Received from client: %v", in)
 	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
 		err := fmt.Errorf("unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
