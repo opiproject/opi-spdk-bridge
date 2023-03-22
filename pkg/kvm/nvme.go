@@ -5,6 +5,8 @@
 package kvm
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -45,6 +47,63 @@ func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string)
 	result.ListenAddress.Traddr = ctrlrDirPath
 
 	return result
+}
+
+// CreateNVMeController creates an NVMe controller device and attaches it to QEMU instance
+func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
+	id := in.NvMeController.Spec.Id.Value
+	err := createControllerDir(s.ctrlrDir, id)
+	if err != nil {
+		log.Print(err)
+		return nil, errFailedToCreateNvmeDir
+	}
+
+	out, err := s.Server.CreateNVMeController(ctx, in)
+	if err != nil {
+		log.Println("Error running cmd on opi-spdk bridge:", err)
+		_ = deleteControllerDir(s.ctrlrDir, id)
+		return out, err
+	}
+
+	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	if monErr != nil {
+		log.Println("Couldn't create QEMU monitor")
+		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: id})
+		_ = deleteControllerDir(s.ctrlrDir, id)
+		return nil, errMonitorCreation
+	}
+	defer mon.Disconnect()
+
+	if err := mon.AddNvmeControllerDevice(id, controllerDirPath(s.ctrlrDir, id)); err != nil {
+		log.Println("Couldn't add NVMe controller:", err)
+		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: id})
+		_ = deleteControllerDir(s.ctrlrDir, id)
+		return nil, errAddDeviceFailed
+	}
+	return out, nil
+}
+
+func createControllerDir(ctrlrDir string, ctrlrID string) error {
+	ctrlrDirPath := controllerDirPath(ctrlrDir, ctrlrID)
+	log.Printf("Creating dir for %v NVMe controller: %v", ctrlrID, ctrlrDirPath)
+	if os.Mkdir(ctrlrDirPath, 0600) != nil {
+		return fmt.Errorf("cannot create controller directory %v", ctrlrDirPath)
+	}
+	return nil
+}
+
+func deleteControllerDir(ctrlrDir string, ctrlrID string) error {
+	ctrlrDirPath := controllerDirPath(ctrlrDir, ctrlrID)
+	log.Printf("Deleting dir for %v NVMe controller: %v", ctrlrID, ctrlrDirPath)
+	if _, err := os.Stat(ctrlrDirPath); os.IsNotExist(err) {
+		log.Printf("%v directory does not exist.", ctrlrDirPath)
+		return nil
+	}
+
+	if os.Remove(ctrlrDirPath) != nil {
+		return fmt.Errorf("cannot delete controller directory %v", ctrlrDirPath)
+	}
+	return nil
 }
 
 func controllerDirPath(ctrlrDir string, ctrlrID string) string {
