@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -71,6 +72,35 @@ func (m *monitor) AddVirtioBlkDevice(id string, chardevID string) error {
 		ID:      &id,
 		Chardev: &chardevID,
 	}
+
+	// TODO: check that device exists before return
+	return m.addDevice(qmpCmd)
+}
+
+func (m *monitor) AddNvmeControllerDevice(id string, ctrlrDir string) error {
+	socket := filepath.Join(ctrlrDir, "cntrl")
+	qmpCmd := struct {
+		Driver string  `json:"driver"`
+		ID     *string `json:"id,omitempty"`
+		Socket *string `json:"socket,omitempty"`
+	}{
+		Driver: "vfio-user-pci",
+		ID:     &id,
+		Socket: &socket,
+	}
+	// TODO: check that device exists before return
+	return m.addDevice(qmpCmd)
+}
+
+func (m *monitor) DeleteVirtioBlkDevice(id string) error {
+	err := m.rmon.DeviceDel(id)
+	if err != nil {
+		return fmt.Errorf("couldn't delete device: %w", err)
+	}
+	return m.waitForEvent("DEVICE_DELETED", id)
+}
+
+func (m *monitor) addDevice(qmpCmd interface{}) error {
 	bs, err := json.Marshal(map[string]interface{}{
 		"execute":   "device_add",
 		"arguments": qmpCmd,
@@ -94,14 +124,6 @@ func (m *monitor) AddVirtioBlkDevice(id string, chardevID string) error {
 	}
 
 	return nil
-}
-
-func (m *monitor) DeleteVirtioBlkDevice(id string) error {
-	err := m.rmon.DeviceDel(id)
-	if err != nil {
-		return fmt.Errorf("couldn't delete device: %w", err)
-	}
-	return m.waitForEvent("DEVICE_DELETED", id)
 }
 
 func (m *monitor) waitForEvent(event string, dataTag string) error {

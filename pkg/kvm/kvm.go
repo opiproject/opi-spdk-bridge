@@ -32,6 +32,7 @@ var (
 	errAddDeviceFailed        = status.Error(codes.FailedPrecondition, "couldn't add device")
 	errDeviceNotDeleted       = status.Error(codes.FailedPrecondition, "device is not deleted")
 	errDevicePartiallyDeleted = status.Error(codes.Internal, "device is partially deleted")
+	errFailedToCreateNvmeDir  = status.Error(codes.FailedPrecondition, "cannot create directory for NVMe controller")
 )
 
 // Server is a wrapper for default opi-spdk-bridge frontend which automates
