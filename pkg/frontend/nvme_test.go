@@ -1751,30 +1751,37 @@ func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
 	tests := map[string]struct {
 		listenAddress string
 		wantPanic     bool
+		protocol      string
 	}{
 		"ipv4 valid address": {
 			listenAddress: "10.10.10.10:12345",
 			wantPanic:     false,
+			protocol:      ipv4NvmeTCPProtocol,
 		},
 		"valid ipv6 addresses": {
-			listenAddress: "2002:0db0:8833:0000:0000:8a8a:0330:7337",
-			wantPanic:     true,
+			listenAddress: "[2002:0db0:8833:0000:0000:8a8a:0330:7337]:54321",
+			wantPanic:     false,
+			protocol:      ipv6NvmeTCPProtocol,
 		},
 		"empty string as listen address": {
 			listenAddress: "",
 			wantPanic:     true,
+			protocol:      "",
 		},
 		"missing port": {
 			listenAddress: "10.10.10.10",
 			wantPanic:     true,
+			protocol:      "",
 		},
 		"valid port invalid ip": {
 			listenAddress: "wrong:12345",
 			wantPanic:     true,
+			protocol:      "",
 		},
 		"meaningless listen address": {
 			listenAddress: "some string which is not ip address",
 			wantPanic:     true,
+			protocol:      "",
 		},
 	}
 
@@ -1792,6 +1799,7 @@ func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
 			wantSubsysListener := &tcpSubsystemListener{
 				listenAddr: net.ParseIP(host),
 				listenPort: port,
+				protocol:   tt.protocol,
 			}
 
 			if !reflect.DeepEqual(gotSubsysListener, wantSubsysListener) {
