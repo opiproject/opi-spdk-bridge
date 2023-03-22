@@ -21,10 +21,16 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+const (
+	ipv4NvmeTCPProtocol = "ipv4"
+	ipv6NvmeTCPProtocol = "ipv6"
+)
+
 // TODO: consider using https://pkg.go.dev/net#TCPAddr
 type tcpSubsystemListener struct {
 	listenAddr net.IP
 	listenPort string
+	protocol   string
 }
 
 // NewTCPSubsystemListener creates a new instance of tcpSubsystemListener
@@ -39,13 +45,20 @@ func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
 		log.Panicf("Invalid ip address: %v", host)
 	}
 
-	if parsedAddr.To4() == nil {
-		log.Panicf("Only ipv4 supported for TCP transport")
+	var protocol string
+	switch {
+	case parsedAddr.To4() != nil:
+		protocol = ipv4NvmeTCPProtocol
+	case parsedAddr.To16() != nil:
+		protocol = ipv6NvmeTCPProtocol
+	default:
+		log.Panicf("Not supported protocol for: %v", listenAddr)
 	}
 
 	return &tcpSubsystemListener{
 		listenAddr: parsedAddr,
 		listenPort: port,
+		protocol:   protocol,
 	}
 }
 
@@ -55,7 +68,7 @@ func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) models.N
 	result.ListenAddress.Trtype = "tcp"
 	result.ListenAddress.Traddr = c.listenAddr.String()
 	result.ListenAddress.Trsvcid = c.listenPort
-	result.ListenAddress.Adrfam = "ipv4"
+	result.ListenAddress.Adrfam = c.protocol
 
 	return result
 }

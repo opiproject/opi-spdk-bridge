@@ -37,7 +37,7 @@ func main() {
 	flag.StringVar(&ctrlrDir, "ctrlr_dir", "", "Directory with created SPDK device unix sockets (-S option in SPDK). Valid only with -kvm option")
 
 	var tcpTransportListenAddr string
-	flag.StringVar(&tcpTransportListenAddr, "tcp_trid", "127.0.0.1:4420", "ipv4 address:port tuple (aka traddr:trsvcid) to listen on for Nvme/TCP transport")
+	flag.StringVar(&tcpTransportListenAddr, "tcp_trid", "127.0.0.1:4420", "ipv4 address:port (aka traddr:trsvcid) or ipv6 [address]:port tuple (aka [traddr]:trsvcid) to listen on for Nvme/TCP transport")
 	flag.Parse()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
