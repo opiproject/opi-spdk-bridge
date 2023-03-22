@@ -47,19 +47,21 @@ func main() {
 	s := grpc.NewServer()
 
 	jsonRPC := server.NewSpdkJSONRPC(spdkAddress)
-	frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
-		frontend.NewTCPSubsystemListener(tcpTransportListenAddr))
 	backendServer := backend.NewServer(jsonRPC)
 	middleendServer := middleend.NewServer(jsonRPC)
 
 	if useKvm {
 		log.Println("Creating KVM server.")
+		frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
+			kvm.NewVfiouserSubsystemListener(ctrlrDir))
 		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir)
 
 		pb.RegisterFrontendNvmeServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
+		frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
+			frontend.NewTCPSubsystemListener(tcpTransportListenAddr))
 		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)
