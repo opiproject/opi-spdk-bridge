@@ -143,7 +143,7 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	if in.PageSize > 0 {
+	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
 	}
