@@ -80,7 +80,9 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete Aio Dev: %s", volume.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Volumes.AioVolumes, volume.Handle.Value)
 	return &emptypb.Empty{}, nil
@@ -100,7 +102,9 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete Aio Dev: %s", in.AioController.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := models.BdevAioCreateParams{
 		Name:      in.AioController.Handle.Value,
@@ -114,7 +118,19 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
-	return &pb.AioController{}, nil
+	if result2 == "" {
+		msg := fmt.Sprintf("Could not create Aio Dev: %s", in.AioController.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	response := &pb.AioController{}
+	err3 := deepcopier.Copy(in.AioController).To(response)
+	if err3 != nil {
+		log.Printf("error: %v", err3)
+		return nil, err3
+	}
+	s.Volumes.AioVolumes[in.AioController.Handle.Value] = response
+	return response, nil
 }
 
 // ListAioControllers lists Aio controllers
