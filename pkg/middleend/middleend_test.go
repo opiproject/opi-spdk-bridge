@@ -6,6 +6,7 @@
 package middleend
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -19,6 +20,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -90,13 +93,16 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	}
 }
 
-func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
-	encryptedVolume := &pb.EncryptedVolume{
+var (
+	encryptedVolume = pb.EncryptedVolume{
 		EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
 		VolumeId:          &pc.ObjectKey{Value: "volume-test"},
 		Key:               []byte("0123456789abcdef0123456789abcdef"),
 		Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
 	}
+)
+
+func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	tests := []struct {
 		name    string
 		in      *pb.EncryptedVolume
@@ -108,7 +114,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	}{
 		{
 			"valid request with invalid SPDK response",
-			encryptedVolume,
+			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -117,7 +123,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with invalid marshal SPDK response",
-			encryptedVolume,
+			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
@@ -126,7 +132,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with empty SPDK response",
-			encryptedVolume,
+			&encryptedVolume,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -135,7 +141,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with ID mismatch SPDK response",
-			encryptedVolume,
+			&encryptedVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -144,7 +150,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with error code from SPDK response",
-			encryptedVolume,
+			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -153,8 +159,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with valid key and invalid bdev response",
-			encryptedVolume,
-			encryptedVolume,
+			&encryptedVolume,
+			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Crypto Dev: %v", "crypto-test"),
@@ -162,8 +168,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with valid key and invalid marshal bdev response",
-			encryptedVolume,
-			encryptedVolume,
+			&encryptedVolume,
+			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go value of type models.BdevCryptoCreateResult"),
@@ -171,8 +177,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with valid key and error code bdev response",
-			encryptedVolume,
-			encryptedVolume,
+			&encryptedVolume,
+			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response error: myopierr"),
@@ -180,8 +186,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with valid key and ID mismatch bdev response",
-			encryptedVolume,
-			encryptedVolume,
+			&encryptedVolume,
+			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response ID mismatch"),
@@ -189,8 +195,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		{
 			"valid request with valid SPDK response",
-			encryptedVolume,
-			encryptedVolume,
+			&encryptedVolume,
+			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"my_crypto_bdev"}`},
 			codes.OK,
 			"",
@@ -229,61 +235,203 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	}
 }
 
-// func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
-// 	tests := []struct {
-// 		name    string
-// 		in      *pb.EncryptedVolume
-// 		out     *pb.EncryptedVolume
-// 		errCode codes.Code
-// 		errMsg  string
-// 		start   bool
-// 	}{
-// 		{
-// 			"unimplemented method",
-// 			&pb.EncryptedVolume{},
-// 			nil,
-// 			codes.Unimplemented,
-// 			fmt.Sprintf("%v method is not implemented", "UpdateEncryptedVolume"),
-// 			false,
-// 		},
-// 	}
+func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      *pb.EncryptedVolume
+		out     *pb.EncryptedVolume
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+	}{
+		{
+			"bdev delete fails",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not delete Crypto: %s", encryptedVolume.EncryptedVolumeId.Value),
+			true,
+		},
+		{
+			"bdev delete empty",
+			&encryptedVolume,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_crypto_delete: %v", "EOF"),
+			true,
+		},
+		{
+			"bdev delete ID mismatch",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_crypto_delete: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"bdev delete exception",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_crypto_delete: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete fails",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not destroy Crypto Key: %v", "super_key"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete empty",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_destroy: %v", "EOF"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ID mismatch",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_destroy: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete exception",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_destroy: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create fails",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not create Crypto Key: %v", "0123456789abcdef0123456789abcdef"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create empty",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_create: %v", "EOF"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create ID mismatch",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_create: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create exception",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_create: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create ok ; bdev create fails",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not create Crypto Dev: %v", encryptedVolume.EncryptedVolumeId.Value),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create ok ; bdev create empty",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_crypto_create: %v", "EOF"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create ok ; bdev create ID mismatch",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_crypto_create: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create ok ; bdev create exception",
+			&encryptedVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_crypto_create: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"bdev delete ok ; key delete ok ; key create ok ; bdev create ok",
+			&encryptedVolume,
+			&encryptedVolume,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
+			codes.OK,
+			"",
+			true,
+		},
+	}
 
-// 	// start GRPC mockup Server
-// 	ctx := context.Background()
-// 	conn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer func(conn *grpc.ClientConn) {
-// 		err := conn.Close()
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 	}(conn)
-// 	client := pb.NewMiddleendServiceClient(conn)
+	// run tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
 
-// 	// run tests
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in}
-// 			response, err := testEnv.client.UpdateEncryptedVolume(ctx, request)
-// 			if response != nil {
-// 				t.Error("response: expected", codes.Unimplemented, "received", response)
-// 			}
+			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in}
+			response, err := testEnv.client.UpdateEncryptedVolume(testEnv.ctx, request)
+			if response != nil {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
 
-// 			if err != nil {
-// 				if er, ok := status.FromError(err); ok {
-// 					if er.Code() != tt.errCode {
-// 						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
-// 					}
-// 					if er.Message() != tt.errMsg {
-// 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-// 					}
-// 				}
-// 			}
-// 		})
-// 	}
-// }
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
+					t.Error("response: expected", tt.out, "received", response)
+				}
+			}
+
+			if err != nil {
+				if er, ok := status.FromError(err); ok {
+					if er.Code() != tt.errCode {
+						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+					}
+					if er.Message() != tt.errMsg {
+						t.Error("error message: expected", tt.errMsg, "received", er.Message())
+					}
+				}
+			}
+		})
+	}
+}
 
 func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 	tests := []struct {
