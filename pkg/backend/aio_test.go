@@ -45,7 +45,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Aio Dev: %v", "mytest"),
+			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolume.Handle.Value),
 			true,
 		},
 		{
@@ -119,8 +119,130 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateAioController(_ *testing.T) {
+func TestBackEnd_UpdateAioController(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      *pb.AioController
+		out     *pb.AioController
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+	}{
+		{
+			"delete fails",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolume.Handle.Value),
+			true,
+		},
+		{
+			"delete empty",
+			&testAioVolume,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_aio_delete: %v", "EOF"),
+			true,
+		},
+		{
+			"delete ID mismatch",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_aio_delete: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"delete exception",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_aio_delete: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"delete ok create fails",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not create Aio Dev: %v", "mytest"),
+			true,
+		},
+		{
+			"delete ok create empty",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_aio_create: %v", "EOF"),
+			true,
+		},
+		{
+			"delete ok create ID mismatch",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_aio_create: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"delete ok create exception",
+			&testAioVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_aio_create: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"valid request with valid SPDK response",
+			&testAioVolume,
+			&testAioVolume,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
+			codes.OK,
+			"",
+			true,
+		},
+	}
 
+	// run tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
+			request := &pb.UpdateAioControllerRequest{AioController: tt.in}
+			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)
+			if response != nil {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
+					t.Error("response: expected", tt.out, "received", response)
+				}
+			}
+
+			if err != nil {
+				if er, ok := status.FromError(err); ok {
+					if er.Code() != tt.errCode {
+						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+					}
+					if er.Message() != tt.errMsg {
+						t.Error("error message: expected", tt.errMsg, "received", er.Message())
+					}
+				}
+			}
+		})
+	}
 }
 
 func TestBackEnd_ListAioControllers(t *testing.T) {
@@ -444,7 +566,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
+			fmt.Sprintf("Could not delete Aio Dev: %s", "mytest"),
 			true,
 			false,
 		},
