@@ -167,7 +167,7 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	if in.PageSize > 0 {
+	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
 	}
@@ -464,7 +464,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 	for i := range result {
 		rr := &result[i]
 		if rr.Nqn == nqn || nqn == "" {
-			if in.PageSize > 0 {
+			if in.PageSize > 0 && int(in.PageSize) < len(result) {
 				log.Printf("Limiting result to: %d", in.PageSize)
 				rr.Namespaces = rr.Namespaces[:in.PageSize]
 			}
