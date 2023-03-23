@@ -80,7 +80,9 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", volume.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Volumes.NullVolumes, volume.Handle.Value)
 	return &emptypb.Empty{}, nil
@@ -100,7 +102,9 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", in.NullDebug.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := models.BdevNullCreateParams{
 		Name:      in.NullDebug.Handle.Value,
@@ -114,12 +118,18 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
+	if result2 == "" {
+		msg := fmt.Sprintf("Could not create Null Dev: %s", in.NullDebug.Handle.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 	response := &pb.NullDebug{}
 	err3 := deepcopier.Copy(in.NullDebug).To(response)
 	if err3 != nil {
 		log.Printf("error: %v", err3)
 		return nil, err3
 	}
+	s.Volumes.NullVolumes[in.NullDebug.Handle.Value] = response
 	return response, nil
 }
 

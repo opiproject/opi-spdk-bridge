@@ -44,7 +44,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
+			fmt.Sprintf("Could not create Null Dev: %v", testNullVolume.Handle.Value),
 			true,
 		},
 		{
@@ -118,8 +118,130 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateNullDebug(_ *testing.T) {
+func TestBackEnd_UpdateNullDebug(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      *pb.NullDebug
+		out     *pb.NullDebug
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+	}{
+		{
+			"delete fails",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolume.Handle.Value),
+			true,
+		},
+		{
+			"delete empty",
+			&testNullVolume,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_null_delete: %v", "EOF"),
+			true,
+		},
+		{
+			"delete ID mismatch",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_null_delete: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"delete exception",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_null_delete: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"delete ok create fails",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
+			true,
+		},
+		{
+			"delete ok create empty",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_null_create: %v", "EOF"),
+			true,
+		},
+		{
+			"delete ok create ID mismatch",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_null_create: %v", "json response ID mismatch"),
+			true,
+		},
+		{
+			"delete ok create exception",
+			&testNullVolume,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_null_create: %v", "json response error: myopierr"),
+			true,
+		},
+		{
+			"valid request with valid SPDK response",
+			&testNullVolume,
+			&testNullVolume,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
+			codes.OK,
+			"",
+			true,
+		},
+	}
 
+	// run tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
+			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in}
+			response, err := testEnv.client.UpdateNullDebug(testEnv.ctx, request)
+			if response != nil {
+				// Marshall the request and response, so we can just compare the contained data
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
+
+				// Compare the marshalled messages
+				if !bytes.Equal(mtt, mResponse) {
+					t.Error("response: expected", tt.out, "received", response)
+				}
+			}
+
+			if err != nil {
+				if er, ok := status.FromError(err); ok {
+					if er.Code() != tt.errCode {
+						t.Error("error code: expected", codes.InvalidArgument, "received", er.Code())
+					}
+					if er.Message() != tt.errMsg {
+						t.Error("error message: expected", tt.errMsg, "received", er.Message())
+					}
+				}
+			}
+		})
+	}
 }
 
 func TestBackEnd_ListNullDebugs(t *testing.T) {
@@ -450,7 +572,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
+			fmt.Sprintf("Could not delete Null Dev: %s", "mytest"),
 			true,
 			false,
 		},
