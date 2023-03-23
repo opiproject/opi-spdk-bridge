@@ -234,6 +234,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		size    int32
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -242,6 +243,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			0,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -250,6 +252,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "EOF"),
 			true,
+			0,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -258,6 +261,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response ID mismatch"),
 			true,
+			0,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -266,6 +270,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response error: myopierr"),
 			true,
+			0,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -297,6 +302,25 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			0,
+		},
+		{
+			"pagination",
+			[]*pb.NVMeSubsystem{
+				{
+					Spec: &pb.NVMeSubsystemSpec{
+						Nqn:          "nqn.2022-09.io.spdk:opi1",
+						SerialNumber: "OpiSerialNumber1",
+						ModelNumber:  "OpiModelNumber1",
+					},
+				},
+			},
+			// {'jsonrpc': '2.0', 'id': 1, 'result': [{'nqn': 'nqn.2020-12.mlnx.snap', 'serial_number': 'Mellanox_NVMe_SNAP', 'model_number': 'Mellanox NVMe SNAP Controller', 'controllers': [{'name': 'NvmeEmu0pf1', 'cntlid': 0, 'pci_bdf': 'ca:00.3', 'pci_index': 1}]}]}
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[{"nqn": "nqn.2022-09.io.spdk:opi1", "serial_number": "OpiSerialNumber1", "model_number": "OpiModelNumber1"},{"nqn": "nqn.2022-09.io.spdk:opi2", "serial_number": "OpiSerialNumber2", "model_number": "OpiModelNumber2"},{"nqn": "nqn.2022-09.io.spdk:opi3", "serial_number": "OpiSerialNumber3", "model_number": "OpiModelNumber3"}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
 		},
 	}
 
@@ -306,7 +330,7 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListNVMeSubsystemsRequest{}
+			request := &pb.ListNVMeSubsystemsRequest{PageSize: tt.size}
 			response, err := testEnv.client.ListNVMeSubsystems(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeSubsystems, tt.out) {
@@ -738,6 +762,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		size    int32
 	}{
 		{
 			"valid request without SPDK",
@@ -759,6 +784,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			0,
 		},
 	}
 
@@ -770,7 +796,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 
-			request := &pb.ListNVMeControllersRequest{Parent: tt.in}
+			request := &pb.ListNVMeControllersRequest{Parent: tt.in, PageSize: tt.size}
 			response, err := testEnv.client.ListNVMeControllers(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeControllers, tt.out) {
@@ -1144,6 +1170,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		size    int32
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -1153,6 +1180,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			0,
 		},
 		{
 			"valid request with invalid marshal SPDK response",
@@ -1162,6 +1190,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go value of type []models.NvmfGetSubsystemsResult"),
 			true,
+			0,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -1171,6 +1200,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "EOF"),
 			true,
+			0,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -1180,6 +1210,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response ID mismatch"),
 			true,
+			0,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -1189,6 +1220,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response error: myopierr"),
 			true,
+			0,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -1202,6 +1234,19 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			0,
+		},
+		{
+			"pagination",
+			"subsystem-test",
+			[]*pb.NVMeNamespace{
+				&testNamespaces[0],
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"NVMe","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":11,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":12,"bdev_name":"Malloc1","name":"Malloc1","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":13,"bdev_name":"Malloc2","name":"Malloc2","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
 		},
 		{
 			"valid request with unknown key",
@@ -1211,6 +1256,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("unable to find subsystem %v", "unknown-namespace-id"),
 			false,
+			0,
 		},
 	}
 
@@ -1225,7 +1271,7 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Namespaces["ns1"] = &testNamespaces[1]
 			testEnv.opiSpdkServer.Nvme.Namespaces["ns2"] = &testNamespaces[2]
 
-			request := &pb.ListNVMeNamespacesRequest{Parent: tt.in}
+			request := &pb.ListNVMeNamespacesRequest{Parent: tt.in, PageSize: tt.size}
 			response, err := testEnv.client.ListNVMeNamespaces(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeNamespaces, tt.out) {

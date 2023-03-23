@@ -145,6 +145,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		size    int32
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -154,6 +155,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			0,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -163,6 +165,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "EOF"),
 			true,
+			0,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -172,6 +175,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "json response ID mismatch"),
 			true,
+			0,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -181,6 +185,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "json response error: myopierr"),
 			true,
+			0,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -206,6 +211,23 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			0,
+		},
+		{
+			"pagination",
+			"subsystem-test",
+			[]*pb.VirtioBlk{
+				{
+					Id:       &pc.ObjectKey{Value: "VblkEmu0pf0"},
+					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					VolumeId: &pc.ObjectKey{Value: "TBD"},
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"VblkEmu0pf0","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"virtio-blk-42","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"VblkEmu0pf2","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"}],"error":{"code":0,"message":""}}`},
+			codes.OK,
+			"",
+			true,
+			1,
 		},
 	}
 
@@ -215,7 +237,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListVirtioBlksRequest{Parent: tt.in}
+			request := &pb.ListVirtioBlksRequest{Parent: tt.in, PageSize: tt.size}
 			response, err := testEnv.client.ListVirtioBlks(testEnv.ctx, request)
 
 			if response != nil {
