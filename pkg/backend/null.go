@@ -143,6 +143,10 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if in.PageSize > 0 {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result = result[:in.PageSize]
+	}
 	Blobarray := make([]*pb.NullDebug, len(result))
 	for i := range result {
 		r := &result[i]

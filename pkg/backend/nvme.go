@@ -103,6 +103,10 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if in.PageSize > 0 {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result = result[:in.PageSize]
+	}
 	Blobarray := make([]*pb.NVMfRemoteController, len(result))
 	for i := range result {
 		r := &result[i]
