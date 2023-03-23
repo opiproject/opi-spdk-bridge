@@ -442,6 +442,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		size    int32
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -451,6 +452,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			0,
 		},
 		{
 			"valid request with invalid marshal SPDK response",
@@ -460,6 +462,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
 			true,
+			0,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -469,6 +472,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
 			true,
+			0,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -478,6 +482,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
 			true,
+			0,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -487,6 +492,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
 			true,
+			0,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -503,6 +509,21 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			0,
+		},
+		{
+			"pagination",
+			"volume-test",
+			[]*pb.EncryptedVolume{
+				{
+					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc0"},
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
 		},
 	}
 
@@ -512,7 +533,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in}
+			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in, PageSize: tt.size}
 			response, err := testEnv.client.ListEncryptedVolumes(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.EncryptedVolumes, tt.out) {

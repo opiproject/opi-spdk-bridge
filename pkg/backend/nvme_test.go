@@ -179,6 +179,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		size    int32
 	}{
 		{
 			"valid request with invalid SPDK response",
@@ -188,6 +189,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
+			0,
 		},
 		{
 			"valid request with invalid marshal SPDK response",
@@ -197,6 +199,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeGetControllerResult"),
 			true,
+			0,
 		},
 		{
 			"valid request with empty SPDK response",
@@ -206,6 +209,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "EOF"),
 			true,
+			0,
 		},
 		{
 			"valid request with ID mismatch SPDK response",
@@ -215,6 +219,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response ID mismatch"),
 			true,
+			0,
 		},
 		{
 			"valid request with error code from SPDK response",
@@ -224,6 +229,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response error: myopierr"),
 			true,
+			0,
 		},
 		{
 			"valid request with valid SPDK response",
@@ -252,6 +258,27 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			0,
+		},
+		{
+			"pagination",
+			"volume-test",
+			[]*pb.NVMfRemoteController{
+				{
+					Id:      &pc.ObjectKey{Value: "OpiNvme12"},
+					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+					Traddr:  "127.0.0.1",
+					Trsvcid: 4444,
+					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
+					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"OpiNvme12","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]},{"name":"OpiNvme13","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"8888","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
 		},
 	}
 
@@ -261,7 +288,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in}
+			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in, PageSize: tt.size}
 			response, err := testEnv.client.ListNVMfRemoteControllers(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMfRemoteControllers, tt.out) {

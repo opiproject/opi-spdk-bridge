@@ -460,14 +460,14 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	if in.PageSize > 0 {
-		log.Printf("Limiting result to: %d", in.PageSize)
-		result = result[:in.PageSize]
-	}
 	Blobarray := []*pb.NVMeNamespace{}
 	for i := range result {
 		rr := &result[i]
 		if rr.Nqn == nqn || nqn == "" {
+			if in.PageSize > 0 {
+				log.Printf("Limiting result to: %d", in.PageSize)
+				rr.Namespaces = rr.Namespaces[:in.PageSize]
+			}
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
 				Blobarray = append(Blobarray, &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{HostNsid: int32(r.Nsid)}})
