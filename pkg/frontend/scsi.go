@@ -80,6 +80,10 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if in.PageSize > 0 {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result = result[:in.PageSize]
+	}
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
@@ -176,6 +180,10 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if in.PageSize > 0 {
+		log.Printf("Limiting result to: %d", in.PageSize)
+		result = result[:in.PageSize]
+	}
 	Blobarray := make([]*pb.VirtioScsiLun, len(result))
 	for i := range result {
 		r := &result[i]
