@@ -130,7 +130,9 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete Crypto: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// now delete a key
 	params0 := models.AccelCryptoKeyDestroyParams{
@@ -144,7 +146,9 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result0)
 	if !result0 {
-		log.Printf("Could not destroy Crypto Key: %v", in)
+		msg := fmt.Sprintf("Could not destroy Crypto Key: %v", params0.KeyName)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// now create a new key
 	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
