@@ -10,7 +10,6 @@
 [![GitHub stars](https://img.shields.io/github/stars/opiproject/opi-spdk-bridge.svg?style=flat-square&label=github%20stars)](https://github.com/opiproject/opi-spdk-bridge)
 [![GitHub Contributors](https://img.shields.io/github/contributors/opiproject/opi-spdk-bridge.svg?style=flat-square)](https://github.com/opiproject/opi-spdk-bridge/graphs/contributors)
 
-
 This is a simple SPDK based storage API PoC.
 
 * SPDK - container with SPDK app that is running on xPU
