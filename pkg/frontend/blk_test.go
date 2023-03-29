@@ -240,6 +240,16 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			1000,
 		},
 		{
+			"pagination negative",
+			"volume-test",
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			"negative PageSize is not allowed",
+			false,
+			-10,
+		},
+		{
 			"pagination",
 			"subsystem-test",
 			[]*pb.VirtioBlk{

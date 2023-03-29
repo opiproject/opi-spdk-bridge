@@ -305,6 +305,15 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			0,
 		},
 		{
+			"pagination negative",
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			"negative PageSize is not allowed",
+			false,
+			-10,
+		},
+		{
 			"pagination",
 			[]*pb.NVMeSubsystem{
 				{
@@ -1249,6 +1258,16 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			"",
 			true,
 			1000,
+		},
+		{
+			"pagination negative",
+			"volume-test",
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			"negative PageSize is not allowed",
+			false,
+			-10,
 		},
 		{
 			"pagination",
