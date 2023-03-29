@@ -65,7 +65,9 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		return nil, fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
 	}
 	params := models.VhostDeleteControllerParams{
 		Ctrlr: in.Name,

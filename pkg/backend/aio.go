@@ -65,7 +65,7 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		err := fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
