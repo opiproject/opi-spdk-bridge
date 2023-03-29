@@ -668,7 +668,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			"unknown-id",
 			nil,
 			[]string{""},
-			codes.Unknown,
+			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
 			false,

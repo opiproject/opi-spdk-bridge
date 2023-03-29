@@ -128,7 +128,7 @@ func (s *Server) DeleteNVMeSubsystem(_ context.Context, in *pb.DeleteNVMeSubsyst
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		err := fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (s *Server) GetNVMeSubsystem(_ context.Context, in *pb.GetNVMeSubsystemRequ
 	log.Printf("GetNVMeSubsystem: Received from client: %v", in)
 	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
-		err := fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -271,7 +271,9 @@ func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeContro
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		return nil, fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
 	}
 	subsys, ok := s.Nvme.Subsystems[controller.Spec.SubsystemId.Value]
 	if !ok {
@@ -326,7 +328,9 @@ func (s *Server) GetNVMeController(_ context.Context, in *pb.GetNVMeControllerRe
 	log.Printf("Received from client: %v", in.Name)
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
-		return nil, fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
 	}
 	return &pb.NVMeController{Spec: &pb.NVMeControllerSpec{Id: &pc.ObjectKey{Value: in.Name}, NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NVMeControllerStatus{Active: true}}, nil
 }
@@ -394,7 +398,7 @@ func (s *Server) DeleteNVMeNamespace(_ context.Context, in *pb.DeleteNVMeNamespa
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		err := fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -488,7 +492,7 @@ func (s *Server) GetNVMeNamespace(_ context.Context, in *pb.GetNVMeNamespaceRequ
 	log.Printf("GetNVMeNamespace: Received from client: %v", in)
 	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
-		err := fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}

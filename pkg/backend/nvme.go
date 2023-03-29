@@ -68,7 +68,7 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		err := fmt.Errorf("unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v -> %v", err, volume)
 		// return nil, err
 	}
