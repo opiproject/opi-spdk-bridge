@@ -70,7 +70,7 @@ func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
 			*resultDeleteVirtioBLk = models.VhostDeleteControllerResult(true)
 		}
 		return s.err
-	} else if method == "nvmf_subsystem_add_listener" {
+	} else if method == "nvmf_subsystem_add_listener" || method == "nvmf_subsystem_remove_listener" {
 		if s.err == nil {
 			resultCreateNvmeController, ok := result.(*models.NvmfSubsystemAddListenerResult)
 			if !ok {
@@ -218,14 +218,11 @@ func (s *mockQmpServer) ExpectDeleteVirtioBlkWithEvent(id string) *mockQmpServer
 }
 
 func (s *mockQmpServer) ExpectDeleteVirtioBlk(id string) *mockQmpServer {
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: genericQmpOk,
-		expectedArgs: []string{
-			`"execute":"device_del"`,
-			`"id":"` + id + `"`,
-		},
-	})
-	return s
+	return s.expectDeleteDevice(id)
+}
+
+func (s *mockQmpServer) ExpectDeleteNvmeController(id string) *mockQmpServer {
+	return s.expectDeleteDevice(id)
 }
 
 func (s *mockQmpServer) WithErrorResponse() *mockQmpServer {
@@ -287,6 +284,17 @@ func (s *mockQmpServer) read(conn net.Conn) string {
 	data := string(buf)
 	log.Println("QMP server got :", data)
 	return data
+}
+
+func (s *mockQmpServer) expectDeleteDevice(id string) *mockQmpServer {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: genericQmpOk,
+		expectedArgs: []string{
+			`"execute":"device_del"`,
+			`"id":"` + id + `"`,
+		},
+	})
+	return s
 }
 
 func TestCreateVirtioBlk(t *testing.T) {
