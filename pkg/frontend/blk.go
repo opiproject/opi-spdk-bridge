@@ -95,6 +95,11 @@ func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkReques
 // ListVirtioBlks lists Virtio block devices
 func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
 	log.Printf("ListVirtioBlks: Received from client: %v", in)
+	if in.PageSize < 0 {
+		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {

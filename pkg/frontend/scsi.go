@@ -73,6 +73,11 @@ func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirt
 // ListVirtioScsiControllers lists Virtio SCSI controllers
 func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
+	if in.PageSize < 0 {
+		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
@@ -173,6 +178,11 @@ func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiL
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
 func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
+	if in.PageSize < 0 {
+		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {

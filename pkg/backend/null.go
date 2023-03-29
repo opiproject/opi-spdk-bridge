@@ -136,6 +136,11 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 // ListNullDebugs lists Null Debug instances
 func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
+	if in.PageSize < 0 {
+		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {

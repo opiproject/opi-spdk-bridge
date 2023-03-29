@@ -529,6 +529,16 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			1000,
 		},
 		{
+			"pagination negative",
+			"volume-test",
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			"negative PageSize is not allowed",
+			false,
+			-10,
+		},
+		{
 			"pagination",
 			"volume-test",
 			[]*pb.EncryptedVolume{
