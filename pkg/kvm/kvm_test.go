@@ -27,8 +27,10 @@ import (
 )
 
 var (
-	alwaysSuccessfulJSONRPC    = stubJSONRRPC{nil}
-	alwaysFailingJSONRPC       = stubJSONRRPC{errors.New("stub error")}
+	errStub                 = errors.New("stub error")
+	alwaysSuccessfulJSONRPC = stubJSONRRPC{nil}
+	alwaysFailingJSONRPC    = stubJSONRRPC{errStub}
+
 	testVirtioBlkID            = "virtio-blk-42"
 	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
 		Id:       &pc.ObjectKey{Value: testVirtioBlkID},
@@ -37,8 +39,9 @@ var (
 		MaxIoQps: 1,
 	}}
 	testDeleteVirtioBlkRequest = &pb.DeleteVirtioBlkRequest{Name: testVirtioBlkID}
-	genericQmpError            = `{"error": {"class": "GenericError", "desc": "some error"}}` + "\n"
-	genericQmpOk               = `{"return": {}}` + "\n"
+
+	genericQmpError = `{"error": {"class": "GenericError", "desc": "some error"}}` + "\n"
+	genericQmpOk    = `{"return": {}}` + "\n"
 
 	qmpServerOperationTimeout = 500 * time.Millisecond
 	qmplibTimeout             = 250 * time.Millisecond
@@ -65,6 +68,15 @@ func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
 				log.Panicf("Unexpected type for virtio-blk device deletion result")
 			}
 			*resultDeleteVirtioBLk = models.VhostDeleteControllerResult(true)
+		}
+		return s.err
+	} else if method == "nvmf_subsystem_add_listener" {
+		if s.err == nil {
+			resultCreateNvmeController, ok := result.(*models.NvmfSubsystemAddListenerResult)
+			if !ok {
+				log.Panicf("Unexpected type for add subsystem listener result")
+			}
+			*resultCreateNvmeController = models.NvmfSubsystemAddListenerResult(true)
 		}
 		return s.err
 	} else {
@@ -168,6 +180,19 @@ func (s *mockQmpServer) ExpectAddVirtioBlk(id string, chardevID string) *mockQmp
 			`"driver":"vhost-user-blk-pci"`,
 			`"id":"` + id + `"`,
 			`"chardev":"` + chardevID + `"`,
+		},
+	})
+	return s
+}
+
+func (s *mockQmpServer) ExpectAddNvmeController(id, controllersDir string) *mockQmpServer {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: genericQmpOk,
+		expectedArgs: []string{
+			`"execute":"device_add"`,
+			`"driver":"vfio-user-pci"`,
+			`"id":"` + id + `"`,
+			`"socket":"` + filepath.Join(controllersDir, id, "cntrl") + `"`,
 		},
 	})
 	return s
