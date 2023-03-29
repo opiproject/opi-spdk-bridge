@@ -212,3 +212,122 @@ func TestCreateNvmeController(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteNvmeController(t *testing.T) {
+	tests := map[string]struct {
+		expectDeleteNvmeController      bool
+		expectDeleteNvmeControllerError bool
+
+		jsonRPC              server.JSONRPC
+		nonDefaultQmpAddress string
+
+		ctrlrDirExistsBeforeOperation bool
+		ctrlrDirExistsAfterOperation  bool
+		nonEmptyCtrlrDirAfterSpdkCall bool
+		expectError                   error
+	}{
+		"valid NVMe controller deletion": {
+			expectDeleteNvmeController:    true,
+			jsonRPC:                       alwaysSuccessfulJSONRPC,
+			ctrlrDirExistsBeforeOperation: true,
+			ctrlrDirExistsAfterOperation:  false,
+			nonEmptyCtrlrDirAfterSpdkCall: false,
+			expectError:                   nil,
+		},
+		"qemu NVMe controller delete failed": {
+			expectDeleteNvmeControllerError: true,
+			jsonRPC:                         alwaysSuccessfulJSONRPC,
+			ctrlrDirExistsBeforeOperation:   true,
+			ctrlrDirExistsAfterOperation:    false,
+			nonEmptyCtrlrDirAfterSpdkCall:   false,
+			expectError:                     errDevicePartiallyDeleted,
+		},
+		"spdk failed to delete NVMe controller": {
+			expectDeleteNvmeController:    true,
+			jsonRPC:                       alwaysFailingJSONRPC,
+			ctrlrDirExistsBeforeOperation: true,
+			ctrlrDirExistsAfterOperation:  false,
+			nonEmptyCtrlrDirAfterSpdkCall: false,
+			expectError:                   errDevicePartiallyDeleted,
+		},
+		"failed to create monitor": {
+			nonDefaultQmpAddress:          "/dev/null",
+			jsonRPC:                       alwaysSuccessfulJSONRPC,
+			ctrlrDirExistsBeforeOperation: true,
+			ctrlrDirExistsAfterOperation:  true,
+			nonEmptyCtrlrDirAfterSpdkCall: false,
+			expectError:                   errMonitorCreation,
+		},
+		"ctrlr dir is not empty after SPDK call": {
+			expectDeleteNvmeController:    true,
+			jsonRPC:                       alwaysSuccessfulJSONRPC,
+			ctrlrDirExistsBeforeOperation: true,
+			ctrlrDirExistsAfterOperation:  true,
+			nonEmptyCtrlrDirAfterSpdkCall: true,
+			expectError:                   errDevicePartiallyDeleted,
+		},
+		"ctrlr dir does not exist": {
+			expectDeleteNvmeController:    true,
+			jsonRPC:                       alwaysSuccessfulJSONRPC,
+			ctrlrDirExistsBeforeOperation: false,
+			ctrlrDirExistsAfterOperation:  false,
+			nonEmptyCtrlrDirAfterSpdkCall: false,
+			expectError:                   nil,
+		},
+		"all operations failed": {
+			expectDeleteNvmeControllerError: true,
+			jsonRPC:                         alwaysFailingJSONRPC,
+			ctrlrDirExistsBeforeOperation:   true,
+			ctrlrDirExistsAfterOperation:    true,
+			nonEmptyCtrlrDirAfterSpdkCall:   true,
+			expectError:                     errDeviceNotDeleted,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvMeController.Spec.Id.Value] = testCreateNvmeControllerRequest.NvMeController
+			qmpServer := startMockQmpServer(t)
+			defer qmpServer.Stop()
+			qmpAddress := qmpServer.socketPath
+			if test.nonDefaultQmpAddress != "" {
+				qmpAddress = test.nonDefaultQmpAddress
+			}
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
+			kvmServer.timeout = qmplibTimeout
+			testCtrlrDir := filepath.Join(qmpServer.testDir, testNvmeControllerID)
+			if test.ctrlrDirExistsBeforeOperation {
+				if err := os.Mkdir(testCtrlrDir, os.ModePerm); err != nil {
+					log.Panic(err)
+				}
+
+				if test.nonEmptyCtrlrDirAfterSpdkCall {
+					if err := os.Mkdir(filepath.Join(testCtrlrDir, "ctrlr"), os.ModeDir); err != nil {
+						log.Panic(err)
+					}
+				}
+			}
+			if test.expectDeleteNvmeController {
+				qmpServer.ExpectDeleteNvmeController(testNvmeControllerID)
+			}
+			if test.expectDeleteNvmeControllerError {
+				qmpServer.ExpectDeleteNvmeController(testNvmeControllerID).WithErrorResponse()
+			}
+
+			_, err := kvmServer.DeleteNVMeController(context.Background(), testDeleteNvmeControllerRequest)
+			if !errors.Is(err, test.expectError) {
+				t.Errorf("Expected error %v, got %v", test.expectError, err)
+			}
+			if !qmpServer.WereExpectedCallsPerformed() {
+				t.Errorf("Not all expected calls were performed")
+			}
+			ctrlrDirExists := dirExists(testCtrlrDir)
+			if ctrlrDirExists != test.ctrlrDirExistsAfterOperation {
+				t.Errorf("Expect controller dir exists %v, got %v",
+					test.ctrlrDirExistsAfterOperation, ctrlrDirExists)
+			}
+		})
+	}
+}
