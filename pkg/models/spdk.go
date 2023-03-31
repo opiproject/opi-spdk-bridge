@@ -117,6 +117,8 @@ type BdevNvmeAttachControllerParams struct {
 	Adrfam  string `json:"adrfam"`
 	Trsvcid string `json:"trsvcid"`
 	Subnqn  string `json:"subnqn"`
+	Hdgst   bool   `json:"hdgst"`
+	Ddgst   bool   `json:"ddgst"`
 }
 
 // BdevNvmeAttachControllerResult is the result of creating a block device based on an NVMe device
