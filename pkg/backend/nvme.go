@@ -39,6 +39,8 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 		Trsvcid: fmt.Sprint(in.NvMfRemoteController.Trsvcid),
 		Subnqn:  in.NvMfRemoteController.Subnqn,
 		Hostnqn: in.NvMfRemoteController.Hostnqn,
+		Hdgst:   in.NvMfRemoteController.Hdgst,
+		Ddgst:   in.NvMfRemoteController.Ddgst,
 	}
 	var result []models.BdevNvmeAttachControllerResult
 	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
