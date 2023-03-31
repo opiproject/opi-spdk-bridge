@@ -225,6 +225,21 @@ func (s *mockQmpServer) ExpectDeleteNvmeController(id string) *mockQmpServer {
 	return s.expectDeleteDevice(id)
 }
 
+func (s *mockQmpServer) ExpectQueryPci(id string) *mockQmpServer {
+	response := `{"return":[{"bus":0,"devices":[]}]}` + "\n"
+	if id != "" {
+		response = `{"return":[{"bus":0,"devices":[{"bus":0,"slot":0,"function":0,"class_info":{"class":0},"id":{"device":0,"vendor":0},"qdev_id":"` +
+			id + `","regions":[]}]}]}` + "\n"
+	}
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: response,
+		expectedArgs: []string{
+			`"execute":"query-pci"`,
+		},
+	})
+	return s
+}
+
 func (s *mockQmpServer) WithErrorResponse() *mockQmpServer {
 	if len(s.expectedCalls) == 0 {
 		log.Panicf("No instance to add a QMP error")
@@ -310,6 +325,8 @@ func TestCreateVirtioBlk(t *testing.T) {
 		expectAddVirtioBlk      bool
 		expectAddVirtioBlkError bool
 
+		expectQueryPci bool
+
 		expectDeleteChardev bool
 
 		jsonRPC              server.JSONRPC
@@ -321,6 +338,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 		"valid virtio-blk creation": {
 			expectAddChardev:   true,
 			expectAddVirtioBlk: true,
+			expectQueryPci:     true,
 			jsonRPC:            alwaysSuccessfulJSONRPC,
 			out:                expectNotNilOut,
 		},
@@ -370,6 +388,9 @@ func TestCreateVirtioBlk(t *testing.T) {
 			}
 			if test.expectAddVirtioBlkError {
 				qmpServer.ExpectAddVirtioBlk(testVirtioBlkID, testVirtioBlkID).WithErrorResponse()
+			}
+			if test.expectQueryPci {
+				qmpServer.ExpectQueryPci(testVirtioBlkID)
 			}
 			if test.expectDeleteChardev {
 				qmpServer.ExpectDeleteChardev(testVirtioBlkID)

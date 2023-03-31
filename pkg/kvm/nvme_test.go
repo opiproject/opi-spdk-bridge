@@ -124,6 +124,7 @@ func TestCreateNvmeController(t *testing.T) {
 	tests := map[string]struct {
 		expectAddNvmeController      bool
 		expectAddNvmeControllerError bool
+		expectQueryPci               bool
 
 		jsonRPC                       server.JSONRPC
 		nonDefaultQmpAddress          string
@@ -135,6 +136,7 @@ func TestCreateNvmeController(t *testing.T) {
 	}{
 		"valid NVMe controller creation": {
 			expectAddNvmeController:       true,
+			expectQueryPci:                true,
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  true,
@@ -192,6 +194,9 @@ func TestCreateNvmeController(t *testing.T) {
 			if test.expectAddNvmeControllerError {
 				qmpServer.ExpectAddNvmeController(testNvmeControllerID, qmpServer.testDir).WithErrorResponse()
 			}
+			if test.expectQueryPci {
+				qmpServer.ExpectQueryPci(testNvmeControllerID)
+			}
 
 			out, err := kvmServer.CreateNVMeController(context.Background(), testCreateNvmeControllerRequest)
 			if !errors.Is(err, test.expectError) {
@@ -217,6 +222,7 @@ func TestDeleteNvmeController(t *testing.T) {
 	tests := map[string]struct {
 		expectDeleteNvmeController      bool
 		expectDeleteNvmeControllerError bool
+		expectQueryPci                  bool
 
 		jsonRPC              server.JSONRPC
 		nonDefaultQmpAddress string
@@ -228,6 +234,7 @@ func TestDeleteNvmeController(t *testing.T) {
 	}{
 		"valid NVMe controller deletion": {
 			expectDeleteNvmeController:    true,
+			expectQueryPci:                true,
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
@@ -244,6 +251,7 @@ func TestDeleteNvmeController(t *testing.T) {
 		},
 		"spdk failed to delete NVMe controller": {
 			expectDeleteNvmeController:    true,
+			expectQueryPci:                true,
 			jsonRPC:                       alwaysFailingJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
@@ -260,6 +268,7 @@ func TestDeleteNvmeController(t *testing.T) {
 		},
 		"ctrlr dir is not empty after SPDK call": {
 			expectDeleteNvmeController:    true,
+			expectQueryPci:                true,
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
@@ -268,6 +277,7 @@ func TestDeleteNvmeController(t *testing.T) {
 		},
 		"ctrlr dir does not exist": {
 			expectDeleteNvmeController:    true,
+			expectQueryPci:                true,
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
@@ -314,6 +324,9 @@ func TestDeleteNvmeController(t *testing.T) {
 			}
 			if test.expectDeleteNvmeControllerError {
 				qmpServer.ExpectDeleteNvmeController(testNvmeControllerID).WithErrorResponse()
+			}
+			if test.expectQueryPci {
+				qmpServer.ExpectQueryPci("")
 			}
 
 			_, err := kvmServer.DeleteNVMeController(context.Background(), testDeleteNvmeControllerRequest)
