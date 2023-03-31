@@ -20,12 +20,14 @@ import (
 // TODO: check for device existence to provide idempotence in all methods
 
 type monitor struct {
-	rmon    *qmpraw.Monitor
-	mon     qmp.Monitor
-	timeout time.Duration
+	rmon                   *qmpraw.Monitor
+	mon                    qmp.Monitor
+	timeout                time.Duration
+	pollDevicePresenceStep time.Duration
 }
 
-func newMonitor(qmpAddress string, protocol string, timeout time.Duration) (*monitor, error) {
+func newMonitor(qmpAddress string, protocol string,
+	timeout time.Duration, pollDevicePresenceStep time.Duration) (*monitor, error) {
 	mon, err := qmp.NewSocketMonitor(protocol, qmpAddress, timeout)
 	if err != nil {
 		log.Printf("couldn't create QEMU monitor: %v", err)
@@ -38,7 +40,7 @@ func newMonitor(qmpAddress string, protocol string, timeout time.Duration) (*mon
 	}
 
 	rawMon := qmpraw.NewMonitor(mon)
-	return &monitor{rawMon, mon, timeout}, nil
+	return &monitor{rawMon, mon, timeout, pollDevicePresenceStep}, nil
 }
 
 func (m *monitor) Disconnect() {
@@ -72,9 +74,10 @@ func (m *monitor) AddVirtioBlkDevice(id string, chardevID string) error {
 		ID:      &id,
 		Chardev: &chardevID,
 	}
-
-	// TODO: check that device exists before return
-	return m.addDevice(qmpCmd)
+	if err := m.addDevice(qmpCmd); err != nil {
+		return err
+	}
+	return m.waitForDeviceExist(id)
 }
 
 func (m *monitor) AddNvmeControllerDevice(id string, ctrlrDir string) error {
@@ -88,8 +91,10 @@ func (m *monitor) AddNvmeControllerDevice(id string, ctrlrDir string) error {
 		ID:     &id,
 		Socket: &socket,
 	}
-	// TODO: check that device exists before return
-	return m.addDevice(qmpCmd)
+	if err := m.addDevice(qmpCmd); err != nil {
+		return err
+	}
+	return m.waitForDeviceExist(id)
 }
 
 func (m *monitor) DeleteVirtioBlkDevice(id string) error {
@@ -101,8 +106,10 @@ func (m *monitor) DeleteVirtioBlkDevice(id string) error {
 }
 
 func (m *monitor) DeleteNvmeControllerDevice(id string) error {
-	// TODO: check that device does not exist before return
-	return m.rmon.DeviceDel(id)
+	if err := m.rmon.DeviceDel(id); err != nil {
+		return err
+	}
+	return m.waitForDeviceNotExist(id)
 }
 
 func (m *monitor) addDevice(qmpCmd interface{}) error {
@@ -163,4 +170,50 @@ func (m *monitor) waitForEvent(event string, key string, value string) error {
 			return fmt.Errorf("qemu event not found: %v", event)
 		}
 	}
+}
+
+func (m *monitor) waitForDeviceExist(id string) error {
+	return m.waitForDevicePresence(id, true)
+}
+
+func (m *monitor) waitForDeviceNotExist(id string) error {
+	return m.waitForDevicePresence(id, false)
+}
+
+func (m *monitor) waitForDevicePresence(id string, shouldExist bool) error {
+	timeoutTimer := time.NewTimer(m.timeout)
+	devicePresenceTicker := time.NewTicker(m.pollDevicePresenceStep)
+	defer devicePresenceTicker.Stop()
+	for {
+		select {
+		case <-timeoutTimer.C:
+			return fmt.Errorf("timeout waiting for PCI device %v presence %v", id, shouldExist)
+		case <-devicePresenceTicker.C:
+			exist, err := m.pciDeviceExist(id)
+			if err != nil {
+				log.Println("failed to check pci device existence:", err)
+				continue
+			}
+			if exist != shouldExist {
+				continue
+			}
+			return nil
+		}
+	}
+}
+
+func (m *monitor) pciDeviceExist(id string) (bool, error) {
+	pciDevs, err := m.rmon.QueryPCI()
+	if err != nil {
+		return false, err
+	}
+
+	for _, pciDev := range pciDevs {
+		for _, dev := range pciDev.Devices {
+			if dev.QdevID == id {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }

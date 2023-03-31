@@ -67,7 +67,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 		return out, err
 	}
 
-	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if monErr != nil {
 		log.Println("Couldn't create QEMU monitor")
 		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: id})
@@ -87,7 +87,7 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 
 // DeleteNVMeController deletes an NVMe controller device and detaches it from QEMU instance
 func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeControllerRequest) (*emptypb.Empty, error) {
-	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if monErr != nil {
 		log.Println("Couldn't create QEMU monitor")
 		return nil, errMonitorCreation

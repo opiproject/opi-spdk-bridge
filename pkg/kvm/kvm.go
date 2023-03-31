@@ -43,7 +43,9 @@ type Server struct {
 	qmpAddress string
 	ctrlrDir   string
 	protocol   string
-	timeout    time.Duration
+
+	timeout                time.Duration
+	pollDevicePresenceStep time.Duration
 }
 
 // NewServer creates instance of KvmServer
@@ -66,7 +68,8 @@ func NewServer(s *frontend.Server, qmpAddress string, ctrlrDir string) *Server {
 	}
 
 	timeout := 2 * time.Second
-	return &Server{s, qmpAddress, ctrlrDir, qmpProtocol, timeout}
+	pollDevicePresenceStep := 5 * time.Millisecond
+	return &Server{s, qmpAddress, ctrlrDir, qmpProtocol, timeout, pollDevicePresenceStep}
 }
 
 // CreateVirtioBlk creates a virtio-blk device and attaches it to QEMU instance
@@ -78,7 +81,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	}
 
 	id := out.Id.Value
-	mon, err := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	mon, err := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if err != nil {
 		log.Println("Couldn't create QEMU monitor")
 		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: id})
@@ -106,7 +109,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 
 // DeleteVirtioBlk deletes a virtio-blk device and detaches it from QEMU instance
 func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
-	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout)
+	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if monErr != nil {
 		log.Println("Couldn't create QEMU monitor")
 		return nil, errMonitorCreation
