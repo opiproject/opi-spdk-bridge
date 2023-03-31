@@ -97,7 +97,7 @@ func (m *monitor) DeleteVirtioBlkDevice(id string) error {
 	if err != nil {
 		return fmt.Errorf("couldn't delete device: %w", err)
 	}
-	return m.waitForEvent("DEVICE_DELETED", id)
+	return m.waitForEvent("DEVICE_DELETED", "device", id)
 }
 
 func (m *monitor) DeleteNvmeControllerDevice(id string) error {
@@ -131,7 +131,7 @@ func (m *monitor) addDevice(qmpCmd interface{}) error {
 	return nil
 }
 
-func (m *monitor) waitForEvent(event string, dataTag string) error {
+func (m *monitor) waitForEvent(event string, key string, value string) error {
 	stream, err := m.mon.Events(context.Background())
 	if err != nil {
 		return fmt.Errorf("couldn't get event channel: %v", err)
@@ -142,32 +142,25 @@ func (m *monitor) waitForEvent(event string, dataTag string) error {
 		select {
 		case e := <-stream:
 			log.Println("qemu event:", e)
-			if !strings.Contains(e.Event, event) {
+			if e.Event != event {
 				continue
 			}
-
-			if dataTag != "" && !m.containsTag(e.Data, dataTag) {
+			v, ok := e.Data[key]
+			if !ok {
+				continue
+			}
+			val, ok := v.(string)
+			if !ok {
+				continue
+			}
+			if val != value {
 				continue
 			}
 			log.Println("Event:", event, "found")
 			return nil
 		case <-timeoutTimer.C:
-			log.Println("Event timeout:", event, ",", dataTag)
+			log.Println("Event timeout:", event, ", key:", key, "value:", value)
 			return fmt.Errorf("qemu event not found: %v", event)
 		}
 	}
-}
-
-func (m *monitor) containsTag(eventData map[string]interface{}, dataTag string) bool {
-	for _, v := range eventData {
-		value, ok := v.(string)
-		if !ok {
-			continue
-		}
-
-		if strings.Contains(value, dataTag) {
-			return true
-		}
-	}
-	return false
 }
