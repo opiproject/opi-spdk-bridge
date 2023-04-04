@@ -20,10 +20,12 @@ import (
 // TODO: check for device existence to provide idempotence in all methods
 
 type monitor struct {
-	rmon                   *qmpraw.Monitor
-	mon                    qmp.Monitor
-	timeout                time.Duration
-	pollDevicePresenceStep time.Duration
+	rmon *qmpraw.Monitor
+	mon  qmp.Monitor
+
+	waitEventTimeout          time.Duration
+	pollDevicePresenceTimeout time.Duration
+	pollDevicePresenceStep    time.Duration
 }
 
 func newMonitor(qmpAddress string, protocol string,
@@ -40,7 +42,12 @@ func newMonitor(qmpAddress string, protocol string,
 	}
 
 	rawMon := qmpraw.NewMonitor(mon)
-	return &monitor{rawMon, mon, timeout, pollDevicePresenceStep}, nil
+	return &monitor{
+		rmon:                      rawMon,
+		mon:                       mon,
+		waitEventTimeout:          timeout,
+		pollDevicePresenceTimeout: timeout,
+		pollDevicePresenceStep:    pollDevicePresenceStep}, nil
 }
 
 func (m *monitor) Disconnect() {
@@ -144,7 +151,7 @@ func (m *monitor) waitForEvent(event string, key string, value string) error {
 		return fmt.Errorf("couldn't get event channel: %v", err)
 	}
 
-	timeoutTimer := time.NewTimer(m.timeout)
+	timeoutTimer := time.NewTimer(m.waitEventTimeout)
 	for {
 		select {
 		case e := <-stream:
@@ -181,7 +188,7 @@ func (m *monitor) waitForDeviceNotExist(id string) error {
 }
 
 func (m *monitor) waitForDevicePresence(id string, shouldExist bool) error {
-	timeoutTimer := time.NewTimer(m.timeout)
+	timeoutTimer := time.NewTimer(m.pollDevicePresenceTimeout)
 	devicePresenceTicker := time.NewTicker(m.pollDevicePresenceStep)
 	defer devicePresenceTicker.Stop()
 	for {
