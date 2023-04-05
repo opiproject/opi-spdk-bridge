@@ -54,7 +54,7 @@ func TestSpdk_NewSpdkJSONRPC(t *testing.T) {
 			before := NewSpdkJSONRPC(tt.address)
 			after := &spdkJSONRPC{
 				transport: tt.transport,
-				socket:    &tt.address,
+				socket:    tt.address,
 				id:        0,
 			}
 			if !reflect.DeepEqual(before, after) {

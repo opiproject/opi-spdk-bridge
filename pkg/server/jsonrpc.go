@@ -33,7 +33,7 @@ type JSONRPC interface {
 
 type spdkJSONRPC struct {
 	transport string
-	socket    *string
+	socket    string
 	id        uint64
 }
 
@@ -51,7 +51,7 @@ func NewSpdkJSONRPC(socketPath string) JSONRPC {
 	log.Printf("Connection to SPDK will be via: %s detected from %s", protocol, socketPath)
 	return &spdkJSONRPC{
 		transport: protocol,
-		socket:    &socketPath,
+		socket:    socketPath,
 		id:        0,
 	}
 }
@@ -96,7 +96,7 @@ func (r *spdkJSONRPC) Call(method string, args, result interface{}) error {
 
 func (r *spdkJSONRPC) communicate(buf []byte) (io.Reader, error) {
 	// connect
-	conn, err := net.Dial(r.transport, *r.socket)
+	conn, err := net.Dial(r.transport, r.socket)
 	if err != nil {
 		log.Fatal(err)
 	}
