@@ -210,17 +210,31 @@ func (m *monitor) waitForDevicePresence(id string, shouldExist bool) error {
 }
 
 func (m *monitor) pciDeviceExist(id string) (bool, error) {
-	pciDevs, err := m.rmon.QueryPCI()
+	pci, err := m.rmon.QueryPCI()
 	if err != nil {
 		return false, err
 	}
 
-	for _, pciDev := range pciDevs {
-		for _, dev := range pciDev.Devices {
-			if dev.QdevID == id {
-				return true, nil
-			}
+	for _, pciDev := range pci {
+		if m.findDeviceWithID(pciDev.Devices, id) {
+			return true, nil
 		}
 	}
 	return false, nil
+}
+
+func (m *monitor) findDeviceWithID(devs []qmpraw.PCIDeviceInfo, id string) bool {
+	for _, dev := range devs {
+		if dev.QdevID == id {
+			return true
+		}
+
+		if dev.PCIBridge != nil {
+			if m.findDeviceWithID(dev.PCIBridge.Devices, id) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
