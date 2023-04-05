@@ -56,10 +56,10 @@ func GenerateSocketName(testType string) string {
 
 func startSpdkMockupServerOnUnixSocket(rpc *spdkJSONRPC) net.Listener {
 	// start SPDK mockup Server
-	if err := os.RemoveAll(*rpc.socket); err != nil {
+	if err := os.RemoveAll(rpc.socket); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", *rpc.socket)
+	ln, err := net.Listen("unix", rpc.socket)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
