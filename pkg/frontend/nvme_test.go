@@ -136,16 +136,10 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
 			response, err := testEnv.client.CreateNVMeSubsystem(testEnv.ctx, request)
 			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out.Spec)
-				mResponse, _ := proto.Marshal(response.Spec)
-
-				// Compare the marshalled messages
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
 				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
-				}
-				if !reflect.DeepEqual(response.Status, tt.out.Status) {
-					t.Error("response: expected", tt.out.GetStatus(), "received", response.GetStatus())
+					t.Error("response: expected", tt.out, "received", response)
 				}
 			}
 
@@ -635,11 +629,10 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in}
 			response, err := testEnv.client.CreateNVMeController(testEnv.ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
-					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
-				}
-				if !reflect.DeepEqual(response.Status, tt.out.Status) {
-					t.Error("response: expected", tt.out.GetStatus(), "received", response.GetStatus())
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
+				if !bytes.Equal(mtt, mResponse) {
+					t.Error("response: expected", tt.out, "received", response)
 				}
 			}
 
@@ -1002,16 +995,10 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in}
 			response, err := testEnv.client.CreateNVMeNamespace(testEnv.ctx, request)
 			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out.Spec)
-				mResponse, _ := proto.Marshal(response.Spec)
-
-				// Compare the marshalled messages
+				mtt, _ := proto.Marshal(tt.out)
+				mResponse, _ := proto.Marshal(response)
 				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
-				}
-				if !reflect.DeepEqual(response.Status, tt.out.Status) {
-					t.Error("response: expected", tt.out.GetStatus(), "received", response.GetStatus())
+					t.Error("response: expected", tt.out, "received", response)
 				}
 			}
 
