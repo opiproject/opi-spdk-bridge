@@ -29,8 +29,7 @@ var (
 )
 
 func TestBackEnd_CreateNullDebug(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      *pb.NullDebug
 		out     *pb.NullDebug
 		spdk    []string
@@ -38,8 +37,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -47,8 +45,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			fmt.Sprintf("Could not create Null Dev: %v", testNullVolume.Handle.Value),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			&testNullVolume,
 			nil,
 			[]string{""},
@@ -56,8 +53,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_create: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -65,8 +61,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_create: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -74,8 +69,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_create: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			&testNullVolume,
 			&testNullVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -86,8 +80,8 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -119,8 +113,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNullDebug(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      *pb.NullDebug
 		out     *pb.NullDebug
 		spdk    []string
@@ -128,8 +121,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"delete fails",
+		"delete fails": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -137,8 +129,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolume.Handle.Value),
 			true,
 		},
-		{
-			"delete empty",
+		"delete empty": {
 			&testNullVolume,
 			nil,
 			[]string{""},
@@ -146,8 +137,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_delete: %v", "EOF"),
 			true,
 		},
-		{
-			"delete ID mismatch",
+		"delete ID mismatch": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -155,8 +145,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_delete: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"delete exception",
+		"delete exception": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -164,8 +153,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_delete: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"delete ok create fails",
+		"delete ok create fails": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -173,8 +161,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
 			true,
 		},
-		{
-			"delete ok create empty",
+		"delete ok create empty": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -182,8 +169,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_create: %v", "EOF"),
 			true,
 		},
-		{
-			"delete ok create ID mismatch",
+		"delete ok create ID mismatch": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -191,8 +177,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_create: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"delete ok create exception",
+		"delete ok create exception": {
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -200,8 +185,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_null_create: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			&testNullVolume,
 			&testNullVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -212,8 +196,8 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -245,8 +229,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 }
 
 func TestBackEnd_ListNullDebugs(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     []*pb.NullDebug
 		spdk    []string
@@ -255,8 +238,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		start   bool
 		size    int32
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -265,8 +247,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -275,8 +256,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -285,8 +265,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -295,8 +274,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -305,8 +283,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
@@ -328,8 +305,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"pagination overflow",
+		"pagination overflow": {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
@@ -351,8 +327,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			true,
 			1000,
 		},
-		{
-			"pagination negative",
+		"pagination negative": {
 			"volume-test",
 			nil,
 			[]string{},
@@ -361,8 +336,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			false,
 			-10,
 		},
-		{
-			"pagination",
+		"pagination": {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
@@ -381,8 +355,8 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -409,8 +383,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 }
 
 func TestBackEnd_GetNullDebug(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *pb.NullDebug
 		spdk    []string
@@ -418,8 +391,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -427,8 +399,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 			true,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -436,8 +407,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -445,8 +415,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -454,8 +423,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -463,8 +431,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"volume-test",
 			&pb.NullDebug{
 				Handle:      &pc.ObjectKey{Value: "Malloc1"},
@@ -480,8 +447,8 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -512,8 +479,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 }
 
 func TestBackEnd_NullDebugStats(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
 		spdk    []string
@@ -521,8 +487,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
@@ -530,8 +495,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 			true,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -539,8 +503,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type models.BdevGetIostatResult"),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"mytest",
 			nil,
 			[]string{""},
@@ -548,8 +511,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
@@ -557,8 +519,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -566,8 +527,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"Malloc0",
 			&pb.VolumeStats{
 				ReadBytesCount:    1,
@@ -585,8 +545,8 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -613,8 +573,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 }
 
 func TestBackEnd_DeleteNullDebug(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
 		spdk    []string
@@ -623,8 +582,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 		start   bool
 		missing bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -633,8 +591,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"mytest",
 			nil,
 			[]string{""},
@@ -643,8 +600,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -653,8 +609,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -663,8 +618,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"mytest",
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
@@ -673,8 +627,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with unknown key",
+		"valid request with unknown key": {
 			"unknown-id",
 			nil,
 			[]string{""},
@@ -683,8 +636,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			false,
 			false,
 		},
-		{
-			"unknown key with missing allowed",
+		"unknown key with missing allowed": {
 			"unknown-id",
 			&emptypb.Empty{},
 			[]string{""},
@@ -696,8 +648,8 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 

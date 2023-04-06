@@ -10,32 +10,27 @@ import (
 )
 
 func TestSpdk_NewSpdkJSONRPC(t *testing.T) {
-	tests := []struct {
-		name      string
+	tests := map[string]struct {
 		address   string
 		transport string
 		wantPanic bool
 	}{
-		{
-			"testing unix",
+		"testing unix": {
 			"/var/tmp/spdk.sock",
 			"unix",
 			false,
 		},
-		{
-			"testing tcp",
+		"testing tcp": {
 			"10.10.10.1:1234",
 			"tcp",
 			false,
 		},
-		{
-			"testing empty",
+		"testing empty": {
 			"",
 			"",
 			true,
 		},
-		{
-			"testing nonsense assuming unix",
+		"testing nonsense assuming unix": {
 			"nonsense",
 			"unix",
 			false,
@@ -43,8 +38,8 @@ func TestSpdk_NewSpdkJSONRPC(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			defer func() {
 				r := recover()
 				if (r != nil) != tt.wantPanic {
