@@ -115,6 +115,17 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			true,
 			false,
 		},
+		"valid request with error code from SPDK version response": {
+			&pb.NVMeSubsystem{
+				Spec: spec,
+			},
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("spdk_get_version: %v", "json response error: myopierr"),
+			true,
+			false,
+		},
 		"valid request with valid SPDK response": {
 			&pb.NVMeSubsystem{
 				Spec: spec,
