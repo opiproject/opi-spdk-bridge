@@ -31,8 +31,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		Subnqn:  "nqn.2016-06.io.spdk:cnode1",
 		Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 	}
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      *pb.NVMfRemoteController
 		out     *pb.NVMfRemoteController
 		spdk    []string
@@ -40,8 +39,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			controller,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -49,8 +47,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeAttachControllerResult"),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			controller,
 			nil,
 			[]string{""},
@@ -58,8 +55,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			controller,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -67,8 +63,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			controller,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
@@ -76,8 +71,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			controller,
 			controller,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":["my_remote_nvmf_bdev"]}`},
@@ -88,8 +82,8 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -119,8 +113,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 }
 
 func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
 		spdk    []string
@@ -128,8 +121,7 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request without SPDK",
+		"valid request without SPDK": {
 			"volume-test",
 			&emptypb.Empty{},
 			[]string{""},
@@ -140,8 +132,8 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -171,8 +163,7 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 }
 
 func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     []*pb.NVMfRemoteController
 		spdk    []string
@@ -181,8 +172,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 		start   bool
 		size    int32
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -191,8 +181,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -201,8 +190,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -211,8 +199,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -221,8 +208,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -231,8 +217,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
@@ -260,8 +245,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"pagination overflow",
+		"pagination overflow": {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
@@ -289,8 +273,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			true,
 			1000,
 		},
-		{
-			"pagination negative",
+		"pagination negative": {
 			"volume-test",
 			nil,
 			[]string{},
@@ -299,8 +282,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			false,
 			-10,
 		},
-		{
-			"pagination",
+		"pagination": {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
@@ -322,8 +304,8 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -350,8 +332,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 }
 
 func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *pb.NVMfRemoteController
 		spdk    []string
@@ -359,8 +340,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -368,8 +348,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 			true,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -377,8 +356,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeGetControllerResult"),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -386,8 +364,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -395,8 +372,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -404,8 +380,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"OpiNvme12",
 			&pb.NVMfRemoteController{
 				Id:      &pc.ObjectKey{Value: "OpiNvme12"},
@@ -424,8 +399,8 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -455,8 +430,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 }
 
 func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
 		spdk    []string
@@ -464,8 +438,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"Malloc0",
 			&pb.VolumeStats{
 				ReadOpsCount:  -1,
@@ -479,8 +452,8 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -507,8 +480,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 }
 
 func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
 		spdk    []string
@@ -517,8 +489,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 		start   bool
 		missing bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -527,8 +498,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -537,8 +507,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -547,8 +516,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -557,8 +525,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -567,8 +534,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"volume-test",
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
@@ -600,8 +566,8 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 

@@ -30,8 +30,7 @@ var (
 )
 
 func TestBackEnd_CreateAioController(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      *pb.AioController
 		out     *pb.AioController
 		spdk    []string
@@ -39,8 +38,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -48,8 +46,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolume.Handle.Value),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			&testAioVolume,
 			nil,
 			[]string{""},
@@ -57,8 +54,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_create: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -66,8 +62,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_create: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -75,8 +70,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_create: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			&testAioVolume,
 			&testAioVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -87,8 +81,8 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -120,8 +114,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 }
 
 func TestBackEnd_UpdateAioController(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      *pb.AioController
 		out     *pb.AioController
 		spdk    []string
@@ -129,8 +122,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"delete fails",
+		"delete fails": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -138,8 +130,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolume.Handle.Value),
 			true,
 		},
-		{
-			"delete empty",
+		"delete empty": {
 			&testAioVolume,
 			nil,
 			[]string{""},
@@ -147,8 +138,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_delete: %v", "EOF"),
 			true,
 		},
-		{
-			"delete ID mismatch",
+		"delete ID mismatch": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -156,8 +146,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_delete: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"delete exception",
+		"delete exception": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -165,8 +154,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_delete: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"delete ok create fails",
+		"delete ok create fails": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -174,8 +162,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("Could not create Aio Dev: %v", "mytest"),
 			true,
 		},
-		{
-			"delete ok create empty",
+		"delete ok create empty": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -183,8 +170,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_create: %v", "EOF"),
 			true,
 		},
-		{
-			"delete ok create ID mismatch",
+		"delete ok create ID mismatch": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -192,8 +178,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_create: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"delete ok create exception",
+		"delete ok create exception": {
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -201,8 +186,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			fmt.Sprintf("bdev_aio_create: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			&testAioVolume,
 			&testAioVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -213,8 +197,8 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -246,8 +230,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 }
 
 func TestBackEnd_ListAioControllers(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     []*pb.AioController
 		spdk    []string
@@ -256,8 +239,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 		start   bool
 		size    int32
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -266,8 +248,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -276,8 +257,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -286,8 +266,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -296,8 +275,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -306,8 +284,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"volume-test",
 			[]*pb.AioController{
 				{
@@ -327,8 +304,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			0,
 		},
-		{
-			"pagination overflow",
+		"pagination overflow": {
 			"volume-test",
 			[]*pb.AioController{
 				{
@@ -348,8 +324,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			true,
 			1000,
 		},
-		{
-			"pagination negative",
+		"pagination negative": {
 			"volume-test",
 			nil,
 			[]string{},
@@ -358,8 +333,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			false,
 			-10,
 		},
-		{
-			"pagination",
+		"pagination": {
 			"volume-test",
 			[]*pb.AioController{
 				{
@@ -377,8 +351,8 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -405,8 +379,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 }
 
 func TestBackEnd_GetAioController(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *pb.AioController
 		spdk    []string
@@ -414,8 +387,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -423,8 +395,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 			true,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -432,8 +403,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"volume-test",
 			nil,
 			[]string{""},
@@ -441,8 +411,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -450,8 +419,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -459,8 +427,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"volume-test",
 			&pb.AioController{Handle: &pc.ObjectKey{Value: "Malloc1"}, BlockSize: 512, BlocksCount: 131072},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
@@ -471,8 +438,8 @@ func TestBackEnd_GetAioController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -503,8 +470,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 }
 
 func TestBackEnd_AioControllerStats(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
 		spdk    []string
@@ -512,8 +478,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
@@ -521,8 +486,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 			true,
 		},
-		{
-			"valid request with invalid marshal SPDK response",
+		"valid request with invalid marshal SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -530,8 +494,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type models.BdevGetIostatResult"),
 			true,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"mytest",
 			nil,
 			[]string{""},
@@ -539,8 +502,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "EOF"),
 			true,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
@@ -548,8 +510,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "json response ID mismatch"),
 			true,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
@@ -557,8 +518,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			fmt.Sprintf("bdev_get_iostat: %v", "json response error: myopierr"),
 			true,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"Malloc0",
 			&pb.VolumeStats{
 				ReadBytesCount:    1,
@@ -576,8 +536,8 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
@@ -604,8 +564,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 }
 
 func TestBackEnd_DeleteAioController(t *testing.T) {
-	tests := []struct {
-		name    string
+	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
 		spdk    []string
@@ -614,8 +573,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 		start   bool
 		missing bool
 	}{
-		{
-			"valid request with invalid SPDK response",
+		"valid request with invalid SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -624,8 +582,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with empty SPDK response",
+		"valid request with empty SPDK response": {
 			"mytest",
 			nil,
 			[]string{""},
@@ -634,8 +591,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with ID mismatch SPDK response",
+		"valid request with ID mismatch SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -644,8 +600,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with error code from SPDK response",
+		"valid request with error code from SPDK response": {
 			"mytest",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -654,8 +609,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with valid SPDK response",
+		"valid request with valid SPDK response": {
 			"mytest",
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
@@ -664,8 +618,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			true,
 			false,
 		},
-		{
-			"valid request with unknown key",
+		"valid request with unknown key": {
 			"unknown-id",
 			nil,
 			[]string{""},
@@ -674,8 +627,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			false,
 			false,
 		},
-		{
-			"unknown key with missing allowed",
+		"unknown key with missing allowed": {
 			"unknown-id",
 			&emptypb.Empty{},
 			[]string{""},
@@ -687,8 +639,8 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 	}
 
 	// run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
