@@ -72,6 +72,17 @@ sudo apt install libguestfs-tools
 echo 4096 | sudo tee /proc/sys/vm/nr_hugepages
 ```
 
+## Compile SPDK
+
+```bash
+git clone https://github.com/spdk/spdk
+cd spdk
+git submodule update --init
+scripts/pkgdep.sh
+./configure --disable-tests --with-vfio-user
+make -j
+```
+
 ## Run SPDK
 
 ```bash
