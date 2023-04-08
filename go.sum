@@ -56,6 +56,8 @@ github.com/opiproject/opi-api v0.0.0-20230324143335-625e66a59b8a h1:Jwp1VwZMPuGC
 github.com/opiproject/opi-api v0.0.0-20230324143335-625e66a59b8a/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20230330192808-3ba8d58f5c82 h1:vLujbS8BSFRaocJAfBsmL9k4OmL6wSPTDe5fLmpPQeI=
 github.com/opiproject/opi-api v0.0.0-20230330192808-3ba8d58f5c82/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20230404182329-b6f178ec8cfa h1:TtoCz6WjWcUstDaJ0GxbzRDCaRQ5+Uq4rRGnPDo/i5w=
+github.com/opiproject/opi-api v0.0.0-20230404182329-b6f178ec8cfa/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
