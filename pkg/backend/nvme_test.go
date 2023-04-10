@@ -171,6 +171,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 		errMsg  string
 		start   bool
 		size    int32
+		token   string
 	}{
 		"valid request with invalid SPDK response": {
 			"volume-test",
@@ -180,6 +181,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
 			0,
+			"",
 		},
 		"valid request with invalid marshal SPDK response": {
 			"volume-test",
@@ -189,6 +191,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeGetControllerResult"),
 			true,
 			0,
+			"",
 		},
 		"valid request with empty SPDK response": {
 			"volume-test",
@@ -198,6 +201,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "EOF"),
 			true,
 			0,
+			"",
 		},
 		"valid request with ID mismatch SPDK response": {
 			"volume-test",
@@ -207,6 +211,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response ID mismatch"),
 			true,
 			0,
+			"",
 		},
 		"valid request with error code from SPDK response": {
 			"volume-test",
@@ -216,6 +221,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response error: myopierr"),
 			true,
 			0,
+			"",
 		},
 		"valid request with valid SPDK response": {
 			"volume-test",
@@ -244,6 +250,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			true,
 			0,
+			"",
 		},
 		"pagination overflow": {
 			"volume-test",
@@ -272,6 +279,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			true,
 			1000,
+			"",
 		},
 		"pagination negative": {
 			"volume-test",
@@ -281,6 +289,17 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+			"",
+		},
+		"pagination error": {
+			"volume-test",
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			false,
+			0,
+			"unknown-pagination-token",
 		},
 		"pagination": {
 			"volume-test",
@@ -300,6 +319,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			true,
 			1,
+			"",
 		},
 	}
 
@@ -309,7 +329,9 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in, PageSize: tt.size}
+			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
+
+			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNVMfRemoteControllers(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMfRemoteControllers, tt.out) {

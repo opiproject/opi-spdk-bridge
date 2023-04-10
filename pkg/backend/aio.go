@@ -144,7 +144,8 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 	}
 	offset := 0
 	if in.PageToken != "" {
-		offset, ok := s.Pagination[in.PageToken]
+		var ok bool
+		offset, ok = s.Pagination[in.PageToken]
 		if !ok {
 			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
 			log.Printf("error: %v", err)
