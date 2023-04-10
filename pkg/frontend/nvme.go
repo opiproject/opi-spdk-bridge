@@ -166,6 +166,16 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	offset := 0
+	if in.PageToken != "" {
+		offset, ok := s.Pagination[in.PageToken]
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	}
 	var result []models.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
@@ -175,10 +185,10 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 	log.Printf("Received from SPDK: %v", result)
 	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
-		log.Printf("Limiting result to: %d", in.PageSize)
-		result = result[:in.PageSize]
+		log.Printf("Limiting result to %d:%d", offset, in.PageSize)
+		result = result[offset:in.PageSize]
 		token = uuid.New().String()
-		s.Pagination[token] = int(in.PageSize)
+		s.Pagination[token] = offset + int(in.PageSize)
 	}
 	Blobarray := make([]*pb.NVMeSubsystem, len(result))
 	for i := range result {
@@ -463,6 +473,16 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	offset := 0
+	if in.PageToken != "" {
+		offset, ok := s.Pagination[in.PageToken]
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	}
 	nqn := ""
 	if in.Parent != "" {
 		subsys, ok := s.Nvme.Subsystems[in.Parent]
@@ -486,10 +506,10 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		rr := &result[i]
 		if rr.Nqn == nqn || nqn == "" {
 			if in.PageSize > 0 && int(in.PageSize) < len(result) {
-				log.Printf("Limiting result to: %d", in.PageSize)
-				rr.Namespaces = rr.Namespaces[:in.PageSize]
+				log.Printf("Limiting result to %d:%d", offset, in.PageSize)
+				rr.Namespaces = rr.Namespaces[offset:in.PageSize]
 				token = uuid.New().String()
-				s.Pagination[token] = int(in.PageSize)
+				s.Pagination[token] = offset + int(in.PageSize)
 			}
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
