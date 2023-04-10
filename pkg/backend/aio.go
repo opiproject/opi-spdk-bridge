@@ -142,6 +142,16 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	offset := 0
+	if in.PageToken != "" {
+		offset, ok := s.Pagination[in.PageToken]
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	}
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
@@ -151,10 +161,10 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 	log.Printf("Received from SPDK: %v", result)
 	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
-		log.Printf("Limiting result to: %d", in.PageSize)
-		result = result[:in.PageSize]
+		log.Printf("Limiting result to %d:%d", offset, in.PageSize)
+		result = result[offset:in.PageSize]
 		token = uuid.New().String()
-		s.Pagination[token] = int(in.PageSize)
+		s.Pagination[token] = offset + int(in.PageSize)
 	}
 	Blobarray := make([]*pb.AioController, len(result))
 	for i := range result {
