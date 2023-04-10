@@ -40,9 +40,10 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	rpc  server.JSONRPC
-	Nvme NvmeParameters
-	Virt VirtioParameters
+	rpc        server.JSONRPC
+	Nvme       NvmeParameters
+	Virt       VirtioParameters
+	Pagination map[string]int
 }
 
 // NewServer creates initialized instance of FrontEnd server communicating
@@ -61,6 +62,7 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 			ScsiCtrls: make(map[string]*pb.VirtioScsiController),
 			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
 		},
+		Pagination: make(map[string]int),
 	}
 }
 

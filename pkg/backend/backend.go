@@ -26,8 +26,9 @@ type Server struct {
 	pb.UnimplementedNullDebugServiceServer
 	pb.UnimplementedAioControllerServiceServer
 
-	rpc     server.JSONRPC
-	Volumes VolumeParameters
+	rpc        server.JSONRPC
+	Volumes    VolumeParameters
+	Pagination map[string]int
 }
 
 // NewServer creates initialized instance of BackEnd server communicating
@@ -40,5 +41,6 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 			NullVolumes: make(map[string]*pb.NullDebug),
 			NvmeVolumes: make(map[string]*pb.NVMfRemoteController),
 		},
+		Pagination: make(map[string]int),
 	}
 }

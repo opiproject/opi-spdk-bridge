@@ -357,6 +357,10 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 				if !reflect.DeepEqual(response.NvMeSubsystems, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.NvMeSubsystems)
 				}
+				// Empty NextPageToken indicates end of results list
+				if tt.size != 1 && response.NextPageToken != "" {
+					t.Error("response: expected", tt, "received", response)
+				}
 			}
 
 			if err != nil {
@@ -1315,6 +1319,10 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			if response != nil {
 				if !reflect.DeepEqual(response.NvMeNamespaces, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.NvMeNamespaces)
+				}
+				// Empty NextPageToken indicates end of results list
+				if tt.size != 1 && response.NextPageToken != "" {
+					t.Error("response: expected", tt, "received", response)
 				}
 			}
 

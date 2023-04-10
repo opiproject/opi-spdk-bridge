@@ -14,6 +14,7 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 
+	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -85,16 +86,19 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
+		token = uuid.New().String()
+		s.Pagination[token] = int(in.PageSize)
 	}
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
-	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray}, nil
+	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray, NextPageToken: token}, nil
 }
 
 // GetVirtioScsiController gets a Virtio SCSI controller
@@ -190,16 +194,19 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
+		token = uuid.New().String()
+		s.Pagination[token] = int(in.PageSize)
 	}
 	Blobarray := make([]*pb.VirtioScsiLun, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
-	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray}, nil
+	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray, NextPageToken: token}, nil
 }
 
 // GetVirtioScsiLun gets a Virtio SCSI LUN

@@ -17,6 +17,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
+	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,14 +28,16 @@ import (
 type Server struct {
 	pb.UnimplementedMiddleendServiceServer
 
-	rpc server.JSONRPC
+	rpc        server.JSONRPC
+	Pagination map[string]int
 }
 
 // NewServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
 func NewServer(jsonRPC server.JSONRPC) *Server {
 	return &Server{
-		rpc: jsonRPC,
+		rpc:        jsonRPC,
+		Pagination: make(map[string]int),
 	}
 }
 
@@ -234,16 +237,19 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
+		token = uuid.New().String()
+		s.Pagination[token] = int(in.PageSize)
 	}
 	Blobarray := make([]*pb.EncryptedVolume, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: r.Name}}
 	}
-	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: Blobarray}, nil
+	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: Blobarray, NextPageToken: token}, nil
 }
 
 // GetEncryptedVolume gets an encrypted volume

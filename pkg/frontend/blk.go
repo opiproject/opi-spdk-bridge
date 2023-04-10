@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/uuid"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
@@ -107,9 +108,12 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
+		token = uuid.New().String()
+		s.Pagination[token] = int(in.PageSize)
 	}
 	Blobarray := make([]*pb.VirtioBlk, len(result))
 	for i := range result {
@@ -119,7 +123,7 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 			PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
 			VolumeId: &pc.ObjectKey{Value: "TBD"}}
 	}
-	return &pb.ListVirtioBlksResponse{VirtioBlks: Blobarray}, nil
+	return &pb.ListVirtioBlksResponse{VirtioBlks: Blobarray, NextPageToken: token}, nil
 }
 
 // GetVirtioBlk gets a Virtio block device

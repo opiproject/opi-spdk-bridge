@@ -15,6 +15,7 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 
+	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -110,9 +111,12 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
+		token = uuid.New().String()
+		s.Pagination[token] = int(in.PageSize)
 	}
 	Blobarray := make([]*pb.NVMfRemoteController, len(result))
 	for i := range result {
@@ -128,7 +132,7 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 			Trsvcid: port,
 		}
 	}
-	return &pb.ListNVMfRemoteControllersResponse{NvMfRemoteControllers: Blobarray}, nil
+	return &pb.ListNVMfRemoteControllersResponse{NvMfRemoteControllers: Blobarray, NextPageToken: token}, nil
 }
 
 // GetNVMfRemoteController gets an NVMf remote controller

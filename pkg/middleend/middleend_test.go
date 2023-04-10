@@ -527,6 +527,10 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 				if !reflect.DeepEqual(response.EncryptedVolumes, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.EncryptedVolumes)
 				}
+				// Empty NextPageToken indicates end of results list
+				if tt.size != 1 && response.NextPageToken != "" {
+					t.Error("response: expected", tt, "received", response)
+				}
 			}
 
 			if err != nil {
