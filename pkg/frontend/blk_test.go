@@ -269,6 +269,10 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 				if !reflect.DeepEqual(response.VirtioBlks, tt.out) {
 					t.Error("response: expected", tt.out, "received", response.VirtioBlks)
 				}
+				// Empty NextPageToken indicates end of results list
+				if tt.size != 1 && response.NextPageToken != "" {
+					t.Error("response: expected", tt, "received", response)
+				}
 			}
 
 			if err != nil {

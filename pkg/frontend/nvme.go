@@ -15,6 +15,7 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 
+	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -172,16 +173,19 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	if in.PageSize > 0 && int(in.PageSize) < len(result) {
 		log.Printf("Limiting result to: %d", in.PageSize)
 		result = result[:in.PageSize]
+		token = uuid.New().String()
+		s.Pagination[token] = int(in.PageSize)
 	}
 	Blobarray := make([]*pb.NVMeSubsystem, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn, SerialNumber: r.SerialNumber, ModelNumber: r.ModelNumber}}
 	}
-	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray}, nil
+	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray, NextPageToken: token}, nil
 }
 
 // GetNVMeSubsystem gets NVMe Subsystems
@@ -325,7 +329,9 @@ func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControlle
 	for _, controller := range s.Nvme.Controllers {
 		Blobarray = append(Blobarray, controller)
 	}
-	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray}, nil
+	token := uuid.New().String()
+	s.Pagination[token] = int(in.PageSize)
+	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray, NextPageToken: token}, nil
 }
 
 // GetNVMeController gets an NVMe controller
@@ -474,6 +480,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	var token string
 	Blobarray := []*pb.NVMeNamespace{}
 	for i := range result {
 		rr := &result[i]
@@ -481,6 +488,8 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 			if in.PageSize > 0 && int(in.PageSize) < len(result) {
 				log.Printf("Limiting result to: %d", in.PageSize)
 				rr.Namespaces = rr.Namespaces[:in.PageSize]
+				token = uuid.New().String()
+				s.Pagination[token] = int(in.PageSize)
 			}
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
@@ -489,7 +498,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		}
 	}
 	if len(Blobarray) > 0 {
-		return &pb.ListNVMeNamespacesResponse{NvMeNamespaces: Blobarray}, nil
+		return &pb.ListNVMeNamespacesResponse{NvMeNamespaces: Blobarray, NextPageToken: token}, nil
 	}
 
 	msg := fmt.Sprintf("Could not find any namespaces for NQN: %s", nqn)
