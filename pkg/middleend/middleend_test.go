@@ -413,6 +413,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 		errMsg  string
 		start   bool
 		size    int32
+		token   string
 	}{
 		"valid request with invalid SPDK response": {
 			"volume-test",
@@ -422,6 +423,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
 			0,
+			"",
 		},
 		"valid request with invalid marshal SPDK response": {
 			"volume-test",
@@ -431,6 +433,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
 			true,
 			0,
+			"",
 		},
 		"valid request with empty SPDK response": {
 			"volume-test",
@@ -440,6 +443,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
 			true,
 			0,
+			"",
 		},
 		"valid request with ID mismatch SPDK response": {
 			"volume-test",
@@ -449,6 +453,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
 			true,
 			0,
+			"",
 		},
 		"valid request with error code from SPDK response": {
 			"volume-test",
@@ -458,6 +463,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
 			true,
 			0,
+			"",
 		},
 		"valid request with valid SPDK response": {
 			"volume-test",
@@ -474,6 +480,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"",
 			true,
 			0,
+			"",
 		},
 		"pagination overflow": {
 			"volume-test",
@@ -490,6 +497,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"",
 			true,
 			1000,
+			"",
 		},
 		"pagination negative": {
 			"volume-test",
@@ -499,6 +507,17 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+			"",
+		},
+		"pagination error": {
+			"volume-test",
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			false,
+			0,
+			"unknown-pagination-token",
 		},
 		"pagination": {
 			"volume-test",
@@ -512,6 +531,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"",
 			true,
 			1,
+			"",
 		},
 	}
 
@@ -521,7 +541,9 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in, PageSize: tt.size}
+			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
+
+			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListEncryptedVolumes(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.EncryptedVolumes, tt.out) {

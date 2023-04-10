@@ -143,6 +143,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 		errMsg  string
 		start   bool
 		size    int32
+		token   string
 	}{
 		"valid request with invalid SPDK response": {
 			"subsystem-test",
@@ -152,6 +153,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			true,
 			0,
+			"",
 		},
 		"valid request with empty SPDK response": {
 			"subsystem-test",
@@ -161,6 +163,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			fmt.Sprintf("vhost_get_controllers: %v", "EOF"),
 			true,
 			0,
+			"",
 		},
 		"valid request with ID mismatch SPDK response": {
 			"subsystem-test",
@@ -170,6 +173,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			fmt.Sprintf("vhost_get_controllers: %v", "json response ID mismatch"),
 			true,
 			0,
+			"",
 		},
 		"valid request with error code from SPDK response": {
 			"subsystem-test",
@@ -179,6 +183,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			fmt.Sprintf("vhost_get_controllers: %v", "json response error: myopierr"),
 			true,
 			0,
+			"",
 		},
 		"valid request with valid SPDK response": {
 			"subsystem-test",
@@ -204,6 +209,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"",
 			true,
 			0,
+			"",
 		},
 		"pagination overflow": {
 			"subsystem-test",
@@ -229,6 +235,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"",
 			true,
 			1000,
+			"",
 		},
 		"pagination negative": {
 			"volume-test",
@@ -238,6 +245,17 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"negative PageSize is not allowed",
 			false,
 			-10,
+			"",
+		},
+		"pagination error": {
+			"volume-test",
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			false,
+			0,
+			"unknown-pagination-token",
 		},
 		"pagination": {
 			"subsystem-test",
@@ -253,6 +271,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"",
 			true,
 			1,
+			"",
 		},
 	}
 
@@ -262,7 +281,9 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.ListVirtioBlksRequest{Parent: tt.in, PageSize: tt.size}
+			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
+
+			request := &pb.ListVirtioBlksRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListVirtioBlks(testEnv.ctx, request)
 
 			if response != nil {

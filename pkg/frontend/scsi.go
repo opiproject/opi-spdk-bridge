@@ -81,7 +81,8 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 	}
 	offset := 0
 	if in.PageToken != "" {
-		offset, ok := s.Pagination[in.PageToken]
+		var ok bool
+		offset, ok = s.Pagination[in.PageToken]
 		if !ok {
 			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
 			log.Printf("error: %v", err)
@@ -199,7 +200,8 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 	}
 	offset := 0
 	if in.PageToken != "" {
-		offset, ok := s.Pagination[in.PageToken]
+		var ok bool
+		offset, ok = s.Pagination[in.PageToken]
 		if !ok {
 			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
 			log.Printf("error: %v", err)
