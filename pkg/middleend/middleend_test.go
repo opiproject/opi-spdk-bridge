@@ -736,7 +736,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
-		"valid request with invalid SPDK response": {
+		"valid request with invalid bdev delete SPDK response": {
 			"crypto-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -744,7 +744,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			fmt.Sprintf("Could not delete Crypto: %v", "crypto-test"),
 			true,
 		},
-		"valid request with invalid marshal SPDK response": {
+		"valid request with invalid bdev delete marshal SPDK response": {
 			"crypto-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
@@ -752,7 +752,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			fmt.Sprintf("bdev_crypto_delete: %v", "json: cannot unmarshal array into Go value of type models.BdevCryptoDeleteResult"),
 			true,
 		},
-		"valid request with empty SPDK response": {
+		"valid request with empty bdev delete SPDK response": {
 			"crypto-test",
 			nil,
 			[]string{""},
@@ -760,7 +760,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			fmt.Sprintf("bdev_crypto_delete: %v", "EOF"),
 			true,
 		},
-		"valid request with ID mismatch SPDK response": {
+		"valid request with ID mismatch on bdev delete SPDK response": {
 			"crypto-test",
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -768,7 +768,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			fmt.Sprintf("bdev_crypto_delete: %v", "json response ID mismatch"),
 			true,
 		},
-		"valid request with error code from SPDK response": {
+		"valid request with error code from bdev delete SPDK response": {
 			"crypto-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -779,9 +779,25 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		"valid request with valid SPDK response": {
 			"crypto-test",
 			&emptypb.Empty{},
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			codes.OK,
 			"",
+			true,
+		},
+		"valid request with key delete fails": {
+			"crypto-test",
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not destroy Crypto Key: %v", "super_key"),
+			true,
+		},
+		"valid request with error code from key delete SPDK response": {
+			"crypto-test",
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":true}`},
+			codes.Unknown,
+			fmt.Sprintf("accel_crypto_key_destroy: %v", "json response error: myopierr"),
 			true,
 		},
 	}
