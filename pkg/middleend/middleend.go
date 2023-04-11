@@ -232,6 +232,10 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	size := 50
+	if in.PageSize > 0 {
+		size = int(in.PageSize)
+	}
 	offset := 0
 	if in.PageToken != "" {
 		var ok bool
@@ -251,11 +255,11 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 	}
 	log.Printf("Received from SPDK: %v", result)
 	var token string
-	if in.PageSize > 0 && int(in.PageSize) < len(result) {
-		log.Printf("Limiting result to %d:%d", offset, in.PageSize)
-		result = result[offset:in.PageSize]
+	if size < len(result) {
+		log.Printf("Limiting result to %d:%d", offset, size)
+		result = result[offset:size]
 		token = uuid.New().String()
-		s.Pagination[token] = offset + int(in.PageSize)
+		s.Pagination[token] = offset + size
 	}
 	Blobarray := make([]*pb.EncryptedVolume, len(result))
 	for i := range result {
