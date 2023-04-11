@@ -37,44 +37,39 @@ func TestCreateVirtioBlk(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		expectAddChardev      bool
-		expectAddChardevError bool
-
-		expectAddVirtioBlk      bool
-		expectAddVirtioBlkError bool
-
-		expectQueryPci bool
-
-		expectDeleteChardev bool
-
 		jsonRPC              server.JSONRPC
 		expectError          error
 		nonDefaultQmpAddress string
 
 		out *pb.VirtioBlk
+
+		mockQmpCalls *mockQmpCalls
 	}{
 		"valid virtio-blk creation": {
-			expectAddChardev:   true,
-			expectAddVirtioBlk: true,
-			expectQueryPci:     true,
-			jsonRPC:            alwaysSuccessfulJSONRPC,
-			out:                expectNotNilOut,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			out:     expectNotNilOut,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectAddChardev(testVirtioBlkID).
+				ExpectAddVirtioBlk(testVirtioBlkID, testVirtioBlkID).
+				ExpectQueryPci(testVirtioBlkID),
 		},
 		"spdk failed to create virtio-blk": {
 			jsonRPC:     alwaysFailingJSONRPC,
 			expectError: server.ErrFailedSpdkCall,
 		},
 		"qemu chardev add failed": {
-			expectAddChardevError: true,
-			jsonRPC:               alwaysSuccessfulJSONRPC,
-			expectError:           errAddChardevFailed,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			expectError: errAddChardevFailed,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectAddChardev(testVirtioBlkID).WithErrorResponse(),
 		},
 		"qemu device add failed": {
-			expectAddChardev:        true,
-			expectAddVirtioBlkError: true,
-			expectDeleteChardev:     true,
-			jsonRPC:                 alwaysSuccessfulJSONRPC,
-			expectError:             errAddDeviceFailed,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			expectError: errAddDeviceFailed,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectAddChardev(testVirtioBlkID).
+				ExpectAddVirtioBlk(testVirtioBlkID, testVirtioBlkID).WithErrorResponse().
+				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"failed to create monitor": {
 			nonDefaultQmpAddress: "/dev/null",
@@ -86,7 +81,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			qmpServer := startMockQmpServer(t)
+			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
 			if test.nonDefaultQmpAddress != "" {
@@ -94,25 +89,6 @@ func TestCreateVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
 			kvmServer.timeout = qmplibTimeout
-
-			if test.expectAddChardev {
-				qmpServer.ExpectAddChardev(testVirtioBlkID)
-			}
-			if test.expectAddChardevError {
-				qmpServer.ExpectAddChardev(testVirtioBlkID).WithErrorResponse()
-			}
-			if test.expectAddVirtioBlk {
-				qmpServer.ExpectAddVirtioBlk(testVirtioBlkID, testVirtioBlkID)
-			}
-			if test.expectAddVirtioBlkError {
-				qmpServer.ExpectAddVirtioBlk(testVirtioBlkID, testVirtioBlkID).WithErrorResponse()
-			}
-			if test.expectQueryPci {
-				qmpServer.ExpectQueryPci(testVirtioBlkID)
-			}
-			if test.expectDeleteChardev {
-				qmpServer.ExpectDeleteChardev(testVirtioBlkID)
-			}
 
 			out, err := kvmServer.CreateVirtioBlk(context.Background(), testCreateVirtioBlkRequest)
 			if !errors.Is(err, test.expectError) {
@@ -132,51 +108,52 @@ func TestCreateVirtioBlk(t *testing.T) {
 
 func TestDeleteVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
-		expectDeleteVirtioBlk          bool
-		expectDeleteVirtioBlkWithEvent bool
-		expectDeleteVirtioBlkError     bool
-
-		expectDeleteChardev      bool
-		expectDeleteChardevError bool
-
 		jsonRPC              server.JSONRPC
 		expectError          error
 		nonDefaultQmpAddress string
+
+		mockQmpCalls *mockQmpCalls
 	}{
 		"valid virtio-blk deletion": {
-			expectDeleteVirtioBlkWithEvent: true,
-			expectDeleteChardev:            true,
-			jsonRPC:                        alwaysSuccessfulJSONRPC,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectDeleteVirtioBlkWithEvent(testVirtioBlkID).
+				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"qemu device delete failed": {
-			expectDeleteVirtioBlkError: true,
-			expectDeleteChardev:        true,
-			jsonRPC:                    alwaysSuccessfulJSONRPC,
-			expectError:                errDevicePartiallyDeleted,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			expectError: errDevicePartiallyDeleted,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectDeleteVirtioBlk(testVirtioBlkID).WithErrorResponse().
+				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"qemu device delete failed by timeout": {
-			expectDeleteVirtioBlk: true,
-			expectDeleteChardev:   true,
-			jsonRPC:               alwaysSuccessfulJSONRPC,
-			expectError:           errDevicePartiallyDeleted,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			expectError: errDevicePartiallyDeleted,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectDeleteVirtioBlk(testVirtioBlkID).
+				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"qemu chardev delete failed": {
-			expectDeleteVirtioBlkWithEvent: true,
-			expectDeleteChardevError:       true,
-			jsonRPC:                        alwaysSuccessfulJSONRPC,
-			expectError:                    errDevicePartiallyDeleted,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			expectError: errDevicePartiallyDeleted,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectDeleteVirtioBlkWithEvent(testVirtioBlkID).
+				ExpectDeleteChardev(testVirtioBlkID).WithErrorResponse(),
 		},
 		"spdk failed to delete virtio-blk": {
-			expectDeleteVirtioBlkWithEvent: true,
-			expectDeleteChardev:            true,
-			jsonRPC:                        alwaysFailingJSONRPC,
-			expectError:                    errDevicePartiallyDeleted,
+			jsonRPC:     alwaysFailingJSONRPC,
+			expectError: errDevicePartiallyDeleted,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectDeleteVirtioBlkWithEvent(testVirtioBlkID).
+				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"all qemu and spdk calls failed": {
-			expectDeleteVirtioBlkError: true,
-			expectDeleteChardevError:   true,
-			jsonRPC:                    alwaysFailingJSONRPC,
-			expectError:                errDeviceNotDeleted,
+			jsonRPC:     alwaysFailingJSONRPC,
+			expectError: errDeviceNotDeleted,
+			mockQmpCalls: newMockQmpCalls().
+				ExpectDeleteVirtioBlk(testVirtioBlkID).WithErrorResponse().
+				ExpectDeleteChardev(testVirtioBlkID).WithErrorResponse(),
 		},
 		"failed to create monitor": {
 			nonDefaultQmpAddress: "/dev/null",
@@ -189,7 +166,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID] = testCreateVirtioBlkRequest.VirtioBlk
-			qmpServer := startMockQmpServer(t)
+			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
 			if test.nonDefaultQmpAddress != "" {
@@ -197,22 +174,6 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
 			kvmServer.timeout = qmplibTimeout
-
-			if test.expectDeleteVirtioBlkWithEvent {
-				qmpServer.ExpectDeleteVirtioBlkWithEvent(testVirtioBlkID)
-			}
-			if test.expectDeleteVirtioBlk {
-				qmpServer.ExpectDeleteVirtioBlk(testVirtioBlkID)
-			}
-			if test.expectDeleteVirtioBlkError {
-				qmpServer.ExpectDeleteVirtioBlk(testVirtioBlkID).WithErrorResponse()
-			}
-			if test.expectDeleteChardev {
-				qmpServer.ExpectDeleteChardev(testVirtioBlkID)
-			}
-			if test.expectDeleteChardevError {
-				qmpServer.ExpectDeleteChardev(testVirtioBlkID).WithErrorResponse()
-			}
 
 			_, err := kvmServer.DeleteVirtioBlk(context.Background(), testDeleteVirtioBlkRequest)
 			if !errors.Is(err, test.expectError) {
