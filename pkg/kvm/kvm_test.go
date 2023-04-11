@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -28,6 +29,8 @@ var (
 
 	qmpServerOperationTimeout = 500 * time.Millisecond
 	qmplibTimeout             = 250 * time.Millisecond
+
+	pathRegexpStr = `\/[a-zA-Z\/\-\_0-9]*\/`
 )
 
 type stubJSONRRPC struct {
@@ -68,9 +71,133 @@ func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
 }
 
 type mockCall struct {
-	response     string
-	event        string
-	expectedArgs []string
+	response           string
+	event              string
+	expectedArgs       []string
+	expectedRegExpArgs []*regexp.Regexp
+}
+
+type mockQmpCalls struct {
+	expectedCalls []mockCall
+}
+
+func newMockQmpCalls() *mockQmpCalls {
+	return &mockQmpCalls{}
+}
+
+func (s *mockQmpCalls) ExpectAddChardev(id string) *mockQmpCalls {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: `{"return": {"pty": "/tmp/dev/pty/42"}}` + "\n",
+		expectedArgs: []string{
+			`"execute":"chardev-add"`,
+			`"id":"` + id + `"`,
+		},
+		expectedRegExpArgs: []*regexp.Regexp{
+			regexp.MustCompile(`"path":"` + pathRegexpStr + id + `"`),
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) ExpectAddVirtioBlk(id string, chardevID string) *mockQmpCalls {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: genericQmpOk,
+		expectedArgs: []string{
+			`"execute":"device_add"`,
+			`"driver":"vhost-user-blk-pci"`,
+			`"id":"` + id + `"`,
+			`"chardev":"` + chardevID + `"`,
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) ExpectAddNvmeController(id string) *mockQmpCalls {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: genericQmpOk,
+		expectedArgs: []string{
+			`"execute":"device_add"`,
+			`"driver":"vfio-user-pci"`,
+			`"id":"` + id + `"`,
+		},
+		expectedRegExpArgs: []*regexp.Regexp{
+			regexp.MustCompile(`"socket":"` + pathRegexpStr + id + `/cntrl"`),
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) ExpectDeleteChardev(id string) *mockQmpCalls {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: genericQmpOk,
+		expectedArgs: []string{
+			`"execute":"chardev-remove"`,
+			`"id":"` + id + `"`,
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) ExpectDeleteVirtioBlkWithEvent(id string) *mockQmpCalls {
+	s.ExpectDeleteVirtioBlk(id)
+	s.expectedCalls[len(s.expectedCalls)-1].event =
+		`{"event":"DEVICE_DELETED","data":{"path":"/some/path","device":"` +
+			id + `"},"timestamp":{"seconds":1,"microseconds":2}}` + "\n"
+	return s
+}
+
+func (s *mockQmpCalls) ExpectDeleteVirtioBlk(id string) *mockQmpCalls {
+	return s.expectDeleteDevice(id)
+}
+
+func (s *mockQmpCalls) ExpectDeleteNvmeController(id string) *mockQmpCalls {
+	return s.expectDeleteDevice(id)
+}
+
+func (s *mockQmpCalls) ExpectQueryPci(id string) *mockQmpCalls {
+	response := `{"return":[{"bus":0,"devices":[{"bus":0,"slot":0,"function":0,` +
+		`"class_info":{"class":0},"id":{"device":0,"vendor":0},"qdev_id":"` +
+		id + `","regions":[]}]}]}` + "\n"
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: response,
+		expectedArgs: []string{
+			`"execute":"query-pci"`,
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) ExpectNoDeviceQueryPci() *mockQmpCalls {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: `{"return":[{"bus":0,"devices":[]}]}` + "\n",
+		expectedArgs: []string{
+			`"execute":"query-pci"`,
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) WithErrorResponse() *mockQmpCalls {
+	if len(s.expectedCalls) == 0 {
+		log.Panicf("No instance to add a QMP error")
+	}
+	s.expectedCalls[len(s.expectedCalls)-1].response = genericQmpError
+	return s
+}
+
+func (s *mockQmpCalls) expectDeleteDevice(id string) *mockQmpCalls {
+	s.expectedCalls = append(s.expectedCalls, mockCall{
+		response: genericQmpOk,
+		expectedArgs: []string{
+			`"execute":"device_del"`,
+			`"id":"` + id + `"`,
+		},
+	})
+	return s
+}
+
+func (s *mockQmpCalls) GetExpectedCalls() []mockCall {
+	return s.expectedCalls
 }
 
 type mockQmpServer struct {
@@ -80,14 +207,14 @@ type mockQmpServer struct {
 
 	greeting                string
 	capabilitiesNegotiation mockCall
-	expectedCalls           []mockCall
-	callIndex               uint32
 
-	test *testing.T
-	mu   sync.Mutex
+	expectedCalls []mockCall
+	test          *testing.T
+	mu            sync.Mutex
+	callIndex     uint32
 }
 
-func startMockQmpServer(t *testing.T) *mockQmpServer {
+func startMockQmpServer(t *testing.T, m *mockQmpCalls) *mockQmpServer {
 	s := &mockQmpServer{}
 	s.greeting =
 		`{"QMP":{"version":{"qemu":{"micro":50,"minor":0,"major":7},"package":""},"capabilities":[]}}`
@@ -103,6 +230,9 @@ func startMockQmpServer(t *testing.T) *mockQmpServer {
 		log.Panic(err.Error())
 	}
 	s.testDir = testDir
+	if m != nil {
+		s.expectedCalls = m.GetExpectedCalls()
+	}
 
 	s.socketPath = filepath.Join(s.testDir, "qmp.sock")
 	socket, err := net.Listen("unix", s.socketPath)
@@ -143,94 +273,6 @@ func (s *mockQmpServer) Stop() {
 	}
 }
 
-func (s *mockQmpServer) ExpectAddChardev(id string) *mockQmpServer {
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: `{"return": {"pty": "/tmp/dev/pty/42"}}` + "\n",
-		expectedArgs: []string{
-			`"execute":"chardev-add"`,
-			`"id":"` + id + `"`,
-			`"path":"` + filepath.Join(s.testDir, id) + `"`,
-		},
-	})
-	return s
-}
-
-func (s *mockQmpServer) ExpectAddVirtioBlk(id string, chardevID string) *mockQmpServer {
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: genericQmpOk,
-		expectedArgs: []string{
-			`"execute":"device_add"`,
-			`"driver":"vhost-user-blk-pci"`,
-			`"id":"` + id + `"`,
-			`"chardev":"` + chardevID + `"`,
-		},
-	})
-	return s
-}
-
-func (s *mockQmpServer) ExpectAddNvmeController(id, controllersDir string) *mockQmpServer {
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: genericQmpOk,
-		expectedArgs: []string{
-			`"execute":"device_add"`,
-			`"driver":"vfio-user-pci"`,
-			`"id":"` + id + `"`,
-			`"socket":"` + filepath.Join(controllersDir, id, "cntrl") + `"`,
-		},
-	})
-	return s
-}
-
-func (s *mockQmpServer) ExpectDeleteChardev(id string) *mockQmpServer {
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: genericQmpOk,
-		expectedArgs: []string{
-			`"execute":"chardev-remove"`,
-			`"id":"` + id + `"`,
-		},
-	})
-	return s
-}
-
-func (s *mockQmpServer) ExpectDeleteVirtioBlkWithEvent(id string) *mockQmpServer {
-	s.ExpectDeleteVirtioBlk(id)
-	s.expectedCalls[len(s.expectedCalls)-1].event =
-		`{"event":"DEVICE_DELETED","data":{"path":"/some/path","device":"` +
-			id + `"},"timestamp":{"seconds":1,"microseconds":2}}` + "\n"
-	return s
-}
-
-func (s *mockQmpServer) ExpectDeleteVirtioBlk(id string) *mockQmpServer {
-	return s.expectDeleteDevice(id)
-}
-
-func (s *mockQmpServer) ExpectDeleteNvmeController(id string) *mockQmpServer {
-	return s.expectDeleteDevice(id)
-}
-
-func (s *mockQmpServer) ExpectQueryPci(id string) *mockQmpServer {
-	response := `{"return":[{"bus":0,"devices":[]}]}` + "\n"
-	if id != "" {
-		response = `{"return":[{"bus":0,"devices":[{"bus":0,"slot":0,"function":0,"class_info":{"class":0},"id":{"device":0,"vendor":0},"qdev_id":"` +
-			id + `","regions":[]}]}]}` + "\n"
-	}
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: response,
-		expectedArgs: []string{
-			`"execute":"query-pci"`,
-		},
-	})
-	return s
-}
-
-func (s *mockQmpServer) WithErrorResponse() *mockQmpServer {
-	if len(s.expectedCalls) == 0 {
-		log.Panicf("No instance to add a QMP error")
-	}
-	s.expectedCalls[len(s.expectedCalls)-1].response = genericQmpError
-	return s
-}
-
 func (s *mockQmpServer) WereExpectedCallsPerformed() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -258,6 +300,11 @@ func (s *mockQmpServer) handleCall(call mockCall, conn net.Conn) {
 			s.test.Errorf("Expected to find argument %v in %v", expectedArg, req)
 		}
 	}
+	for _, expectedRegExpArg := range call.expectedRegExpArgs {
+		if !expectedRegExpArg.MatchString(req) {
+			s.test.Errorf("Expected to find argument matching regexp %v in %v", expectedRegExpArg.String(), req)
+		}
+	}
 	s.write(call.response, conn)
 	if call.event != "" {
 		time.Sleep(time.Millisecond * 1)
@@ -282,15 +329,4 @@ func (s *mockQmpServer) read(conn net.Conn) string {
 	data := string(buf)
 	log.Println("QMP server got :", data)
 	return data
-}
-
-func (s *mockQmpServer) expectDeleteDevice(id string) *mockQmpServer {
-	s.expectedCalls = append(s.expectedCalls, mockCall{
-		response: genericQmpOk,
-		expectedArgs: []string{
-			`"execute":"device_del"`,
-			`"id":"` + id + `"`,
-		},
-	})
-	return s
 }
