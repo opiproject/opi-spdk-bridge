@@ -97,21 +97,38 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 // DeleteEncryptedVolume deletes an encrypted volume
 func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
-	params := models.BdevCryptoDeleteParams{
+	bdevCryptoDeleteParams := models.BdevCryptoDeleteParams{
 		Name: in.Name,
 	}
-	var result models.BdevCryptoDeleteResult
-	err := s.rpc.Call("bdev_crypto_delete", &params, &result)
+	var bdevCryptoDeleteResult models.BdevCryptoDeleteResult
+	err := s.rpc.Call("bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	log.Printf("Received from SPDK: %v", result)
-	if !result {
+	log.Printf("Received from SPDK: %v", bdevCryptoDeleteResult)
+	if !bdevCryptoDeleteResult {
 		msg := fmt.Sprintf("Could not delete Crypto: %s", in.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
+
+	keyDestroyParams := models.AccelCryptoKeyDestroyParams{
+		KeyName: "super_key",
+	}
+	var keyDestroyResult models.AccelCryptoKeyDestroyResult
+	err = s.rpc.Call("accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	log.Printf("Received from SPDK: %v", keyDestroyResult)
+	if !keyDestroyResult {
+		msg := fmt.Sprintf("Could not destroy Crypto Key: %v", keyDestroyParams.KeyName)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+
 	return &emptypb.Empty{}, nil
 }
 
