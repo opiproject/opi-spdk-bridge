@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
-	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 )
 
@@ -24,15 +22,6 @@ var (
 	errStub                 = errors.New("stub error")
 	alwaysSuccessfulJSONRPC = stubJSONRRPC{nil}
 	alwaysFailingJSONRPC    = stubJSONRRPC{errStub}
-
-	testVirtioBlkID            = "virtio-blk-42"
-	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
-		Id:       &pc.ObjectKey{Value: testVirtioBlkID},
-		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
-		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
-		MaxIoQps: 1,
-	}}
-	testDeleteVirtioBlkRequest = &pb.DeleteVirtioBlkRequest{Name: testVirtioBlkID}
 
 	genericQmpError = `{"error": {"class": "GenericError", "desc": "some error"}}` + "\n"
 	genericQmpOk    = `{"return": {}}` + "\n"

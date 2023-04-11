@@ -11,11 +11,23 @@ import (
 	"log"
 	"testing"
 
+	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/protobuf/proto"
+)
+
+var (
+	testVirtioBlkID            = "virtio-blk-42"
+	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
+		Id:       &pc.ObjectKey{Value: testVirtioBlkID},
+		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
+		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+		MaxIoQps: 1,
+	}}
+	testDeleteVirtioBlkRequest = &pb.DeleteVirtioBlkRequest{Name: testVirtioBlkID}
 )
 
 func TestCreateVirtioBlk(t *testing.T) {
