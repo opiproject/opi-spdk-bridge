@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -81,7 +82,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 	}
 	size := 50
 	if in.PageSize > 0 {
-		size = int(in.PageSize)
+		size = int(math.Min(float64(in.PageSize), 250))
 	}
 	offset := 0
 	if in.PageToken != "" {
@@ -204,7 +205,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 	}
 	size := 50
 	if in.PageSize > 0 {
-		size = int(in.PageSize)
+		size = int(math.Min(float64(in.PageSize), 250))
 	}
 	offset := 0
 	if in.PageToken != "" {

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 
 	"github.com/google/uuid"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -103,7 +104,7 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 	}
 	size := 50
 	if in.PageSize > 0 {
-		size = int(in.PageSize)
+		size = int(math.Min(float64(in.PageSize), 250))
 	}
 	offset := 0
 	if in.PageToken != "" {

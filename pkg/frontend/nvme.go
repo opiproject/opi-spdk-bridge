@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"net"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -168,7 +169,7 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 	}
 	size := 50
 	if in.PageSize > 0 {
-		size = int(in.PageSize)
+		size = int(math.Min(float64(in.PageSize), 250))
 	}
 	offset := 0
 	if in.PageToken != "" {
@@ -480,7 +481,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 	}
 	size := 50
 	if in.PageSize > 0 {
-		size = int(in.PageSize)
+		size = int(math.Min(float64(in.PageSize), 250))
 	}
 	offset := 0
 	if in.PageToken != "" {
