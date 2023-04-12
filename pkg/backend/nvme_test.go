@@ -321,6 +321,26 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			1,
 			"",
 		},
+		"pagination offset": {
+			"volume-test",
+			[]*pb.NVMfRemoteController{
+				{
+					Id:      &pc.ObjectKey{Value: "OpiNvme13"},
+					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+					Traddr:  "127.0.0.1",
+					Trsvcid: 8888,
+					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
+					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+				},
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"OpiNvme12","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]},{"name":"OpiNvme13","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"8888","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
+			"existing-pagination-token",
+		},
 	}
 
 	// run tests
