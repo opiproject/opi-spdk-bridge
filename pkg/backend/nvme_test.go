@@ -38,6 +38,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		exist   bool
 	}{
 		"valid request with invalid marshal SPDK response": {
 			controller,
@@ -46,6 +47,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go value of type []models.BdevNvmeAttachControllerResult"),
 			true,
+			false,
 		},
 		"valid request with empty SPDK response": {
 			controller,
@@ -54,6 +56,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch SPDK response": {
 			controller,
@@ -62,6 +65,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from SPDK response": {
 			controller,
@@ -70,6 +74,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
 			controller,
@@ -77,6 +82,16 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":["my_remote_nvmf_bdev"]}`},
 			codes.OK,
 			"",
+			true,
+			false,
+		},
+		"already exists": {
+			controller,
+			controller,
+			[]string{""},
+			codes.OK,
+			"",
+			false,
 			true,
 		},
 	}
@@ -86,6 +101,10 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			if tt.exist {
+				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controller.Id.Value] = controller
+			}
 
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in}
 			response, err := testEnv.client.CreateNVMfRemoteController(testEnv.ctx, request)

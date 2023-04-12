@@ -37,6 +37,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
 			&testAioVolume,
@@ -45,6 +46,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolume.Handle.Value),
 			true,
+			false,
 		},
 		"valid request with empty SPDK response": {
 			&testAioVolume,
@@ -53,6 +55,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_create: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch SPDK response": {
 			&testAioVolume,
@@ -61,6 +64,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_create: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from SPDK response": {
 			&testAioVolume,
@@ -69,6 +73,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_create: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
 			&testAioVolume,
@@ -76,6 +81,16 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
 			"",
+			true,
+			false,
+		},
+		"already exists": {
+			&testAioVolume,
+			&testAioVolume,
+			[]string{""},
+			codes.OK,
+			"",
+			false,
 			true,
 		},
 	}
@@ -85,6 +100,10 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			if tt.exist {
+				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolume.Handle.Value] = &testAioVolume
+			}
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in}
 			response, err := testEnv.client.CreateAioController(testEnv.ctx, request)
