@@ -9,7 +9,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"log"
-	"math"
 	"math/big"
 	"net"
 	"os"
@@ -27,14 +26,15 @@ func ExtractPagination(pageSize int32, pageToken string, pagination map[string]i
 		maxPageSize     = 250
 		defaultPageSize = 50
 	)
-	if pageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		return -1, -1, err
-	}
-	// pick reasonable default and max sizes
-	size = defaultPageSize
-	if pageSize > 0 {
-		size = int(math.Min(float64(pageSize), maxPageSize))
+	switch {
+	case pageSize < 0:
+		return -1, -1, status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
+	case pageSize == 0:
+		size = defaultPageSize
+	case pageSize > maxPageSize:
+		size = maxPageSize
+	default:
+		size = int(pageSize)
 	}
 	// fetch offset from the database using opaque token
 	offset = 0
@@ -42,8 +42,7 @@ func ExtractPagination(pageSize int32, pageToken string, pagination map[string]i
 		var ok bool
 		offset, ok = pagination[pageToken]
 		if !ok {
-			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", pageToken)
-			return -1, -1, err
+			return -1, -1, status.Errorf(codes.NotFound, "unable to find pagination token %s", pageToken)
 		}
 		log.Printf("Found offset %d from pagination token: %s", offset, pageToken)
 	}
