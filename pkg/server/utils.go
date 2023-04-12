@@ -23,14 +23,18 @@ import (
 
 // ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
 func ExtractPagination(pageSize int32, pageToken string, pagination map[string]int) (size int, offset int, err error) {
+	const (
+		maxPageSize     = 250
+		defaultPageSize = 50
+	)
 	if pageSize < 0 {
 		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
 		return -1, -1, err
 	}
 	// pick reasonable default and max sizes
-	size = 50
+	size = defaultPageSize
 	if pageSize > 0 {
-		size = int(math.Min(float64(pageSize), 250))
+		size = int(math.Min(float64(pageSize), maxPageSize))
 	}
 	// fetch offset from the database using opaque token
 	offset = 0
