@@ -112,10 +112,10 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	var token string
-	if size < len(result) {
-		log.Printf("Limiting result to %d:%d", offset, size)
-		result = result[offset:size]
+	token := ""
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
+	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
 	}

@@ -22,28 +22,40 @@ import (
 )
 
 // ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
-func ExtractPagination(PageSize int32, PageToken string, Pagination map[string]int) (int, int, error) {
-	if PageSize < 0 {
+func ExtractPagination(pageSize int32, pageToken string, pagination map[string]int) (int, int, error) {
+	if pageSize < 0 {
 		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
 		return -1, -1, err
 	}
+	// pick reasonable default and max sizes
 	size := 50
-	if PageSize > 0 {
-		size = int(math.Min(float64(PageSize), 250))
+	if pageSize > 0 {
+		size = int(math.Min(float64(pageSize), 250))
 	}
+	// fetch offset from the database using opaque token
 	offset := 0
-	if PageToken != "" {
+	if pageToken != "" {
 		var ok bool
-		offset, ok = Pagination[PageToken]
+		offset, ok = pagination[pageToken]
 		if !ok {
-			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", PageToken)
-			log.Printf("error: %v", err)
+			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", pageToken)
 			return -1, -1, err
 		}
-		log.Printf("Found offset %d from pagination token: %s", offset, PageToken)
+		log.Printf("Found offset %d from pagination token: %s", offset, pageToken)
 	}
 	return size, offset, nil
+}
+
+// LimitPagination is a helper function for slice the result by offset and size
+func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
+	end := offset + size
+	hasMoreElements := false
+	if end < len(result) {
+		hasMoreElements = true
+	} else {
+		end = len(result)
+	}
+	return result[offset:end], hasMoreElements
 }
 
 // CreateTestSpdkServer creates a mock spdk server for testing
