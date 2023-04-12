@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math"
 	"regexp"
 	"strings"
 
@@ -228,25 +227,10 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 // ListEncryptedVolumes lists encrypted volumes
 func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	size := 50
-	if in.PageSize > 0 {
-		size = int(math.Min(float64(in.PageSize), 250))
-	}
-	offset := 0
-	if in.PageToken != "" {
-		var ok bool
-		offset, ok = s.Pagination[in.PageToken]
-		if !ok {
-			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
