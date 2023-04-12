@@ -360,6 +360,23 @@ func TestFrontEnd_ListNVMeSubsystem(t *testing.T) {
 			1,
 			"",
 		},
+		"pagination offset": {
+			[]*pb.NVMeSubsystem{
+				{
+					Spec: &pb.NVMeSubsystemSpec{
+						Nqn:          "nqn.2022-09.io.spdk:opi2",
+						SerialNumber: "OpiSerialNumber2",
+						ModelNumber:  "OpiModelNumber2",
+					},
+				},
+			},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[{"nqn": "nqn.2022-09.io.spdk:opi1", "serial_number": "OpiSerialNumber1", "model_number": "OpiModelNumber1"},{"nqn": "nqn.2022-09.io.spdk:opi2", "serial_number": "OpiSerialNumber2", "model_number": "OpiModelNumber2"},{"nqn": "nqn.2022-09.io.spdk:opi3", "serial_number": "OpiSerialNumber3", "model_number": "OpiModelNumber3"}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
+			"existing-pagination-token",
+		},
 	}
 
 	// run tests
@@ -1332,6 +1349,18 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 			true,
 			1,
 			"",
+		},
+		"pagination offset": {
+			"subsystem-test",
+			[]*pb.NVMeNamespace{
+				&testNamespaces[1],
+			},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"NVMe","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":11,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":12,"bdev_name":"Malloc1","name":"Malloc1","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":13,"bdev_name":"Malloc2","name":"Malloc2","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},
+			codes.OK,
+			"",
+			true,
+			1,
+			"existing-pagination-token",
 		},
 		"valid request with unknown key": {
 			"unknown-namespace-id",
