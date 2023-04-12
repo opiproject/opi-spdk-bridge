@@ -270,7 +270,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not destroy Crypto Key: %v", "super_key"),
+			fmt.Sprintf("Could not destroy Crypto Key: %v", "crypto-test"),
 			true,
 		},
 		"bdev delete ok ; key delete empty": {
@@ -789,7 +789,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not destroy Crypto Key: %v", "super_key"),
+			fmt.Sprintf("Could not destroy Crypto Key: %v", "crypto-test"),
 			true,
 		},
 		"valid request with error code from key delete SPDK response": {
