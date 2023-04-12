@@ -9,11 +9,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
@@ -138,25 +138,10 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 // ListAioControllers lists Aio controllers
 func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	size := 50
-	if in.PageSize > 0 {
-		size = int(math.Min(float64(in.PageSize), 250))
-	}
-	offset := 0
-	if in.PageToken != "" {
-		var ok bool
-		offset, ok = s.Pagination[in.PageToken]
-		if !ok {
-			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	var result []models.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)

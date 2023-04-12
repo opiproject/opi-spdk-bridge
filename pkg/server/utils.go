@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 	"net"
 	"os"
@@ -16,7 +17,34 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+// ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
+func ExtractPagination(PageSize int32, PageToken string, Pagination map[string]int) (int, int, error) {
+	if PageSize < 0 {
+		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
+		log.Printf("error: %v", err)
+		return -1, -1, err
+	}
+	size := 50
+	if PageSize > 0 {
+		size = int(math.Min(float64(PageSize), 250))
+	}
+	offset := 0
+	if PageToken != "" {
+		var ok bool
+		offset, ok = Pagination[PageToken]
+		if !ok {
+			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", PageToken)
+			log.Printf("error: %v", err)
+			return -1, -1, err
+		}
+		log.Printf("Found offset %d from pagination token: %s", offset, PageToken)
+	}
+	return size, offset, nil
+}
 
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {

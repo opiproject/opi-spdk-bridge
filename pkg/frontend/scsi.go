@@ -9,11 +9,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/models"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
@@ -75,25 +75,10 @@ func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirt
 // ListVirtioScsiControllers lists Virtio SCSI controllers
 func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	size := 50
-	if in.PageSize > 0 {
-		size = int(math.Min(float64(in.PageSize), 250))
-	}
-	offset := 0
-	if in.PageToken != "" {
-		var ok bool
-		offset, ok = s.Pagination[in.PageToken]
-		if !ok {
-			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
@@ -198,25 +183,10 @@ func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiL
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
 func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
-	if in.PageSize < 0 {
-		err := status.Error(codes.InvalidArgument, "negative PageSize is not allowed")
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	size := 50
-	if in.PageSize > 0 {
-		size = int(math.Min(float64(in.PageSize), 250))
-	}
-	offset := 0
-	if in.PageToken != "" {
-		var ok bool
-		offset, ok = s.Pagination[in.PageToken]
-		if !ok {
-			err := status.Errorf(codes.NotFound, "unable to find pagination token %s", in.PageToken)
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-		log.Printf("Found offset %d from pagination token: %s", offset, in.PageToken)
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
 	}
 	var result []models.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
