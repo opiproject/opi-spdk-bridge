@@ -174,10 +174,10 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	var token string
-	if size < len(result) {
-		log.Printf("Limiting result to %d:%d", offset, size)
-		result = result[offset:size]
+	token := ""
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
+	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
 	}
@@ -481,14 +481,15 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	var token string
+	token := ""
 	Blobarray := []*pb.NVMeNamespace{}
 	for i := range result {
 		rr := &result[i]
 		if rr.Nqn == nqn || nqn == "" {
-			if size < len(result) {
-				log.Printf("Limiting result to %d:%d", offset, size)
-				rr.Namespaces = rr.Namespaces[offset:size]
+			log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
+			hasMoreElements := false
+			rr.Namespaces, hasMoreElements = server.LimitPagination(rr.Namespaces, offset, size)
+			if hasMoreElements {
 				token = uuid.New().String()
 				s.Pagination[token] = offset + size
 			}
