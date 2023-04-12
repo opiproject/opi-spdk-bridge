@@ -50,11 +50,10 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	}
 	params1 := models.AccelCryptoKeyCreateParams{
 		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
-		Name:   "super_key",
+		Name:   in.EncryptedVolume.EncryptedVolumeId.Value,
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("a", len(in.EncryptedVolume.Key)),
 	}
-	// TODO: don't use hard-coded key name
 	var result1 models.AccelCryptoKeyCreateResult
 	err1 := s.rpc.Call("accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
@@ -71,7 +70,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	params := models.BdevCryptoCreateParams{
 		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      "super_key",
+		KeyName:      in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
 	var result models.BdevCryptoCreateResult
 	err := s.rpc.Call("bdev_crypto_create", &params, &result)
@@ -114,7 +113,7 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 	}
 
 	keyDestroyParams := models.AccelCryptoKeyDestroyParams{
-		KeyName: "super_key",
+		KeyName: in.Name,
 	}
 	var keyDestroyResult models.AccelCryptoKeyDestroyResult
 	err = s.rpc.Call("accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)
@@ -153,7 +152,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	// now delete a key
 	params0 := models.AccelCryptoKeyDestroyParams{
-		KeyName: "super_key",
+		KeyName: in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
 	var result0 models.AccelCryptoKeyDestroyResult
 	err0 := s.rpc.Call("accel_crypto_key_destroy", &params0, &result0)
@@ -176,11 +175,10 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	params2 := models.AccelCryptoKeyCreateParams{
 		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
-		Name:   "super_key",
+		Name:   in.EncryptedVolume.EncryptedVolumeId.Value,
 		Key:    string(in.EncryptedVolume.Key),
 		Key2:   strings.Repeat("b", len(in.EncryptedVolume.Key)),
 	}
-	// TODO: don't use hard-coded key name
 	var result2 models.AccelCryptoKeyCreateResult
 	err2 := s.rpc.Call("accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
@@ -197,7 +195,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	params3 := models.BdevCryptoCreateParams{
 		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      "super_key",
+		KeyName:      in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
 	var result3 models.BdevCryptoCreateResult
 	err3 := s.rpc.Call("bdev_crypto_create", &params3, &result3)
