@@ -9,17 +9,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
-	"net"
-	"os"
 	"reflect"
 	"testing"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -29,68 +23,29 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
-// TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
-
-type middleendClient struct {
-	pb.MiddleendServiceClient
-}
-
 type testEnv struct {
+	*server.TestEnv
 	opiSpdkServer *Server
-	client        *middleendClient
-	ln            net.Listener
-	testSocket    string
+	client        *server.TestOpiClient
 	ctx           context.Context
-	conn          *grpc.ClientConn
-	jsonRPC       server.JSONRPC
-}
-
-func (e *testEnv) Close() {
-	server.CloseListener(e.ln)
-	if err := os.RemoveAll(e.testSocket); err != nil {
-		log.Fatal(err)
-	}
-	server.CloseGrpcConnection(e.conn)
 }
 
 func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
-	env := &testEnv{}
-	env.testSocket = server.GenerateSocketName("middleend")
-	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, startSpdkServer, spdkResponses)
-	env.opiSpdkServer = NewServer(env.jsonRPC)
-
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx,
-		"",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer(env.opiSpdkServer)))
-	if err != nil {
-		log.Fatal(err)
-	}
-	env.ctx = ctx
-	env.conn = conn
-
-	env.client = &middleendClient{
-		pb.NewMiddleendServiceClient(env.conn),
-	}
-
-	return env
-}
-
-func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, error) {
-	listener := bufconn.Listen(1024 * 1024)
-	server := grpc.NewServer()
-	pb.RegisterMiddleendServiceServer(server, opiSpdkServer)
-
-	go func() {
-		if err := server.Serve(listener); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	return func(context.Context, string) (net.Conn, error) {
-		return listener.Dial()
-	}
+	var opiSpdkServer *Server
+	env := server.CreateTestEnvironment(startSpdkServer, spdkResponses,
+		func(jsonRPC server.JSONRPC) server.TestOpiServer {
+			opiSpdkServer = NewServer(jsonRPC)
+			return server.TestOpiServer{
+				FrontendNvmeServiceServer:         &pb.UnimplementedFrontendNvmeServiceServer{},
+				FrontendVirtioBlkServiceServer:    &pb.UnimplementedFrontendVirtioBlkServiceServer{},
+				FrontendVirtioScsiServiceServer:   &pb.UnimplementedFrontendVirtioScsiServiceServer{},
+				MiddleendServiceServer:            opiSpdkServer,
+				AioControllerServiceServer:        &pb.UnimplementedAioControllerServiceServer{},
+				NullDebugServiceServer:            &pb.UnimplementedNullDebugServiceServer{},
+				NVMfRemoteControllerServiceServer: &pb.UnimplementedNVMfRemoteControllerServiceServer{},
+			}
+		})
+	return &testEnv{env, opiSpdkServer, env.Client, env.Ctx}
 }
 
 var (
