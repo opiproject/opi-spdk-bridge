@@ -339,7 +339,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 				}
 				// Empty NextPageToken indicates end of results list
 				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("response: expected", tt, "received", response)
+					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
 				}
 			}
 
