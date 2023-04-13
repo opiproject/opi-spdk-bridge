@@ -7,6 +7,7 @@ package middleend
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"regexp"
@@ -304,7 +305,7 @@ func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) model
 		fallthrough
 	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256:
 		params.Cipher = "AES_CBC"
-		params.Key = string(volume.Key)
+		params.Key = hex.EncodeToString(volume.Key)
 		params.Key2 = ""
 
 	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128:
@@ -314,8 +315,8 @@ func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) model
 	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256:
 		params.Cipher = "AES_XTS"
 		keyHalf := len(volume.Key) / 2
-		params.Key = string(volume.Key[:keyHalf])
-		params.Key2 = string(volume.Key[keyHalf:])
+		params.Key = hex.EncodeToString(volume.Key[:keyHalf])
+		params.Key2 = hex.EncodeToString(volume.Key[keyHalf:])
 	}
 
 	params.Name = volume.EncryptedVolumeId.Value
