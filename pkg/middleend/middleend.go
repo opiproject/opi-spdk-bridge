@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strings"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -51,12 +50,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params1 := models.AccelCryptoKeyCreateParams{
-		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
-		Name:   in.EncryptedVolume.EncryptedVolumeId.Value,
-		Key:    string(in.EncryptedVolume.Key),
-		Key2:   strings.Repeat("a", len(in.EncryptedVolume.Key)),
-	}
+	params1 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result1 models.AccelCryptoKeyCreateResult
 	err1 := s.rpc.Call("accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
@@ -176,12 +170,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params2 := models.AccelCryptoKeyCreateParams{
-		Cipher: r.FindStringSubmatch(in.EncryptedVolume.Cipher.String())[1],
-		Name:   in.EncryptedVolume.EncryptedVolumeId.Value,
-		Key:    string(in.EncryptedVolume.Key),
-		Key2:   strings.Repeat("b", len(in.EncryptedVolume.Key)),
-	}
+	params2 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result2 models.AccelCryptoKeyCreateResult
 	err2 := s.rpc.Call("accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
@@ -303,4 +292,33 @@ func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeS
 		WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
 		UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
 	}}, nil
+}
+
+func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) models.AccelCryptoKeyCreateParams {
+	var params models.AccelCryptoKeyCreateParams
+
+	switch volume.Cipher {
+	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128:
+		fallthrough
+	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192:
+		fallthrough
+	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256:
+		params.Cipher = "AES_CBC"
+		params.Key = string(volume.Key)
+		params.Key2 = ""
+
+	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128:
+		fallthrough
+	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192:
+		fallthrough
+	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256:
+		params.Cipher = "AES_XTS"
+		keyHalf := len(volume.Key) / 2
+		params.Key = string(volume.Key[:keyHalf])
+		params.Key2 = string(volume.Key[keyHalf:])
+	}
+
+	params.Name = volume.EncryptedVolumeId.Value
+
+	return params
 }
