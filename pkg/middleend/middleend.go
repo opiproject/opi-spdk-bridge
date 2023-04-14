@@ -291,14 +291,23 @@ func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeS
 }
 
 func (s *Server) verifyEncryptedVolume(volume *pb.EncryptedVolume) error {
+	keyLengthInBits := len(volume.Key) * 8
+	expectedKeyLengthInBits := 0
 	switch {
 	case volume.Cipher == pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256:
-		return nil
+		expectedKeyLengthInBits = 512
 	case volume.Cipher == pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128:
-		return nil
+		expectedKeyLengthInBits = 256
 	default:
 		return fmt.Errorf("only AES_XTS_256 and AES_XTS_128 are supported")
 	}
+
+	if keyLengthInBits != expectedKeyLengthInBits {
+		return fmt.Errorf("expected key size %vb, provided size %vb",
+			expectedKeyLengthInBits, keyLengthInBits)
+	}
+
+	return nil
 }
 
 func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) models.AccelCryptoKeyCreateParams {
