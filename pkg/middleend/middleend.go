@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
-	"regexp"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -44,13 +43,12 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
-	// first create a key
-	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
-	if !r.MatchString(in.EncryptedVolume.Cipher.String()) {
-		msg := fmt.Sprintf("Could not parse Crypto Cipher: %s", in.EncryptedVolume.Cipher.String())
-		log.Print(msg)
-		return nil, status.Errorf(codes.InvalidArgument, msg)
+	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
+		log.Printf("error: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
+	// first create a key
 	params1 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result1 models.AccelCryptoKeyCreateResult
 	err1 := s.rpc.Call("accel_crypto_key_create", &params1, &result1)
@@ -132,6 +130,10 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 // UpdateEncryptedVolume updates an encrypted volume
 func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
+	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
+		log.Printf("error: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	// first delete old bdev
 	params1 := models.BdevCryptoDeleteParams{
 		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
@@ -161,13 +163,6 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	log.Printf("Received from SPDK: %v", result0)
 	if !result0 {
 		msg := fmt.Sprintf("Could not destroy Crypto Key: %v", params0.KeyName)
-		log.Print(msg)
-		return nil, status.Errorf(codes.InvalidArgument, msg)
-	}
-	// now create a new key
-	r := regexp.MustCompile("ENCRYPTION_TYPE_([A-Z_]+)_")
-	if !r.MatchString(in.EncryptedVolume.Cipher.String()) {
-		msg := fmt.Sprintf("Could not parse Crypto Cipher: %s", in.EncryptedVolume.Cipher.String())
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -295,30 +290,24 @@ func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeS
 	}}, nil
 }
 
+func (s *Server) verifyEncryptedVolume(volume *pb.EncryptedVolume) error {
+	switch {
+	case volume.Cipher == pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256:
+		return nil
+	case volume.Cipher == pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128:
+		return nil
+	default:
+		return fmt.Errorf("only AES_XTS_256 and AES_XTS_128 are supported")
+	}
+}
+
 func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) models.AccelCryptoKeyCreateParams {
 	var params models.AccelCryptoKeyCreateParams
 
-	switch volume.Cipher {
-	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128:
-		fallthrough
-	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192:
-		fallthrough
-	case pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256:
-		params.Cipher = "AES_CBC"
-		params.Key = hex.EncodeToString(volume.Key)
-		params.Key2 = ""
-
-	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128:
-		fallthrough
-	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192:
-		fallthrough
-	case pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256:
-		params.Cipher = "AES_XTS"
-		keyHalf := len(volume.Key) / 2
-		params.Key = hex.EncodeToString(volume.Key[:keyHalf])
-		params.Key2 = hex.EncodeToString(volume.Key[keyHalf:])
-	}
-
+	params.Cipher = "AES_XTS"
+	keyHalf := len(volume.Key) / 2
+	params.Key = hex.EncodeToString(volume.Key[:keyHalf])
+	params.Key2 = hex.EncodeToString(volume.Key[keyHalf:])
 	params.Name = volume.EncryptedVolumeId.Value
 
 	return params
