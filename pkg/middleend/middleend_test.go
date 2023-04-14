@@ -274,6 +274,32 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			"only AES_XTS_256 and AES_XTS_128 are supported",
 			false,
 		},
+		"invalid request with invalid key size for AES_XTS_128": {
+			&pb.EncryptedVolume{
+				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
+				VolumeId:          encryptedVolume.VolumeId,
+				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+				Key:               []byte("1234"),
+			},
+			&encryptedVolume,
+			[]string{},
+			codes.InvalidArgument,
+			fmt.Sprintf("expected key size %vb, provided size %vb", 256, (4 * 8)),
+			false,
+		},
+		"invalid request with invalid key size for AES_XTS_256": {
+			&pb.EncryptedVolume{
+				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
+				VolumeId:          encryptedVolume.VolumeId,
+				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:               []byte("1234"),
+			},
+			&encryptedVolume,
+			[]string{},
+			codes.InvalidArgument,
+			fmt.Sprintf("expected key size %vb, provided size %vb", 512, (4 * 8)),
+			false,
+		},
 	}
 
 	// run tests
@@ -533,6 +559,32 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
+		},
+		"invalid key size for AES_XTS_128": {
+			&pb.EncryptedVolume{
+				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
+				VolumeId:          encryptedVolume.VolumeId,
+				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+				Key:               []byte("1234"),
+			},
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			fmt.Sprintf("expected key size %vb, provided size %vb", 256, (4 * 8)),
+			false,
+		},
+		"invalid key size for AES_XTS_256": {
+			&pb.EncryptedVolume{
+				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
+				VolumeId:          encryptedVolume.VolumeId,
+				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:               []byte("1234"),
+			},
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			fmt.Sprintf("expected key size %vb, provided size %vb", 512, (4 * 8)),
 			false,
 		},
 	}
