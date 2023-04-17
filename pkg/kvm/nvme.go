@@ -56,11 +56,20 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 	if in.NvmeController.Spec.SubsystemId == nil || in.NvmeController.Spec.SubsystemId.Value == "" {
 		return nil, errInvalidSubsystem
 	}
+	if in.NvmeController.Spec.PcieId == nil {
+		log.Println("Pci endpoint should be specified")
+		return nil, errNoPcieEndpoint
+	}
+	location, err := s.nvmeDeviceLocator.Calculate(in.NvmeController.Spec.PcieId)
+	if err != nil {
+		log.Println("Failed to calculate device location: ", err)
+		return nil, errDeviceEndpoint
+	}
 
 	// Create request can miss Name field which is generated in spdk bridge.
 	// Use subsystem instead, since it is required to exist
 	dirName := in.NvmeController.Spec.SubsystemId.Value
-	err := createControllerDir(s.ctrlrDir, dirName)
+	err = createControllerDir(s.ctrlrDir, dirName)
 	if err != nil {
 		log.Print(err)
 		return nil, errFailedToCreateNvmeDir
@@ -84,7 +93,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 	defer mon.Disconnect()
 
 	qemuDeviceID := toQemuID(name)
-	if err := mon.AddNvmeControllerDevice(qemuDeviceID, controllerDirPath(s.ctrlrDir, dirName)); err != nil {
+	if err := mon.AddNvmeControllerDevice(qemuDeviceID, controllerDirPath(s.ctrlrDir, dirName), location); err != nil {
 		log.Println("Couldn't add Nvme controller:", err)
 		_, _ = s.Server.DeleteNvmeController(context.Background(), &pb.DeleteNvmeControllerRequest{Name: name})
 		_ = deleteControllerDir(s.ctrlrDir, dirName)
