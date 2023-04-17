@@ -88,7 +88,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, nil)
 			kvmServer.timeout = qmplibTimeout
 
 			out, err := kvmServer.CreateVirtioBlk(context.Background(), testCreateVirtioBlkRequest)
@@ -173,7 +173,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, nil)
 			kvmServer.timeout = qmplibTimeout
 
 			_, err := kvmServer.DeleteVirtioBlk(context.Background(), testDeleteVirtioBlkRequest)
