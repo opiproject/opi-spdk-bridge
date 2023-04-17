@@ -87,15 +87,19 @@ func (m *monitor) AddVirtioBlkDevice(id string, chardevID string) error {
 	return m.waitForDeviceExist(id)
 }
 
-func (m *monitor) AddNvmeControllerDevice(id string, ctrlrDir string) error {
+func (m *monitor) AddNvmeControllerDevice(id string, ctrlrDir string, location deviceLocation) error {
 	socket := filepath.Join(ctrlrDir, "cntrl")
 	qmpCmd := struct {
 		Driver string  `json:"driver"`
 		ID     *string `json:"id,omitempty"`
+		Bus    *string `json:"bus,omitempty"`
+		Addr   *string `json:"addr,omitempty"`
 		Socket *string `json:"socket,omitempty"`
 	}{
 		Driver: "vfio-user-pci",
 		ID:     &id,
+		Bus:    location.Bus,
+		Addr:   location.Addr,
 		Socket: &socket,
 	}
 	if err := m.addDevice(qmpCmd); err != nil {

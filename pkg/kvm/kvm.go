@@ -30,6 +30,8 @@ var (
 	errInvalidSubsystem       = status.Error(codes.InvalidArgument, "invalid subsystem")
 	errDevicePartiallyDeleted = status.Error(codes.Internal, "device is partially deleted")
 	errFailedToCreateNvmeDir  = status.Error(codes.FailedPrecondition, "cannot create directory for Nvme controller")
+	errDeviceEndpoint         = status.Error(codes.InvalidArgument, "values in endpoint cannot be used to calculate device location")
+	errNoPcieEndpoint         = status.Error(codes.InvalidArgument, "no pcie endpoint provided")
 )
 
 // Server is a wrapper for default opi-spdk-bridge frontend which automates
