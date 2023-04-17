@@ -5,6 +5,7 @@
 package kvm
 
 import (
+	"fmt"
 	"log"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -29,7 +30,18 @@ func newDeviceLocator(buses []string, deviceType string) deviceLocator {
 		log.Println(deviceType, "location will be assigned by QEMU")
 		return defaultDeviceLocator{}
 	}
-	return nil
+	elementSet := make(map[string]struct{})
+	for _, bus := range buses {
+		if bus == "" {
+			log.Panicln("Empty bus name cannot be used in", buses, "for", deviceType)
+		}
+		if _, ok := elementSet[bus]; ok {
+			log.Panicln("Duplicated bus", bus, "for", deviceType)
+		}
+		elementSet[bus] = struct{}{}
+	}
+	log.Println(deviceType, "device location will be calculated based on requested PcieEndpoint on ", buses)
+	return busDeviceLocator{buses}
 }
 
 type defaultDeviceLocator struct{}
@@ -39,4 +51,44 @@ func (defaultDeviceLocator) Calculate(_ *pb.PciEndpoint) (deviceLocation, error)
 		Bus:  nil,
 		Addr: nil,
 	}, nil
+}
+
+type busDeviceLocator struct {
+	buses []string
+}
+
+func (l busDeviceLocator) Calculate(endpoint *pb.PciEndpoint) (deviceLocation, error) {
+	if endpoint == nil {
+		return deviceLocation{}, fmt.Errorf("pci endpoint is required to calculate device location")
+	}
+	bus, addr, err := l.calculateBusAddr(endpoint.PhysicalFunction)
+	if err != nil {
+		return deviceLocation{}, err
+	}
+
+	addrInHex := fmt.Sprintf("%#x", addr)
+	return deviceLocation{
+		Bus:  &bus,
+		Addr: &addrInHex,
+	}, nil
+}
+
+func (l busDeviceLocator) calculateBusAddr(physicalFunction int32) (bus string, addr uint32, err error) {
+	if physicalFunction < 0 {
+		err = fmt.Errorf("physical function cannot be negative")
+		return
+	}
+
+	var maxDevicesOnBus int32 = 32
+	for _, qemuBus := range l.buses {
+		if physicalFunction >= maxDevicesOnBus {
+			physicalFunction -= maxDevicesOnBus
+		} else {
+			addr = uint32(physicalFunction)
+			bus = qemuBus
+			return
+		}
+	}
+	err = fmt.Errorf("no corresponding bus found for physical function: %v", physicalFunction)
+	return
 }

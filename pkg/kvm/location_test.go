@@ -20,6 +20,23 @@ func TestNewDeviceLocator(t *testing.T) {
 			wantPanic:     false,
 			expectLocator: defaultDeviceLocator{},
 		},
+		"bus device locator on provided buses": {
+			buses:     []string{"bus.opi.0", "bus.opi.1"},
+			wantPanic: false,
+			expectLocator: busDeviceLocator{
+				buses: []string{"bus.opi.0", "bus.opi.1"},
+			},
+		},
+		"panic on empty bus": {
+			buses:         []string{"bus.opi.0", ""},
+			wantPanic:     true,
+			expectLocator: nil,
+		},
+		"panic on duplicated bus": {
+			buses:         []string{"bus.opi.0", "bus.opi.0"},
+			wantPanic:     true,
+			expectLocator: nil,
+		},
 	}
 
 	for testName, test := range tests {
