@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	"github.com/opiproject/gospdk/spdk"
 
@@ -20,6 +21,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+func splitBusesBySeparator(str string) []string {
+	if str != "" {
+		return strings.Split(str, ":")
+	}
+	return []string{}
+}
 
 func main() {
 	var port int
@@ -37,9 +45,18 @@ func main() {
 	var ctrlrDir string
 	flag.StringVar(&ctrlrDir, "ctrlr_dir", "", "Directory with created SPDK device unix sockets (-S option in SPDK). Valid only with -kvm option")
 
+	var nvmeBusesStr string
+	flag.StringVar(&nvmeBusesStr, "nvme_buses", "", "QEMU PCI buses IDs separated by `:` to attach NVMe devices on. e.g. \"pci.opi.0:pci.opi.1\". Valid only with -kvm option")
+
+	var virtioBlkStr string
+	flag.StringVar(&virtioBlkStr, "virtio_blk_buses", "", "QEMU PCI buses IDs separated by `:` to attach virtio-blk devices on. e.g. \"pci.opi.0:pci.opi.1\". Valid only with -kvm option")
+
 	var tcpTransportListenAddr string
 	flag.StringVar(&tcpTransportListenAddr, "tcp_trid", "127.0.0.1:4420", "ipv4 address:port (aka traddr:trsvcid) or ipv6 [address]:port tuple (aka [traddr]:trsvcid) to listen on for Nvme/TCP transport")
 	flag.Parse()
+
+	nvmeBuses := splitBusesBySeparator(nvmeBusesStr)
+	virtioBlkBuses := splitBusesBySeparator(virtioBlkStr)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -55,7 +72,7 @@ func main() {
 		log.Println("Creating KVM server.")
 		frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
 			kvm.NewVfiouserSubsystemListener(ctrlrDir))
-		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir)
+		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir, nvmeBuses, virtioBlkBuses)
 
 		pb.RegisterFrontendNvmeServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
