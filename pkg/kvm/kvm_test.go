@@ -125,6 +125,16 @@ func (s *mockQmpCalls) ExpectAddVirtioBlk(id string, chardevID string) *mockQmpC
 	return s
 }
 
+func (s *mockQmpCalls) ExpectAddVirtioBlkWithAddress(id string, chardevID string, bus string, pf uint32) *mockQmpCalls {
+	s.ExpectAddVirtioBlk(id, chardevID)
+	index := len(s.expectedCalls) - 1
+	s.expectedCalls[index].expectedArgs =
+		append(s.expectedCalls[index].expectedArgs, `"bus":"`+bus+`"`)
+	s.expectedCalls[index].expectedArgs =
+		append(s.expectedCalls[index].expectedArgs, `"addr":"`+fmt.Sprintf("%#x", pf)+`"`)
+	return s
+}
+
 func (s *mockQmpCalls) ExpectAddNvmeController(id string, ctrlrDir string) *mockQmpCalls {
 	s.expectedCalls = append(s.expectedCalls, mockCall{
 		response: genericQmpOk,
