@@ -15,6 +15,17 @@ import (
 
 // CreateVirtioBlk creates a virtio-blk device and attaches it to QEMU instance
 func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+	if in.VirtioBlk.PcieId == nil {
+		log.Println("Pci endpoint should be specified")
+		return nil, errNoPcieEndpoint
+	}
+
+	location, err := s.virtioBlkDeviceLocator.Calculate(in.VirtioBlk.PcieId)
+	if err != nil {
+		log.Println("Failed to calculate device location:", err)
+		return nil, errDeviceEndpoint
+	}
+
 	out, err := s.Server.CreateVirtioBlk(ctx, in)
 	if err != nil {
 		log.Println("Error running cmd on opi-spdk bridge:", err)
@@ -38,7 +49,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	}
 
 	qemuDevID := toQemuID(out.Name)
-	if err = mon.AddVirtioBlkDevice(qemuDevID, qemuChardevID); err != nil {
+	if err = mon.AddVirtioBlkDevice(qemuDevID, qemuChardevID, location); err != nil {
 		log.Println("Couldn't add device:", err)
 		_ = mon.DeleteChardev(qemuDevID)
 		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: out.Name})

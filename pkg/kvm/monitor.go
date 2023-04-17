@@ -71,14 +71,18 @@ func (m *monitor) DeleteChardev(id string) error {
 	return m.rmon.ChardevRemove(id)
 }
 
-func (m *monitor) AddVirtioBlkDevice(id string, chardevID string) error {
+func (m *monitor) AddVirtioBlkDevice(id string, chardevID string, location deviceLocation) error {
 	qmpCmd := struct {
 		Driver  string  `json:"driver"`
 		ID      *string `json:"id,omitempty"`
+		Bus     *string `json:"bus,omitempty"`
+		Addr    *string `json:"addr,omitempty"`
 		Chardev *string `json:"chardev,omitempty"`
 	}{
 		Driver:  "vhost-user-blk-pci",
 		ID:      &id,
+		Bus:     location.Bus,
+		Addr:    location.Addr,
 		Chardev: &chardevID,
 	}
 	if err := m.addDevice(qmpCmd); err != nil {
