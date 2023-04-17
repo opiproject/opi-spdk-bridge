@@ -41,12 +41,15 @@ func TestCreateVirtioBlk(t *testing.T) {
 		jsonRPC              spdk.JSONRPC
 		expectError          error
 		nonDefaultQmpAddress string
+		buses                []string
 
+		in  *pb.CreateVirtioBlkRequest
 		out *pb.VirtioBlk
 
 		mockQmpCalls *mockQmpCalls
 	}{
 		"valid virtio-blk creation": {
+			in:      testCreateVirtioBlkRequest,
 			jsonRPC: alwaysSuccessfulJSONRPC,
 			out:     expectNotNilOut,
 			mockQmpCalls: newMockQmpCalls().
@@ -55,16 +58,19 @@ func TestCreateVirtioBlk(t *testing.T) {
 				ExpectQueryPci(testVirtioBlkID),
 		},
 		"spdk failed to create virtio-blk": {
+			in:          testCreateVirtioBlkRequest,
 			jsonRPC:     alwaysFailingJSONRPC,
 			expectError: spdk.ErrFailedSpdkCall,
 		},
 		"qemu chardev add failed": {
+			in:          testCreateVirtioBlkRequest,
 			jsonRPC:     alwaysSuccessfulJSONRPC,
 			expectError: errAddChardevFailed,
 			mockQmpCalls: newMockQmpCalls().
 				ExpectAddChardev(testVirtioBlkID).WithErrorResponse(),
 		},
 		"qemu device add failed": {
+			in:          testCreateVirtioBlkRequest,
 			jsonRPC:     alwaysSuccessfulJSONRPC,
 			expectError: errAddDeviceFailed,
 			mockQmpCalls: newMockQmpCalls().
@@ -73,9 +79,67 @@ func TestCreateVirtioBlk(t *testing.T) {
 				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"failed to create monitor": {
+			in:                   testCreateVirtioBlkRequest,
 			nonDefaultQmpAddress: "/dev/null",
 			jsonRPC:              alwaysSuccessfulJSONRPC,
 			expectError:          errMonitorCreation,
+		},
+		"valid virtio-blk creation with on first bus location": {
+			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
+				PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
+				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+				MaxIoQps: 1,
+			}, VirtioBlkId: testVirtioBlkID},
+			out: &pb.VirtioBlk{
+				Name:     testVirtioBlkID,
+				PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
+				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+				MaxIoQps: 1,
+			},
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			buses:   []string{"pci.opi.0", "pci.opi.1"},
+			mockQmpCalls: newMockQmpCalls().
+				ExpectAddChardev(testVirtioBlkID).
+				ExpectAddVirtioBlkWithAddress(testVirtioBlkID, testVirtioBlkID, "pci.opi.0", 1).
+				ExpectQueryPci(testVirtioBlkID),
+		},
+		"valid virtio-blk creation with on second bus location": {
+			in:      testCreateVirtioBlkRequest,
+			out:     expectNotNilOut,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			buses:   []string{"pci.opi.0", "pci.opi.1"},
+			mockQmpCalls: newMockQmpCalls().
+				ExpectAddChardev(testVirtioBlkID).
+				ExpectAddVirtioBlkWithAddress(testVirtioBlkID, testVirtioBlkID, "pci.opi.1", 10).
+				ExpectQueryPci(testVirtioBlkID),
+		},
+		"virtio-blk creation with physical function goes out of buses": {
+			in:          testCreateVirtioBlkRequest,
+			out:         nil,
+			expectError: errDeviceEndpoint,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			buses:       []string{"pci.opi.0"},
+		},
+		"negative physical function": {
+			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
+				PcieId:   &pb.PciEndpoint{PhysicalFunction: -1},
+				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+				MaxIoQps: 1,
+			}, VirtioBlkId: testVirtioBlkID},
+			out:         nil,
+			expectError: errDeviceEndpoint,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
+			buses:       []string{"pci.opi.0"},
+		},
+		"nil pcie endpoint": {
+			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
+				PcieId:   nil,
+				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+				MaxIoQps: 1,
+			}, VirtioBlkId: testVirtioBlkID},
+			out:         nil,
+			expectError: errNoPcieEndpoint,
+			jsonRPC:     alwaysSuccessfulJSONRPC,
 		},
 	}
 
@@ -88,10 +152,11 @@ func TestCreateVirtioBlk(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, nil)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, test.buses)
 			kvmServer.timeout = qmplibTimeout
+			request := proto.Clone(test.in).(*pb.CreateVirtioBlkRequest)
 
-			out, err := kvmServer.CreateVirtioBlk(context.Background(), testCreateVirtioBlkRequest)
+			out, err := kvmServer.CreateVirtioBlk(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
 				t.Errorf("Expected error %v, got %v", test.expectError, err)
 			}
@@ -166,7 +231,9 @@ func TestDeleteVirtioBlk(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID] = testCreateVirtioBlkRequest.VirtioBlk
+			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID] =
+				proto.Clone(testCreateVirtioBlkRequest.VirtioBlk).(*pb.VirtioBlk)
+			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID].Name = testVirtioBlkID
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
@@ -175,8 +242,9 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, nil)
 			kvmServer.timeout = qmplibTimeout
+			request := proto.Clone(testDeleteVirtioBlkRequest).(*pb.DeleteVirtioBlkRequest)
 
-			_, err := kvmServer.DeleteVirtioBlk(context.Background(), testDeleteVirtioBlkRequest)
+			_, err := kvmServer.DeleteVirtioBlk(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
 				t.Errorf("Expected %v, got %v", test.expectError, err)
 			}
