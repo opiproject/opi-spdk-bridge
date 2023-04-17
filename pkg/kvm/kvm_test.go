@@ -6,6 +6,7 @@ package kvm
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -136,6 +137,16 @@ func (s *mockQmpCalls) ExpectAddNvmeController(id string, ctrlrDir string) *mock
 			regexp.MustCompile(`"socket":"` + pathRegexpStr + ctrlrDir + `/cntrl"`),
 		},
 	})
+	return s
+}
+
+func (s *mockQmpCalls) ExpectAddNvmeControllerWithAddress(id string, ctrlDir string, bus string, pf uint32) *mockQmpCalls {
+	s.ExpectAddNvmeController(id, ctrlDir)
+	index := len(s.expectedCalls) - 1
+	s.expectedCalls[index].expectedArgs =
+		append(s.expectedCalls[index].expectedArgs, `"bus":"`+bus+`"`)
+	s.expectedCalls[index].expectedArgs =
+		append(s.expectedCalls[index].expectedArgs, `"addr":"`+fmt.Sprintf("%#x", pf)+`"`)
 	return s
 }
 
