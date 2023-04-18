@@ -72,6 +72,7 @@ func main() {
 	pb.RegisterNullDebugServiceServer(s, backendServer)
 	pb.RegisterAioControllerServiceServer(s, backendServer)
 	pb.RegisterMiddleendEncryptionServiceServer(s, middleendServer)
+	pb.RegisterMiddleendQosVolumeServiceServer(s, middleendServer)
 
 	reflection.Register(s)
 
