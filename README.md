@@ -117,6 +117,7 @@ opi_api.storage.v1.FrontendNvmeService
 opi_api.storage.v1.FrontendVirtioBlkService
 opi_api.storage.v1.FrontendVirtioScsiService
 opi_api.storage.v1.MiddleendEncryptionService
+opi_api.storage.v1.MiddleendQosVolumeService
 opi_api.storage.v1.NVMfRemoteControllerService
 opi_api.storage.v1.NullDebugService
 ```

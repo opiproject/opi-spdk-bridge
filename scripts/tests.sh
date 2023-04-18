@@ -40,6 +40,7 @@ grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cl
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendVirtioBlkService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendVirtioScsiService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.MiddleendEncryptionService -l
+"${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.MiddleendQosVolumeService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMfRemoteControllerService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullDebugService -l
 
