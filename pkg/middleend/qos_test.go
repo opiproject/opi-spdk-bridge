@@ -298,3 +298,97 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 	}
 }
 
+func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
+	tests := map[string]struct {
+		in          string
+		spdk        []string
+		errCode     codes.Code
+		errMsg      string
+		start       bool
+		existBefore bool
+		existAfter  bool
+		missing     bool
+	}{
+		"qos volume does not exist": {
+			in:          testQosVolume.QosVolumeId.Value,
+			spdk:        []string{},
+			errCode:     codes.NotFound,
+			errMsg:      fmt.Sprintf("unable to find key %s", testQosVolume.QosVolumeId.Value),
+			start:       false,
+			existBefore: false,
+			existAfter:  false,
+			missing:     false,
+		},
+		"qos volume does not exist, with allow_missing": {
+			in:          testQosVolume.QosVolumeId.Value,
+			spdk:        []string{},
+			errCode:     codes.OK,
+			errMsg:      "",
+			start:       false,
+			existBefore: false,
+			existAfter:  false,
+			missing:     true,
+		},
+		"SPDK call failed": {
+			in:          testQosVolume.QosVolumeId.Value,
+			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
+			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
+			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
+			start:       true,
+			existBefore: true,
+			existAfter:  true,
+			missing:     false,
+		},
+		"SPDK call result false": {
+			in:          testQosVolume.QosVolumeId.Value,
+			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
+			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
+			start:       true,
+			existBefore: true,
+			existAfter:  true,
+			missing:     false,
+		},
+		"successful deletion": {
+			in:          testQosVolume.QosVolumeId.Value,
+			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			errCode:     codes.OK,
+			errMsg:      "",
+			start:       true,
+			existBefore: true,
+			existAfter:  false,
+			missing:     false,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			request := &pb.DeleteQosVolumeRequest{Name: tt.in}
+			if tt.existBefore {
+				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value] = testQosVolume
+			}
+			if tt.missing {
+				request.AllowMissing = true
+			}
+
+			_, err := testEnv.client.DeleteQosVolume(testEnv.ctx, request)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expect grpc error status")
+			}
+
+			_, ok := testEnv.opiSpdkServer.volumes.qosVolumes[tt.in]
+			if tt.existAfter != ok {
+				t.Error("expect QoS volume exist", tt.existAfter, "received", ok)
+			}
+		})
+	}
+}
