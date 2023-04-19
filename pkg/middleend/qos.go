@@ -53,6 +53,42 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 	return in.QosVolume, nil
 }
 
+// DeleteQosVolume creates a QoS volume
+func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
+	log.Printf("CreateQosVolume: Received from client: %v", in)
+	qosVolume, ok := s.volumes.qosVolumes[in.Name]
+	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	params := spdk.BdevQoSParams{
+		Name:           qosVolume.VolumeId.Value,
+		RwIosPerSec:    0,
+		RwMbytesPerSec: 0,
+		RMbytesPerSec:  0,
+		WMbytesPerSec:  0,
+	}
+	var result spdk.BdevQoSResult
+	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, spdk.ErrFailedSpdkCall
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not clear QoS limit for : %s", in.Name)
+		log.Print(msg)
+		return nil, spdk.ErrUnexpectedSpdkCallResult
+	}
+
+	delete(s.volumes.qosVolumes, in.Name)
+	return &emptypb.Empty{}, nil
+}
+
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	if volume.QosVolumeId == nil || volume.QosVolumeId.Value == "" {
 		return fmt.Errorf("qos_volume_id cannot be empty")
