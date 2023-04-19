@@ -23,12 +23,18 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// VolumeParameters contains MiddleEnd volume related structures
+type VolumeParameters struct {
+	qosVolumes map[string]*pb.QosVolume
+}
+
 // Server contains middleend related OPI services
 type Server struct {
 	pb.UnimplementedMiddleendEncryptionServiceServer
 	pb.UnimplementedMiddleendQosVolumeServiceServer
 
 	rpc        spdk.JSONRPC
+	volumes    VolumeParameters
 	Pagination map[string]int
 }
 
@@ -36,7 +42,10 @@ type Server struct {
 // with provided jsonRPC
 func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	return &Server{
-		rpc:        jsonRPC,
+		rpc: jsonRPC,
+		volumes: VolumeParameters{
+			qosVolumes: make(map[string]*pb.QosVolume),
+		},
 		Pagination: make(map[string]int),
 	}
 }
