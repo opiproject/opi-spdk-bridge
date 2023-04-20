@@ -20,7 +20,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 		return nil, errNoPcieEndpoint
 	}
 
-	location, err := s.virtioBlkDeviceLocator.Calculate(in.VirtioBlk.PcieId)
+	location, err := s.locator.Calculate(in.VirtioBlk.PcieId)
 	if err != nil {
 		log.Println("Failed to calculate device location:", err)
 		return nil, errDeviceEndpoint

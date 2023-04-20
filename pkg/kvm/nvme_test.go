@@ -282,7 +282,7 @@ func TestCreateNvmeController(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, test.buses, nil)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, test.buses)
 			kvmServer.timeout = qmplibTimeout
 			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
 			if test.ctrlrDirExistsBeforeOperation &&
@@ -415,7 +415,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, nil)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
 			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
 			if test.ctrlrDirExistsBeforeOperation {

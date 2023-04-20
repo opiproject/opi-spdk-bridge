@@ -152,7 +152,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, test.buses)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, test.buses)
 			kvmServer.timeout = qmplibTimeout
 			request := proto.Clone(test.in).(*pb.CreateVirtioBlkRequest)
 
@@ -240,7 +240,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			if test.nonDefaultQmpAddress != "" {
 				qmpAddress = test.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil, nil)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
 			request := proto.Clone(testDeleteVirtioBlkRequest).(*pb.DeleteVirtioBlkRequest)
 

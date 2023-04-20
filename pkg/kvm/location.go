@@ -11,11 +11,6 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
-const (
-	virtioBlkDeviceType = "virtio-blk"
-	nvmeDeviceType      = "NVMe"
-)
-
 type deviceLocation struct {
 	Bus  *string
 	Addr *string
@@ -25,22 +20,22 @@ type deviceLocator interface {
 	Calculate(endpoint *pb.PciEndpoint) (deviceLocation, error)
 }
 
-func newDeviceLocator(buses []string, deviceType string) deviceLocator {
+func newDeviceLocator(buses []string) deviceLocator {
 	if len(buses) == 0 {
-		log.Println(deviceType, "location will be assigned by QEMU")
+		log.Println("Device location for virtio-blk and Nvme devices will be assigned by QEMU")
 		return defaultDeviceLocator{}
 	}
 	elementSet := make(map[string]struct{})
 	for _, bus := range buses {
 		if bus == "" {
-			log.Panicln("Empty bus name cannot be used in", buses, "for", deviceType)
+			log.Panicln("Empty bus name cannot be used in", buses)
 		}
 		if _, ok := elementSet[bus]; ok {
-			log.Panicln("Duplicated bus", bus, "for", deviceType)
+			log.Panicln("Duplicated bus", bus)
 		}
 		elementSet[bus] = struct{}{}
 	}
-	log.Println(deviceType, "device location will be calculated based on requested PcieEndpoint on ", buses)
+	log.Println("Device location will be calculated based on requested PcieEndpoint on", buses)
 	return busDeviceLocator{buses}
 }
 

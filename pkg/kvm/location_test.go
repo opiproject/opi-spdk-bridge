@@ -47,7 +47,7 @@ func TestNewDeviceLocator(t *testing.T) {
 					t.Errorf("newDeviceLocator() recover = %v, wantPanic = %v", r, test.wantPanic)
 				}
 			}()
-			before := newDeviceLocator(test.buses, nvmeDeviceType)
+			before := newDeviceLocator(test.buses)
 			if !reflect.DeepEqual(before, test.expectLocator) {
 				t.Error("response: expected", test.expectLocator, "received", before)
 			}
