@@ -64,7 +64,7 @@ func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
 	jsonRPC := NewSpdkJSONRPC(socket).(*spdkJSONRPC)
-	ln := startSpdkMockupServerOnUnixSocket(jsonRPC)
+	ln := StartUnixListener(jsonRPC.socket)
 	if startSpdkServer {
 		go spdkMockServerCommunicate(jsonRPC, ln, spdkResponses)
 	}
@@ -97,12 +97,13 @@ func GenerateSocketName(testType string) string {
 	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
 }
 
-func startSpdkMockupServerOnUnixSocket(rpc *spdkJSONRPC) net.Listener {
+// StartUnixListener is utility function used to create new listener in tests
+func StartUnixListener(socketPath string) net.Listener {
 	// start SPDK mockup Server
-	if err := os.RemoveAll(rpc.socket); err != nil {
+	if err := os.RemoveAll(socketPath); err != nil {
 		log.Fatal(err)
 	}
-	ln, err := net.Listen("unix", rpc.socket)
+	ln, err := net.Listen("unix", socketPath)
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
