@@ -9,11 +9,12 @@ import (
 	"log"
 	"net"
 
+	"github.com/opiproject/gospdk/spdk"
+
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/kvm"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc"
@@ -46,7 +47,7 @@ func main() {
 	}
 	s := grpc.NewServer()
 
-	jsonRPC := server.NewSpdkJSONRPC(spdkAddress)
+	jsonRPC := spdk.NewSpdkJSONRPC(spdkAddress)
 	backendServer := backend.NewServer(jsonRPC)
 	middleendServer := middleend.NewServer(jsonRPC)
 

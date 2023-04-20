@@ -18,6 +18,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/opiproject/gospdk/spdk"
 )
 
 // ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
@@ -62,13 +64,13 @@ func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
 }
 
 // CreateTestSpdkServer creates a mock spdk server for testing
-func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, JSONRPC) {
-	jsonRPC := NewSpdkJSONRPC(socket).(*spdkJSONRPC)
-	ln := StartUnixListener(jsonRPC.socket)
+func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, spdk.JSONRPC) {
+	jsonRPC := spdk.NewSpdkJSONRPC(socket)
+	ln := jsonRPC.StartUnixListener()
 	if startSpdkServer {
 		go spdkMockServerCommunicate(jsonRPC, ln, spdkResponses)
 	}
-	return ln, jsonRPC
+	return ln, jsonRPC.(*spdk.SpdkJSONRPC)
 }
 
 // CloseGrpcConnection is utility function used to defer grpc connection close is tests
@@ -97,20 +99,7 @@ func GenerateSocketName(testType string) string {
 	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
 }
 
-// StartUnixListener is utility function used to create new listener in tests
-func StartUnixListener(socketPath string) net.Listener {
-	// start SPDK mockup Server
-	if err := os.RemoveAll(socketPath); err != nil {
-		log.Fatal(err)
-	}
-	ln, err := net.Listen("unix", socketPath)
-	if err != nil {
-		log.Fatal("listen error:", err)
-	}
-	return ln
-}
-
-func spdkMockServerCommunicate(rpc *spdkJSONRPC, l net.Listener, toSend []string) {
+func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string) {
 	for _, spdk := range toSend {
 		// wait for client to connect (accept stage)
 		fd, err := l.Accept()
@@ -118,7 +107,8 @@ func spdkMockServerCommunicate(rpc *spdkJSONRPC, l net.Listener, toSend []string
 			log.Fatal("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		log.Printf("SPDK ID [%d]", rpc.id)
+		id := rpc.GetID()
+		log.Printf("SPDK ID [%d]", id)
 		// read from client
 		// we just read to extract ID, rest of the data is discarded here
 		buf := make([]byte, 512)
@@ -129,7 +119,7 @@ func spdkMockServerCommunicate(rpc *spdkJSONRPC, l net.Listener, toSend []string
 		// fill in ID, since client expects the same ID in the response
 		data := buf[0:nr]
 		if strings.Contains(spdk, "%") {
-			spdk = fmt.Sprintf(spdk, rpc.id)
+			spdk = fmt.Sprintf(spdk, id)
 		}
 		log.Printf("SPDK mockup Server: got : %s", string(data))
 		log.Printf("SPDK mockup Server: snd : %s", spdk)
