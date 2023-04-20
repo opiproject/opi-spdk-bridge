@@ -25,7 +25,7 @@ import (
 
 // Server contains middleend related OPI services
 type Server struct {
-	pb.UnimplementedMiddleendServiceServer
+	pb.UnimplementedMiddleendEncryptionServiceServer
 
 	rpc        spdk.JSONRPC
 	Pagination map[string]int

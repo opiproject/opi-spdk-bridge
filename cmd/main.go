@@ -71,7 +71,7 @@ func main() {
 	pb.RegisterNVMfRemoteControllerServiceServer(s, backendServer)
 	pb.RegisterNullDebugServiceServer(s, backendServer)
 	pb.RegisterAioControllerServiceServer(s, backendServer)
-	pb.RegisterMiddleendServiceServer(s, middleendServer)
+	pb.RegisterMiddleendEncryptionServiceServer(s, middleendServer)
 
 	reflection.Register(s)
 
