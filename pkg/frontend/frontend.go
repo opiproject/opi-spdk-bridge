@@ -8,15 +8,14 @@ package frontend
 import (
 	"log"
 
+	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/models"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 // SubsystemListener interface is used to provide SPDK call params to create/delete
 // NVMe controllers depending on used transport type.
 type SubsystemListener interface {
-	Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams
+	Params(ctrlr *pb.NVMeController, nqn string) spdk.NvmfSubsystemAddListenerParams
 }
 
 // NvmeParameters contains all NVMe related structures
@@ -40,7 +39,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	rpc        server.JSONRPC
+	rpc        spdk.JSONRPC
 	Nvme       NvmeParameters
 	Virt       VirtioParameters
 	Pagination map[string]int
@@ -48,7 +47,7 @@ type Server struct {
 
 // NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC server.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
@@ -68,7 +67,7 @@ func NewServer(jsonRPC server.JSONRPC) *Server {
 
 // NewServerWithSubsystemListener creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC and externally created SubsystemListener instead default one.
-func NewServerWithSubsystemListener(jsonRPC server.JSONRPC, sysListener SubsystemListener) *Server {
+func NewServerWithSubsystemListener(jsonRPC spdk.JSONRPC, sysListener SubsystemListener) *Server {
 	if sysListener == nil {
 		log.Panic("nil for SubsystemListener is not allowed")
 	}

@@ -273,7 +273,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevGetBdevsResult"),
 			true,
 			0,
 			"",
@@ -466,7 +466,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []models.BdevGetBdevsResult"),
+			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevGetBdevsResult"),
 			true,
 		},
 		"valid request with empty SPDK response": {
@@ -562,7 +562,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
-			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type models.BdevGetIostatResult"),
+			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevGetIostatResult"),
 			true,
 		},
 		"valid request with empty SPDK response": {

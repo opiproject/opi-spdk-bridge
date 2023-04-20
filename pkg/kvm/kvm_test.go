@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opiproject/opi-spdk-bridge/pkg/models"
+	models "github.com/opiproject/gospdk/spdk"
 )
 
 var (
@@ -35,6 +35,14 @@ var (
 
 type stubJSONRRPC struct {
 	err error
+}
+
+func (s stubJSONRRPC) GetID() uint64 {
+	return 0
+}
+
+func (s stubJSONRRPC) StartUnixListener() net.Listener {
+	return nil
 }
 
 func (s stubJSONRRPC) Call(method string, _, result interface{}) error {

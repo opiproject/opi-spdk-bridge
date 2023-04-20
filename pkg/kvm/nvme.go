@@ -13,9 +13,9 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	models "github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 )
 
 type vfiouserSubsystemListener struct {

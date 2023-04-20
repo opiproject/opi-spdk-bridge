@@ -11,9 +11,9 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	models "github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"github.com/ulule/deepcopier"
 
@@ -40,12 +40,12 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
-		return nil, fmt.Errorf("%w for %v", server.ErrFailedSpdkCall, in)
+		return nil, fmt.Errorf("%w for %v", models.ErrFailedSpdkCall, in)
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		log.Printf("Could not create: %v", in)
-		return nil, fmt.Errorf("%w for %v", server.ErrUnexpectedSpdkCallResult, in)
+		return nil, fmt.Errorf("%w for %v", models.ErrUnexpectedSpdkCallResult, in)
 	}
 	s.Virt.BlkCtrls[in.VirtioBlk.Id.Value] = in.VirtioBlk
 	// s.VirtioCtrls[in.VirtioBlk.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}

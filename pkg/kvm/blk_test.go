@@ -11,10 +11,10 @@ import (
 	"log"
 	"testing"
 
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/protobuf/proto"
 )
@@ -37,7 +37,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		jsonRPC              server.JSONRPC
+		jsonRPC              spdk.JSONRPC
 		expectError          error
 		nonDefaultQmpAddress string
 
@@ -55,7 +55,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 		"spdk failed to create virtio-blk": {
 			jsonRPC:     alwaysFailingJSONRPC,
-			expectError: server.ErrFailedSpdkCall,
+			expectError: spdk.ErrFailedSpdkCall,
 		},
 		"qemu chardev add failed": {
 			jsonRPC:     alwaysSuccessfulJSONRPC,
@@ -108,7 +108,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 
 func TestDeleteVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
-		jsonRPC              server.JSONRPC
+		jsonRPC              spdk.JSONRPC
 		expectError          error
 		nonDefaultQmpAddress string
 

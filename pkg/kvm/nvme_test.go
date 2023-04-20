@@ -14,11 +14,10 @@ import (
 	"reflect"
 	"testing"
 
+	models "github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	"github.com/opiproject/opi-spdk-bridge/pkg/models"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"github.com/ulule/deepcopier"
 	"google.golang.org/protobuf/proto"
 )
@@ -122,7 +121,7 @@ func TestCreateNvmeController(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		jsonRPC                       server.JSONRPC
+		jsonRPC                       models.JSONRPC
 		nonDefaultQmpAddress          string
 		ctrlrDirExistsBeforeOperation bool
 		ctrlrDirExistsAfterOperation  bool
@@ -211,7 +210,7 @@ func TestCreateNvmeController(t *testing.T) {
 
 func TestDeleteNvmeController(t *testing.T) {
 	tests := map[string]struct {
-		jsonRPC              server.JSONRPC
+		jsonRPC              models.JSONRPC
 		nonDefaultQmpAddress string
 
 		ctrlrDirExistsBeforeOperation bool

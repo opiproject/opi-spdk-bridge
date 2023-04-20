@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"log"
 
+	models "github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/models"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
@@ -27,13 +27,13 @@ import (
 type Server struct {
 	pb.UnimplementedMiddleendServiceServer
 
-	rpc        server.JSONRPC
+	rpc        models.JSONRPC
 	Pagination map[string]int
 }
 
 // NewServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC server.JSONRPC) *Server {
+func NewServer(jsonRPC models.JSONRPC) *Server {
 	return &Server{
 		rpc:        jsonRPC,
 		Pagination: make(map[string]int),
