@@ -60,7 +60,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 		log.Println("Pci endpoint should be specified")
 		return nil, errNoPcieEndpoint
 	}
-	location, err := s.nvmeDeviceLocator.Calculate(in.NvmeController.Spec.PcieId)
+	location, err := s.locator.Calculate(in.NvmeController.Spec.PcieId)
 	if err != nil {
 		log.Println("Failed to calculate device location: ", err)
 		return nil, errDeviceEndpoint

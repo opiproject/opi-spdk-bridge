@@ -46,12 +46,11 @@ type Server struct {
 	timeout                time.Duration
 	pollDevicePresenceStep time.Duration
 
-	nvmeDeviceLocator      deviceLocator
-	virtioBlkDeviceLocator deviceLocator
+	locator deviceLocator
 }
 
 // NewServer creates instance of KvmServer
-func NewServer(s *frontend.Server, qmpAddress string, ctrlrDir string, nvmeBuses []string, virtioBlkBuses []string) *Server {
+func NewServer(s *frontend.Server, qmpAddress string, ctrlrDir string, buses []string) *Server {
 	if s == nil {
 		log.Fatalf("Frontend Server cannot be nil")
 	}
@@ -71,8 +70,13 @@ func NewServer(s *frontend.Server, qmpAddress string, ctrlrDir string, nvmeBuses
 
 	timeout := 2 * time.Second
 	pollDevicePresenceStep := 5 * time.Millisecond
-	return &Server{s, qmpAddress, ctrlrDir, qmpProtocol, timeout, pollDevicePresenceStep,
-		newDeviceLocator(nvmeBuses, nvmeDeviceType), newDeviceLocator(virtioBlkBuses, virtioBlkDeviceType)}
+	return &Server{s,
+		qmpAddress,
+		ctrlrDir,
+		qmpProtocol,
+		timeout,
+		pollDevicePresenceStep,
+		newDeviceLocator(buses)}
 }
 
 func getProtocol(qmpAddress string) (string, error) {
