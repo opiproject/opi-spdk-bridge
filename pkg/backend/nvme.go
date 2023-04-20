@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -33,7 +33,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 		return volume, nil
 	}
 	// not found, so create a new one
-	params := models.BdevNvmeAttachControllerParams{
+	params := spdk.BdevNvmeAttachControllerParams{
 		Name:    in.NvMfRemoteController.Id.Value,
 		Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
 		Traddr:  in.NvMfRemoteController.Traddr,
@@ -44,7 +44,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 		Hdgst:   in.NvMfRemoteController.Hdgst,
 		Ddgst:   in.NvMfRemoteController.Ddgst,
 	}
-	var result []models.BdevNvmeAttachControllerResult
+	var result []spdk.BdevNvmeAttachControllerResult
 	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -76,10 +76,10 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		log.Printf("error: %v -> %v", err, volume)
 		// return nil, err
 	}
-	params := models.BdevNvmeDetachControllerParams{
+	params := spdk.BdevNvmeDetachControllerParams{
 		Name: in.Name,
 	}
-	var result models.BdevNvmeDetachControllerResult
+	var result spdk.BdevNvmeDetachControllerResult
 	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -105,7 +105,7 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.BdevNvmeGetControllerResult
+	var result []spdk.BdevNvmeGetControllerResult
 	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -139,10 +139,10 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 // GetNVMfRemoteController gets an NVMf remote controller
 func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("GetNVMfRemoteController: Received from client: %v", in)
-	params := models.BdevNvmeGetControllerParams{
+	params := spdk.BdevNvmeGetControllerParams{
 		Name: in.Name,
 	}
-	var result []models.BdevNvmeGetControllerResult
+	var result []spdk.BdevNvmeGetControllerResult
 	err := s.rpc.Call("bdev_nvme_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

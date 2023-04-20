@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"log"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -32,12 +32,12 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 		return volume, nil
 	}
 	// not found, so create a new one
-	params := models.BdevAioCreateParams{
+	params := spdk.BdevAioCreateParams{
 		Name:      in.AioController.Handle.Value,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
-	var result models.BdevAioCreateResult
+	var result spdk.BdevAioCreateResult
 	err := s.rpc.Call("bdev_aio_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -71,10 +71,10 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := models.BdevAioDeleteParams{
+	params := spdk.BdevAioDeleteParams{
 		Name: in.Name,
 	}
-	var result models.BdevAioDeleteResult
+	var result spdk.BdevAioDeleteResult
 	err := s.rpc.Call("bdev_aio_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -93,10 +93,10 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 // UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
-	params1 := models.BdevAioDeleteParams{
+	params1 := spdk.BdevAioDeleteParams{
 		Name: in.AioController.Handle.Value,
 	}
-	var result1 models.BdevAioDeleteResult
+	var result1 spdk.BdevAioDeleteResult
 	err1 := s.rpc.Call("bdev_aio_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
@@ -108,12 +108,12 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params2 := models.BdevAioCreateParams{
+	params2 := spdk.BdevAioCreateParams{
 		Name:      in.AioController.Handle.Value,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
-	var result2 models.BdevAioCreateResult
+	var result2 spdk.BdevAioCreateResult
 	err2 := s.rpc.Call("bdev_aio_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
@@ -143,7 +143,7 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.BdevGetBdevsResult
+	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -168,10 +168,10 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 // GetAioController gets an Aio controller
 func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("GetAioController: Received from client: %v", in)
-	params := models.BdevGetBdevsParams{
+	params := spdk.BdevGetBdevsParams{
 		Name: in.Name,
 	}
-	var result []models.BdevGetBdevsResult
+	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -189,11 +189,11 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 // AioControllerStats gets an Aio controller stats
 func (s *Server) AioControllerStats(_ context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
 	log.Printf("AioControllerStats: Received from client: %v", in)
-	params := models.BdevGetIostatParams{
+	params := spdk.BdevGetIostatParams{
 		Name: in.GetHandle().GetValue(),
 	}
 	// See https://mholt.github.io/json-to-go/
-	var result models.BdevGetIostatResult
+	var result spdk.BdevGetIostatResult
 	err := s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

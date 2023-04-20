@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"log"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -25,10 +25,10 @@ import (
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
-	params := models.VhostCreateScsiControllerParams{
+	params := spdk.VhostCreateScsiControllerParams{
 		Ctrlr: in.VirtioScsiController.Id.Value,
 	}
-	var result models.VhostCreateScsiControllerResult
+	var result spdk.VhostCreateScsiControllerResult
 	err := s.rpc.Call("vhost_create_scsi_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -50,10 +50,10 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 // DeleteVirtioScsiController deletes a Virtio SCSI controller
 func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiController: Received from client: %v", in)
-	params := models.VhostDeleteControllerParams{
+	params := spdk.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
-	var result models.VhostDeleteControllerResult
+	var result spdk.VhostDeleteControllerResult
 	err := s.rpc.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -80,7 +80,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.VhostGetControllersResult
+	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -105,10 +105,10 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 // GetVirtioScsiController gets a Virtio SCSI controller
 func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("GetVirtioScsiController: Received from client: %v", in)
-	params := models.VhostGetControllersParams{
+	params := spdk.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []models.VhostGetControllersResult
+	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -188,7 +188,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.VhostGetControllersResult
+	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -213,10 +213,10 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 // GetVirtioScsiLun gets a Virtio SCSI LUN
 func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("GetVirtioScsiLun: Received from client: %v", in)
-	params := models.VhostGetControllersParams{
+	params := spdk.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []models.VhostGetControllersResult
+	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

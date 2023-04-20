@@ -11,7 +11,7 @@ import (
 	"log"
 	"net"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -64,8 +64,8 @@ func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
 	}
 }
 
-func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams {
-	result := models.NvmfSubsystemAddListenerParams{}
+func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
+	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "tcp"
 	result.ListenAddress.Traddr = c.listenAddr.String()
@@ -85,14 +85,14 @@ func (s *Server) CreateNVMeSubsystem(_ context.Context, in *pb.CreateNVMeSubsyst
 		return subsys, nil
 	}
 	// not found, so create a new one
-	params := models.NvmfCreateSubsystemParams{
+	params := spdk.NvmfCreateSubsystemParams{
 		Nqn:           in.NvMeSubsystem.Spec.Nqn,
 		SerialNumber:  in.NvMeSubsystem.Spec.SerialNumber,
 		ModelNumber:   in.NvMeSubsystem.Spec.ModelNumber,
 		AllowAnyHost:  true,
 		MaxNamespaces: int(in.NvMeSubsystem.Spec.MaxNamespaces),
 	}
-	var result models.NvmfCreateSubsystemResult
+	var result spdk.NvmfCreateSubsystemResult
 	err := s.rpc.Call("nvmf_create_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -104,7 +104,7 @@ func (s *Server) CreateNVMeSubsystem(_ context.Context, in *pb.CreateNVMeSubsyst
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	var ver models.GetVersionResult
+	var ver spdk.GetVersionResult
 	err = s.rpc.Call("spdk_get_version", nil, &ver)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -134,10 +134,10 @@ func (s *Server) DeleteNVMeSubsystem(_ context.Context, in *pb.DeleteNVMeSubsyst
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := models.NvmfDeleteSubsystemParams{
+	params := spdk.NvmfDeleteSubsystemParams{
 		Nqn: subsys.Spec.Nqn,
 	}
-	var result models.NvmfDeleteSubsystemResult
+	var result spdk.NvmfDeleteSubsystemResult
 	err := s.rpc.Call("nvmf_delete_subsystem", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -167,7 +167,7 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.NvmfGetSubsystemsResult
+	var result []spdk.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -199,7 +199,7 @@ func (s *Server) GetNVMeSubsystem(_ context.Context, in *pb.GetNVMeSubsystemRequ
 		return nil, err
 	}
 
-	var result []models.NvmfGetSubsystemsResult
+	var result []spdk.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -221,7 +221,7 @@ func (s *Server) GetNVMeSubsystem(_ context.Context, in *pb.GetNVMeSubsystemRequ
 // NVMeSubsystemStats gets NVMe Subsystem stats
 func (s *Server) NVMeSubsystemStats(_ context.Context, in *pb.NVMeSubsystemStatsRequest) (*pb.NVMeSubsystemStatsResponse, error) {
 	log.Printf("NVMeSubsystemStats: Received from client: %v", in)
-	var result models.NvmfGetSubsystemStatsResult
+	var result spdk.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -249,7 +249,7 @@ func (s *Server) CreateNVMeController(_ context.Context, in *pb.CreateNVMeContro
 	}
 
 	params := s.Nvme.subsysListener.Params(in.NvMeController, subsys.Spec.Nqn)
-	var result models.NvmfSubsystemAddListenerResult
+	var result spdk.NvmfSubsystemAddListenerResult
 	err := s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -293,7 +293,7 @@ func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeContro
 	}
 
 	params := s.Nvme.subsysListener.Params(controller, subsys.Spec.Nqn)
-	var result models.NvmfSubsystemAddListenerResult
+	var result spdk.NvmfSubsystemAddListenerResult
 	err := s.rpc.Call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -370,7 +370,7 @@ func (s *Server) CreateNVMeNamespace(_ context.Context, in *pb.CreateNVMeNamespa
 		return nil, err
 	}
 
-	params := models.NvmfSubsystemAddNsParams{
+	params := spdk.NvmfSubsystemAddNsParams{
 		Nqn: subsys.Spec.Nqn,
 	}
 
@@ -378,7 +378,7 @@ func (s *Server) CreateNVMeNamespace(_ context.Context, in *pb.CreateNVMeNamespa
 	params.Namespace.Nsid = int(in.NvMeNamespace.Spec.HostNsid)
 	params.Namespace.BdevName = in.NvMeNamespace.Spec.VolumeId.Value
 
-	var result models.NvmfSubsystemAddNsResult
+	var result spdk.NvmfSubsystemAddNsResult
 	err := s.rpc.Call("nvmf_subsystem_add_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -421,11 +421,11 @@ func (s *Server) DeleteNVMeNamespace(_ context.Context, in *pb.DeleteNVMeNamespa
 		return nil, err
 	}
 
-	params := models.NvmfSubsystemRemoveNsParams{
+	params := spdk.NvmfSubsystemRemoveNsParams{
 		Nqn:  subsys.Spec.Nqn,
 		Nsid: int(namespace.Spec.HostNsid),
 	}
-	var result models.NvmfSubsystemRemoveNsResult
+	var result spdk.NvmfSubsystemRemoveNsResult
 	err := s.rpc.Call("nvmf_subsystem_remove_ns", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -474,7 +474,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		}
 		nqn = subsys.Spec.Nqn
 	}
-	var result []models.NvmfGetSubsystemsResult
+	var result []spdk.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -528,7 +528,7 @@ func (s *Server) GetNVMeNamespace(_ context.Context, in *pb.GetNVMeNamespaceRequ
 		return nil, err
 	}
 
-	var result []models.NvmfGetSubsystemsResult
+	var result []spdk.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
