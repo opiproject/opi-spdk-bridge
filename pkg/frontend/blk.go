@@ -11,7 +11,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -32,20 +32,20 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 		return controller, nil
 	}
 	// not found, so create a new one
-	params := models.VhostCreateBlkControllerParams{
+	params := spdk.VhostCreateBlkControllerParams{
 		Ctrlr:   in.VirtioBlk.Id.Value,
 		DevName: in.VirtioBlk.VolumeId.Value,
 	}
-	var result models.VhostCreateBlkControllerResult
+	var result spdk.VhostCreateBlkControllerResult
 	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
-		return nil, fmt.Errorf("%w for %v", models.ErrFailedSpdkCall, in)
+		return nil, fmt.Errorf("%w for %v", spdk.ErrFailedSpdkCall, in)
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		log.Printf("Could not create: %v", in)
-		return nil, fmt.Errorf("%w for %v", models.ErrUnexpectedSpdkCallResult, in)
+		return nil, fmt.Errorf("%w for %v", spdk.ErrUnexpectedSpdkCallResult, in)
 	}
 	s.Virt.BlkCtrls[in.VirtioBlk.Id.Value] = in.VirtioBlk
 	// s.VirtioCtrls[in.VirtioBlk.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
@@ -70,10 +70,10 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := models.VhostDeleteControllerParams{
+	params := spdk.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
-	var result models.VhostDeleteControllerResult
+	var result spdk.VhostDeleteControllerResult
 	err := s.rpc.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -101,7 +101,7 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.VhostGetControllersResult
+	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -135,10 +135,10 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params := models.VhostGetControllersParams{
+	params := spdk.VhostGetControllersParams{
 		Name: in.Name,
 	}
-	var result []models.VhostGetControllersResult
+	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 )
 
 var (
@@ -48,29 +48,29 @@ func (s stubJSONRRPC) StartUnixListener() net.Listener {
 func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
 	if method == "vhost_create_blk_controller" {
 		if s.err == nil {
-			resultCreateVirtioBLk, ok := result.(*models.VhostCreateBlkControllerResult)
+			resultCreateVirtioBLk, ok := result.(*spdk.VhostCreateBlkControllerResult)
 			if !ok {
 				log.Panicf("Unexpected type for virtio-blk device creation result")
 			}
-			*resultCreateVirtioBLk = models.VhostCreateBlkControllerResult(true)
+			*resultCreateVirtioBLk = spdk.VhostCreateBlkControllerResult(true)
 		}
 		return s.err
 	} else if method == "vhost_delete_controller" {
 		if s.err == nil {
-			resultDeleteVirtioBLk, ok := result.(*models.VhostDeleteControllerResult)
+			resultDeleteVirtioBLk, ok := result.(*spdk.VhostDeleteControllerResult)
 			if !ok {
 				log.Panicf("Unexpected type for virtio-blk device deletion result")
 			}
-			*resultDeleteVirtioBLk = models.VhostDeleteControllerResult(true)
+			*resultDeleteVirtioBLk = spdk.VhostDeleteControllerResult(true)
 		}
 		return s.err
 	} else if method == "nvmf_subsystem_add_listener" || method == "nvmf_subsystem_remove_listener" {
 		if s.err == nil {
-			resultCreateNvmeController, ok := result.(*models.NvmfSubsystemAddListenerResult)
+			resultCreateNvmeController, ok := result.(*spdk.NvmfSubsystemAddListenerResult)
 			if !ok {
 				log.Panicf("Unexpected type for add subsystem listener result")
 			}
-			*resultCreateNvmeController = models.NvmfSubsystemAddListenerResult(true)
+			*resultCreateNvmeController = spdk.NvmfSubsystemAddListenerResult(true)
 		}
 		return s.err
 	} else {

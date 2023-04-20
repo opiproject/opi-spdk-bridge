@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"testing"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
@@ -90,7 +90,7 @@ func TestNewVfiouserSubsystemListener(t *testing.T) {
 
 func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
 	tmpDir := os.TempDir()
-	wantParams := models.NvmfSubsystemAddListenerParams{}
+	wantParams := spdk.NvmfSubsystemAddListenerParams{}
 	wantParams.Nqn = "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a"
 	wantParams.ListenAddress.Trtype = "vfiouser"
 	wantParams.ListenAddress.Traddr = filepath.Join(tmpDir, "nvme-1")
@@ -121,7 +121,7 @@ func TestCreateNvmeController(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		jsonRPC                       models.JSONRPC
+		jsonRPC                       spdk.JSONRPC
 		nonDefaultQmpAddress          string
 		ctrlrDirExistsBeforeOperation bool
 		ctrlrDirExistsAfterOperation  bool
@@ -210,7 +210,7 @@ func TestCreateNvmeController(t *testing.T) {
 
 func TestDeleteNvmeController(t *testing.T) {
 	tests := map[string]struct {
-		jsonRPC              models.JSONRPC
+		jsonRPC              spdk.JSONRPC
 		nonDefaultQmpAddress string
 
 		ctrlrDirExistsBeforeOperation bool

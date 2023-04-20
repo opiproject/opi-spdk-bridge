@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"log"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -32,12 +32,12 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 		return volume, nil
 	}
 	// not found, so create a new one
-	params := models.BdevNullCreateParams{
+	params := spdk.BdevNullCreateParams{
 		Name:      in.NullDebug.Handle.Value,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
-	var result models.BdevNullCreateResult
+	var result spdk.BdevNullCreateResult
 	err := s.rpc.Call("bdev_null_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -71,10 +71,10 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := models.BdevNullDeleteParams{
+	params := spdk.BdevNullDeleteParams{
 		Name: in.Name,
 	}
-	var result models.BdevNullDeleteResult
+	var result spdk.BdevNullDeleteResult
 	err := s.rpc.Call("bdev_null_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -93,10 +93,10 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 // UpdateNullDebug updates a Null Debug instance
 func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
-	params1 := models.BdevNullDeleteParams{
+	params1 := spdk.BdevNullDeleteParams{
 		Name: in.NullDebug.Handle.Value,
 	}
-	var result1 models.BdevNullDeleteResult
+	var result1 spdk.BdevNullDeleteResult
 	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
@@ -108,12 +108,12 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params2 := models.BdevNullCreateParams{
+	params2 := spdk.BdevNullCreateParams{
 		Name:      in.NullDebug.Handle.Value,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
-	var result2 models.BdevNullCreateResult
+	var result2 spdk.BdevNullCreateResult
 	err2 := s.rpc.Call("bdev_null_create", &params2, &result2)
 	if err2 != nil {
 		log.Printf("error: %v", err2)
@@ -143,7 +143,7 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 		log.Printf("error: %v", perr)
 		return nil, perr
 	}
-	var result []models.BdevGetBdevsResult
+	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -168,10 +168,10 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 // GetNullDebug gets a a Null Debug instance
 func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("GetNullDebug: Received from client: %v", in)
-	params := models.BdevGetBdevsParams{
+	params := spdk.BdevGetBdevsParams{
 		Name: in.Name,
 	}
-	var result []models.BdevGetBdevsResult
+	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -189,11 +189,11 @@ func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*p
 // NullDebugStats gets a Null Debug instance stats
 func (s *Server) NullDebugStats(_ context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
 	log.Printf("NullDebugStats: Received from client: %v", in)
-	params := models.BdevGetIostatParams{
+	params := spdk.BdevGetIostatParams{
 		Name: in.Handle.Value,
 	}
 	// See https://mholt.github.io/json-to-go/
-	var result models.BdevGetIostatResult
+	var result spdk.BdevGetIostatResult
 	err := s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)

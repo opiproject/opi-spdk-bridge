@@ -13,7 +13,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	models "github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 )
@@ -41,8 +41,8 @@ func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
 	}
 }
 
-func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) models.NvmfSubsystemAddListenerParams {
-	result := models.NvmfSubsystemAddListenerParams{}
+func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
+	result := spdk.NvmfSubsystemAddListenerParams{}
 	ctrlrDirPath := controllerDirPath(c.ctrlrDir, ctrlr.Spec.Id.Value)
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "vfiouser"
