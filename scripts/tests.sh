@@ -22,7 +22,7 @@ done
 curl --fail --insecure --user spdkuser:spdkpass -X POST -H 'Content-Type: application/json' -d '{"id": 1, "method": "bdev_get_bdevs"}' http://127.0.0.1:9009
 
 STORAGE_CLIENT_NAME=$(docker-compose ps | grep opi-spdk-client | awk '{print $1}')
-STORAGE_CLIENT_RC=$(docker inspect --format '{{.State.ExitCode}}' "${STORAGE_CLIENT_NAME}")
+STORAGE_CLIENT_RC=$(docker wait "${STORAGE_CLIENT_NAME}")
 if [ "${STORAGE_CLIENT_RC}" != "0" ]; then
     echo "opi-spdk-client failed:"
     docker logs "${STORAGE_CLIENT_NAME}"
