@@ -58,6 +58,35 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 	return &emptypb.Empty{}, nil
 }
 
+// UpdateQosVolume updates a QoS volume
+func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeRequest) (*pb.QosVolume, error) {
+	log.Printf("UpdateQosVolume: Received from client: %v", in)
+	if err := s.verifyQosVolume(in.QosVolume); err != nil {
+		log.Println("error:", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	qosVolumeID := in.QosVolume.QosVolumeId.Value
+	volume, ok := s.volumes.qosVolumes[qosVolumeID]
+	if !ok {
+		log.Printf("Non-existing QoS volume with id %v", qosVolumeID)
+		return nil, status.Errorf(codes.NotFound, "volume_id %v does not exist", qosVolumeID)
+	}
+
+	if volume.VolumeId.Value != in.QosVolume.VolumeId.Value {
+		msg := fmt.Sprintf("Change of underlying volume %v to a new one %v is forbidden",
+			volume.VolumeId.Value, in.QosVolume.VolumeId.Value)
+		log.Println("error:", msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	log.Println("Set new max limit values")
+	if err := s.setMaxLimit(in.QosVolume.VolumeId.Value, in.QosVolume.LimitMax); err != nil {
+		return nil, err
+	}
+
+	s.volumes.qosVolumes[qosVolumeID] = in.QosVolume
+	return in.QosVolume, nil
+}
+
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	if volume.QosVolumeId == nil || volume.QosVolumeId.Value == "" {
 		return fmt.Errorf("qos_volume_id cannot be empty")
