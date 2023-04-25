@@ -29,24 +29,8 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return volume, nil
 	}
 
-	params := spdk.BdevQoSParams{
-		Name:           in.QosVolume.VolumeId.Value,
-		RwIosPerSec:    int(in.QosVolume.LimitMax.RwIopsKiops * 1000),
-		RwMbytesPerSec: int(in.QosVolume.LimitMax.RwBandwidthMbs),
-		RMbytesPerSec:  int(in.QosVolume.LimitMax.RdBandwidthMbs),
-		WMbytesPerSec:  int(in.QosVolume.LimitMax.RdBandwidthMbs),
-	}
-	var result spdk.BdevQoSResult
-	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, spdk.ErrFailedSpdkCall
-	}
-	log.Printf("Received from SPDK: %v", result)
-	if !result {
-		msg := fmt.Sprintf("Could not set QoS limit: %s", in.QosVolume)
-		log.Print(msg)
-		return nil, spdk.ErrUnexpectedSpdkCallResult
+	if err := s.setMaxLimit(in.QosVolume.VolumeId.Value, in.QosVolume.LimitMax); err != nil {
+		return nil, err
 	}
 
 	s.volumes.qosVolumes[in.QosVolume.QosVolumeId.Value] = proto.Clone(in.QosVolume).(*pb.QosVolume)
@@ -65,24 +49,9 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	params := spdk.BdevQoSParams{
-		Name:           qosVolume.VolumeId.Value,
-		RwIosPerSec:    0,
-		RwMbytesPerSec: 0,
-		RMbytesPerSec:  0,
-		WMbytesPerSec:  0,
-	}
-	var result spdk.BdevQoSResult
-	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, spdk.ErrFailedSpdkCall
-	}
-	log.Printf("Received from SPDK: %v", result)
-	if !result {
-		msg := fmt.Sprintf("Could not clear QoS limit for : %s", in.Name)
-		log.Print(msg)
-		return nil, spdk.ErrUnexpectedSpdkCallResult
+
+	if err := s.cleanMaxLimit(qosVolume.VolumeId.Value); err != nil {
+		return nil, err
 	}
 
 	delete(s.volumes.qosVolumes, in.Name)
@@ -130,4 +99,32 @@ func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	}
 
 	return nil
+}
+
+func (s *Server) setMaxLimit(qosVolumeID string, limit *pb.QosLimit) error {
+	params := spdk.BdevQoSParams{
+		Name:           qosVolumeID,
+		RwIosPerSec:    int(limit.RwIopsKiops * 1000),
+		RwMbytesPerSec: int(limit.RwBandwidthMbs),
+		RMbytesPerSec:  int(limit.RdBandwidthMbs),
+		WMbytesPerSec:  int(limit.RdBandwidthMbs),
+	}
+	var result spdk.BdevQoSResult
+	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return spdk.ErrFailedSpdkCall
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not set max QoS limit: %s on %v", limit, qosVolumeID)
+		log.Print(msg)
+		return spdk.ErrUnexpectedSpdkCallResult
+	}
+
+	return nil
+}
+
+func (s *Server) cleanMaxLimit(qosVolumeID string) error {
+	return s.setMaxLimit(qosVolumeID, &pb.QosLimit{})
 }
