@@ -392,3 +392,292 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 		})
 	}
 }
+
+func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
+	originalQosVolume := &pb.QosVolume{
+		QosVolumeId: testQosVolume.QosVolumeId,
+		VolumeId:    testQosVolume.VolumeId,
+		LimitMax:    &pb.QosLimit{RdBandwidthMbs: 1221},
+	}
+	tests := map[string]struct {
+		in          *pb.QosVolume
+		out         *pb.QosVolume
+		spdk        []string
+		errCode     codes.Code
+		errMsg      string
+		start       bool
+		existBefore bool
+	}{
+		"limit_min is not supported": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMin: &pb.QosLimit{
+					RdIopsKiops: 100000,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_min is not supported",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max rd_iops_kiops is not supported": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					RdIopsKiops: 100000,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max rd_iops_kiops is not supported",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max wr_iops_kiops is not supported": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					WrIopsKiops: 100000,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max wr_iops_kiops is not supported",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max rw_iops_kiops is negative": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					RwIopsKiops: -1,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max rw_iops_kiops cannot be negative",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max rd_bandwidth_kiops is negative": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					RdBandwidthMbs: -1,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max rd_bandwidth_mbs cannot be negative",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max wr_bandwidth_kiops is negative": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					WrBandwidthMbs: -1,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max wr_bandwidth_mbs cannot be negative",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max rw_bandwidth_kiops is negative": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					RwBandwidthMbs: -1,
+				},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max rw_bandwidth_mbs cannot be negative",
+			start:       false,
+			existBefore: true,
+		},
+		"limit_max with all zero limits": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax:    &pb.QosLimit{},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "QoS volume limit_max should set limit",
+			start:       false,
+			existBefore: true,
+		},
+		"qos_volume_id is nil": {
+			in: &pb.QosVolume{
+				QosVolumeId: nil,
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "qos_volume_id cannot be empty",
+			start:       false,
+			existBefore: true,
+		},
+		"qos_volume_id is empty": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: ""},
+				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "qos_volume_id cannot be empty",
+			start:       false,
+			existBefore: true,
+		},
+		"volume_id is nil": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    nil,
+				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "volume_id cannot be empty",
+			start:       false,
+			existBefore: true,
+		},
+		"volume_id is empty": {
+			in: &pb.QosVolume{
+				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
+				VolumeId:    &_go.ObjectKey{Value: ""},
+				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+			},
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.InvalidArgument,
+			errMsg:      "volume_id cannot be empty",
+			start:       false,
+			existBefore: true,
+		},
+		"qos volume does not exist": {
+			in:          testQosVolume,
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.NotFound,
+			errMsg:      fmt.Sprintf("volume_id %v does not exist", testQosVolume.QosVolumeId.Value),
+			start:       false,
+			existBefore: false,
+		},
+		"change underlying volume": {
+			in: &pb.QosVolume{
+				QosVolumeId: testQosVolume.QosVolumeId,
+				VolumeId:    &_go.ObjectKey{Value: "new-underlying-volume-id"},
+				LimitMax:    &pb.QosLimit{RdBandwidthMbs: 1},
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg: fmt.Sprintf("Change of underlying volume %v to a new one %v is forbidden",
+				originalQosVolume.VolumeId.Value, "new-underlying-volume-id"),
+			start:       false,
+			existBefore: true,
+		},
+		"SPDK call failed": {
+			in:          testQosVolume,
+			out:         nil,
+			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
+			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
+			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
+			start:       true,
+			existBefore: true,
+		},
+		"SPDK call result false": {
+			in:          testQosVolume,
+			out:         nil,
+			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
+			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
+			start:       true,
+			existBefore: true,
+		},
+		"successful update": {
+			in:          testQosVolume,
+			out:         testQosVolume,
+			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			errCode:     codes.OK,
+			errMsg:      "",
+			start:       true,
+			existBefore: true,
+		},
+		"update with the same limit values": {
+			in:          originalQosVolume,
+			out:         originalQosVolume,
+			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			errCode:     codes.OK,
+			errMsg:      "",
+			start:       true,
+			existBefore: true,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in}
+
+			if tt.existBefore {
+				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.QosVolumeId.Value] = originalQosVolume
+			}
+
+			response, err := testEnv.client.UpdateQosVolume(testEnv.ctx, request)
+
+			marshalledOut, _ := proto.Marshal(tt.out)
+			marshalledResponse, _ := proto.Marshal(response)
+			if !bytes.Equal(marshalledOut, marshalledResponse) {
+				t.Error("response: expected", tt.out, "received", response)
+			}
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expect grpc error status")
+			}
+
+			vol := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value]
+			if tt.errCode == codes.OK {
+				if !proto.Equal(tt.in, vol) {
+					t.Error("expect QoS volume", vol, "is equal to", tt.in)
+				}
+			} else if tt.existBefore {
+				if !proto.Equal(originalQosVolume, vol) {
+					t.Error("expect QoS volume", originalQosVolume, "is preserved, received", vol)
+				}
+			}
+		})
+	}
+}
