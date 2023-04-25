@@ -53,9 +53,9 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 	return in.QosVolume, nil
 }
 
-// DeleteQosVolume creates a QoS volume
+// DeleteQosVolume deletes a QoS volume
 func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
-	log.Printf("CreateQosVolume: Received from client: %v", in)
+	log.Printf("DeleteQosVolume: Received from client: %v", in)
 	qosVolume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
 		if in.AllowMissing {
