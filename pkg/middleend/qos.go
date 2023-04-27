@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -85,6 +87,32 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 
 	s.volumes.qosVolumes[qosVolumeID] = in.QosVolume
 	return in.QosVolume, nil
+}
+
+// ListQosVolumes lists QoS volumes
+func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
+	log.Printf("ListQosVolume: Received from client: %v", in)
+
+	size, offset, err := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	volumes := []*pb.QosVolume{}
+	for _, qosVolume := range s.volumes.qosVolumes {
+		volumes = append(volumes, proto.Clone(qosVolume).(*pb.QosVolume))
+	}
+
+	token := ""
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(volumes), offset, size)
+	volumes, hasMoreElements := server.LimitPagination(volumes, offset, size)
+	if hasMoreElements {
+		token = uuid.New().String()
+		s.Pagination[token] = offset + size
+	}
+
+	return &pb.ListQosVolumesResponse{QosVolumes: volumes, NextPageToken: token}, nil
 }
 
 // GetQosVolume gets a QoS volume
