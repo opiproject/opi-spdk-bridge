@@ -682,6 +682,135 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 	}
 }
 
+func TestMiddleEnd_ListQosVolume(t *testing.T) {
+	qosVolume0 := &pb.QosVolume{
+		QosVolumeId: &_go.ObjectKey{Value: "qos-volume-41"},
+		VolumeId:    &_go.ObjectKey{Value: "volume-41"},
+		LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+	}
+	qosVolume1 := &pb.QosVolume{
+		QosVolumeId: &_go.ObjectKey{Value: "qos-volume-45"},
+		VolumeId:    &_go.ObjectKey{Value: "volume-45"},
+		LimitMax:    &pb.QosLimit{RwBandwidthMbs: 5},
+	}
+	existingToken := "existing-pagination-token"
+	tests := map[string]struct {
+		out             []*pb.QosVolume
+		existingVolumes map[string]*pb.QosVolume
+		errCode         codes.Code
+		errMsg          string
+		size            int32
+		token           string
+	}{
+		"no qos volumes were created": {
+			out:             []*pb.QosVolume{},
+			existingVolumes: map[string]*pb.QosVolume{},
+			errCode:         codes.OK,
+			errMsg:          "",
+			size:            0,
+			token:           "",
+		},
+		"qos volumes were created": {
+			out: []*pb.QosVolume{qosVolume0, qosVolume1},
+			existingVolumes: map[string]*pb.QosVolume{
+				qosVolume0.QosVolumeId.Value: qosVolume0,
+				qosVolume1.QosVolumeId.Value: qosVolume1,
+			},
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    0,
+			token:   "",
+		},
+		// TODO: Uncomment tests when sort of results is added to ListQosVolumes
+		// "pagination": {
+		// 	out: []*pb.QosVolume{qosVolume0},
+		// 	existingVolumes: map[string]*pb.QosVolume{
+		// 		qosVolume0.QosVolumeId.Value: qosVolume0,
+		// 		qosVolume1.QosVolumeId.Value: qosVolume1,
+		// 	},
+		// 	errCode: codes.OK,
+		// 	errMsg:  "",
+		// 	size:    1,
+		// 	token:   "",
+		// },
+		// "pagination offset": {
+		// 	out: []*pb.QosVolume{qosVolume1},
+		// 	existingVolumes: map[string]*pb.QosVolume{
+		// 		qosVolume0.QosVolumeId.Value: qosVolume0,
+		// 		qosVolume1.QosVolumeId.Value: qosVolume1,
+		// 	},
+		// 	errCode: codes.OK,
+		// 	errMsg:  "",
+		// 	size:    1,
+		// 	token:   existingToken,
+		// },
+		"pagination negative": {
+			out: nil,
+			existingVolumes: map[string]*pb.QosVolume{
+				qosVolume0.QosVolumeId.Value: qosVolume0,
+				qosVolume1.QosVolumeId.Value: qosVolume1,
+			},
+			errCode: codes.InvalidArgument,
+			errMsg:  "negative PageSize is not allowed",
+			size:    -10,
+			token:   "",
+		},
+		"pagination error": {
+			out: nil,
+			existingVolumes: map[string]*pb.QosVolume{
+				qosVolume0.QosVolumeId.Value: qosVolume0,
+				qosVolume1.QosVolumeId.Value: qosVolume1,
+			},
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			size:    0,
+			token:   "unknown-pagination-token",
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(false, []string{})
+			defer testEnv.Close()
+			testEnv.opiSpdkServer.volumes.qosVolumes = tt.existingVolumes
+			request := &pb.ListQosVolumesRequest{}
+			request.PageSize = tt.size
+			request.PageToken = tt.token
+			testEnv.opiSpdkServer.Pagination[existingToken] = 1
+
+			response, err := testEnv.client.ListQosVolumes(testEnv.ctx, request)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expect grpc error status")
+			}
+
+			if response != nil {
+				if len(tt.out) != len(response.QosVolumes) {
+					t.Error("Expected", tt.out, "received", response.QosVolumes)
+				} else {
+					for _, expectVol := range tt.out {
+						found := false
+						for _, receivedVol := range response.QosVolumes {
+							if proto.Equal(expectVol, receivedVol) {
+								found = true
+							}
+						}
+						if !found {
+							t.Error("expect ", expectVol, "received in", response.QosVolumes)
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestMiddleEnd_GetQosVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
