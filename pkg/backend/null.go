@@ -14,6 +14,7 @@ import (
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"github.com/opiproject/opi-spdk-bridge/pkg/volume"
 
 	"github.com/google/uuid"
 	"github.com/ulule/deepcopier"
@@ -26,14 +27,20 @@ import (
 func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
-	if ok {
-		log.Printf("Already existing NullDebug with id %v", in.NullDebug.Handle.Value)
-		return volume, nil
+	// vol, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
+	vol := s.registry.Find(in.NullDebug.Handle.Value)
+	if vol != nil {
+		if null := vol.Descriptor().ToNullDebug(); null != nil {
+			log.Printf("Already existing NullDebug with id %v", in.NullDebug.Handle.Value)
+			return null, nil
+		} else {
+			// panic?
+		}
 	}
+	vol = volume.NewNullVolume(in.NullDebug)
 	// not found, so create a new one
 	params := spdk.BdevNullCreateParams{
-		Name:      in.NullDebug.Handle.Value,
+		Name:      vol.BdevName(),
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -55,6 +62,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	s.registry.Add(in.NullDebug.Handle.Value, vol)
 	s.Volumes.NullVolumes[in.NullDebug.Handle.Value] = response
 	return response, nil
 }
@@ -62,8 +70,8 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 // DeleteNullDebug deletes a Null Debug instance
 func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNullDebug: Received from client: %v", in)
-	volume, ok := s.Volumes.NullVolumes[in.Name]
-	if !ok {
+	vol := s.registry.Find(in.Name)
+	if vol == nil {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
@@ -71,22 +79,26 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+
+	err := s.registry.Delete(in.Name)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
 	params := spdk.BdevNullDeleteParams{
 		Name: in.Name,
 	}
 	var result spdk.BdevNullDeleteResult
-	err := s.rpc.Call("bdev_null_delete", &params, &result)
+	err = s.rpc.Call("bdev_null_delete", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete Null Dev: %s", volume.Handle.Value)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", in.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Volumes.NullVolumes, volume.Handle.Value)
 	return &emptypb.Empty{}, nil
 }
 

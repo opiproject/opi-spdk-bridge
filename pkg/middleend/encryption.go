@@ -30,6 +30,24 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	encrVol := s.registry.Find(in.EncryptedVolume.EncryptedVolumeId.Value)
+	if encrVol != nil {
+		log.Printf("Already existing encrypted volume with id %v", in.EncryptedVolume.EncryptedVolumeId.Value)
+		if encr := encrVol.Descriptor().ToEncryptedVolume(); encr != nil {
+			return encr, nil
+		} else {
+			// panic?
+		}
+	}
+	vol := s.registry.Find(in.EncryptedVolume.VolumeId.Value)
+	if vol == nil {
+		return nil, status.Errorf(codes.NotFound, "Underlying volume %v not found", in.EncryptedVolume.VolumeId.Value)
+	}
+	encrVol, err := vol.CreateEncryptedVolume(in.EncryptedVolume)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
 	// first create a key
 	params1 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result1 spdk.AccelCryptoKeyCreateResult
@@ -46,12 +64,12 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	}
 	// create bdev now
 	params := spdk.BdevCryptoCreateParams{
-		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
-		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
+		Name:         encrVol.BdevName(),
+		BaseBdevName: vol.BdevName(),
 		KeyName:      in.EncryptedVolume.EncryptedVolumeId.Value,
 	}
 	var result spdk.BdevCryptoCreateResult
-	err := s.rpc.Call("bdev_crypto_create", &params, &result)
+	err = s.rpc.Call("bdev_crypto_create", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -68,17 +86,34 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+
+	s.registry.Add(in.EncryptedVolume.EncryptedVolumeId.Value, encrVol)
 	return response, nil
 }
 
 // DeleteEncryptedVolume deletes an encrypted volume
 func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
+
+	vol := s.registry.Find(in.Name)
+	if vol == nil {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	err := s.registry.Delete(in.Name)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
 	bdevCryptoDeleteParams := spdk.BdevCryptoDeleteParams{
-		Name: in.Name,
+		Name: vol.BdevName(),
 	}
 	var bdevCryptoDeleteResult spdk.BdevCryptoDeleteResult
-	err := s.rpc.Call("bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
+	err = s.rpc.Call("bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -91,7 +126,7 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 	}
 
 	keyDestroyParams := spdk.AccelCryptoKeyDestroyParams{
-		KeyName: in.Name,
+		KeyName: vol.BdevName(),
 	}
 	var keyDestroyResult spdk.AccelCryptoKeyDestroyResult
 	err = s.rpc.Call("accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)

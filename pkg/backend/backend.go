@@ -8,6 +8,7 @@ package backend
 import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/volume"
 )
 
 // TODO: can we combine all of volume types into a single list?
@@ -29,11 +30,12 @@ type Server struct {
 	rpc        spdk.JSONRPC
 	Volumes    VolumeParameters
 	Pagination map[string]int
+	registry   *volume.Registry
 }
 
 // NewServer creates initialized instance of BackEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC, registry *volume.Registry) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Volumes: VolumeParameters{
@@ -42,5 +44,6 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 			NvmeVolumes: make(map[string]*pb.NVMfRemoteController),
 		},
 		Pagination: make(map[string]int),
+		registry:   registry,
 	}
 }

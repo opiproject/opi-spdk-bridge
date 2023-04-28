@@ -13,7 +13,6 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -24,20 +23,33 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if volume, ok := s.volumes.qosVolumes[in.QosVolume.QosVolumeId.Value]; ok {
+	qosVol := s.registry.Find(in.QosVolume.QosVolumeId.Value)
+	if qosVol != nil {
 		log.Printf("Already existing QoS volume with id %v", in.QosVolume.QosVolumeId.Value)
-		return volume, nil
+		if qos := qosVol.Descriptor().ToQosVolume(); qos != nil {
+			return qos, nil
+		} else {
+			// panic?
+		}
+	}
+	vol := s.registry.Find(in.QosVolume.VolumeId.Value)
+	if vol == nil {
+		return nil, status.Errorf(codes.NotFound, "Underlying volume %v not found", in.QosVolume.VolumeId.Value)
+	}
+	qosVol, err := vol.CreateQosVolume(in.QosVolume)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	params := spdk.BdevQoSParams{
-		Name:           in.QosVolume.VolumeId.Value,
+		Name:           qosVol.BdevName(),
 		RwIosPerSec:    int(in.QosVolume.LimitMax.RwIopsKiops * 1000),
 		RwMbytesPerSec: int(in.QosVolume.LimitMax.RwBandwidthMbs),
 		RMbytesPerSec:  int(in.QosVolume.LimitMax.RdBandwidthMbs),
 		WMbytesPerSec:  int(in.QosVolume.LimitMax.RdBandwidthMbs),
 	}
 	var result spdk.BdevQoSResult
-	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
+	err = s.rpc.Call("bdev_set_qos_limit", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, spdk.ErrFailedSpdkCall
@@ -49,15 +61,16 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return nil, spdk.ErrUnexpectedSpdkCallResult
 	}
 
-	s.volumes.qosVolumes[in.QosVolume.QosVolumeId.Value] = proto.Clone(in.QosVolume).(*pb.QosVolume)
+	s.registry.Add(in.QosVolume.QosVolumeId.Value, qosVol)
+	// s.volumes.qosVolumes[in.QosVolume.QosVolumeId.Value] = proto.Clone(in.QosVolume).(*pb.QosVolume)
 	return in.QosVolume, nil
 }
 
 // DeleteQosVolume creates a QoS volume
 func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
-	qosVolume, ok := s.volumes.qosVolumes[in.Name]
-	if !ok {
+	vol := s.registry.Find(in.Name)
+	if vol == nil {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
@@ -65,15 +78,19 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	err := s.registry.Delete(in.Name)
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
 	params := spdk.BdevQoSParams{
-		Name:           qosVolume.VolumeId.Value,
+		Name:           vol.BdevName(),
 		RwIosPerSec:    0,
 		RwMbytesPerSec: 0,
 		RMbytesPerSec:  0,
 		WMbytesPerSec:  0,
 	}
 	var result spdk.BdevQoSResult
-	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
+	err = s.rpc.Call("bdev_set_qos_limit", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, spdk.ErrFailedSpdkCall
@@ -85,7 +102,7 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 		return nil, spdk.ErrUnexpectedSpdkCallResult
 	}
 
-	delete(s.volumes.qosVolumes, in.Name)
+	// delete(s.volumes.qosVolumes, in.Name)
 	return &emptypb.Empty{}, nil
 }
 

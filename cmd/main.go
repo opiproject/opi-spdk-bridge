@@ -15,6 +15,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/kvm"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/volume"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"google.golang.org/grpc"
@@ -47,9 +48,10 @@ func main() {
 	}
 	s := grpc.NewServer()
 
+	registry := volume.NewRegistry()
 	jsonRPC := spdk.NewSpdkJSONRPC(spdkAddress)
-	backendServer := backend.NewServer(jsonRPC)
-	middleendServer := middleend.NewServer(jsonRPC)
+	backendServer := backend.NewServer(jsonRPC, registry)
+	middleendServer := middleend.NewServer(jsonRPC, registry)
 
 	if useKvm {
 		log.Println("Creating KVM server.")

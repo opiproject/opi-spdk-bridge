@@ -8,6 +8,7 @@ package middleend
 import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/volume"
 )
 
 // VolumeParameters contains MiddleEnd volume related structures
@@ -23,16 +24,18 @@ type Server struct {
 	rpc        spdk.JSONRPC
 	volumes    VolumeParameters
 	Pagination map[string]int
+	registry   *volume.Registry
 }
 
 // NewServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC, registry *volume.Registry) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		volumes: VolumeParameters{
 			qosVolumes: make(map[string]*pb.QosVolume),
 		},
 		Pagination: make(map[string]int),
+		registry:   registry,
 	}
 }
