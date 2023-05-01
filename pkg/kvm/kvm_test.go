@@ -45,6 +45,10 @@ func (s stubJSONRRPC) StartUnixListener() net.Listener {
 	return nil
 }
 
+func (s stubJSONRRPC) GetVersion() string {
+	return ""
+}
+
 func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
 	if method == "vhost_create_blk_controller" {
 		if s.err == nil {
