@@ -681,3 +681,50 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		})
 	}
 }
+
+func TestMiddleEnd_GetQosVolume(t *testing.T) {
+	tests := map[string]struct {
+		in      string
+		out     *pb.QosVolume
+		errCode codes.Code
+		errMsg  string
+	}{
+		"unknown QoS volume name": {
+			in:      "unknown-qos-volume-id",
+			out:     nil,
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %s", "unknown-qos-volume-id"),
+		},
+		"existing QoS volume": {
+			in:      testQosVolume.QosVolumeId.Value,
+			out:     testQosVolume,
+			errCode: codes.OK,
+			errMsg:  "",
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(false, []string{})
+			defer testEnv.Close()
+			request := &pb.GetQosVolumeRequest{Name: tt.in}
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value] = testQosVolume
+
+			response, err := testEnv.client.GetQosVolume(testEnv.ctx, request)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expect grpc error status")
+			}
+
+			if tt.errCode == codes.OK && !proto.Equal(tt.out, response) {
+				t.Error("expect QoS volume", tt.out, "is equal to", response)
+			}
+		})
+	}
+}
