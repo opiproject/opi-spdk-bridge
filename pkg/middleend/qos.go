@@ -87,6 +87,18 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 	return in.QosVolume, nil
 }
 
+// GetQosVolume gets a QoS volume
+func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
+	log.Printf("GetQosVolume: Received from client: %v", in)
+	volume, ok := s.volumes.qosVolumes[in.Name]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return volume, nil
+}
+
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	if volume.QosVolumeId == nil || volume.QosVolumeId.Value == "" {
 		return fmt.Errorf("qos_volume_id cannot be empty")
