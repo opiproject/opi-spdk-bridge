@@ -99,6 +99,48 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 	return volume, nil
 }
 
+// QosVolumeStats gets a QoS volume stats
+func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest) (*pb.QosVolumeStatsResponse, error) {
+	log.Printf("QosVolumeStats: Received from client: %v", in)
+	if in.VolumeId == nil || in.VolumeId.Value == "" {
+		return nil, status.Error(codes.InvalidArgument, "volume_id cannot be empty")
+	}
+	volume, ok := s.volumes.qosVolumes[in.VolumeId.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VolumeId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	params := spdk.BdevGetIostatParams{
+		Name: volume.VolumeId.Value,
+	}
+	var result spdk.BdevGetIostatResult
+	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, spdk.ErrFailedSpdkCall
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if len(result.Bdevs) != 1 {
+		log.Printf("error: expect to find one bdev in response")
+		return nil, spdk.ErrUnexpectedSpdkCallResult
+	}
+
+	return &pb.QosVolumeStatsResponse{
+		Stats: &pb.VolumeStats{
+			ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
+			ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
+			WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),
+			WriteOpsCount:     int32(result.Bdevs[0].NumWriteOps),
+			UnmapBytesCount:   int32(result.Bdevs[0].BytesUnmapped),
+			UnmapOpsCount:     int32(result.Bdevs[0].NumUnmapOps),
+			ReadLatencyTicks:  int32(result.Bdevs[0].ReadLatencyTicks),
+			WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
+			UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
+		},
+		Id: in.VolumeId}, nil
+}
+
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	if volume.QosVolumeId == nil || volume.QosVolumeId.Value == "" {
 		return fmt.Errorf("qos_volume_id cannot be empty")
