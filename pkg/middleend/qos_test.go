@@ -728,3 +728,88 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 		})
 	}
 }
+
+func TestMiddleEnd_QosVolumeStats(t *testing.T) {
+	tests := map[string]struct {
+		in      *_go.ObjectKey
+		out     *pb.QosVolumeStatsResponse
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+	}{
+		"empty QoS volume id is not allowed ": {
+			in:      nil,
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  "volume_id cannot be empty",
+			start:   false,
+		},
+		"unknown QoS volume Id": {
+			in:      &_go.ObjectKey{Value: "unknown-qos-volume-id"},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %s", "unknown-qos-volume-id"),
+			start:   false,
+		},
+		"SPDK call failed": {
+			in:      testQosVolume.QosVolumeId,
+			out:     nil,
+			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"some internal error"}}`},
+			errCode: status.Convert(spdk.ErrFailedSpdkCall).Code(),
+			errMsg:  status.Convert(spdk.ErrFailedSpdkCall).Message(),
+			start:   true,
+		},
+		"SPDK call result false": {
+			in:      testQosVolume.QosVolumeId,
+			out:     nil,
+			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,"bdevs":[]}}`},
+			errCode: status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
+			errMsg:  status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
+			start:   true,
+		},
+		"successful QoS volume stats": {
+			in: testQosVolume.QosVolumeId,
+			out: &pb.QosVolumeStatsResponse{
+				Stats: &pb.VolumeStats{
+					ReadBytesCount: 36864,
+				},
+				Id: testQosVolume.QosVolumeId,
+			},
+			spdk: []string{
+				`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,` +
+					`"bdevs":[{"name":"` + testQosVolume.VolumeId.Value + `", "bytes_read": 36864}]}}`,
+			},
+			errCode: codes.OK,
+			errMsg:  "",
+			start:   true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+			request := &pb.QosVolumeStatsRequest{VolumeId: tt.in}
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value] = testQosVolume
+
+			response, err := testEnv.client.QosVolumeStats(testEnv.ctx, request)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expect grpc error status")
+			}
+
+			if tt.errCode == codes.OK && !proto.Equal(tt.out, response) {
+				t.Error("expect QoS volume stats", tt.out, "is equal to", response)
+			}
+		})
+	}
+}
