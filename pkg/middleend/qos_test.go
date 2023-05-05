@@ -721,29 +721,28 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			size:    0,
 			token:   "",
 		},
-		// TODO: Uncomment tests when sort of results is added to ListQosVolumes
-		// "pagination": {
-		// 	out: []*pb.QosVolume{qosVolume0},
-		// 	existingVolumes: map[string]*pb.QosVolume{
-		// 		qosVolume0.QosVolumeId.Value: qosVolume0,
-		// 		qosVolume1.QosVolumeId.Value: qosVolume1,
-		// 	},
-		// 	errCode: codes.OK,
-		// 	errMsg:  "",
-		// 	size:    1,
-		// 	token:   "",
-		// },
-		// "pagination offset": {
-		// 	out: []*pb.QosVolume{qosVolume1},
-		// 	existingVolumes: map[string]*pb.QosVolume{
-		// 		qosVolume0.QosVolumeId.Value: qosVolume0,
-		// 		qosVolume1.QosVolumeId.Value: qosVolume1,
-		// 	},
-		// 	errCode: codes.OK,
-		// 	errMsg:  "",
-		// 	size:    1,
-		// 	token:   existingToken,
-		// },
+		"pagination": {
+			out: []*pb.QosVolume{qosVolume0},
+			existingVolumes: map[string]*pb.QosVolume{
+				qosVolume0.QosVolumeId.Value: qosVolume0,
+				qosVolume1.QosVolumeId.Value: qosVolume1,
+			},
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    1,
+			token:   "",
+		},
+		"pagination offset": {
+			out: []*pb.QosVolume{qosVolume1},
+			existingVolumes: map[string]*pb.QosVolume{
+				qosVolume0.QosVolumeId.Value: qosVolume0,
+				qosVolume1.QosVolumeId.Value: qosVolume1,
+			},
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    1,
+			token:   existingToken,
+		},
 		"pagination negative": {
 			out: nil,
 			existingVolumes: map[string]*pb.QosVolume{

@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
@@ -21,6 +22,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
+	sort.Slice(volumes, func(i int, j int) bool {
+		return volumes[i].EncryptedVolumeId.Value < volumes[j].EncryptedVolumeId.Value
+	})
+}
 
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
@@ -216,6 +223,8 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 		r := &result[i]
 		Blobarray[i] = &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: r.Name}}
 	}
+	sortEncryptedVolumes(Blobarray)
+
 	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: Blobarray, NextPageToken: token}, nil
 }
 

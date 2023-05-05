@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
@@ -18,6 +19,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortQosVolumes(volumes []*pb.QosVolume) {
+	sort.Slice(volumes, func(i int, j int) bool {
+		return volumes[i].QosVolumeId.Value < volumes[j].QosVolumeId.Value
+	})
+}
 
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
@@ -103,6 +110,7 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 	for _, qosVolume := range s.volumes.qosVolumes {
 		volumes = append(volumes, proto.Clone(qosVolume).(*pb.QosVolume))
 	}
+	sortQosVolumes(volumes)
 
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(volumes), offset, size)
