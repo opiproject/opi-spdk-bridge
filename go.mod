@@ -8,7 +8,7 @@ require (
 	github.com/opiproject/gospdk v0.0.0-20230424140834-faeab6caeac6
 	github.com/opiproject/opi-api v0.0.0-20230427144911-9638639fdf99
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
-	google.golang.org/grpc v1.54.0
+	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )
 
