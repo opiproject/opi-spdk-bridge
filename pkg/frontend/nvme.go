@@ -234,6 +234,10 @@ func (s *Server) NVMeSubsystemStats(_ context.Context, in *pb.NVMeSubsystemStats
 // CreateNVMeController creates an NVMe controller
 func (s *Server) CreateNVMeController(_ context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.NvMeController)
+	if err := s.verifyNVMeController(in.NvMeController); err != nil {
+		log.Printf("error: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Nvme.Controllers[in.NvMeController.Spec.Id.Value]
 	if ok {
@@ -561,4 +565,23 @@ func (s *Server) GetNVMeNamespace(_ context.Context, in *pb.GetNVMeNamespaceRequ
 func (s *Server) NVMeNamespaceStats(_ context.Context, in *pb.NVMeNamespaceStatsRequest) (*pb.NVMeNamespaceStatsResponse, error) {
 	log.Printf("NVMeNamespaceStats: Received from client: %v", in)
 	return &pb.NVMeNamespaceStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+}
+
+func (s *Server) verifyNVMeController(controller *pb.NVMeController) error {
+	qosLimits := map[string]*pb.QosLimit{
+		"limit_min": controller.Spec.MinLimit,
+		"limit_max": controller.Spec.MaxLimit,
+	}
+	for limitName, limit := range qosLimits {
+		if limit != nil && (limit.RdBandwidthMbs != 0 ||
+			limit.WrBandwidthMbs != 0 ||
+			limit.RwBandwidthMbs != 0 ||
+			limit.RdIopsKiops != 0 ||
+			limit.WrIopsKiops != 0 ||
+			limit.RwIopsKiops != 0) {
+			return fmt.Errorf(fmt.Sprintf("%s is not supported", limitName))
+		}
+	}
+
+	return nil
 }
