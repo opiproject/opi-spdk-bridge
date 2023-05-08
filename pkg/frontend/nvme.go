@@ -316,6 +316,11 @@ func (s *Server) DeleteNVMeController(_ context.Context, in *pb.DeleteNVMeContro
 // UpdateNVMeController updates an NVMe controller
 func (s *Server) UpdateNVMeController(_ context.Context, in *pb.UpdateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("UpdateNVMeController: Received from client: %v", in)
+	if err := s.verifyNVMeController(in.NvMeController); err != nil {
+		log.Printf("error: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value] = in.NvMeController
 	s.Nvme.Controllers[in.NvMeController.Spec.Id.Value].Status = &pb.NVMeControllerStatus{Active: true}
 	response := &pb.NVMeController{}
