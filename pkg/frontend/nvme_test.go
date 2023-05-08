@@ -607,6 +607,44 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		start   bool
 		exist   bool
 	}{
+		"limit_min is not supported": {
+			&pb.NVMeController{
+				Spec: &pb.NVMeControllerSpec{
+					Id:               &pc.ObjectKey{Value: "controller-test"},
+					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
+					NvmeControllerId: 1,
+					MinLimit: &pb.QosLimit{
+						RwIopsKiops: 1,
+					},
+				},
+			},
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			"limit_min is not supported",
+			false,
+			false,
+		},
+		"limit_max is not supported": {
+			&pb.NVMeController{
+				Spec: &pb.NVMeControllerSpec{
+					Id:               &pc.ObjectKey{Value: "controller-test"},
+					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
+					NvmeControllerId: 1,
+					MaxLimit: &pb.QosLimit{
+						RwIopsKiops: 1,
+					},
+				},
+			},
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			"limit_max is not supported",
+			false,
+			false,
+		},
 		"valid request with invalid SPDK response": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
