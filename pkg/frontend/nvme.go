@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -33,6 +34,24 @@ type tcpSubsystemListener struct {
 	listenAddr net.IP
 	listenPort string
 	protocol   string
+}
+
+func sortNVMeSubsystems(subsystems []*pb.NVMeSubsystem) {
+	sort.Slice(subsystems, func(i int, j int) bool {
+		return subsystems[i].Spec.Nqn < subsystems[j].Spec.Nqn
+	})
+}
+
+func sortNVMeControllers(controllers []*pb.NVMeController) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Spec.Id.Value < controllers[j].Spec.Id.Value
+	})
+}
+
+func sortNVMeNamespaces(namespaces []*pb.NVMeNamespace) {
+	sort.Slice(namespaces, func(i int, j int) bool {
+		return namespaces[i].Spec.HostNsid < namespaces[j].Spec.HostNsid
+	})
 }
 
 // NewTCPSubsystemListener creates a new instance of tcpSubsystemListener
@@ -186,6 +205,7 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		r := &result[i]
 		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn, SerialNumber: r.SerialNumber, ModelNumber: r.ModelNumber}}
 	}
+	sortNVMeSubsystems(Blobarray)
 	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray, NextPageToken: token}, nil
 }
 
@@ -330,6 +350,7 @@ func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControlle
 	for _, controller := range s.Nvme.Controllers {
 		Blobarray = append(Blobarray, controller)
 	}
+	sortNVMeControllers(Blobarray)
 	token := uuid.New().String()
 	s.Pagination[token] = int(in.PageSize)
 	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray, NextPageToken: token}, nil
@@ -500,6 +521,7 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		}
 	}
 	if len(Blobarray) > 0 {
+		sortNVMeNamespaces(Blobarray)
 		return &pb.ListNVMeNamespacesResponse{NvMeNamespaces: Blobarray, NextPageToken: token}, nil
 	}
 

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
@@ -21,6 +22,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortVirtioBlks(virtioBlks []*pb.VirtioBlk) {
+	sort.Slice(virtioBlks, func(i int, j int) bool {
+		return virtioBlks[i].Id.Value < virtioBlks[j].Id.Value
+	})
+}
 
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
@@ -123,6 +130,8 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 			PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
 			VolumeId: &pc.ObjectKey{Value: "TBD"}}
 	}
+	sortVirtioBlks(Blobarray)
+
 	return &pb.ListVirtioBlksResponse{VirtioBlks: Blobarray, NextPageToken: token}, nil
 }
 

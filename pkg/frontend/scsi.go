@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -21,6 +22,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortScsiControllers(controllers []*pb.VirtioScsiController) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Id.Value < controllers[j].Id.Value
+	})
+}
 
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
@@ -99,6 +106,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
+	sortScsiControllers(Blobarray)
 	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray, NextPageToken: token}, nil
 }
 

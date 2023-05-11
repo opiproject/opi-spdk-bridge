@@ -194,17 +194,21 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
-					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
-					VolumeId: &pc.ObjectKey{Value: "TBD"},
-				},
-				{
 					Id:       &pc.ObjectKey{Value: "VblkEmu0pf2"},
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
+				{
+					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					VolumeId: &pc.ObjectKey{Value: "TBD"},
+				},
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"VblkEmu0pf0","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"virtio-blk-42","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"VblkEmu0pf2","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"}],"error":{"code":0,"message":""}}`},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[` +
+				`{"ctrlr":"VblkEmu0pf2","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},` +
+				`{"ctrlr":"virtio-blk-42","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},` +
+				`{"ctrlr":"VblkEmu0pf0","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"}` +
+				`],"error":{"code":0,"message":""}}`},
 			codes.OK,
 			"",
 			true,
@@ -220,12 +224,12 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+					Id:       &pc.ObjectKey{Value: "VblkEmu0pf2"},
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "VblkEmu0pf2"},
+					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
