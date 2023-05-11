@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -21,6 +22,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortAioControllers(controllers []*pb.AioController) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Handle.Value < controllers[j].Handle.Value
+	})
+}
 
 // CreateAioController creates an Aio controller
 func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
@@ -162,6 +169,7 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 		r := &result[i]
 		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
+	sortAioControllers(Blobarray)
 	return &pb.ListAioControllersResponse{AioControllers: Blobarray, NextPageToken: token}, nil
 }
 
