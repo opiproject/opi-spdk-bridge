@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
@@ -21,6 +22,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortNullDebugs(nullDebugs []*pb.NullDebug) {
+	sort.Slice(nullDebugs, func(i int, j int) bool {
+		return nullDebugs[i].Handle.Value < nullDebugs[j].Handle.Value
+	})
+}
 
 // CreateNullDebug creates a Null Debug instance
 func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
@@ -162,6 +169,7 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 		r := &result[i]
 		Blobarray[i] = &pb.NullDebug{Handle: &pc.ObjectKey{Value: r.Name}, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
+	sortNullDebugs(Blobarray)
 	return &pb.ListNullDebugsResponse{NullDebugs: Blobarray, NextPageToken: token}, nil
 }
 

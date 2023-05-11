@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -22,6 +23,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func sortNVMfRemoteControllers(controllers []*pb.NVMfRemoteController) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Id.Value < controllers[j].Id.Value
+	})
+}
 
 // CreateNVMfRemoteController creates an NVMf remote controller
 func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
@@ -133,6 +140,7 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 			Trsvcid: port,
 		}
 	}
+	sortNVMfRemoteControllers(Blobarray)
 	return &pb.ListNVMfRemoteControllersResponse{NvMfRemoteControllers: Blobarray, NextPageToken: token}, nil
 }
 
