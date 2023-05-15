@@ -32,6 +32,10 @@ func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.VirtioScsiControllerId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Id.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value]
 	if ok {
@@ -159,6 +163,10 @@ func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiC
 // CreateVirtioScsiLun creates a Virtio SCSI LUN
 func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("CreateVirtioScsiLun: Received from client: %v", in)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.VirtioScsiLunId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Id.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value]
 	if ok {
