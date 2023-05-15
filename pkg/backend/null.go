@@ -32,6 +32,10 @@ func sortNullDebugs(nullDebugs []*pb.NullDebug) {
 // CreateNullDebug creates a Null Debug instance
 func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.NullDebugId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Handle.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
 	if ok {

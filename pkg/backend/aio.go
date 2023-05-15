@@ -32,6 +32,10 @@ func sortAioControllers(controllers []*pb.AioController) {
 // CreateAioController creates an Aio controller
 func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.AioControllerId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Handle.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Handle.Value]
 	if ok {

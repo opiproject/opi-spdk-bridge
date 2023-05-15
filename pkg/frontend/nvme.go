@@ -97,6 +97,10 @@ func (c *tcpSubsystemListener) Params(_ *pb.NVMeController, nqn string) spdk.Nvm
 // CreateNVMeSubsystem creates an NVMe Subsystem
 func (s *Server) CreateNVMeSubsystem(_ context.Context, in *pb.CreateNVMeSubsystemRequest) (*pb.NVMeSubsystem, error) {
 	log.Printf("CreateNVMeSubsystem: Received from client: %v", in)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.NvMeSubsystemId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMeSubsystemId, in.NvMeSubsystem.Spec.Id.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	subsys, ok := s.Nvme.Subsystems[in.NvMeSubsystem.Spec.Id.Value]
 	if ok {
@@ -254,6 +258,10 @@ func (s *Server) NVMeSubsystemStats(_ context.Context, in *pb.NVMeSubsystemStats
 // CreateNVMeController creates an NVMe controller
 func (s *Server) CreateNVMeController(_ context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
 	log.Printf("Received from client: %v", in.NvMeController)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.NvMeControllerId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMeControllerId, in.NvMeController.Spec.Id.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Nvme.Controllers[in.NvMeController.Spec.Id.Value]
 	if ok {
@@ -377,6 +385,10 @@ func (s *Server) NVMeControllerStats(_ context.Context, in *pb.NVMeControllerSta
 // CreateNVMeNamespace creates an NVMe namespace
 func (s *Server) CreateNVMeNamespace(_ context.Context, in *pb.CreateNVMeNamespaceRequest) (*pb.NVMeNamespace, error) {
 	log.Printf("CreateNVMeNamespace: Received from client: %v", in)
+	// see https://google.aip.dev/133#user-specified-ids
+	if in.NvMeNamespaceId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMeNamespaceId, in.NvMeNamespace.Spec.Id.Value)
+	}
 	// idempotent API when called with same key, should return same object
 	namespace, ok := s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value]
 	if ok {
