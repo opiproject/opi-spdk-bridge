@@ -32,6 +32,13 @@ func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value]
+	if ok {
+		log.Printf("Already existing VirtioScsiController with id %v", in.VirtioScsiController.Id.Value)
+		return controller, nil
+	}
+	// not found, so create a new one
 	params := spdk.VhostCreateScsiControllerParams{
 		Ctrlr: in.VirtioScsiController.Id.Value,
 	}
@@ -45,6 +52,8 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	if !result {
 		log.Printf("Could not create: %v", in)
 	}
+	s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value] = in.VirtioScsiController
+	// s.VirtioCtrls[in.VirtioScsiController.Id.Value].Status = &pb.VirtioScsiControllerStatus{Active: true}
 	response := &pb.VirtioScsiController{}
 	err = deepcopier.Copy(in.VirtioScsiController).To(response)
 	if err != nil {
@@ -57,6 +66,15 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 // DeleteVirtioScsiController deletes a Virtio SCSI controller
 func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiController: Received from client: %v", in)
+	controller, ok := s.Virt.ScsiCtrls[in.Name]
+	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	params := spdk.VhostDeleteControllerParams{
 		Ctrlr: in.Name,
 	}
@@ -70,6 +88,7 @@ func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirt
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
+	delete(s.Virt.ScsiCtrls, controller.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
@@ -140,6 +159,13 @@ func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiC
 // CreateVirtioScsiLun creates a Virtio SCSI LUN
 func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("CreateVirtioScsiLun: Received from client: %v", in)
+	// idempotent API when called with same key, should return same object
+	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value]
+	if ok {
+		log.Printf("Already existing VirtioScsiLun with id %v", in.VirtioScsiLun.Id.Value)
+		return lun, nil
+	}
+	// not found, so create a new one
 	params := struct {
 		Name string `json:"ctrlr"`
 		Num  int    `json:"scsi_target_num"`
@@ -156,12 +182,23 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value] = in.VirtioScsiLun
+	// s.ScsiLuns[in.VirtioScsiLun.Id.Value].Status = &pb.VirtioScsiLunStatus{Active: true}
 	return &pb.VirtioScsiLun{}, nil
 }
 
 // DeleteVirtioScsiLun deletes a Virtio SCSI LUN
 func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioScsiLun: Received from client: %v", in)
+	lun, ok := s.Virt.ScsiLuns[in.Name]
+	if !ok {
+		if in.AllowMissing {
+			return &emptypb.Empty{}, nil
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	params := struct {
 		Name string `json:"ctrlr"`
 		Num  int    `json:"scsi_target_num"`
@@ -179,6 +216,7 @@ func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiL
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
+	delete(s.Virt.ScsiLuns, lun.Id.Value)
 	return &emptypb.Empty{}, nil
 }
 
