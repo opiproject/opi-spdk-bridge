@@ -24,7 +24,7 @@ import (
 
 var (
 	testVirtioCtrl = pb.VirtioBlk{
-		Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+		Id:       &pc.ObjectKey{},
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
@@ -62,6 +62,10 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			testEnv := createTestEnvironment(true, test.spdk)
 			defer testEnv.Close()
+
+			if test.out != nil {
+				test.out.Id.Value = "virtio-blk-42"
+			}
 
 			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in, VirtioBlkId: "virtio-blk-42"}
 			response, err := testEnv.client.CreateVirtioBlk(testEnv.ctx, request)
