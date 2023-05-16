@@ -106,7 +106,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controller.Id.Value] = controller
 			}
 
-			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in}
+			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: "OpiNvme8"}
 			response, err := testEnv.client.CreateNVMfRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {

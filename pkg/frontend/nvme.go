@@ -103,7 +103,7 @@ func (s *Server) CreateNVMeSubsystem(_ context.Context, in *pb.CreateNVMeSubsyst
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMeSubsystemId, in.NvMeSubsystem.Spec.Id.Value)
 		name = in.NvMeSubsystemId
 	}
-	in.NvMeSubsystem.Spec.Id.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.NvMeSubsystem.Spec.Id.Value = name
 	// idempotent API when called with same key, should return same object
 	subsys, ok := s.Nvme.Subsystems[in.NvMeSubsystem.Spec.Id.Value]
 	if ok {
@@ -267,7 +267,7 @@ func (s *Server) CreateNVMeController(_ context.Context, in *pb.CreateNVMeContro
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMeControllerId, in.NvMeController.Spec.Id.Value)
 		name = in.NvMeControllerId
 	}
-	in.NvMeController.Spec.Id.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.NvMeController.Spec.Id.Value = name
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Nvme.Controllers[in.NvMeController.Spec.Id.Value]
 	if ok {
@@ -397,7 +397,7 @@ func (s *Server) CreateNVMeNamespace(_ context.Context, in *pb.CreateNVMeNamespa
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMeNamespaceId, in.NvMeNamespace.Spec.Id.Value)
 		name = in.NvMeNamespaceId
 	}
-	in.NvMeNamespace.Spec.Id.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.NvMeNamespace.Spec.Id.Value = name
 	// idempotent API when called with same key, should return same object
 	namespace, ok := s.Nvme.Namespaces[in.NvMeNamespace.Spec.Id.Value]
 	if ok {

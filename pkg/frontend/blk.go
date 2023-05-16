@@ -38,7 +38,7 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioBlkId, in.VirtioBlk.Id.Value)
 		name = in.VirtioBlkId
 	}
-	in.VirtioBlk.Id.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.VirtioBlk.Id.Value = name
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.BlkCtrls[in.VirtioBlk.Id.Value]
 	if ok {

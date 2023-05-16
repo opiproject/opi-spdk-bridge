@@ -104,7 +104,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolume.Handle.Value] = &testNullVolume
 			}
 
-			request := &pb.CreateNullDebugRequest{NullDebug: tt.in}
+			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: "mytest"}
 			response, err := testEnv.client.CreateNullDebug(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

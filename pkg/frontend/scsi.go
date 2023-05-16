@@ -38,7 +38,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Id.Value)
 		name = in.VirtioScsiControllerId
 	}
-	in.VirtioScsiController.Id.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.VirtioScsiController.Id.Value = name
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value]
 	if ok {
@@ -172,7 +172,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Id.Value)
 		name = in.VirtioScsiLunId
 	}
-	in.VirtioScsiLun.Id.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.VirtioScsiLun.Id.Value = name
 	// idempotent API when called with same key, should return same object
 	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value]
 	if ok {
