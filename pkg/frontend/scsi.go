@@ -47,7 +47,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	}
 	// not found, so create a new one
 	params := spdk.VhostCreateScsiControllerParams{
-		Ctrlr: in.VirtioScsiController.Id.Value,
+		Ctrlr: name,
 	}
 	var result spdk.VhostCreateScsiControllerResult
 	err := s.rpc.Call("vhost_create_scsi_controller", &params, &result)
@@ -185,7 +185,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		Num  int    `json:"scsi_target_num"`
 		Bdev string `json:"bdev_name"`
 	}{
-		Name: in.VirtioScsiLun.TargetId.Value,
+		Name: name,
 		Num:  5,
 		Bdev: in.VirtioScsiLun.VolumeId.Value,
 	}

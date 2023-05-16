@@ -48,7 +48,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	}
 	// not found, so create a new one
 	params := spdk.BdevNvmeAttachControllerParams{
-		Name:    in.NvMfRemoteController.Id.Value,
+		Name:    name,
 		Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
 		Traddr:  in.NvMfRemoteController.Traddr,
 		Adrfam:  strings.ReplaceAll(in.NvMfRemoteController.Adrfam.String(), "NVMF_ADRFAM_", ""),
