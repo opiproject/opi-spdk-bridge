@@ -198,7 +198,13 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 	log.Printf("Received from SPDK: %v", result)
 	s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value] = in.VirtioScsiLun
 	// s.ScsiLuns[in.VirtioScsiLun.Id.Value].Status = &pb.VirtioScsiLunStatus{Active: true}
-	return &pb.VirtioScsiLun{}, nil
+	response := &pb.VirtioScsiLun{}
+	err = deepcopier.Copy(in.VirtioScsiLun).To(response)
+	if err != nil {
+		log.Printf("Error at response creation: %v", err)
+		return nil, status.Error(codes.Internal, "Failed to construct device create response")
+	}
+	return response, nil
 }
 
 // DeleteVirtioScsiLun deletes a Virtio SCSI LUN
