@@ -30,7 +30,7 @@ var (
 			Nqn: "nqn.2022-09.io.spdk:opi2",
 		},
 	}
-	testCreateNvmeControllerRequest = &pb.CreateNVMeControllerRequest{NvMeController: &pb.NVMeController{
+	testCreateNvmeControllerRequest = &pb.CreateNVMeControllerRequest{NvMeControllerId: testNvmeControllerID, NvMeController: &pb.NVMeController{
 		Spec: &pb.NVMeControllerSpec{
 			Id:               &pc.ObjectKey{Value: testNvmeControllerID},
 			SubsystemId:      testSubsystem.Spec.Id,

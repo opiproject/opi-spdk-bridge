@@ -38,7 +38,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Handle.Value)
 		name = in.NullDebugId
 	}
-	in.NullDebug.Handle.Value = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.NullDebug.Handle.Value = name
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
 	if ok {

@@ -225,7 +225,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in}
+			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: "mytest"}
 			response, err := testEnv.client.CreateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if string(response.Key) != string(tt.out.Key) &&

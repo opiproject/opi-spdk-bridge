@@ -263,7 +263,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in}
+			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in, QosVolumeId: "mytest"}
 			if tt.existBefore {
 				testEnv.opiSpdkServer.volumes.qosVolumes[tt.in.QosVolumeId.Value] = tt.in
 			}

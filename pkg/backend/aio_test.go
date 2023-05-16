@@ -105,7 +105,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolume.Handle.Value] = &testAioVolume
 			}
 
-			request := &pb.CreateAioControllerRequest{AioController: tt.in}
+			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: "mytest"}
 			response, err := testEnv.client.CreateAioController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

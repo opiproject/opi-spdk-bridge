@@ -63,7 +63,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(true, test.spdk)
 			defer testEnv.Close()
 
-			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in}
+			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in, VirtioBlkId: "virtio-blk-42"}
 			response, err := testEnv.client.CreateVirtioBlk(testEnv.ctx, request)
 			if response != nil {
 				wantOut, _ := proto.Marshal(test.out)

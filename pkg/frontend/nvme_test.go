@@ -167,7 +167,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
 			}
 
-			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in}
+			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in, NvMeSubsystemId: "subsystem-test"}
 			response, err := testEnv.client.CreateNVMeSubsystem(testEnv.ctx, request)
 			if response != nil {
 				mtt, _ := proto.Marshal(tt.out)
@@ -730,7 +730,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
 			}
 
-			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in}
+			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in, NvMeControllerId: "controller-test"}
 			response, err := testEnv.client.CreateNVMeController(testEnv.ctx, request)
 			if response != nil {
 				mtt, _ := proto.Marshal(tt.out)
@@ -1141,7 +1141,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
 			}
 
-			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in}
+			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in, NvMeNamespaceId: "namespace-test"}
 			response, err := testEnv.client.CreateNVMeNamespace(testEnv.ctx, request)
 			if response != nil {
 				mtt, _ := proto.Marshal(tt.out)
