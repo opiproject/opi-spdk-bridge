@@ -26,7 +26,7 @@ var (
 	testNvmeControllerID = "nvme-43"
 	testSubsystem        = pb.NVMeSubsystem{
 		Spec: &pb.NVMeSubsystemSpec{
-			Id:  &pc.ObjectKey{Value: "subsystem-test"},
+			Id:  &pc.ObjectKey{},
 			Nqn: "nqn.2022-09.io.spdk:opi2",
 		},
 	}

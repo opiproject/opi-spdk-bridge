@@ -22,7 +22,7 @@ import (
 
 var (
 	testAioVolume = pb.AioController{
-		Handle:      &pc.ObjectKey{Value: "mytest"},
+		Handle:      &pc.ObjectKey{},
 		BlockSize:   512,
 		BlocksCount: 12,
 		Filename:    "/tmp/aio_bdev_file",
@@ -44,7 +44,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolume.Handle.Value),
+			fmt.Sprintf("Could not create Aio Dev: %v", "mytest"),
 			true,
 			false,
 		},
@@ -102,7 +102,10 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolume.Handle.Value] = &testAioVolume
+				testEnv.opiSpdkServer.Volumes.AioVolumes["mytest"] = &testAioVolume
+			}
+			if tt.out != nil {
+				tt.out.Handle.Value = "mytest"
 			}
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: "mytest"}

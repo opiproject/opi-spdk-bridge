@@ -22,7 +22,7 @@ import (
 
 var (
 	testNullVolume = pb.NullDebug{
-		Handle:      &pc.ObjectKey{Value: "mytest"},
+		Handle:      &pc.ObjectKey{},
 		BlockSize:   512,
 		BlocksCount: 64,
 	}
@@ -43,7 +43,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Null Dev: %v", testNullVolume.Handle.Value),
+			fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
 			true,
 			false,
 		},
@@ -101,7 +101,10 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolume.Handle.Value] = &testNullVolume
+				testEnv.opiSpdkServer.Volumes.NullVolumes["mytest"] = &testNullVolume
+			}
+			if tt.out != nil {
+				tt.out.Handle.Value = "mytest"
 			}
 
 			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: "mytest"}
