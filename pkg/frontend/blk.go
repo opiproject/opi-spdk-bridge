@@ -47,7 +47,7 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	}
 	// not found, so create a new one
 	params := spdk.VhostCreateBlkControllerParams{
-		Ctrlr:   in.VirtioBlk.Id.Value,
+		Ctrlr:   name,
 		DevName: in.VirtioBlk.VolumeId.Value,
 	}
 	var result spdk.VhostCreateBlkControllerResult

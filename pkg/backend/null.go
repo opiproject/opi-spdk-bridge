@@ -47,7 +47,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	}
 	// not found, so create a new one
 	params := spdk.BdevNullCreateParams{
-		Name:      in.NullDebug.Handle.Value,
+		Name:      name,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -59,7 +59,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result == "" {
-		msg := fmt.Sprintf("Could not create Null Dev: %s", in.NullDebug.Handle.Value)
+		msg := fmt.Sprintf("Could not create Null Dev: %s", params.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}

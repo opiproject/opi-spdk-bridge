@@ -47,7 +47,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 	}
 	// not found, so create a new one
 	params := spdk.BdevAioCreateParams{
-		Name:      in.AioController.Handle.Value,
+		Name:      name,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
@@ -59,7 +59,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result == "" {
-		msg := fmt.Sprintf("Could not create Aio Dev: %s", in.AioController.Handle.Value)
+		msg := fmt.Sprintf("Could not create Aio Dev: %s", params.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
