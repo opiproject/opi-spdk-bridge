@@ -18,10 +18,10 @@ import (
 )
 
 var (
-	testQosVolume = &pb.QosVolume{
-		QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-		VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-		LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+	testQosVolumeID = "qos-volume-42"
+	testQosVolume   = &pb.QosVolume{
+		VolumeId: &_go.ObjectKey{Value: "volume-42"},
+		LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 	}
 )
 
@@ -38,8 +38,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 	}{
 		"limit_min is not supported": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMin: &pb.QosLimit{
 					RdIopsKiops: 100000,
 				},
@@ -54,8 +53,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max rd_iops_kiops is not supported": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RdIopsKiops: 100000,
 				},
@@ -70,8 +68,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max wr_iops_kiops is not supported": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					WrIopsKiops: 100000,
 				},
@@ -86,8 +83,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max rw_iops_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RwIopsKiops: -1,
 				},
@@ -102,8 +98,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max rd_bandwidth_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RdBandwidthMbs: -1,
 				},
@@ -118,8 +113,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max wr_bandwidth_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					WrBandwidthMbs: -1,
 				},
@@ -134,8 +128,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max rw_bandwidth_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RwBandwidthMbs: -1,
 				},
@@ -150,9 +143,8 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"limit_max with all zero limits": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-				LimitMax:    &pb.QosLimit{},
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -162,39 +154,24 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existBefore: false,
 			existAfter:  false,
 		},
-		"qos_volume_id is nil": {
+		"qos_volume_id is ignored": {
 			in: &pb.QosVolume{
-				QosVolumeId: nil,
+				QosVolumeId: &_go.ObjectKey{Value: "ignored-id"},
 				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
 				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
 			},
-			out:         nil,
-			spdk:        []string{},
-			errCode:     codes.InvalidArgument,
-			errMsg:      "qos_volume_id cannot be empty",
-			start:       false,
+			out:         testQosVolume,
+			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			errCode:     codes.OK,
+			errMsg:      "",
+			start:       true,
 			existBefore: false,
-			existAfter:  false,
-		},
-		"qos_volume_id is empty": {
-			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: ""},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
-			},
-			out:         nil,
-			spdk:        []string{},
-			errCode:     codes.InvalidArgument,
-			errMsg:      "qos_volume_id cannot be empty",
-			start:       false,
-			existBefore: false,
-			existAfter:  false,
+			existAfter:  true,
 		},
 		"volume_id is nil": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    nil,
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+				VolumeId: nil,
+				LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -206,9 +183,8 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"volume_id is empty": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: ""},
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+				VolumeId: &_go.ObjectKey{Value: ""},
+				LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -263,9 +239,12 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in, QosVolumeId: "mytest"}
+			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in, QosVolumeId: testQosVolumeID}
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[tt.in.QosVolumeId.Value] = tt.in
+				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID] = tt.in
+			}
+			if tt.out != nil {
+				tt.out.QosVolumeId = &_go.ObjectKey{Value: testQosVolumeID}
 			}
 
 			response, err := testEnv.client.CreateQosVolume(testEnv.ctx, request)
@@ -287,11 +266,11 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 				t.Errorf("expect grpc error status")
 			}
 
-			vol, ok := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value]
+			vol, ok := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID]
 			if tt.existAfter != ok {
 				t.Error("expect QoS volume exist", tt.existAfter, "received", ok)
 			}
-			if tt.existAfter && !proto.Equal(tt.in, vol) {
+			if tt.existAfter && !proto.Equal(tt.out, vol) {
 				t.Error("expect QoS volume ", vol, "is equal to", tt.in)
 			}
 		})
