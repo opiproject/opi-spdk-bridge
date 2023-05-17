@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
+	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/grpc/codes"
@@ -29,6 +30,12 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
+	name := uuid.New().String()
+	if in.QosVolumeId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.QosVolumeId)
+		name = in.QosVolumeId
+	}
+	in.QosVolume.QosVolumeId = &pc.ObjectKey{Value: name}
 
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
