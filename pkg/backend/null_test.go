@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	testNullVolume = pb.NullDebug{
+	testNullVolumeID = "mytest"
+	testNullVolume   = pb.NullDebug{
 		BlockSize:   512,
 		BlocksCount: 64,
 	}
@@ -42,7 +43,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
+			fmt.Sprintf("Could not create Null Dev: %v", testNullVolumeID),
 			true,
 			false,
 		},
@@ -100,13 +101,13 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes["mytest"] = &testNullVolume
+				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 			}
 			if tt.out != nil {
-				tt.out.Handle = &pc.ObjectKey{Value: "mytest"}
+				tt.out.Handle = &pc.ObjectKey{Value: testNullVolumeID}
 			}
 
-			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: "mytest"}
+			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: testNullVolumeID}
 			response, err := testEnv.client.CreateNullDebug(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
@@ -555,7 +556,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.InvalidArgument,
@@ -563,7 +564,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -571,7 +572,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -579,7 +580,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.Unknown,
@@ -587,7 +588,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -650,16 +651,16 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Null Dev: %s", "mytest"),
+			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolumeID),
 			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -668,7 +669,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -677,7 +678,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -686,7 +687,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			"mytest",
+			testNullVolumeID,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
@@ -720,7 +721,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes["mytest"] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 
 			request := &pb.DeleteNullDebugRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)

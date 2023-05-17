@@ -21,7 +21,8 @@ import (
 )
 
 var (
-	testAioVolume = pb.AioController{
+	testAioVolumeID = "mytest"
+	testAioVolume   = pb.AioController{
 		BlockSize:   512,
 		BlocksCount: 12,
 		Filename:    "/tmp/aio_bdev_file",
@@ -43,7 +44,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Aio Dev: %v", "mytest"),
+			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolumeID),
 			true,
 			false,
 		},
@@ -101,13 +102,13 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes["mytest"] = &testAioVolume
+				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 			}
 			if tt.out != nil {
-				tt.out.Handle = &pc.ObjectKey{Value: "mytest"}
+				tt.out.Handle = &pc.ObjectKey{Value: testAioVolumeID}
 			}
 
-			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: "mytest"}
+			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: testAioVolumeID}
 			response, err := testEnv.client.CreateAioController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
@@ -545,7 +546,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.InvalidArgument,
@@ -553,7 +554,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -561,7 +562,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -569,7 +570,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.Unknown,
@@ -577,7 +578,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -640,16 +641,16 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Aio Dev: %s", "mytest"),
+			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolumeID),
 			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -658,7 +659,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -667,7 +668,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -676,7 +677,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			"mytest",
+			testAioVolumeID,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
@@ -710,7 +711,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes["mytest"] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 
 			request := &pb.DeleteAioControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteAioController(testEnv.ctx, request)

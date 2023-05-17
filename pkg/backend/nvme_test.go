@@ -22,6 +22,7 @@ import (
 )
 
 func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
+	controllerID := "OpiNvme8"
 	controller := &pb.NVMfRemoteController{
 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
@@ -102,13 +103,13 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeVolumes["OpiNvme8"] = controller
+				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerID] = controller
 			}
 			if tt.out != nil {
-				tt.out.Id = &pc.ObjectKey{Value: "OpiNvme8"}
+				tt.out.Id = &pc.ObjectKey{Value: controllerID}
 			}
 
-			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: "OpiNvme8"}
+			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: controllerID}
 			response, err := testEnv.client.CreateNVMfRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
