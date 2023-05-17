@@ -89,10 +89,10 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 }
 
 var (
-	encryptedVolume = pb.EncryptedVolume{
-		EncryptedVolumeId: &pc.ObjectKey{Value: "crypto-test"},
-		VolumeId:          &pc.ObjectKey{Value: "volume-test"},
-		Key:               []byte("0123456789abcdef0123456789abcdef"),
-		Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+	encryptedVolumeID = "crypto-test"
+	encryptedVolume   = pb.EncryptedVolume{
+		VolumeId: &pc.ObjectKey{Value: "volume-test"},
+		Key:      []byte("0123456789abcdef0123456789abcdef"),
+		Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
 	}
 )
