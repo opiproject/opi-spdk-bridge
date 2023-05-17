@@ -110,10 +110,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with AES_XTS_192 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192,
-				Key:               []byte("0123456789abcdef0123456789abcdef0123456789abcdef"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192,
+				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -123,16 +122,14 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"valid request with valid SPDK response and AES_XTS_256 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
-				Key:               []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
-				Key:               []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"my_crypto_bdev"}`},
 			codes.OK,
@@ -141,10 +138,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with AES_CBC_128 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128,
-				Key:               []byte("0123456789abcdef"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128,
+				Key:      []byte("0123456789abcdef"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -154,10 +150,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with AES_CBC_192 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192,
-				Key:               []byte("0123456789abcdef01234567"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192,
+				Key:      []byte("0123456789abcdef01234567"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -167,10 +162,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with AES_CBC_256 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256,
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256,
+				Key:      []byte("0123456789abcdef0123456789abcdef"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -180,10 +174,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with unspecified cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_UNSPECIFIED,
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_UNSPECIFIED,
+				Key:      []byte("0123456789abcdef0123456789abcdef"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -193,10 +186,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with invalid key size for AES_XTS_128": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
-				Key:               []byte("1234"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+				Key:      []byte("1234"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -206,10 +198,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"invalid request with invalid key size for AES_XTS_256": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
-				Key:               []byte("1234"),
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:      []byte("1234"),
 			},
 			&encryptedVolume,
 			[]string{},
@@ -224,14 +215,16 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+			if tt.out != nil {
+				tt.out.EncryptedVolumeId = &pc.ObjectKey{Value: encryptedVolumeID}
+			}
 
-			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: "mytest"}
+			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: encryptedVolumeID}
 			response, err := testEnv.client.CreateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if string(response.Key) != string(tt.out.Key) &&
 					response.EncryptedVolumeId.Value != tt.out.EncryptedVolumeId.Value &&
 					response.VolumeId.Value != tt.out.VolumeId.Value {
-					// if !reflect.DeepEqual(response, tt.out) {
 					t.Error("response: expected", tt.out, "received", response)
 				}
 			}
