@@ -22,7 +22,6 @@ import (
 
 var (
 	testAioVolume = pb.AioController{
-		Handle:      &pc.ObjectKey{},
 		BlockSize:   512,
 		BlocksCount: 12,
 		Filename:    "/tmp/aio_bdev_file",
@@ -105,7 +104,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.AioVolumes["mytest"] = &testAioVolume
 			}
 			if tt.out != nil {
-				tt.out.Handle.Value = "mytest"
+				tt.out.Handle = &pc.ObjectKey{Value: "mytest"}
 			}
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: "mytest"}
@@ -711,7 +710,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolume.Handle.Value] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes["mytest"] = &testAioVolume
 
 			request := &pb.DeleteAioControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteAioController(testEnv.ctx, request)

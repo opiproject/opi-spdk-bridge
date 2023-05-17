@@ -24,7 +24,6 @@ import (
 
 var (
 	testVirtioCtrl = pb.VirtioBlk{
-		Id:       &pc.ObjectKey{},
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
@@ -64,7 +63,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			defer testEnv.Close()
 
 			if test.out != nil {
-				test.out.Id.Value = "virtio-blk-42"
+				test.out.Id = &pc.ObjectKey{Value: "virtio-blk-42"}
 			}
 
 			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in, VirtioBlkId: "virtio-blk-42"}
@@ -395,7 +394,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrl.Id.Value] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls["virtio-blk-42"] = &testVirtioCtrl
 
 			request := &pb.GetVirtioBlkRequest{Name: tt.in}
 			response, err := testEnv.client.GetVirtioBlk(testEnv.ctx, request)
@@ -446,7 +445,7 @@ func TestFrontEnd_VirtioBlkStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrl.Id.Value] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls["virtio-blk-42"] = &testVirtioCtrl
 
 			request := &pb.VirtioBlkStatsRequest{ControllerId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.VirtioBlkStats(testEnv.ctx, request)
@@ -549,7 +548,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrl.Id.Value] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls["virtio-blk-42"] = &testVirtioCtrl
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)

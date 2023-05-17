@@ -35,6 +35,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 	if deepcopier.Copy(testCreateVirtioBlkRequest.VirtioBlk).To(expectNotNilOut) != nil {
 		log.Panicf("Failed to copy structure")
 	}
+	expectNotNilOut.Id.Value = testVirtioBlkID
 
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
@@ -97,7 +98,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 			gotOut, _ := proto.Marshal(out)
 			wantOut, _ := proto.Marshal(test.out)
 			if !bytes.Equal(gotOut, wantOut) {
-				t.Errorf("Expected out %v, got %v", &test.out, out)
+				t.Errorf("Expected out %v, got %v", test.out, out)
 			}
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")

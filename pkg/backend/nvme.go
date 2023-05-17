@@ -36,10 +36,10 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvMfRemoteControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Id.Value)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Id)
 		name = in.NvMfRemoteControllerId
 	}
-	in.NvMfRemoteController.Id.Value = name
+	in.NvMfRemoteController.Id = &pc.ObjectKey{Value: name}
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Id.Value]
 	if ok {

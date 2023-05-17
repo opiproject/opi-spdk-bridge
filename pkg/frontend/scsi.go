@@ -35,10 +35,10 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.VirtioScsiControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Id.Value)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Id)
 		name = in.VirtioScsiControllerId
 	}
-	in.VirtioScsiController.Id.Value = name
+	in.VirtioScsiController.Id = &pc.ObjectKey{Value: name}
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value]
 	if ok {
@@ -169,10 +169,10 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.VirtioScsiLunId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Id.Value)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Id)
 		name = in.VirtioScsiLunId
 	}
-	in.VirtioScsiLun.Id.Value = name
+	in.VirtioScsiLun.Id = &pc.ObjectKey{Value: name}
 	// idempotent API when called with same key, should return same object
 	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value]
 	if ok {

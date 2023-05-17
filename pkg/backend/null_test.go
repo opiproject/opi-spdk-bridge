@@ -22,7 +22,6 @@ import (
 
 var (
 	testNullVolume = pb.NullDebug{
-		Handle:      &pc.ObjectKey{},
 		BlockSize:   512,
 		BlocksCount: 64,
 	}
@@ -104,7 +103,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.NullVolumes["mytest"] = &testNullVolume
 			}
 			if tt.out != nil {
-				tt.out.Handle.Value = "mytest"
+				tt.out.Handle = &pc.ObjectKey{Value: "mytest"}
 			}
 
 			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: "mytest"}
@@ -721,7 +720,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolume.Handle.Value] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes["mytest"] = &testNullVolume
 
 			request := &pb.DeleteNullDebugRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)
