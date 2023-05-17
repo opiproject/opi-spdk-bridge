@@ -32,6 +32,14 @@ func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
+
+	name := uuid.New().String()
+	if in.EncryptedVolumeId != "" {
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.EncryptedVolumeId)
+		name = in.EncryptedVolumeId
+	}
+	in.EncryptedVolume.EncryptedVolumeId = &pc.ObjectKey{Value: name}
+
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
 		log.Printf("error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
