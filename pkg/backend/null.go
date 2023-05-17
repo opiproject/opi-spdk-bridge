@@ -35,10 +35,10 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NullDebugId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Handle.Value)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Handle)
 		name = in.NullDebugId
 	}
-	in.NullDebug.Handle.Value = name
+	in.NullDebug.Handle = &pc.ObjectKey{Value: name}
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
 	if ok {

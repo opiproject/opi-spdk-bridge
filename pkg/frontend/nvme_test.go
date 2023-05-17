@@ -25,14 +25,12 @@ import (
 var (
 	testSubsystem = pb.NVMeSubsystem{
 		Spec: &pb.NVMeSubsystemSpec{
-			Id:  &pc.ObjectKey{},
 			Nqn: "nqn.2022-09.io.spdk:opi3",
 		},
 	}
 
 	testController = pb.NVMeController{
 		Spec: &pb.NVMeControllerSpec{
-			Id:               &pc.ObjectKey{},
 			SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 			NvmeControllerId: 17,
@@ -44,9 +42,8 @@ var (
 
 	testNamespace = pb.NVMeNamespace{
 		Spec: &pb.NVMeNamespaceSpec{
-			Id:          &pc.ObjectKey{},
 			HostNsid:    22,
-			SubsystemId: testSubsystem.Spec.Id,
+			SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
 		},
 		Status: &pb.NVMeNamespaceStatus{
 			PciState:     2,
@@ -57,7 +54,6 @@ var (
 
 func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 	spec := &pb.NVMeSubsystemSpec{
-		Id:           &pc.ObjectKey{},
 		Nqn:          "nqn.2022-09.io.spdk:opi3",
 		SerialNumber: "OpiSerialNumber",
 		ModelNumber:  "OpiModelNumber",
@@ -161,13 +157,13 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
+			testEnv.opiSpdkServer.Nvme.Namespaces["namespace-test"] = &testNamespace
 			if tt.exist {
 				testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
 			}
 			if tt.out != nil {
-				tt.out.Spec.Id.Value = "subsystem-test"
+				tt.out.Spec.Id = &pc.ObjectKey{Value: "subsystem-test"}
 			}
 
 			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in, NvMeSubsystemId: "subsystem-test"}
@@ -493,7 +489,7 @@ func TestFrontEnd_GetNVMeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
 
 			request := &pb.GetNVMeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.GetNVMeSubsystem(testEnv.ctx, request)
@@ -579,7 +575,7 @@ func TestFrontEnd_NVMeSubsystemStats(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
 
 			request := &pb.NVMeSubsystemStatsRequest{SubsystemId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NVMeSubsystemStats(testEnv.ctx, request)
@@ -616,7 +612,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		"valid request with invalid SPDK response": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{},
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: 1,
@@ -632,7 +627,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		"valid request with empty SPDK response": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{},
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: 1,
@@ -648,7 +642,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		"valid request with ID mismatch SPDK response": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{},
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: 1,
@@ -664,7 +657,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		"valid request with error code from SPDK response": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{},
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: 1,
@@ -680,7 +672,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		"valid request with valid SPDK response": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{},
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: 17,
@@ -706,7 +697,6 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 		"already exists": {
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{},
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: 17,
@@ -727,13 +717,13 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Namespaces["namespace-test"] = &testNamespace
 			if tt.exist {
 				testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
 			}
 			if tt.out != nil {
-				tt.out.Spec.Id.Value = "controller-test"
+				tt.out.Spec.Id = &pc.ObjectKey{Value: "controller-test"}
 			}
 
 			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in, NvMeControllerId: "controller-test"}
@@ -879,8 +869,8 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
 			testEnv.opiSpdkServer.Nvme.Controllers["controller-test1"] = &pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
 					Id:               &pc.ObjectKey{Value: "controller-test1"},
@@ -955,8 +945,8 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
 
 			request := &pb.GetNVMeControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNVMeController(testEnv.ctx, request)
@@ -1035,7 +1025,6 @@ func TestFrontEnd_NVMeControllerStats(t *testing.T) {
 
 func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 	spec := &pb.NVMeNamespaceSpec{
-		Id:          &pc.ObjectKey{},
 		SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
 		HostNsid:    0,
 		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
@@ -1044,7 +1033,6 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 		Eui64:       1967554867335598546,
 	}
 	namespaceSpec := &pb.NVMeNamespaceSpec{
-		Id:          &pc.ObjectKey{},
 		SubsystemId: &pc.ObjectKey{Value: "subsystem-test"},
 		HostNsid:    22,
 		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
@@ -1141,13 +1129,13 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
 			if tt.exist {
 				testEnv.opiSpdkServer.Nvme.Namespaces["namespace-test"] = &testNamespace
 			}
 			if tt.out != nil {
-				tt.out.Spec.Id.Value = "namespace-test"
+				tt.out.Spec.Id = &pc.ObjectKey{Value: "namespace-test"}
 			}
 
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in, NvMeNamespaceId: "namespace-test"}
@@ -1419,8 +1407,8 @@ func TestFrontEnd_ListNVMeNamespaces(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
 			testEnv.opiSpdkServer.Nvme.Namespaces["ns0"] = &testNamespaces[0]
 			testEnv.opiSpdkServer.Nvme.Namespaces["ns1"] = &testNamespaces[1]
 			testEnv.opiSpdkServer.Nvme.Namespaces["ns2"] = &testNamespaces[2]
@@ -1533,9 +1521,9 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
+			testEnv.opiSpdkServer.Nvme.Namespaces["namespace-test"] = &testNamespace
 
 			request := &pb.GetNVMeNamespaceRequest{Name: tt.in}
 			response, err := testEnv.client.GetNVMeNamespace(testEnv.ctx, request)
@@ -1692,9 +1680,9 @@ func TestFrontEnd_DeleteNVMeNamespace(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespace.Spec.Id.Value] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
+			testEnv.opiSpdkServer.Nvme.Namespaces["namespace-test"] = &testNamespace
 
 			request := &pb.DeleteNVMeNamespaceRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMeNamespace(testEnv.ctx, request)
@@ -1795,8 +1783,8 @@ func TestFrontEnd_DeleteNVMeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testController.Spec.Id.Value] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Controllers["controller-test"] = &testController
 
 			request := &pb.DeleteNVMeControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMeController(testEnv.ctx, request)
@@ -1897,7 +1885,7 @@ func TestFrontEnd_DeleteNVMeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems["subsystem-test"] = &testSubsystem
 
 			request := &pb.DeleteNVMeSubsystemRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMeSubsystem(testEnv.ctx, request)

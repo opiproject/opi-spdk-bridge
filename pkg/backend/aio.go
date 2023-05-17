@@ -35,10 +35,10 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.AioControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Handle.Value)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Handle)
 		name = in.AioControllerId
 	}
-	in.AioController.Handle.Value = name
+	in.AioController.Handle = &pc.ObjectKey{Value: name}
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Handle.Value]
 	if ok {
