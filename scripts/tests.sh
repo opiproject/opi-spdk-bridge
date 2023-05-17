@@ -45,9 +45,9 @@ grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cl
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullDebugService -l
 
 # test nvme
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeSubsystem "{nv_me_subsystem_id: 'subsystem1', nv_me_subsystem : {spec : {id : {value : 'subsystem1'}, nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeController "{nv_me_controller_id: 'controller1', nv_me_controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem1' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeNamespace "{nv_me_namespace_id: 'namespace1', 'nv_me_namespace' : { 'spec' : {'id' : {'value' : 'namespace1'}, 'subsystem_id' : { 'value' : 'subsystem1' }, 'volume_id' : { 'value' : 'Malloc1' }, 'host_nsid' : '1' } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeSubsystem  "{nv_me_subsystem_id:  'subsystem1',  nv_me_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeController "{nv_me_controller_id: 'controller1', nv_me_controller : {spec : {subsystem_id : { value : 'subsystem1' }, nvme_controller_id: 2, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeNamespace  "{nv_me_namespace_id:  'namespace1',  nv_me_namespace  : {spec : {subsystem_id : { value : 'subsystem1' }, volume_id : { value : 'Malloc1' }, host_nsid : 1 } } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeSubsystem "{name : 'subsystem1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeController "{name : 'controller1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeNamespace "{name :  'namespace1'}"
