@@ -29,6 +29,7 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
+
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
