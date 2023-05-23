@@ -152,7 +152,7 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 // ListNullDebugs lists Null Debug instances
 func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
 	log.Printf("ListNullDebugs: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -164,20 +164,14 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.NullDebug, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.NullDebug{Handle: &pc.ObjectKey{Value: r.Name}, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
 	sortNullDebugs(Blobarray)
-	return &pb.ListNullDebugsResponse{NullDebugs: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListNullDebugsResponse{NullDebugs: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetNullDebug gets a a Null Debug instance

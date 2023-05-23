@@ -152,7 +152,7 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 // ListAioControllers lists Aio controllers
 func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -164,20 +164,14 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.AioController, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
 	sortAioControllers(Blobarray)
-	return &pb.ListAioControllersResponse{AioControllers: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListAioControllersResponse{AioControllers: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetAioController gets an Aio controller

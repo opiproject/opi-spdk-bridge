@@ -114,7 +114,7 @@ func (s *Server) NVMfRemoteControllerReset(_ context.Context, in *pb.NVMfRemoteC
 // ListNVMfRemoteControllers lists an NVMf remote controllers
 func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRemoteControllersRequest) (*pb.ListNVMfRemoteControllersResponse, error) {
 	log.Printf("ListNVMfRemoteControllers: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -126,13 +126,6 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.NVMfRemoteController, len(result))
 	for i := range result {
 		r := &result[i]
@@ -148,7 +141,8 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		}
 	}
 	sortNVMfRemoteControllers(Blobarray)
-	return &pb.ListNVMfRemoteControllersResponse{NvMfRemoteControllers: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListNVMfRemoteControllersResponse{NvMfRemoteControllers: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetNVMfRemoteController gets an NVMf remote controller
