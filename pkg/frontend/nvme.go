@@ -188,7 +188,7 @@ func (s *Server) UpdateNVMeSubsystem(_ context.Context, in *pb.UpdateNVMeSubsyst
 // ListNVMeSubsystems lists NVMe Subsystems
 func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystemsRequest) (*pb.ListNVMeSubsystemsResponse, error) {
 	log.Printf("ListNVMeSubsystems: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -200,20 +200,14 @@ func (s *Server) ListNVMeSubsystems(_ context.Context, in *pb.ListNVMeSubsystems
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.NVMeSubsystem, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.NVMeSubsystem{Spec: &pb.NVMeSubsystemSpec{Nqn: r.Nqn, SerialNumber: r.SerialNumber, ModelNumber: r.ModelNumber}}
 	}
 	sortNVMeSubsystems(Blobarray)
-	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListNVMeSubsystemsResponse{NvMeSubsystems: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetNVMeSubsystem gets NVMe Subsystems
@@ -360,14 +354,18 @@ func (s *Server) UpdateNVMeController(_ context.Context, in *pb.UpdateNVMeContro
 // ListNVMeControllers lists NVMe controllers
 func (s *Server) ListNVMeControllers(_ context.Context, in *pb.ListNVMeControllersRequest) (*pb.ListNVMeControllersResponse, error) {
 	log.Printf("Received from client: %v", in.Parent)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
+	}
 	Blobarray := []*pb.NVMeController{}
 	for _, controller := range s.Nvme.Controllers {
 		Blobarray = append(Blobarray, controller)
 	}
 	sortNVMeControllers(Blobarray)
-	token := uuid.New().String()
-	s.Pagination[token] = int(in.PageSize)
-	return &pb.ListNVMeControllersResponse{NvMeControllers: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListNVMeControllersResponse{NvMeControllers: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetNVMeController gets an NVMe controller
@@ -501,7 +499,7 @@ func (s *Server) UpdateNVMeNamespace(_ context.Context, in *pb.UpdateNVMeNamespa
 // ListNVMeNamespaces lists NVMe namespaces
 func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespacesRequest) (*pb.ListNVMeNamespacesResponse, error) {
 	log.Printf("ListNVMeNamespaces: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -523,18 +521,10 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
 	Blobarray := []*pb.NVMeNamespace{}
 	for i := range result {
 		rr := &result[i]
 		if rr.Nqn == nqn || nqn == "" {
-			log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-			hasMoreElements := false
-			rr.Namespaces, hasMoreElements = server.LimitPagination(rr.Namespaces, offset, size)
-			if hasMoreElements {
-				token = uuid.New().String()
-				s.Pagination[token] = offset + size
-			}
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
 				Blobarray = append(Blobarray, &pb.NVMeNamespace{Spec: &pb.NVMeNamespaceSpec{HostNsid: int32(r.Nsid)}})
@@ -543,7 +533,8 @@ func (s *Server) ListNVMeNamespaces(_ context.Context, in *pb.ListNVMeNamespaces
 	}
 	if len(Blobarray) > 0 {
 		sortNVMeNamespaces(Blobarray)
-		return &pb.ListNVMeNamespacesResponse{NvMeNamespaces: Blobarray, NextPageToken: token}, nil
+		page := server.LimitToPage(pageToken, Blobarray)
+		return &pb.ListNVMeNamespacesResponse{NvMeNamespaces: page.List, NextPageToken: page.NextToken}, nil
 	}
 
 	msg := fmt.Sprintf("Could not find any namespaces for NQN: %s", nqn)

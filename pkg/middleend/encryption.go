@@ -207,7 +207,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 // ListEncryptedVolumes lists encrypted volumes
 func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -219,21 +219,14 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.EncryptedVolume, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: r.Name}}
 	}
 	sortEncryptedVolumes(Blobarray)
-
-	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListEncryptedVolumesResponse{EncryptedVolumes: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetEncryptedVolume gets an encrypted volume

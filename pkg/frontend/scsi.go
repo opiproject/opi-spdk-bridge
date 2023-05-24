@@ -29,6 +29,12 @@ func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 	})
 }
 
+func sortScsiLuns(controllers []*pb.VirtioScsiLun) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Id.Value < controllers[j].Id.Value
+	})
+}
+
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
@@ -108,7 +114,7 @@ func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirt
 // ListVirtioScsiControllers lists Virtio SCSI controllers
 func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	log.Printf("ListVirtioScsiControllers: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -120,20 +126,14 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
 	sortScsiControllers(Blobarray)
-	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetVirtioScsiController gets a Virtio SCSI controller
@@ -249,7 +249,7 @@ func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiL
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
 func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	log.Printf("ListVirtioScsiLuns: Received from client: %v", in)
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, perr := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -261,19 +261,14 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
 	Blobarray := make([]*pb.VirtioScsiLun, len(result))
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
-	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray, NextPageToken: token}, nil
+	sortScsiLuns(Blobarray)
+	page := server.LimitToPage(pageToken, Blobarray)
+	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetVirtioScsiLun gets a Virtio SCSI LUN

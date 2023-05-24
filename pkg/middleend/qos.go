@@ -108,7 +108,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
 	log.Printf("ListQosVolume: Received from client: %v", in)
 
-	size, offset, err := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	pageToken, err := s.Pagination.PageToken(in.PageSize, in.PageToken)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -119,16 +119,8 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 		volumes = append(volumes, proto.Clone(qosVolume).(*pb.QosVolume))
 	}
 	sortQosVolumes(volumes)
-
-	token := ""
-	log.Printf("Limiting result len(%d) to [%d:%d]", len(volumes), offset, size)
-	volumes, hasMoreElements := server.LimitPagination(volumes, offset, size)
-	if hasMoreElements {
-		token = uuid.New().String()
-		s.Pagination[token] = offset + size
-	}
-
-	return &pb.ListQosVolumesResponse{QosVolumes: volumes, NextPageToken: token}, nil
+	page := server.LimitToPage(pageToken, volumes)
+	return &pb.ListQosVolumesResponse{QosVolumes: page.List, NextPageToken: page.NextToken}, nil
 }
 
 // GetQosVolume gets a QoS volume
