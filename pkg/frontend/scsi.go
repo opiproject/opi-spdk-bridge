@@ -25,7 +25,7 @@ import (
 
 func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 	sort.Slice(controllers, func(i int, j int) bool {
-		return controllers[i].Id.Value < controllers[j].Id.Value
+		return controllers[i].Name < controllers[j].Name
 	})
 }
 
@@ -35,14 +35,14 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.VirtioScsiControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Id)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Name)
 		name = in.VirtioScsiControllerId
 	}
-	in.VirtioScsiController.Id = &pc.ObjectKey{Value: name}
+	in.VirtioScsiController.Name = name
 	// idempotent API when called with same key, should return same object
-	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value]
+	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Name]
 	if ok {
-		log.Printf("Already existing VirtioScsiController with id %v", in.VirtioScsiController.Id.Value)
+		log.Printf("Already existing VirtioScsiController with id %v", in.VirtioScsiController.Name)
 		return controller, nil
 	}
 	// not found, so create a new one
@@ -59,8 +59,8 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	if !result {
 		log.Printf("Could not create: %v", in)
 	}
-	s.Virt.ScsiCtrls[in.VirtioScsiController.Id.Value] = in.VirtioScsiController
-	// s.VirtioCtrls[in.VirtioScsiController.Id.Value].Status = &pb.VirtioScsiControllerStatus{Active: true}
+	s.Virt.ScsiCtrls[in.VirtioScsiController.Name] = in.VirtioScsiController
+	// s.VirtioCtrls[in.VirtioScsiController.Name].Status = &pb.VirtioScsiControllerStatus{Active: true}
 	response := &pb.VirtioScsiController{}
 	err = deepcopier.Copy(in.VirtioScsiController).To(response)
 	if err != nil {
@@ -95,7 +95,7 @@ func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirt
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
-	delete(s.Virt.ScsiCtrls, controller.Id.Value)
+	delete(s.Virt.ScsiCtrls, controller.Name)
 	return &emptypb.Empty{}, nil
 }
 
@@ -130,7 +130,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: r.Ctrlr}}
+		Blobarray[i] = &pb.VirtioScsiController{Name: r.Ctrlr}
 	}
 	sortScsiControllers(Blobarray)
 	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray, NextPageToken: token}, nil
@@ -154,7 +154,7 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiController{Id: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
+	return &pb.VirtioScsiController{Name: result[0].Ctrlr}, nil
 }
 
 // VirtioScsiControllerStats gets a Virtio SCSI controller stats
@@ -169,14 +169,14 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.VirtioScsiLunId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Id)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Name)
 		name = in.VirtioScsiLunId
 	}
-	in.VirtioScsiLun.Id = &pc.ObjectKey{Value: name}
+	in.VirtioScsiLun.Name = name
 	// idempotent API when called with same key, should return same object
-	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value]
+	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Name]
 	if ok {
-		log.Printf("Already existing VirtioScsiLun with id %v", in.VirtioScsiLun.Id.Value)
+		log.Printf("Already existing VirtioScsiLun with id %v", in.VirtioScsiLun.Name)
 		return lun, nil
 	}
 	// not found, so create a new one
@@ -196,8 +196,8 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	s.Virt.ScsiLuns[in.VirtioScsiLun.Id.Value] = in.VirtioScsiLun
-	// s.ScsiLuns[in.VirtioScsiLun.Id.Value].Status = &pb.VirtioScsiLunStatus{Active: true}
+	s.Virt.ScsiLuns[in.VirtioScsiLun.Name] = in.VirtioScsiLun
+	// s.ScsiLuns[in.VirtioScsiLun.Name].Status = &pb.VirtioScsiLunStatus{Active: true}
 	response := &pb.VirtioScsiLun{}
 	err = deepcopier.Copy(in.VirtioScsiLun).To(response)
 	if err != nil {
@@ -236,7 +236,7 @@ func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiL
 	if !result {
 		log.Printf("Could not delete: %v", in)
 	}
-	delete(s.Virt.ScsiLuns, lun.Id.Value)
+	delete(s.Virt.ScsiLuns, lun.Name)
 	return &emptypb.Empty{}, nil
 }
 

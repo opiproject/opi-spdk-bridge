@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
@@ -26,7 +25,7 @@ import (
 
 func sortNVMfRemoteControllers(controllers []*pb.NVMfRemoteController) {
 	sort.Slice(controllers, func(i int, j int) bool {
-		return controllers[i].Id.Value < controllers[j].Id.Value
+		return controllers[i].Name < controllers[j].Name
 	})
 }
 
@@ -36,14 +35,14 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvMfRemoteControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Id)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Name)
 		name = in.NvMfRemoteControllerId
 	}
-	in.NvMfRemoteController.Id = &pc.ObjectKey{Value: name}
+	in.NvMfRemoteController.Name = name
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Id.Value]
+	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Name]
 	if ok {
-		log.Printf("Already existing NVMfRemoteController with id %v", in.NvMfRemoteController.Id.Value)
+		log.Printf("Already existing NVMfRemoteController with id %v", in.NvMfRemoteController.Name)
 		return volume, nil
 	}
 	// not found, so create a new one
@@ -74,7 +73,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	s.Volumes.NvmeVolumes[in.NvMfRemoteController.Id.Value] = response
+	s.Volumes.NvmeVolumes[in.NvMfRemoteController.Name] = response
 	return response, nil
 }
 
@@ -100,7 +99,7 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	// delete(s.Volumes.NvmeVolumes, volume.Id.Value)
+	// delete(s.Volumes.NvmeVolumes, volume.Name)
 	delete(s.Volumes.NvmeVolumes, in.Name)
 	return &emptypb.Empty{}, nil
 }
@@ -138,7 +137,7 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 		r := &result[i]
 		port, _ := strconv.ParseInt(r.Ctrlrs[0].Trid.Trsvcid, 10, 64)
 		Blobarray[i] = &pb.NVMfRemoteController{
-			Id:      &pc.ObjectKey{Value: r.Name},
+			Name:    r.Name,
 			Hostnqn: r.Ctrlrs[0].Host.Nqn,
 			Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(r.Ctrlrs[0].Trid.Trtype)]),
 			Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(r.Ctrlrs[0].Trid.Adrfam)]),
@@ -171,7 +170,7 @@ func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemote
 	}
 	port, _ := strconv.ParseInt(result[0].Ctrlrs[0].Trid.Trsvcid, 10, 64)
 	return &pb.NVMfRemoteController{
-		Id:      &pc.ObjectKey{Value: result[0].Name},
+		Name:    result[0].Name,
 		Hostnqn: result[0].Ctrlrs[0].Host.Nqn,
 		Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Trtype)]),
 		Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Adrfam)]),

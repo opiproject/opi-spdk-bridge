@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"github.com/ulule/deepcopier"
@@ -25,7 +24,7 @@ import (
 
 func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
 	sort.Slice(volumes, func(i int, j int) bool {
-		return volumes[i].EncryptedVolumeId.Value < volumes[j].EncryptedVolumeId.Value
+		return volumes[i].Name < volumes[j].Name
 	})
 }
 
@@ -35,10 +34,10 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 
 	name := uuid.New().String()
 	if in.EncryptedVolumeId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.EncryptedVolumeId)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
 		name = in.EncryptedVolumeId
 	}
-	in.EncryptedVolume.EncryptedVolumeId = &pc.ObjectKey{Value: name}
+	in.EncryptedVolume.Name = name
 
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
 		log.Printf("error: %v", err)
@@ -61,9 +60,9 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	}
 	// create bdev now
 	params := spdk.BdevCryptoCreateParams{
-		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
+		Name:         in.EncryptedVolume.Name,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      in.EncryptedVolume.EncryptedVolumeId.Value,
+		KeyName:      in.EncryptedVolume.Name,
 	}
 	var result spdk.BdevCryptoCreateResult
 	err := s.rpc.Call("bdev_crypto_create", &params, &result)
@@ -73,7 +72,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result == "" {
-		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -133,7 +132,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	// first delete old bdev
 	params1 := spdk.BdevCryptoDeleteParams{
-		Name: in.EncryptedVolume.EncryptedVolumeId.Value,
+		Name: in.EncryptedVolume.Name,
 	}
 	var result1 spdk.BdevCryptoDeleteResult
 	err1 := s.rpc.Call("bdev_crypto_delete", &params1, &result1)
@@ -143,13 +142,13 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not delete Crypto: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		msg := fmt.Sprintf("Could not delete Crypto: %s", in.EncryptedVolume.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// now delete a key
 	params0 := spdk.AccelCryptoKeyDestroyParams{
-		KeyName: in.EncryptedVolume.EncryptedVolumeId.Value,
+		KeyName: in.EncryptedVolume.Name,
 	}
 	var result0 spdk.AccelCryptoKeyDestroyResult
 	err0 := s.rpc.Call("accel_crypto_key_destroy", &params0, &result0)
@@ -178,9 +177,9 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	// create bdev now
 	params3 := spdk.BdevCryptoCreateParams{
-		Name:         in.EncryptedVolume.EncryptedVolumeId.Value,
+		Name:         in.EncryptedVolume.Name,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      in.EncryptedVolume.EncryptedVolumeId.Value,
+		KeyName:      in.EncryptedVolume.Name,
 	}
 	var result3 spdk.BdevCryptoCreateResult
 	err3 := s.rpc.Call("bdev_crypto_create", &params3, &result3)
@@ -190,7 +189,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result3)
 	if result3 == "" {
-		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.EncryptedVolumeId.Value)
+		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -229,7 +228,7 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 	Blobarray := make([]*pb.EncryptedVolume, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: r.Name}}
+		Blobarray[i] = &pb.EncryptedVolume{Name: r.Name}
 	}
 	sortEncryptedVolumes(Blobarray)
 
@@ -254,7 +253,7 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.EncryptedVolume{EncryptedVolumeId: &pc.ObjectKey{Value: result[0].Name}}, nil
+	return &pb.EncryptedVolume{Name: result[0].Name}, nil
 }
 
 // EncryptedVolumeStats gets an encrypted volume stats
@@ -316,7 +315,7 @@ func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) spdk.
 	keyHalf := len(volume.Key) / 2
 	params.Key = hex.EncodeToString(volume.Key[:keyHalf])
 	params.Key2 = hex.EncodeToString(volume.Key[keyHalf:])
-	params.Name = volume.EncryptedVolumeId.Value
+	params.Name = volume.Name
 
 	return params
 }
