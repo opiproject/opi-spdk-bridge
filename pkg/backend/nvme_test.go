@@ -106,7 +106,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerID] = controller
 			}
 			if tt.out != nil {
-				tt.out.Id = &pc.ObjectKey{Value: controllerID}
+				tt.out.Name = controllerID
 			}
 
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: controllerID}
@@ -249,7 +249,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
-					Id:      &pc.ObjectKey{Value: "OpiNvme12"},
+					Name:    "OpiNvme12",
 					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 					Traddr:  "127.0.0.1",
@@ -258,7 +258,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 				},
 				{
-					Id:      &pc.ObjectKey{Value: "OpiNvme13"},
+					Name:    "OpiNvme13",
 					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 					Traddr:  "127.0.0.1",
@@ -281,7 +281,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
-					Id:      &pc.ObjectKey{Value: "OpiNvme12"},
+					Name:    "OpiNvme12",
 					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 					Traddr:  "127.0.0.1",
@@ -290,7 +290,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 				},
 				{
-					Id:      &pc.ObjectKey{Value: "OpiNvme13"},
+					Name:    "OpiNvme13",
 					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 					Traddr:  "127.0.0.1",
@@ -330,7 +330,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
-					Id:      &pc.ObjectKey{Value: "OpiNvme12"},
+					Name:    "OpiNvme12",
 					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 					Traddr:  "127.0.0.1",
@@ -350,7 +350,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.NVMfRemoteController{
 				{
-					Id:      &pc.ObjectKey{Value: "OpiNvme13"},
+					Name:    "OpiNvme13",
 					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 					Traddr:  "127.0.0.1",
@@ -454,7 +454,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 		"valid request with valid SPDK response": {
 			"OpiNvme12",
 			&pb.NVMfRemoteController{
-				Id:      &pc.ObjectKey{Value: "OpiNvme12"},
+				Name:    "OpiNvme12",
 				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 				Traddr:  "127.0.0.1",

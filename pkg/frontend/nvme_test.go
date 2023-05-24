@@ -164,7 +164,7 @@ func TestFrontEnd_CreateNVMeSubsystem(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
 			}
 			if tt.out != nil {
-				tt.out.Spec.Id = &pc.ObjectKey{Value: testSubsystemID}
+				tt.out.Spec.Name = testSubsystemID
 			}
 
 			request := &pb.CreateNVMeSubsystemRequest{NvMeSubsystem: tt.in, NvMeSubsystemId: testSubsystemID}
@@ -680,7 +680,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 			},
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{Value: testControllerID},
+					Name:             testControllerID,
 					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: -1,
@@ -724,7 +724,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Controllers[testControllerID] = &testController
 			}
 			if tt.out != nil {
-				tt.out.Spec.Id = &pc.ObjectKey{Value: testControllerID}
+				tt.out.Spec.Name = testControllerID
 			}
 
 			request := &pb.CreateNVMeControllerRequest{NvMeController: tt.in, NvMeControllerId: testControllerID}
@@ -753,7 +753,7 @@ func TestFrontEnd_CreateNVMeController(t *testing.T) {
 
 func TestFrontEnd_UpdateNVMeController(t *testing.T) {
 	spec := &pb.NVMeControllerSpec{
-		Id:               &pc.ObjectKey{Value: testControllerID},
+		Name:             testControllerID,
 		SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 		NvmeControllerId: 17,
@@ -835,7 +835,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			[]*pb.NVMeController{
 				{
 					Spec: &pb.NVMeControllerSpec{
-						Id:               &pc.ObjectKey{Value: testControllerID},
+						Name:             testControllerID,
 						SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 						PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 						NvmeControllerId: 17,
@@ -846,7 +846,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 				},
 				{
 					Spec: &pb.NVMeControllerSpec{
-						Id:               &pc.ObjectKey{Value: "controller-test1"},
+						Name:             "controller-test1",
 						SubsystemId:      &pc.ObjectKey{Value: "subsystem-test1"},
 						PcieId:           &pb.PciEndpoint{PhysicalFunction: 2, VirtualFunction: 2},
 						NvmeControllerId: 17,
@@ -874,7 +874,7 @@ func TestFrontEnd_ListNVMeControllers(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerID] = &testController
 			testEnv.opiSpdkServer.Nvme.Controllers["controller-test1"] = &pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{Value: "controller-test1"},
+					Name:             "controller-test1",
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test1"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 2, VirtualFunction: 2},
 					NvmeControllerId: 17,
@@ -919,7 +919,7 @@ func TestFrontEnd_GetNVMeController(t *testing.T) {
 			testControllerID,
 			&pb.NVMeController{
 				Spec: &pb.NVMeControllerSpec{
-					Id:               &pc.ObjectKey{Value: testControllerID},
+					Name:             testControllerID,
 					NvmeControllerId: 17,
 				},
 				Status: &pb.NVMeControllerStatus{
@@ -1136,7 +1136,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceID] = &testNamespace
 			}
 			if tt.out != nil {
-				tt.out.Spec.Id = &pc.ObjectKey{Value: testNamespaceID}
+				tt.out.Spec.Name = testNamespaceID
 			}
 
 			request := &pb.CreateNVMeNamespaceRequest{NvMeNamespace: tt.in, NvMeNamespaceId: testNamespaceID}
@@ -1165,7 +1165,7 @@ func TestFrontEnd_CreateNVMeNamespace(t *testing.T) {
 
 func TestFrontEnd_UpdateNVMeNamespace(t *testing.T) {
 	spec := &pb.NVMeNamespaceSpec{
-		Id:          &pc.ObjectKey{Value: testNamespaceID},
+		Name:        testNamespaceID,
 		SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
 		HostNsid:    22,
 		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
@@ -1494,7 +1494,7 @@ func TestFrontEnd_GetNVMeNamespace(t *testing.T) {
 			testNamespaceID,
 			&pb.NVMeNamespace{
 				Spec: &pb.NVMeNamespaceSpec{
-					Id:       &pc.ObjectKey{Value: testNamespaceID},
+					Name:     testNamespaceID,
 					HostNsid: 22,
 				},
 				Status: &pb.NVMeNamespaceStatus{

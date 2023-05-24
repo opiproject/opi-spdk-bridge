@@ -105,7 +105,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 			}
 			if tt.out != nil {
-				tt.out.Handle = &pc.ObjectKey{Value: testAioVolumeID}
+				tt.out.Name = testAioVolumeID
 			}
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: testAioVolumeID}
@@ -149,7 +149,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolume.Handle.Value),
+			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolume.Name),
 			true,
 		},
 		"delete empty": {
@@ -316,12 +316,12 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.AioController{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Name:        "Malloc0",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Name:        "Malloc1",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -340,12 +340,12 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.AioController{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Name:        "Malloc0",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Name:        "Malloc1",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -381,7 +381,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.AioController{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Name:        "Malloc0",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -397,7 +397,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"volume-test",
 			[]*pb.AioController{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Name:        "Malloc1",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -496,7 +496,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			"volume-test",
-			&pb.AioController{Handle: &pc.ObjectKey{Value: "Malloc1"}, BlockSize: 512, BlocksCount: 131072},
+			&pb.AioController{Name: "Malloc1", BlockSize: 512, BlocksCount: 131072},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",

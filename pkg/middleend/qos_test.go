@@ -156,9 +156,9 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		},
 		"qos_volume_id is ignored": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "ignored-id"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+				Name:     "ignored-id",
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
 			out:         testQosVolume,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
@@ -244,7 +244,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID] = tt.in
 			}
 			if tt.out != nil {
-				tt.out.QosVolumeId = &_go.ObjectKey{Value: testQosVolumeID}
+				tt.out.Name = testQosVolumeID
 			}
 
 			response, err := testEnv.client.CreateQosVolume(testEnv.ctx, request)
@@ -289,17 +289,17 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 		missing     bool
 	}{
 		"qos volume does not exist": {
-			in:          testQosVolume.QosVolumeId.Value,
+			in:          testQosVolumeID,
 			spdk:        []string{},
 			errCode:     codes.NotFound,
-			errMsg:      fmt.Sprintf("unable to find key %s", testQosVolume.QosVolumeId.Value),
+			errMsg:      fmt.Sprintf("unable to find key %s", testQosVolumeID),
 			start:       false,
 			existBefore: false,
 			existAfter:  false,
 			missing:     false,
 		},
 		"qos volume does not exist, with allow_missing": {
-			in:          testQosVolume.QosVolumeId.Value,
+			in:          testQosVolumeID,
 			spdk:        []string{},
 			errCode:     codes.OK,
 			errMsg:      "",
@@ -309,7 +309,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			missing:     true,
 		},
 		"SPDK call failed": {
-			in:          testQosVolume.QosVolumeId.Value,
+			in:          testQosVolumeID,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
 			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
 			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
@@ -319,7 +319,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"SPDK call result false": {
-			in:          testQosVolume.QosVolumeId.Value,
+			in:          testQosVolumeID,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
 			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
@@ -329,7 +329,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"successful deletion": {
-			in:          testQosVolume.QosVolumeId.Value,
+			in:          testQosVolumeID,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
@@ -345,7 +345,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			defer testEnv.Close()
 			request := &pb.DeleteQosVolumeRequest{Name: tt.in}
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value] = testQosVolume
+				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID] = testQosVolume
 			}
 			if tt.missing {
 				request.AllowMissing = true
@@ -374,9 +374,9 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 
 func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 	originalQosVolume := &pb.QosVolume{
-		QosVolumeId: testQosVolume.QosVolumeId,
-		VolumeId:    testQosVolume.VolumeId,
-		LimitMax:    &pb.QosLimit{RdBandwidthMbs: 1221},
+		Name:     testQosVolumeID,
+		VolumeId: testQosVolume.VolumeId,
+		LimitMax: &pb.QosLimit{RdBandwidthMbs: 1221},
 	}
 	tests := map[string]struct {
 		in          *pb.QosVolume
@@ -389,8 +389,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 	}{
 		"limit_min is not supported": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMin: &pb.QosLimit{
 					RdIopsKiops: 100000,
 				},
@@ -404,8 +404,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max rd_iops_kiops is not supported": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RdIopsKiops: 100000,
 				},
@@ -419,8 +419,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max wr_iops_kiops is not supported": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					WrIopsKiops: 100000,
 				},
@@ -434,8 +434,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max rw_iops_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RwIopsKiops: -1,
 				},
@@ -449,8 +449,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max rd_bandwidth_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RdBandwidthMbs: -1,
 				},
@@ -464,8 +464,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max wr_bandwidth_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					WrBandwidthMbs: -1,
 				},
@@ -479,8 +479,8 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max rw_bandwidth_kiops is negative": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				LimitMax: &pb.QosLimit{
 					RwBandwidthMbs: -1,
 				},
@@ -494,9 +494,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"limit_max with all zero limits": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-				LimitMax:    &pb.QosLimit{},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -505,24 +505,11 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			start:       false,
 			existBefore: true,
 		},
-		"qos_volume_id is nil": {
-			in: &pb.QosVolume{
-				QosVolumeId: nil,
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
-			},
-			out:         nil,
-			spdk:        []string{},
-			errCode:     codes.InvalidArgument,
-			errMsg:      "qos_volume_id cannot be empty",
-			start:       false,
-			existBefore: true,
-		},
 		"qos_volume_id is empty": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: ""},
-				VolumeId:    &_go.ObjectKey{Value: "volume-42"},
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+				Name:     "",
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -533,9 +520,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"volume_id is nil": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    nil,
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+				Name:     testQosVolumeID,
+				VolumeId: nil,
+				LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -546,9 +533,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		},
 		"volume_id is empty": {
 			in: &pb.QosVolume{
-				QosVolumeId: &_go.ObjectKey{Value: "qos-volume-42"},
-				VolumeId:    &_go.ObjectKey{Value: ""},
-				LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: ""},
+				LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -562,15 +549,15 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			out:         nil,
 			spdk:        []string{},
 			errCode:     codes.NotFound,
-			errMsg:      fmt.Sprintf("volume_id %v does not exist", testQosVolume.QosVolumeId.Value),
+			errMsg:      fmt.Sprintf("volume_id %v does not exist", testQosVolumeID),
 			start:       false,
 			existBefore: false,
 		},
 		"change underlying volume": {
 			in: &pb.QosVolume{
-				QosVolumeId: testQosVolume.QosVolumeId,
-				VolumeId:    &_go.ObjectKey{Value: "new-underlying-volume-id"},
-				LimitMax:    &pb.QosLimit{RdBandwidthMbs: 1},
+				Name:     testQosVolumeID,
+				VolumeId: &_go.ObjectKey{Value: "new-underlying-volume-id"},
+				LimitMax: &pb.QosLimit{RdBandwidthMbs: 1},
 			},
 			out:     nil,
 			spdk:    []string{},
@@ -625,7 +612,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in}
 
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.QosVolumeId.Value] = originalQosVolume
+				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = originalQosVolume
 			}
 
 			response, err := testEnv.client.UpdateQosVolume(testEnv.ctx, request)
@@ -647,7 +634,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 				t.Errorf("expect grpc error status")
 			}
 
-			vol := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value]
+			vol := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID]
 			if tt.errCode == codes.OK {
 				if !proto.Equal(tt.in, vol) {
 					t.Error("expect QoS volume", vol, "is equal to", tt.in)
@@ -663,14 +650,14 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 
 func TestMiddleEnd_ListQosVolume(t *testing.T) {
 	qosVolume0 := &pb.QosVolume{
-		QosVolumeId: &_go.ObjectKey{Value: "qos-volume-41"},
-		VolumeId:    &_go.ObjectKey{Value: "volume-41"},
-		LimitMax:    &pb.QosLimit{RwBandwidthMbs: 1},
+		Name:     "qos-volume-41",
+		VolumeId: &_go.ObjectKey{Value: "volume-41"},
+		LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 	}
 	qosVolume1 := &pb.QosVolume{
-		QosVolumeId: &_go.ObjectKey{Value: "qos-volume-45"},
-		VolumeId:    &_go.ObjectKey{Value: "volume-45"},
-		LimitMax:    &pb.QosLimit{RwBandwidthMbs: 5},
+		Name:     "qos-volume-45",
+		VolumeId: &_go.ObjectKey{Value: "volume-45"},
+		LimitMax: &pb.QosLimit{RwBandwidthMbs: 5},
 	}
 	existingToken := "existing-pagination-token"
 	tests := map[string]struct {
@@ -692,8 +679,8 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		"qos volumes were created": {
 			out: []*pb.QosVolume{qosVolume0, qosVolume1},
 			existingVolumes: map[string]*pb.QosVolume{
-				qosVolume0.QosVolumeId.Value: qosVolume0,
-				qosVolume1.QosVolumeId.Value: qosVolume1,
+				qosVolume0.Name: qosVolume0,
+				qosVolume1.Name: qosVolume1,
 			},
 			errCode: codes.OK,
 			errMsg:  "",
@@ -703,8 +690,8 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		"pagination": {
 			out: []*pb.QosVolume{qosVolume0},
 			existingVolumes: map[string]*pb.QosVolume{
-				qosVolume0.QosVolumeId.Value: qosVolume0,
-				qosVolume1.QosVolumeId.Value: qosVolume1,
+				qosVolume0.Name: qosVolume0,
+				qosVolume1.Name: qosVolume1,
 			},
 			errCode: codes.OK,
 			errMsg:  "",
@@ -714,8 +701,8 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		"pagination offset": {
 			out: []*pb.QosVolume{qosVolume1},
 			existingVolumes: map[string]*pb.QosVolume{
-				qosVolume0.QosVolumeId.Value: qosVolume0,
-				qosVolume1.QosVolumeId.Value: qosVolume1,
+				qosVolume0.Name: qosVolume0,
+				qosVolume1.Name: qosVolume1,
 			},
 			errCode: codes.OK,
 			errMsg:  "",
@@ -725,8 +712,8 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		"pagination negative": {
 			out: nil,
 			existingVolumes: map[string]*pb.QosVolume{
-				qosVolume0.QosVolumeId.Value: qosVolume0,
-				qosVolume1.QosVolumeId.Value: qosVolume1,
+				qosVolume0.Name: qosVolume0,
+				qosVolume1.Name: qosVolume1,
 			},
 			errCode: codes.InvalidArgument,
 			errMsg:  "negative PageSize is not allowed",
@@ -736,8 +723,8 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		"pagination error": {
 			out: nil,
 			existingVolumes: map[string]*pb.QosVolume{
-				qosVolume0.QosVolumeId.Value: qosVolume0,
-				qosVolume1.QosVolumeId.Value: qosVolume1,
+				qosVolume0.Name: qosVolume0,
+				qosVolume1.Name: qosVolume1,
 			},
 			errCode: codes.NotFound,
 			errMsg:  fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
@@ -803,7 +790,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			errMsg:  fmt.Sprintf("unable to find key %s", "unknown-qos-volume-id"),
 		},
 		"existing QoS volume": {
-			in:      testQosVolume.QosVolumeId.Value,
+			in:      testQosVolumeID,
 			out:     testQosVolume,
 			errCode: codes.OK,
 			errMsg:  "",
@@ -814,7 +801,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 			request := &pb.GetQosVolumeRequest{Name: tt.in}
-			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value] = testQosVolume
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID] = testQosVolume
 
 			response, err := testEnv.client.GetQosVolume(testEnv.ctx, request)
 
@@ -862,7 +849,7 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			start:   false,
 		},
 		"SPDK call failed": {
-			in:      testQosVolume.QosVolumeId,
+			in:      &_go.ObjectKey{Value: testQosVolumeID},
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"some internal error"}}`},
 			errCode: status.Convert(spdk.ErrFailedSpdkCall).Code(),
@@ -870,7 +857,7 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			start:   true,
 		},
 		"SPDK call result false": {
-			in:      testQosVolume.QosVolumeId,
+			in:      &_go.ObjectKey{Value: testQosVolumeID},
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,"bdevs":[]}}`},
 			errCode: status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
@@ -878,12 +865,12 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			start:   true,
 		},
 		"successful QoS volume stats": {
-			in: testQosVolume.QosVolumeId,
+			in: &_go.ObjectKey{Value: testQosVolumeID},
 			out: &pb.QosVolumeStatsResponse{
 				Stats: &pb.VolumeStats{
 					ReadBytesCount: 36864,
 				},
-				Id: testQosVolume.QosVolumeId,
+				Id: &_go.ObjectKey{Value: testQosVolumeID},
 			},
 			spdk: []string{
 				`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,` +
@@ -899,7 +886,7 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 			request := &pb.QosVolumeStatsRequest{VolumeId: tt.in}
-			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolume.QosVolumeId.Value] = testQosVolume
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeID] = testQosVolume
 
 			response, err := testEnv.client.QosVolumeStats(testEnv.ctx, request)
 
