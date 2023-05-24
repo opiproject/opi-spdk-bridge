@@ -23,6 +23,7 @@ import (
 )
 
 // ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
+// TODO: remove when not used in other bridges
 func ExtractPagination(pageSize int32, pageToken string, pagination map[string]int) (size int, offset int, err error) {
 	const (
 		maxPageSize     = 250
@@ -52,6 +53,7 @@ func ExtractPagination(pageSize int32, pageToken string, pagination map[string]i
 }
 
 // LimitPagination is a helper function for slice the result by offset and size
+// TODO: remove when not used in other bridges
 func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
 	end := offset + size
 	hasMoreElements := false
