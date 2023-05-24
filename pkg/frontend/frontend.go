@@ -10,6 +10,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 // SubsystemListener interface is used to provide SPDK call params to create/delete
@@ -42,7 +43,7 @@ type Server struct {
 	rpc        spdk.JSONRPC
 	Nvme       NvmeParameters
 	Virt       VirtioParameters
-	Pagination map[string]int
+	Pagination server.Pagination
 }
 
 // NewServer creates initialized instance of FrontEnd server communicating
@@ -61,7 +62,7 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 			ScsiCtrls: make(map[string]*pb.VirtioScsiController),
 			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
 		},
-		Pagination: make(map[string]int),
+		Pagination: server.NewPagination(),
 	}
 }
 
