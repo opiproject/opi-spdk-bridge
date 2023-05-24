@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/grpc/codes"
@@ -23,7 +22,7 @@ import (
 
 func sortQosVolumes(volumes []*pb.QosVolume) {
 	sort.Slice(volumes, func(i int, j int) bool {
-		return volumes[i].QosVolumeId.Value < volumes[j].QosVolumeId.Value
+		return volumes[i].Name < volumes[j].Name
 	})
 }
 
@@ -32,17 +31,17 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 	log.Printf("CreateQosVolume: Received from client: %v", in)
 	name := uuid.New().String()
 	if in.QosVolumeId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.QosVolumeId)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
 		name = in.QosVolumeId
 	}
-	in.QosVolume.QosVolumeId = &pc.ObjectKey{Value: name}
+	in.QosVolume.Name = name
 
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if volume, ok := s.volumes.qosVolumes[in.QosVolume.QosVolumeId.Value]; ok {
-		log.Printf("Already existing QoS volume with id %v", in.QosVolume.QosVolumeId.Value)
+	if volume, ok := s.volumes.qosVolumes[in.QosVolume.Name]; ok {
+		log.Printf("Already existing QoS volume with id %v", in.QosVolume.Name)
 		return volume, nil
 	}
 
@@ -50,7 +49,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return nil, err
 	}
 
-	s.volumes.qosVolumes[in.QosVolume.QosVolumeId.Value] = proto.Clone(in.QosVolume).(*pb.QosVolume)
+	s.volumes.qosVolumes[in.QosVolume.Name] = proto.Clone(in.QosVolume).(*pb.QosVolume)
 	return in.QosVolume, nil
 }
 
@@ -82,7 +81,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	qosVolumeID := in.QosVolume.QosVolumeId.Value
+	qosVolumeID := in.QosVolume.Name
 	volume, ok := s.volumes.qosVolumes[qosVolumeID]
 	if !ok {
 		log.Printf("Non-existing QoS volume with id %v", qosVolumeID)
@@ -186,7 +185,7 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 }
 
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
-	if volume.QosVolumeId == nil || volume.QosVolumeId.Value == "" {
+	if volume.Name == "" {
 		return fmt.Errorf("qos_volume_id cannot be empty")
 	}
 	if volume.VolumeId == nil || volume.VolumeId.Value == "" {

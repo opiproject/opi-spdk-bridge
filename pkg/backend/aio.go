@@ -12,7 +12,6 @@ import (
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
@@ -25,7 +24,7 @@ import (
 
 func sortAioControllers(controllers []*pb.AioController) {
 	sort.Slice(controllers, func(i int, j int) bool {
-		return controllers[i].Handle.Value < controllers[j].Handle.Value
+		return controllers[i].Name < controllers[j].Name
 	})
 }
 
@@ -35,14 +34,14 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.AioControllerId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Handle)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Name)
 		name = in.AioControllerId
 	}
-	in.AioController.Handle = &pc.ObjectKey{Value: name}
+	in.AioController.Name = name
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.AioVolumes[in.AioController.Handle.Value]
+	volume, ok := s.Volumes.AioVolumes[in.AioController.Name]
 	if ok {
-		log.Printf("Already existing AioController with id %v", in.AioController.Handle.Value)
+		log.Printf("Already existing AioController with id %v", in.AioController.Name)
 		return volume, nil
 	}
 	// not found, so create a new one
@@ -69,7 +68,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	s.Volumes.AioVolumes[in.AioController.Handle.Value] = response
+	s.Volumes.AioVolumes[in.AioController.Name] = response
 	return response, nil
 }
 
@@ -96,11 +95,11 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete Aio Dev: %s", volume.Handle.Value)
+		msg := fmt.Sprintf("Could not delete Aio Dev: %s", volume.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Volumes.AioVolumes, volume.Handle.Value)
+	delete(s.Volumes.AioVolumes, volume.Name)
 	return &emptypb.Empty{}, nil
 }
 
@@ -108,7 +107,7 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
 	params1 := spdk.BdevAioDeleteParams{
-		Name: in.AioController.Handle.Value,
+		Name: in.AioController.Name,
 	}
 	var result1 spdk.BdevAioDeleteResult
 	err1 := s.rpc.Call("bdev_aio_delete", &params1, &result1)
@@ -118,12 +117,12 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not delete Aio Dev: %s", in.AioController.Handle.Value)
+		msg := fmt.Sprintf("Could not delete Aio Dev: %s", in.AioController.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevAioCreateParams{
-		Name:      in.AioController.Handle.Value,
+		Name:      in.AioController.Name,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
@@ -135,7 +134,7 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if result2 == "" {
-		msg := fmt.Sprintf("Could not create Aio Dev: %s", in.AioController.Handle.Value)
+		msg := fmt.Sprintf("Could not create Aio Dev: %s", in.AioController.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -145,7 +144,7 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 		log.Printf("error: %v", err3)
 		return nil, err3
 	}
-	s.Volumes.AioVolumes[in.AioController.Handle.Value] = response
+	s.Volumes.AioVolumes[in.AioController.Name] = response
 	return response, nil
 }
 
@@ -174,7 +173,7 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 	Blobarray := make([]*pb.AioController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.AioController{Handle: &pc.ObjectKey{Value: r.Name}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
+		Blobarray[i] = &pb.AioController{Name: r.Name, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
 	sortAioControllers(Blobarray)
 	return &pb.ListAioControllersResponse{AioControllers: Blobarray, NextPageToken: token}, nil
@@ -198,7 +197,7 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.AioController{Handle: &pc.ObjectKey{Value: result[0].Name}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
+	return &pb.AioController{Name: result[0].Name, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
 // AioControllerStats gets an Aio controller stats

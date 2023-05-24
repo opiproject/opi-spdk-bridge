@@ -43,7 +43,7 @@ func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
 
 func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
-	ctrlrDirPath := controllerDirPath(c.ctrlrDir, ctrlr.Spec.Id.Value)
+	ctrlrDirPath := controllerDirPath(c.ctrlrDir, ctrlr.Spec.Name)
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath
@@ -53,7 +53,7 @@ func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string)
 
 // CreateNVMeController creates an NVMe controller device and attaches it to QEMU instance
 func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
-	id := in.NvMeController.Spec.Id.Value
+	id := in.NvMeController.Spec.Name
 	err := createControllerDir(s.ctrlrDir, id)
 	if err != nil {
 		log.Print(err)

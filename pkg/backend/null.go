@@ -25,7 +25,7 @@ import (
 
 func sortNullDebugs(nullDebugs []*pb.NullDebug) {
 	sort.Slice(nullDebugs, func(i int, j int) bool {
-		return nullDebugs[i].Handle.Value < nullDebugs[j].Handle.Value
+		return nullDebugs[i].Name < nullDebugs[j].Name
 	})
 }
 
@@ -35,14 +35,14 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NullDebugId != "" {
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Handle)
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Name)
 		name = in.NullDebugId
 	}
-	in.NullDebug.Handle = &pc.ObjectKey{Value: name}
+	in.NullDebug.Name = name
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Handle.Value]
+	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Name]
 	if ok {
-		log.Printf("Already existing NullDebug with id %v", in.NullDebug.Handle.Value)
+		log.Printf("Already existing NullDebug with id %v", in.NullDebug.Name)
 		return volume, nil
 	}
 	// not found, so create a new one
@@ -69,7 +69,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	s.Volumes.NullVolumes[in.NullDebug.Handle.Value] = response
+	s.Volumes.NullVolumes[in.NullDebug.Name] = response
 	return response, nil
 }
 
@@ -96,11 +96,11 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete Null Dev: %s", volume.Handle.Value)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", volume.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Volumes.NullVolumes, volume.Handle.Value)
+	delete(s.Volumes.NullVolumes, volume.Name)
 	return &emptypb.Empty{}, nil
 }
 
@@ -108,7 +108,7 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
 	params1 := spdk.BdevNullDeleteParams{
-		Name: in.NullDebug.Handle.Value,
+		Name: in.NullDebug.Name,
 	}
 	var result1 spdk.BdevNullDeleteResult
 	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
@@ -118,12 +118,12 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not delete Null Dev: %s", in.NullDebug.Handle.Value)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", in.NullDebug.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevNullCreateParams{
-		Name:      in.NullDebug.Handle.Value,
+		Name:      in.NullDebug.Name,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -135,7 +135,7 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if result2 == "" {
-		msg := fmt.Sprintf("Could not create Null Dev: %s", in.NullDebug.Handle.Value)
+		msg := fmt.Sprintf("Could not create Null Dev: %s", in.NullDebug.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -145,7 +145,7 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		log.Printf("error: %v", err3)
 		return nil, err3
 	}
-	s.Volumes.NullVolumes[in.NullDebug.Handle.Value] = response
+	s.Volumes.NullVolumes[in.NullDebug.Name] = response
 	return response, nil
 }
 
@@ -174,7 +174,7 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 	Blobarray := make([]*pb.NullDebug, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NullDebug{Handle: &pc.ObjectKey{Value: r.Name}, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
+		Blobarray[i] = &pb.NullDebug{Name: r.Name, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
 	sortNullDebugs(Blobarray)
 	return &pb.ListNullDebugsResponse{NullDebugs: Blobarray, NextPageToken: token}, nil
@@ -198,7 +198,7 @@ func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*p
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullDebug{Handle: &pc.ObjectKey{Value: result[0].Name}, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
+	return &pb.NullDebug{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
 // NullDebugStats gets a Null Debug instance stats

@@ -21,7 +21,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 		return out, err
 	}
 
-	id := out.Id.Value
+	id := out.Name
 	mon, err := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if err != nil {
 		log.Println("Couldn't create QEMU monitor")
@@ -31,7 +31,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	defer mon.Disconnect()
 
 	ctrlr := filepath.Join(s.ctrlrDir, id)
-	chardevID := out.Id.Value
+	chardevID := out.Name
 	if err := mon.AddChardev(chardevID, ctrlr); err != nil {
 		log.Println("Couldn't add chardev:", err)
 		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: id})
