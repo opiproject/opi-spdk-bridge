@@ -29,6 +29,12 @@ func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 	})
 }
 
+func sortScsiLuns(controllers []*pb.VirtioScsiLun) {
+	sort.Slice(controllers, func(i int, j int) bool {
+		return controllers[i].Id.Value < controllers[j].Id.Value
+	})
+}
+
 // CreateVirtioScsiController creates a Virtio SCSI controller
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
@@ -260,6 +266,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: r.Ctrlr}}
 	}
+	sortScsiLuns(Blobarray)
 	page := server.LimitToPage(pageToken, Blobarray)
 	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: page.List, NextPageToken: page.NextToken}, nil
 }
