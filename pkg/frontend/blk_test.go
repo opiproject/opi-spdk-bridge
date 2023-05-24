@@ -64,7 +64,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			defer testEnv.Close()
 
 			if test.out != nil {
-				test.out.Id = &pc.ObjectKey{Value: testVirtioCtrlID}
+				test.out.Name = testVirtioCtrlID
 			}
 
 			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in, VirtioBlkId: testVirtioCtrlID}
@@ -193,17 +193,17 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Id:       &pc.ObjectKey{Value: "VblkEmu0pf0"},
+					Name:     "VblkEmu0pf0",
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "VblkEmu0pf2"},
+					Name:     "VblkEmu0pf2",
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+					Name:     testVirtioCtrlID,
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
@@ -223,17 +223,17 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Id:       &pc.ObjectKey{Value: "VblkEmu0pf0"},
+					Name:     "VblkEmu0pf0",
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "VblkEmu0pf2"},
+					Name:     "VblkEmu0pf2",
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
 				{
-					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+					Name:     testVirtioCtrlID,
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
@@ -269,7 +269,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Id:       &pc.ObjectKey{Value: "VblkEmu0pf0"},
+					Name:     "VblkEmu0pf0",
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
@@ -285,7 +285,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+					Name:     testVirtioCtrlID,
 					PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 					VolumeId: &pc.ObjectKey{Value: "TBD"},
 				},
@@ -344,7 +344,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
@@ -352,7 +352,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -360,7 +360,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -368,7 +368,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
 			codes.Unknown,
@@ -376,9 +376,9 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			&pb.VirtioBlk{
-				Id:       &pc.ObjectKey{Value: "virtio-blk-42"},
+				Name:     testVirtioCtrlID,
 				PcieId:   &pb.PciEndpoint{PhysicalFunction: int32(1)},
 				VolumeId: &pc.ObjectKey{Value: "TBD"},
 			},
@@ -395,7 +395,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls["virtio-blk-42"] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
 
 			request := &pb.GetVirtioBlkRequest{Name: tt.in}
 			response, err := testEnv.client.GetVirtioBlk(testEnv.ctx, request)
@@ -446,7 +446,7 @@ func TestFrontEnd_VirtioBlkStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls["virtio-blk-42"] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
 
 			request := &pb.VirtioBlkStatsRequest{ControllerId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.VirtioBlkStats(testEnv.ctx, request)
@@ -479,7 +479,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -488,7 +488,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -497,7 +497,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -506,7 +506,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -515,7 +515,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			"virtio-blk-42",
+			testVirtioCtrlID,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
@@ -549,7 +549,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls["virtio-blk-42"] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)

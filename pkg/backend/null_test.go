@@ -104,7 +104,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 			}
 			if tt.out != nil {
-				tt.out.Handle = &pc.ObjectKey{Value: testNullVolumeID}
+				tt.out.Name = testNullVolumeID
 			}
 
 			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: testNullVolumeID}
@@ -148,7 +148,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolume.Handle.Value),
+			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolumeID),
 			true,
 		},
 		"delete empty": {
@@ -315,13 +315,13 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Name:        "Malloc0",
 					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Name:        "Malloc1",
 					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
 					BlockSize:   512,
 					BlocksCount: 131072,
@@ -341,13 +341,13 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Name:        "Malloc0",
 					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Name:        "Malloc1",
 					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
 					BlockSize:   512,
 					BlocksCount: 131072,
@@ -384,7 +384,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc0"},
+					Name:        "Malloc0",
 					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
 					BlockSize:   512,
 					BlocksCount: 131072,
@@ -401,7 +401,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"volume-test",
 			[]*pb.NullDebug{
 				{
-					Handle:      &pc.ObjectKey{Value: "Malloc1"},
+					Name:        "Malloc1",
 					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
 					BlockSize:   512,
 					BlocksCount: 131072,
@@ -502,7 +502,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 		"valid request with valid SPDK response": {
 			"volume-test",
 			&pb.NullDebug{
-				Handle:      &pc.ObjectKey{Value: "Malloc1"},
+				Name:        "Malloc1",
 				Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
 				BlockSize:   512,
 				BlocksCount: 131072,

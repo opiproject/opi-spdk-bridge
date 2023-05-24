@@ -26,14 +26,14 @@ var (
 	testNvmeControllerID = "nvme-43"
 	testSubsystem        = pb.NVMeSubsystem{
 		Spec: &pb.NVMeSubsystemSpec{
-			Id:  &pc.ObjectKey{},
-			Nqn: "nqn.2022-09.io.spdk:opi2",
+			Name: "",
+			Nqn:  "nqn.2022-09.io.spdk:opi2",
 		},
 	}
 	testCreateNvmeControllerRequest = &pb.CreateNVMeControllerRequest{NvMeControllerId: testNvmeControllerID, NvMeController: &pb.NVMeController{
 		Spec: &pb.NVMeControllerSpec{
-			Id:               &pc.ObjectKey{Value: testNvmeControllerID},
-			SubsystemId:      testSubsystem.Spec.Id,
+			Name:             testNvmeControllerID,
+			SubsystemId:      &pc.ObjectKey{Value: testSubsystem.Spec.Name},
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 0, VirtualFunction: 5},
 			NvmeControllerId: 43,
 		},
@@ -98,9 +98,7 @@ func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
 	vfiouserSubsysListener := NewVfiouserSubsystemListener(tmpDir)
 	gotParams := vfiouserSubsysListener.Params(&pb.NVMeController{
 		Spec: &pb.NVMeControllerSpec{
-			Id: &pc.ObjectKey{
-				Value: "nvme-1",
-			},
+			Name: "nvme-1",
 		},
 	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
 
@@ -173,7 +171,7 @@ func TestCreateNvmeController(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
+			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Name] = &testSubsystem
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
@@ -182,7 +180,7 @@ func TestCreateNvmeController(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
 			kvmServer.timeout = qmplibTimeout
-			testCtrlrDir := filepath.Join(qmpServer.testDir, testCreateNvmeControllerRequest.NvMeController.Spec.Id.Value)
+			testCtrlrDir := filepath.Join(qmpServer.testDir, testCreateNvmeControllerRequest.NvMeController.Spec.Name)
 			if test.ctrlrDirExistsBeforeOperation &&
 				os.Mkdir(testCtrlrDir, os.ModePerm) != nil {
 				log.Panicf("Couldn't create ctrlr dir for test")
@@ -291,8 +289,8 @@ func TestDeleteNvmeController(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Id.Value] = &testSubsystem
-			opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvMeController.Spec.Id.Value] = testCreateNvmeControllerRequest.NvMeController
+			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Name] = &testSubsystem
+			opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvMeController.Spec.Name] = testCreateNvmeControllerRequest.NvMeController
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath

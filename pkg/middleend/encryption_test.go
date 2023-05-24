@@ -216,14 +216,14 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 			if tt.out != nil {
-				tt.out.EncryptedVolumeId = &pc.ObjectKey{Value: encryptedVolumeID}
+				tt.out.Name = encryptedVolumeID
 			}
 
 			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: encryptedVolumeID}
 			response, err := testEnv.client.CreateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if string(response.Key) != string(tt.out.Key) &&
-					response.EncryptedVolumeId.Value != tt.out.EncryptedVolumeId.Value &&
+					response.Name != tt.out.Name &&
 					response.VolumeId.Value != tt.out.VolumeId.Value {
 					t.Error("response: expected", tt.out, "received", response)
 				}
@@ -257,7 +257,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Crypto: %s", encryptedVolume.EncryptedVolumeId.Value),
+			fmt.Sprintf("Could not delete Crypto: %s", encryptedVolumeID),
 			true,
 		},
 		"bdev delete empty": {
@@ -353,7 +353,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Crypto Dev: %v", encryptedVolume.EncryptedVolumeId.Value),
+			fmt.Sprintf("Could not create Crypto Dev: %v", encryptedVolumeID),
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create empty": {
@@ -390,10 +390,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use AES_XTS_192 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192,
-				Key:               []byte("0123456789abcdef0123456789abcdef0123456789abcdef"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192,
+				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
 			nil,
 			[]string{},
@@ -403,16 +403,16 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use AES_XTS_256 cipher ; bdev delete ok ; key delete ok ; key create ok ; bdev create ok": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
-				Key:               []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
-				Key:               []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
@@ -421,10 +421,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use AES_CBC_128 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128,
-				Key:               []byte("0123456789abcdef"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128,
+				Key:      []byte("0123456789abcdef"),
 			},
 			nil,
 			[]string{},
@@ -434,10 +434,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use AES_CBC_192 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192,
-				Key:               []byte("0123456789abcdef01234567"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192,
+				Key:      []byte("0123456789abcdef01234567"),
 			},
 			nil,
 			[]string{},
@@ -447,10 +447,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use AES_CBC_256 cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256,
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256,
+				Key:      []byte("0123456789abcdef0123456789abcdef"),
 			},
 			nil,
 			[]string{},
@@ -460,10 +460,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use UNSPECIFIED cipher": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_UNSPECIFIED,
-				Key:               []byte("0123456789abcdef0123456789abcdef"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_UNSPECIFIED,
+				Key:      []byte("0123456789abcdef0123456789abcdef"),
 			},
 			nil,
 			[]string{},
@@ -473,10 +473,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"invalid key size for AES_XTS_128": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
-				Key:               []byte("1234"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+				Key:      []byte("1234"),
 			},
 			nil,
 			[]string{},
@@ -486,10 +486,10 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"invalid key size for AES_XTS_256": {
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: encryptedVolume.EncryptedVolumeId,
-				VolumeId:          encryptedVolume.VolumeId,
-				Cipher:            pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
-				Key:               []byte("1234"),
+				Name:     encryptedVolumeID,
+				VolumeId: encryptedVolume.VolumeId,
+				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
+				Key:      []byte("1234"),
 			},
 			nil,
 			[]string{},
@@ -597,10 +597,10 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"volume-test",
 			[]*pb.EncryptedVolume{
 				{
-					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc0"},
+					Name: "Malloc0",
 				},
 				{
-					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc1"},
+					Name: "Malloc1",
 				},
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[` +
@@ -616,10 +616,10 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"volume-test",
 			[]*pb.EncryptedVolume{
 				{
-					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc0"},
+					Name: "Malloc0",
 				},
 				{
-					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc1"},
+					Name: "Malloc1",
 				},
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
@@ -653,7 +653,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"volume-test",
 			[]*pb.EncryptedVolume{
 				{
-					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc0"},
+					Name: "Malloc0",
 				},
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
@@ -667,7 +667,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			"volume-test",
 			[]*pb.EncryptedVolume{
 				{
-					EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc1"},
+					Name: "Malloc1",
 				},
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
@@ -765,7 +765,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 		"valid request with valid SPDK response": {
 			"Malloc0",
 			&pb.EncryptedVolume{
-				EncryptedVolumeId: &pc.ObjectKey{Value: "Malloc0"},
+				Name: "Malloc0",
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
@@ -783,7 +783,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
-				if response.EncryptedVolumeId.Value != tt.out.EncryptedVolumeId.Value {
+				if response.Name != tt.out.Name {
 					// if !reflect.DeepEqual(response, tt.out) {
 					t.Error("response: expected", tt.out, "received", response)
 				}

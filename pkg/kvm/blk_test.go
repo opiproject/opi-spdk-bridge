@@ -22,7 +22,7 @@ import (
 var (
 	testVirtioBlkID            = "virtio-blk-42"
 	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlkId: testVirtioBlkID, VirtioBlk: &pb.VirtioBlk{
-		Id:       &pc.ObjectKey{},
+		Name:     "",
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
@@ -35,7 +35,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 	if deepcopier.Copy(testCreateVirtioBlkRequest.VirtioBlk).To(expectNotNilOut) != nil {
 		log.Panicf("Failed to copy structure")
 	}
-	expectNotNilOut.Id.Value = testVirtioBlkID
+	expectNotNilOut.Name = testVirtioBlkID
 
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
