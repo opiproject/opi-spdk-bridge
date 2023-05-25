@@ -43,7 +43,7 @@ func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
 
 func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
-	ctrlrDirPath := controllerDirPath(c.ctrlrDir, ctrlr.Spec.Name)
+	ctrlrDirPath := controllerDirPath(c.ctrlrDir, ctrlr.Spec.SubsystemId.Value)
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath
@@ -53,8 +53,14 @@ func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NVMeController, nqn string)
 
 // CreateNVMeController creates an NVMe controller device and attaches it to QEMU instance
 func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeControllerRequest) (*pb.NVMeController, error) {
-	id := in.NvMeController.Spec.Name
-	err := createControllerDir(s.ctrlrDir, id)
+	if in.NvMeController.Spec.SubsystemId == nil || in.NvMeController.Spec.SubsystemId.Value == "" {
+		return nil, errInvalidSubsystem
+	}
+
+	// Create request can miss Name field which is generated in spdk bridge.
+	// Use subsystem instead, since it is required to exist
+	dirName := in.NvMeController.Spec.SubsystemId.Value
+	err := createControllerDir(s.ctrlrDir, dirName)
 	if err != nil {
 		log.Print(err)
 		return nil, errFailedToCreateNvmeDir
@@ -63,23 +69,25 @@ func (s *Server) CreateNVMeController(ctx context.Context, in *pb.CreateNVMeCont
 	out, err := s.Server.CreateNVMeController(ctx, in)
 	if err != nil {
 		log.Println("Error running cmd on opi-spdk bridge:", err)
-		_ = deleteControllerDir(s.ctrlrDir, id)
+		_ = deleteControllerDir(s.ctrlrDir, dirName)
 		return out, err
 	}
+	name := out.Spec.Name
 
 	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if monErr != nil {
 		log.Println("Couldn't create QEMU monitor")
-		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: id})
-		_ = deleteControllerDir(s.ctrlrDir, id)
+		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: name})
+		_ = deleteControllerDir(s.ctrlrDir, dirName)
 		return nil, errMonitorCreation
 	}
 	defer mon.Disconnect()
 
-	if err := mon.AddNvmeControllerDevice(id, controllerDirPath(s.ctrlrDir, id)); err != nil {
+	qemuDeviceID := toQemuID(name)
+	if err := mon.AddNvmeControllerDevice(qemuDeviceID, controllerDirPath(s.ctrlrDir, dirName)); err != nil {
 		log.Println("Couldn't add NVMe controller:", err)
-		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: id})
-		_ = deleteControllerDir(s.ctrlrDir, id)
+		_, _ = s.Server.DeleteNVMeController(context.Background(), &pb.DeleteNVMeControllerRequest{Name: name})
+		_ = deleteControllerDir(s.ctrlrDir, dirName)
 		return nil, errAddDeviceFailed
 	}
 	return out, nil
@@ -94,7 +102,14 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	}
 	defer mon.Disconnect()
 
-	delNvmeErr := mon.DeleteNvmeControllerDevice(in.Name)
+	dirName, findDirNameErr := s.findDirName(in.Name)
+	if findDirNameErr != nil {
+		log.Println("Failed to detect controller directory name:", findDirNameErr)
+		return nil, findDirNameErr
+	}
+
+	qemuDeviceID := toQemuID(in.Name)
+	delNvmeErr := mon.DeleteNvmeControllerDevice(qemuDeviceID)
 	if delNvmeErr != nil {
 		log.Printf("Couldn't delete NVMe controller: %v", delNvmeErr)
 	}
@@ -104,7 +119,7 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 		log.Println("Error running underlying cmd on opi-spdk bridge:", spdkErr)
 	}
 
-	delDirErr := deleteControllerDir(s.ctrlrDir, in.Name)
+	delDirErr := deleteControllerDir(s.ctrlrDir, dirName)
 	if delDirErr != nil {
 		log.Println("Failed to delete NVMe controller directory:", delDirErr)
 	}
@@ -118,18 +133,26 @@ func (s *Server) DeleteNVMeController(ctx context.Context, in *pb.DeleteNVMeCont
 	return response, err
 }
 
-func createControllerDir(ctrlrDir string, ctrlrID string) error {
-	ctrlrDirPath := controllerDirPath(ctrlrDir, ctrlrID)
-	log.Printf("Creating dir for %v NVMe controller: %v", ctrlrID, ctrlrDirPath)
+func (s *Server) findDirName(name string) (string, error) {
+	ctrlr, ok := s.Server.Nvme.Controllers[name]
+	if !ok {
+		return "", errNoController
+	}
+	return ctrlr.Spec.SubsystemId.Value, nil
+}
+
+func createControllerDir(ctrlrDir string, dirName string) error {
+	ctrlrDirPath := controllerDirPath(ctrlrDir, dirName)
+	log.Printf("Creating dir for NVMe controller: %v", ctrlrDirPath)
 	if os.Mkdir(ctrlrDirPath, 0600) != nil {
 		return fmt.Errorf("cannot create controller directory %v", ctrlrDirPath)
 	}
 	return nil
 }
 
-func deleteControllerDir(ctrlrDir string, ctrlrID string) error {
-	ctrlrDirPath := controllerDirPath(ctrlrDir, ctrlrID)
-	log.Printf("Deleting dir for %v NVMe controller: %v", ctrlrID, ctrlrDirPath)
+func deleteControllerDir(ctrlrDir string, dirName string) error {
+	ctrlrDirPath := controllerDirPath(ctrlrDir, dirName)
+	log.Printf("Deleting dir for NVMe controller: %v", ctrlrDirPath)
 	if _, err := os.Stat(ctrlrDirPath); os.IsNotExist(err) {
 		log.Printf("%v directory does not exist.", ctrlrDirPath)
 		return nil
