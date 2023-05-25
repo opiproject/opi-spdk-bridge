@@ -18,15 +18,15 @@ import (
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	"github.com/ulule/deepcopier"
 	"google.golang.org/protobuf/proto"
 )
 
 var (
 	testNvmeControllerID = "nvme-43"
+	testSubsystemID      = "subsystem0"
 	testSubsystem        = pb.NVMeSubsystem{
 		Spec: &pb.NVMeSubsystemSpec{
-			Name: "",
+			Name: testSubsystemID,
 			Nqn:  "nqn.2022-09.io.spdk:opi2",
 		},
 	}
@@ -98,7 +98,7 @@ func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
 	vfiouserSubsysListener := NewVfiouserSubsystemListener(tmpDir)
 	gotParams := vfiouserSubsysListener.Params(&pb.NVMeController{
 		Spec: &pb.NVMeControllerSpec{
-			Name: "nvme-1",
+			SubsystemId: &pc.ObjectKey{Value: "nvme-1"},
 		},
 	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
 
@@ -113,16 +113,15 @@ func dirExists(dirname string) bool {
 }
 
 func TestCreateNvmeController(t *testing.T) {
-	expectNotNilOut := &pb.NVMeController{}
-	if deepcopier.Copy(testCreateNvmeControllerRequest.NvMeController).To(expectNotNilOut) != nil {
-		log.Panicf("Failed to copy structure")
-	}
+	expectNotNilOut := proto.Clone(testCreateNvmeControllerRequest.NvMeController).(*pb.NVMeController)
+	expectNotNilOut.Spec.NvmeControllerId = -1
 
 	tests := map[string]struct {
 		jsonRPC                       spdk.JSONRPC
 		nonDefaultQmpAddress          string
 		ctrlrDirExistsBeforeOperation bool
 		ctrlrDirExistsAfterOperation  bool
+		emptySubsystem                bool
 
 		out         *pb.NVMeController
 		expectError error
@@ -136,7 +135,7 @@ func TestCreateNvmeController(t *testing.T) {
 			out:                           expectNotNilOut,
 			expectError:                   nil,
 			mockQmpCalls: newMockQmpCalls().
-				ExpectAddNvmeController(testNvmeControllerID).
+				ExpectAddNvmeController(testNvmeControllerID, testSubsystemID).
 				ExpectQueryPci(testNvmeControllerID),
 		},
 		"spdk failed to create NVMe controller": {
@@ -151,7 +150,7 @@ func TestCreateNvmeController(t *testing.T) {
 			ctrlrDirExistsAfterOperation:  false,
 			expectError:                   errAddDeviceFailed,
 			mockQmpCalls: newMockQmpCalls().
-				ExpectAddNvmeController(testNvmeControllerID).WithErrorResponse(),
+				ExpectAddNvmeController(testNvmeControllerID, testSubsystemID).WithErrorResponse(),
 		},
 		"failed to create monitor": {
 			nonDefaultQmpAddress:          "/dev/null",
@@ -165,6 +164,13 @@ func TestCreateNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
 			expectError:                   errFailedToCreateNvmeDir,
+		},
+		"empty subsystem in request": {
+			jsonRPC:                       alwaysSuccessfulJSONRPC,
+			ctrlrDirExistsBeforeOperation: false,
+			ctrlrDirExistsAfterOperation:  false,
+			emptySubsystem:                true,
+			expectError:                   errInvalidSubsystem,
 		},
 	}
 
@@ -180,20 +186,25 @@ func TestCreateNvmeController(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
 			kvmServer.timeout = qmplibTimeout
-			testCtrlrDir := filepath.Join(qmpServer.testDir, testCreateNvmeControllerRequest.NvMeController.Spec.Name)
+			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
 			if test.ctrlrDirExistsBeforeOperation &&
 				os.Mkdir(testCtrlrDir, os.ModePerm) != nil {
 				log.Panicf("Couldn't create ctrlr dir for test")
 			}
 
-			out, err := kvmServer.CreateNVMeController(context.Background(), testCreateNvmeControllerRequest)
+			request := proto.Clone(testCreateNvmeControllerRequest).(*pb.CreateNVMeControllerRequest)
+			if test.emptySubsystem {
+				request.NvMeController.Spec.SubsystemId.Value = ""
+			}
+
+			out, err := kvmServer.CreateNVMeController(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
 				t.Errorf("Expected error %v, got %v", test.expectError, err)
 			}
 			gotOut, _ := proto.Marshal(out)
 			wantOut, _ := proto.Marshal(test.out)
 			if !bytes.Equal(gotOut, wantOut) {
-				t.Errorf("Expected out %v, got %v", &test.out, out)
+				t.Errorf("Expected out %v, got %v", test.out, out)
 			}
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")
@@ -214,6 +225,7 @@ func TestDeleteNvmeController(t *testing.T) {
 		ctrlrDirExistsBeforeOperation bool
 		ctrlrDirExistsAfterOperation  bool
 		nonEmptyCtrlrDirAfterSpdkCall bool
+		noController                  bool
 		expectError                   error
 
 		mockQmpCalls *mockQmpCalls
@@ -275,7 +287,7 @@ func TestDeleteNvmeController(t *testing.T) {
 				ExpectDeleteNvmeController(testNvmeControllerID).
 				ExpectNoDeviceQueryPci(),
 		},
-		"all operations failed": {
+		"all communication operations failed": {
 			jsonRPC:                       alwaysFailingJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
@@ -284,13 +296,24 @@ func TestDeleteNvmeController(t *testing.T) {
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).WithErrorResponse(),
 		},
+		"no controller found": {
+			jsonRPC:                       alwaysFailingJSONRPC,
+			ctrlrDirExistsBeforeOperation: true,
+			ctrlrDirExistsAfterOperation:  true,
+			nonEmptyCtrlrDirAfterSpdkCall: false,
+			noController:                  true,
+			expectError:                   errNoController,
+		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
 			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Name] = &testSubsystem
-			opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvMeController.Spec.Name] = testCreateNvmeControllerRequest.NvMeController
+			if !test.noController {
+				opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvMeController.Spec.Name] =
+					testCreateNvmeControllerRequest.NvMeController
+			}
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
@@ -299,7 +322,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir)
 			kvmServer.timeout = qmplibTimeout
-			testCtrlrDir := filepath.Join(qmpServer.testDir, testNvmeControllerID)
+			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
 			if test.ctrlrDirExistsBeforeOperation {
 				if err := os.Mkdir(testCtrlrDir, os.ModePerm); err != nil {
 					log.Panic(err)

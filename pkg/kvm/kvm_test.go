@@ -124,16 +124,16 @@ func (s *mockQmpCalls) ExpectAddVirtioBlk(id string, chardevID string) *mockQmpC
 	return s
 }
 
-func (s *mockQmpCalls) ExpectAddNvmeController(id string) *mockQmpCalls {
+func (s *mockQmpCalls) ExpectAddNvmeController(id string, ctrlrDir string) *mockQmpCalls {
 	s.expectedCalls = append(s.expectedCalls, mockCall{
 		response: genericQmpOk,
 		expectedArgs: []string{
 			`"execute":"device_add"`,
 			`"driver":"vfio-user-pci"`,
-			`"id":"` + id + `"`,
+			`"id":"` + toQemuID(id) + `"`,
 		},
 		expectedRegExpArgs: []*regexp.Regexp{
-			regexp.MustCompile(`"socket":"` + pathRegexpStr + id + `/cntrl"`),
+			regexp.MustCompile(`"socket":"` + pathRegexpStr + ctrlrDir + `/cntrl"`),
 		},
 	})
 	return s
@@ -169,7 +169,7 @@ func (s *mockQmpCalls) ExpectDeleteNvmeController(id string) *mockQmpCalls {
 func (s *mockQmpCalls) ExpectQueryPci(id string) *mockQmpCalls {
 	response := `{"return":[{"bus":0,"devices":[{"bus":0,"slot":0,"function":0,` +
 		`"class_info":{"class":0},"id":{"device":0,"vendor":0},"qdev_id":"` +
-		id + `","regions":[]}]}]}` + "\n"
+		toQemuID(id) + `","regions":[]}]}]}` + "\n"
 	s.expectedCalls = append(s.expectedCalls, mockCall{
 		response: response,
 		expectedArgs: []string{
@@ -202,7 +202,7 @@ func (s *mockQmpCalls) expectDeleteDevice(id string) *mockQmpCalls {
 		response: genericQmpOk,
 		expectedArgs: []string{
 			`"execute":"device_del"`,
-			`"id":"` + id + `"`,
+			`"id":"` + toQemuID(id) + `"`,
 		},
 	})
 	return s
