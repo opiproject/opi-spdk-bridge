@@ -13,16 +13,16 @@ import (
 )
 
 // SubsystemListener interface is used to provide SPDK call params to create/delete
-// NVMe controllers depending on used transport type.
+// Nvme controllers depending on used transport type.
 type SubsystemListener interface {
-	Params(ctrlr *pb.NVMeController, nqn string) spdk.NvmfSubsystemAddListenerParams
+	Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams
 }
 
-// NvmeParameters contains all NVMe related structures
+// NvmeParameters contains all Nvme related structures
 type NvmeParameters struct {
-	Subsystems     map[string]*pb.NVMeSubsystem
-	Controllers    map[string]*pb.NVMeController
-	Namespaces     map[string]*pb.NVMeNamespace
+	Subsystems     map[string]*pb.NvmeSubsystem
+	Controllers    map[string]*pb.NvmeController
+	Namespaces     map[string]*pb.NvmeNamespace
 	subsysListener SubsystemListener
 }
 
@@ -51,9 +51,9 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
-			Subsystems:     make(map[string]*pb.NVMeSubsystem),
-			Controllers:    make(map[string]*pb.NVMeController),
-			Namespaces:     make(map[string]*pb.NVMeNamespace),
+			Subsystems:     make(map[string]*pb.NvmeSubsystem),
+			Controllers:    make(map[string]*pb.NvmeController),
+			Namespaces:     make(map[string]*pb.NvmeNamespace),
 			subsysListener: NewTCPSubsystemListener("127.0.0.1:4420"),
 		},
 		Virt: VirtioParameters{

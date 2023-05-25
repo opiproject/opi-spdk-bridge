@@ -24,24 +24,24 @@ import (
 var (
 	testNvmeControllerID = "nvme-43"
 	testSubsystemID      = "subsystem0"
-	testSubsystem        = pb.NVMeSubsystem{
-		Spec: &pb.NVMeSubsystemSpec{
+	testSubsystem        = pb.NvmeSubsystem{
+		Spec: &pb.NvmeSubsystemSpec{
 			Name: testSubsystemID,
 			Nqn:  "nqn.2022-09.io.spdk:opi2",
 		},
 	}
-	testCreateNvmeControllerRequest = &pb.CreateNVMeControllerRequest{NvMeControllerId: testNvmeControllerID, NvMeController: &pb.NVMeController{
-		Spec: &pb.NVMeControllerSpec{
+	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{NvmeControllerId: testNvmeControllerID, NvmeController: &pb.NvmeController{
+		Spec: &pb.NvmeControllerSpec{
 			Name:             testNvmeControllerID,
 			SubsystemId:      &pc.ObjectKey{Value: testSubsystem.Spec.Name},
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 0, VirtualFunction: 5},
 			NvmeControllerId: 43,
 		},
-		Status: &pb.NVMeControllerStatus{
+		Status: &pb.NvmeControllerStatus{
 			Active: true,
 		},
 	}}
-	testDeleteNvmeControllerRequest = &pb.DeleteNVMeControllerRequest{Name: testNvmeControllerID}
+	testDeleteNvmeControllerRequest = &pb.DeleteNvmeControllerRequest{Name: testNvmeControllerID}
 )
 
 func TestNewVfiouserSubsystemListener(t *testing.T) {
@@ -96,8 +96,8 @@ func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
 	wantParams.ListenAddress.Traddr = filepath.Join(tmpDir, "nvme-1")
 
 	vfiouserSubsysListener := NewVfiouserSubsystemListener(tmpDir)
-	gotParams := vfiouserSubsysListener.Params(&pb.NVMeController{
-		Spec: &pb.NVMeControllerSpec{
+	gotParams := vfiouserSubsysListener.Params(&pb.NvmeController{
+		Spec: &pb.NvmeControllerSpec{
 			SubsystemId: &pc.ObjectKey{Value: "nvme-1"},
 		},
 	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
@@ -113,7 +113,7 @@ func dirExists(dirname string) bool {
 }
 
 func TestCreateNvmeController(t *testing.T) {
-	expectNotNilOut := proto.Clone(testCreateNvmeControllerRequest.NvMeController).(*pb.NVMeController)
+	expectNotNilOut := proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
 	expectNotNilOut.Spec.NvmeControllerId = -1
 
 	tests := map[string]struct {
@@ -123,12 +123,12 @@ func TestCreateNvmeController(t *testing.T) {
 		ctrlrDirExistsAfterOperation  bool
 		emptySubsystem                bool
 
-		out         *pb.NVMeController
+		out         *pb.NvmeController
 		expectError error
 
 		mockQmpCalls *mockQmpCalls
 	}{
-		"valid NVMe controller creation": {
+		"valid Nvme controller creation": {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  true,
@@ -138,13 +138,13 @@ func TestCreateNvmeController(t *testing.T) {
 				ExpectAddNvmeController(testNvmeControllerID, testSubsystemID).
 				ExpectQueryPci(testNvmeControllerID),
 		},
-		"spdk failed to create NVMe controller": {
+		"spdk failed to create Nvme controller": {
 			jsonRPC:                       alwaysFailingJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
 			expectError:                   errStub,
 		},
-		"qemu NVMe controller add failed": {
+		"qemu Nvme controller add failed": {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
@@ -192,12 +192,12 @@ func TestCreateNvmeController(t *testing.T) {
 				log.Panicf("Couldn't create ctrlr dir for test")
 			}
 
-			request := proto.Clone(testCreateNvmeControllerRequest).(*pb.CreateNVMeControllerRequest)
+			request := proto.Clone(testCreateNvmeControllerRequest).(*pb.CreateNvmeControllerRequest)
 			if test.emptySubsystem {
-				request.NvMeController.Spec.SubsystemId.Value = ""
+				request.NvmeController.Spec.SubsystemId.Value = ""
 			}
 
-			out, err := kvmServer.CreateNVMeController(context.Background(), request)
+			out, err := kvmServer.CreateNvmeController(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
 				t.Errorf("Expected error %v, got %v", test.expectError, err)
 			}
@@ -230,7 +230,7 @@ func TestDeleteNvmeController(t *testing.T) {
 
 		mockQmpCalls *mockQmpCalls
 	}{
-		"valid NVMe controller deletion": {
+		"valid Nvme controller deletion": {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
@@ -240,7 +240,7 @@ func TestDeleteNvmeController(t *testing.T) {
 				ExpectDeleteNvmeController(testNvmeControllerID).
 				ExpectNoDeviceQueryPci(),
 		},
-		"qemu NVMe controller delete failed": {
+		"qemu Nvme controller delete failed": {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
@@ -249,7 +249,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).WithErrorResponse(),
 		},
-		"spdk failed to delete NVMe controller": {
+		"spdk failed to delete Nvme controller": {
 			jsonRPC:                       alwaysFailingJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
@@ -311,8 +311,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
 			opiSpdkServer.Nvme.Subsystems[testSubsystem.Spec.Name] = &testSubsystem
 			if !test.noController {
-				opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvMeController.Spec.Name] =
-					testCreateNvmeControllerRequest.NvMeController
+				opiSpdkServer.Nvme.Controllers[testCreateNvmeControllerRequest.NvmeController.Spec.Name] =
+					testCreateNvmeControllerRequest.NvmeController
 			}
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
@@ -335,7 +335,7 @@ func TestDeleteNvmeController(t *testing.T) {
 				}
 			}
 
-			_, err := kvmServer.DeleteNVMeController(context.Background(), testDeleteNvmeControllerRequest)
+			_, err := kvmServer.DeleteNvmeController(context.Background(), testDeleteNvmeControllerRequest)
 			if !errors.Is(err, test.expectError) {
 				t.Errorf("Expected error %v, got %v", test.expectError, err)
 			}
