@@ -29,7 +29,7 @@ var (
 	errNoController           = status.Error(codes.NotFound, "no controller found")
 	errInvalidSubsystem       = status.Error(codes.InvalidArgument, "invalid subsystem")
 	errDevicePartiallyDeleted = status.Error(codes.Internal, "device is partially deleted")
-	errFailedToCreateNvmeDir  = status.Error(codes.FailedPrecondition, "cannot create directory for NVMe controller")
+	errFailedToCreateNvmeDir  = status.Error(codes.FailedPrecondition, "cannot create directory for Nvme controller")
 )
 
 // Server is a wrapper for default opi-spdk-bridge frontend which automates
