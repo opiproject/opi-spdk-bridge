@@ -21,27 +21,27 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 		return out, err
 	}
 
-	id := out.Name
 	mon, err := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if err != nil {
 		log.Println("Couldn't create QEMU monitor")
-		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: id})
+		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: out.Name})
 		return nil, errMonitorCreation
 	}
 	defer mon.Disconnect()
 
-	ctrlr := filepath.Join(s.ctrlrDir, id)
-	chardevID := out.Name
-	if err := mon.AddChardev(chardevID, ctrlr); err != nil {
+	ctrlr := filepath.Join(s.ctrlrDir, out.Name)
+	qemuChardevID := toQemuID(out.Name)
+	if err := mon.AddChardev(qemuChardevID, ctrlr); err != nil {
 		log.Println("Couldn't add chardev:", err)
-		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: id})
+		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: out.Name})
 		return nil, errAddChardevFailed
 	}
 
-	if err = mon.AddVirtioBlkDevice(id, id); err != nil {
+	qemuDevID := toQemuID(out.Name)
+	if err = mon.AddVirtioBlkDevice(qemuDevID, qemuChardevID); err != nil {
 		log.Println("Couldn't add device:", err)
-		_ = mon.DeleteChardev(id)
-		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: id})
+		_ = mon.DeleteChardev(qemuDevID)
+		_, _ = s.Server.DeleteVirtioBlk(context.Background(), &pb.DeleteVirtioBlkRequest{Name: out.Name})
 		return nil, errAddDeviceFailed
 	}
 
@@ -57,13 +57,14 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 	}
 	defer mon.Disconnect()
 
-	id := in.Name
-	delDevErr := mon.DeleteVirtioBlkDevice(id)
+	qemuDeviceID := toQemuID(in.Name)
+	delDevErr := mon.DeleteVirtioBlkDevice(qemuDeviceID)
 	if delDevErr != nil {
 		log.Printf("Couldn't delete virtio-blk: %v", delDevErr)
 	}
 
-	delChardevErr := mon.DeleteChardev(id)
+	qemuChardevID := toQemuID(in.Name)
+	delChardevErr := mon.DeleteChardev(qemuChardevID)
 	if delChardevErr != nil {
 		log.Printf("Couldn't delete chardev for virtio-blk: %v. Device is partially deleted", delChardevErr)
 	}

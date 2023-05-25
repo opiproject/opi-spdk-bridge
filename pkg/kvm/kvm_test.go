@@ -102,7 +102,7 @@ func (s *mockQmpCalls) ExpectAddChardev(id string) *mockQmpCalls {
 		response: `{"return": {"pty": "/tmp/dev/pty/42"}}` + "\n",
 		expectedArgs: []string{
 			`"execute":"chardev-add"`,
-			`"id":"` + id + `"`,
+			`"id":"` + toQemuID(id) + `"`,
 		},
 		expectedRegExpArgs: []*regexp.Regexp{
 			regexp.MustCompile(`"path":"` + pathRegexpStr + id + `"`),
@@ -117,8 +117,8 @@ func (s *mockQmpCalls) ExpectAddVirtioBlk(id string, chardevID string) *mockQmpC
 		expectedArgs: []string{
 			`"execute":"device_add"`,
 			`"driver":"vhost-user-blk-pci"`,
-			`"id":"` + id + `"`,
-			`"chardev":"` + chardevID + `"`,
+			`"id":"` + toQemuID(id) + `"`,
+			`"chardev":"` + toQemuID(chardevID) + `"`,
 		},
 	})
 	return s
@@ -144,7 +144,7 @@ func (s *mockQmpCalls) ExpectDeleteChardev(id string) *mockQmpCalls {
 		response: genericQmpOk,
 		expectedArgs: []string{
 			`"execute":"chardev-remove"`,
-			`"id":"` + id + `"`,
+			`"id":"` + toQemuID(id) + `"`,
 		},
 	})
 	return s
@@ -154,7 +154,7 @@ func (s *mockQmpCalls) ExpectDeleteVirtioBlkWithEvent(id string) *mockQmpCalls {
 	s.ExpectDeleteVirtioBlk(id)
 	s.expectedCalls[len(s.expectedCalls)-1].event =
 		`{"event":"DEVICE_DELETED","data":{"path":"/some/path","device":"` +
-			id + `"},"timestamp":{"seconds":1,"microseconds":2}}` + "\n"
+			toQemuID(id) + `"},"timestamp":{"seconds":1,"microseconds":2}}` + "\n"
 	return s
 }
 
