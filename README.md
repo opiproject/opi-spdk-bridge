@@ -72,23 +72,23 @@ on X86 management VM run
 
 ```bash
 docker run --network=host --rm -it namely/grpc-cli ls   --json_input --json_output 10.10.10.10:50051 -l
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeSubsystem "{nv_me_subsystem : {spec : {id : {value : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeSubsystems "{}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeSubsystem "{name : 'subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeController "{nv_me_controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem2' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeControllers "{parent : 'subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeController "{name : 'controller1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMeNamespace "{nv_me_namespace : {spec : {id : {value : 'namespace1'}, subsystem_id : { value : 'subsystem2' }, volume_id : { value : 'Malloc0' }, 'host_nsid' : '10', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } } }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMeNamespaces "{parent : 'subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMeNamespace "{name : 'namespace1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 NVMeNamespaceStats "{namespace_id : {value : 'namespace1'} }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeSubsystem "{nv_me_subsystem : {spec : {id : {value : 'subsystem2'}, nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeSubsystems "{}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeSubsystem "{name : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeController "{nv_me_controller : {spec : {id : {value : 'controller1'}, nvme_controller_id: 2, subsystem_id : { value : 'subsystem2' }, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeControllers "{parent : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeController "{name : 'controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeNamespace "{nv_me_namespace : {spec : {id : {value : 'namespace1'}, subsystem_id : { value : 'subsystem2' }, volume_id : { value : 'Malloc0' }, 'host_nsid' : '10', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } } }"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeNamespaces "{parent : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeNamespace "{name : 'namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 NvmeNamespaceStats "{namespace_id : {value : 'namespace1'} }"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNVMfRemoteController "{nv_mf_remote_controller : {id: {value : 'NvmeTcp12'}, traddr:'11.11.11.2', subnqn:'nqn.2016-06.com.opi.spdk.target0', trsvcid:'4444', trtype:'NVME_TRANSPORT_TCP', adrfam:'NVMF_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNVMfRemoteControllers "{}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNVMfRemoteController "{name: 'NvmeTcp12'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMfRemoteController "{name: 'NvmeTcp12'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeNamespace "{name : 'namespace1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeController "{name : 'controller1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNVMeSubsystem "{name : 'subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeNamespace "{name : 'namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeController "{name : 'controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'subsystem2'}"
 ```
 
 ## Test SPDK is up
@@ -129,39 +129,39 @@ $ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService -l
 filename: frontend_nvme_pcie.proto
 package: opi_api.storage.v1;
 service FrontendNvmeService {
-  rpc CreateNVMeSubsystem(opi_api.storage.v1.CreateNVMeSubsystemRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
-  rpc DeleteNVMeSubsystem(opi_api.storage.v1.DeleteNVMeSubsystemRequest) returns (google.protobuf.Empty) {}
-  rpc UpdateNVMeSubsystem(opi_api.storage.v1.UpdateNVMeSubsystemRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
-  rpc ListNVMeSubsystem(opi_api.storage.v1.ListNVMeSubsystemRequest) returns (opi_api.storage.v1.ListNVMeSubsystemResponse) {}
-  rpc GetNVMeSubsystem(opi_api.storage.v1.GetNVMeSubsystemRequest) returns (opi_api.storage.v1.NVMeSubsystem) {}
-  rpc NVMeSubsystemStats(opi_api.storage.v1.NVMeSubsystemStatsRequest) returns (opi_api.storage.v1.NVMeSubsystemStatsResponse) {}
-  rpc CreateNVMeController(opi_api.storage.v1.CreateNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
-  rpc DeleteNVMeController(opi_api.storage.v1.DeleteNVMeControllerRequest) returns (google.protobuf.Empty) {}
-  rpc UpdateNVMeController(opi_api.storage.v1.UpdateNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
-  rpc ListNVMeController(opi_api.storage.v1.ListNVMeControllerRequest) returns (opi_api.storage.v1.ListNVMeControllerResponse) {}
-  rpc GetNVMeController(opi_api.storage.v1.GetNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
-  rpc NVMeControllerStats(opi_api.storage.v1.NVMeControllerStatsRequest) returns (opi_api.storage.v1.NVMeControllerStatsResponse) {}
-  rpc CreateNVMeNamespace(opi_api.storage.v1.CreateNVMeNamespaceRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
-  rpc DeleteNVMeNamespace(opi_api.storage.v1.DeleteNVMeNamespaceRequest) returns (google.protobuf.Empty) {}
-  rpc UpdateNVMeNamespace(opi_api.storage.v1.UpdateNVMeNamespaceRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
-  rpc ListNVMeNamespace(opi_api.storage.v1.ListNVMeNamespaceRequest) returns (opi_api.storage.v1.ListNVMeNamespaceResponse) {}
-  rpc GetNVMeNamespace(opi_api.storage.v1.GetNVMeNamespaceRequest) returns (opi_api.storage.v1.NVMeNamespace) {}
-  rpc NVMeNamespaceStats(opi_api.storage.v1.NVMeNamespaceStatsRequest) returns (opi_api.storage.v1.NVMeNamespaceStatsResponse) {}
+  rpc CreateNvmeSubsystem(opi_api.storage.v1.CreateNvmeSubsystemRequest) returns (opi_api.storage.v1.NvmeSubsystem) {}
+  rpc DeleteNvmeSubsystem(opi_api.storage.v1.DeleteNvmeSubsystemRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateNvmeSubsystem(opi_api.storage.v1.UpdateNvmeSubsystemRequest) returns (opi_api.storage.v1.NvmeSubsystem) {}
+  rpc ListNvmeSubsystem(opi_api.storage.v1.ListNvmeSubsystemRequest) returns (opi_api.storage.v1.ListNvmeSubsystemResponse) {}
+  rpc GetNvmeSubsystem(opi_api.storage.v1.GetNvmeSubsystemRequest) returns (opi_api.storage.v1.NvmeSubsystem) {}
+  rpc NvmeSubsystemStats(opi_api.storage.v1.NvmeSubsystemStatsRequest) returns (opi_api.storage.v1.NvmeSubsystemStatsResponse) {}
+  rpc CreateNvmeController(opi_api.storage.v1.CreateNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
+  rpc DeleteNvmeController(opi_api.storage.v1.DeleteNvmeControllerRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateNvmeController(opi_api.storage.v1.UpdateNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
+  rpc ListNvmeController(opi_api.storage.v1.ListNvmeControllerRequest) returns (opi_api.storage.v1.ListNvmeControllerResponse) {}
+  rpc GetNvmeController(opi_api.storage.v1.GetNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
+  rpc NvmeControllerStats(opi_api.storage.v1.NvmeControllerStatsRequest) returns (opi_api.storage.v1.NvmeControllerStatsResponse) {}
+  rpc CreateNvmeNamespace(opi_api.storage.v1.CreateNvmeNamespaceRequest) returns (opi_api.storage.v1.NvmeNamespace) {}
+  rpc DeleteNvmeNamespace(opi_api.storage.v1.DeleteNvmeNamespaceRequest) returns (google.protobuf.Empty) {}
+  rpc UpdateNvmeNamespace(opi_api.storage.v1.UpdateNvmeNamespaceRequest) returns (opi_api.storage.v1.NvmeNamespace) {}
+  rpc ListNvmeNamespace(opi_api.storage.v1.ListNvmeNamespaceRequest) returns (opi_api.storage.v1.ListNvmeNamespaceResponse) {}
+  rpc GetNvmeNamespace(opi_api.storage.v1.GetNvmeNamespaceRequest) returns (opi_api.storage.v1.NvmeNamespace) {}
+  rpc NvmeNamespaceStats(opi_api.storage.v1.NvmeNamespaceStatsRequest) returns (opi_api.storage.v1.NvmeNamespaceStatsResponse) {}
 }
 ```
 
 See methods
 
 ```bash
-$ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService.CreateNVMeController -l
-  rpc CreateNVMeController(opi_api.storage.v1.CreateNVMeControllerRequest) returns (opi_api.storage.v1.NVMeController) {}
+$ grpc_cli ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService.CreateNvmeController -l
+  rpc CreateNvmeController(opi_api.storage.v1.CreateNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
 ```
 
 See messages
 
 ```bash
-$ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NVMeControllerSpec
-message NVMeControllerSpec {
+$ grpc_cli type opi-spdk-server:50051 opi_api.storage.v1.NvmeControllerSpec
+message NvmeControllerSpec {
   .opi_api.common.v1.ObjectKey id = 1 [json_name = "id"];
   int32 nvme_controller_id = 2 [json_name = "nvmeControllerId"];
   .opi_api.common.v1.ObjectKey subsystem_id = 3 [json_name = "subsystemId"];
@@ -184,7 +184,7 @@ message PciEndpoint {
 Call remote method
 
 ```bash
-$ grpc_cli call --json_input --json_output opi-spdk-server:50051 DeleteNVMeController "{subsystem_id: 8}"
+$ grpc_cli call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{subsystem_id: 8}"
 connecting to opi-spdk-server:50051
 {}
 Rpc succeeded with OK status
@@ -194,7 +194,7 @@ Server log
 
 ```bash
 opi-spdk-server_1  | 2022/08/05 14:31:14 server listening at [::]:50051
-opi-spdk-server_1  | 2022/08/05 14:39:40 DeleteNVMeSubsystem: Received from client: id:8
+opi-spdk-server_1  | 2022/08/05 14:39:40 DeleteNvmeSubsystem: Received from client: id:8
 opi-spdk-server_1  | 2022/08/05 14:39:40 Sending to SPDK: {"jsonrpc":"2.0","id":1,"method":"bdev_malloc_delete","params":{"name":"OpiMalloc8"}}
 opi-spdk-server_1  | 2022/08/05 14:39:40 Received from SPDK: {1 {-19 No such device} 0xc000029f4e}
 opi-spdk-server_1  | 2022/08/05 14:39:40 error: bdev_malloc_delete: json response error: No such device
@@ -205,7 +205,7 @@ opi-spdk-server_1  | 2022/08/05 14:39:40 Could not delete: id:8
 Another remote call example
 
 ```bash
-$ grpc_cli call --json_input --json_output opi-spdk-server:50051 ListNVMeSubsystem {}
+$ grpc_cli call --json_input --json_output opi-spdk-server:50051 ListNvmeSubsystem {}
 connecting to opi-spdk-server:50051
 {
  "subsystem": [
@@ -223,7 +223,7 @@ Rpc succeeded with OK status
 Another Server log
 
 ```bash
-2022/09/21 19:38:26 ListNVMeSubsystem: Received from client:
+2022/09/21 19:38:26 ListNvmeSubsystem: Received from client:
 2022/09/21 19:38:26 Sending to SPDK: {"jsonrpc":"2.0","id":1,"method":"bdev_get_bdevs"}
 2022/09/21 19:38:26 Received from SPDK: {1 {0 } 0x40003de660}
 2022/09/21 19:38:26 Received from SPDK: [{Malloc0 512 131072 08cd0d67-eb57-41c2-957b-585faed7d81a} {Malloc1 512 131072 78c4b40f-dd16-42c1-b057-f95c11db7aaf}]
