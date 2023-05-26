@@ -45,18 +45,18 @@ grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cl
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullDebugService -l
 
 # test nvme
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeSubsystem  "{nv_me_subsystem_id:  'subsystem1',  nv_me_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeController "{nv_me_controller_id: 'controller1', nv_me_controller : {spec : {subsystem_id : { value : 'subsystem1' }, nvme_controller_id: 2, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNVMeNamespace  "{nv_me_namespace_id:  'namespace1',  nv_me_namespace  : {spec : {subsystem_id : { value : 'subsystem1' }, volume_id : { value : 'Malloc1' }, host_nsid : 1 } } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeSubsystem "{name : 'subsystem1'}"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeController "{name : 'controller1'}"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNVMeNamespace "{name :  'namespace1'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem1',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller1', nvme_controller : {spec : {subsystem_id : { value : 'subsystem1' }, nvme_controller_id: 2, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeNamespace  "{nvme_namespace_id:  'namespace1',  nvme_namespace  : {spec : {subsystem_id : { value : 'subsystem1' }, volume_id : { value : 'Malloc1' }, host_nsid : 1 } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeSubsystem "{name : 'subsystem1'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeController "{name : 'controller1'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeNamespace "{name :  'namespace1'}"
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444'
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444 subnqn:nqn.2022-09.io.spdk:opitest1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
 grep "Total" log.txt
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNVMeNamespace "{name : 'namespace1'}"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNVMeController "{name : 'controller1'}"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNVMeSubsystem "{name : 'subsystem1'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeNamespace "{name : 'namespace1'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : 'controller1'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeSubsystem "{name : 'subsystem1'}"
 
 # this is last line
 docker-compose ps -a
