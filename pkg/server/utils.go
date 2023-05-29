@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/opiproject/gospdk/spdk"
 )
@@ -139,4 +140,9 @@ func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string
 			log.Fatal(err)
 		}
 	}
+}
+
+// ProtoClone creates a deep copy of a provided gRPC structure
+func ProtoClone[T proto.Message](protoStruct T) T {
+	return proto.Clone(protoStruct).(T)
 }
