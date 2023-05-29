@@ -17,7 +17,6 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
-	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -63,12 +62,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := &pb.NullDebug{}
-	err = deepcopier.Copy(in.NullDebug).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
+	response := server.ProtoClone(in.NullDebug)
 	s.Volumes.NullVolumes[in.NullDebug.Name] = response
 	return response, nil
 }
@@ -139,12 +133,7 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := &pb.NullDebug{}
-	err3 := deepcopier.Copy(in.NullDebug).To(response)
-	if err3 != nil {
-		log.Printf("error: %v", err3)
-		return nil, err3
-	}
+	response := server.ProtoClone(in.NullDebug)
 	s.Volumes.NullVolumes[in.NullDebug.Name] = response
 	return response, nil
 }
