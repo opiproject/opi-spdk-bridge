@@ -17,7 +17,6 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
-	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -61,12 +60,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	}
 	s.Virt.ScsiCtrls[in.VirtioScsiController.Name] = in.VirtioScsiController
 	// s.VirtioCtrls[in.VirtioScsiController.Name].Status = &pb.VirtioScsiControllerStatus{Active: true}
-	response := &pb.VirtioScsiController{}
-	err = deepcopier.Copy(in.VirtioScsiController).To(response)
-	if err != nil {
-		log.Printf("Error at response creation: %v", err)
-		return nil, status.Error(codes.Internal, "Failed to construct device create response")
-	}
+	response := server.ProtoClone(in.VirtioScsiController)
 	return response, nil
 }
 
@@ -198,12 +192,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 	log.Printf("Received from SPDK: %v", result)
 	s.Virt.ScsiLuns[in.VirtioScsiLun.Name] = in.VirtioScsiLun
 	// s.ScsiLuns[in.VirtioScsiLun.Name].Status = &pb.VirtioScsiLunStatus{Active: true}
-	response := &pb.VirtioScsiLun{}
-	err = deepcopier.Copy(in.VirtioScsiLun).To(response)
-	if err != nil {
-		log.Printf("Error at response creation: %v", err)
-		return nil, status.Error(codes.Internal, "Failed to construct device create response")
-	}
+	response := server.ProtoClone(in.VirtioScsiLun)
 	return response, nil
 }
 

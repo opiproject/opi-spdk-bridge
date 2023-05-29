@@ -7,7 +7,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/opiproject/gospdk v0.0.0-20230515120524-37c85998ff39
 	github.com/opiproject/opi-api v0.0.0-20230525195117-1db0f9cbae90
-	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )

@@ -16,7 +16,6 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
-	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -62,12 +61,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := &pb.AioController{}
-	err = deepcopier.Copy(in.AioController).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
+	response := server.ProtoClone(in.AioController)
 	s.Volumes.AioVolumes[in.AioController.Name] = response
 	return response, nil
 }
@@ -138,12 +132,7 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := &pb.AioController{}
-	err3 := deepcopier.Copy(in.AioController).To(response)
-	if err3 != nil {
-		log.Printf("error: %v", err3)
-		return nil, err3
-	}
+	response := server.ProtoClone(in.AioController)
 	s.Volumes.AioVolumes[in.AioController.Name] = response
 	return response, nil
 }

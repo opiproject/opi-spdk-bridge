@@ -17,7 +17,6 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
-	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -67,12 +66,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	if len(result) != 1 {
 		log.Printf("expecting exactly 1 result")
 	}
-	response := &pb.NVMfRemoteController{}
-	err = deepcopier.Copy(in.NvMfRemoteController).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
+	response := server.ProtoClone(in.NvMfRemoteController)
 	s.Volumes.NvmeVolumes[in.NvMfRemoteController.Name] = response
 	return response, nil
 }

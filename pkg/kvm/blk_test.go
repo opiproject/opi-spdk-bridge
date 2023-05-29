@@ -8,14 +8,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"log"
 	"testing"
 
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	"github.com/ulule/deepcopier"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -31,10 +30,7 @@ var (
 )
 
 func TestCreateVirtioBlk(t *testing.T) {
-	expectNotNilOut := &pb.VirtioBlk{}
-	if deepcopier.Copy(testCreateVirtioBlkRequest.VirtioBlk).To(expectNotNilOut) != nil {
-		log.Panicf("Failed to copy structure")
-	}
+	expectNotNilOut := server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 	expectNotNilOut.Name = testVirtioBlkID
 
 	tests := map[string]struct {

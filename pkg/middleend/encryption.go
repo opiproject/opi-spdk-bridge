@@ -16,7 +16,6 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
-	"github.com/ulule/deepcopier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -76,12 +75,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := &pb.EncryptedVolume{}
-	err = deepcopier.Copy(in.EncryptedVolume).To(response)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
+	response := server.ProtoClone(in.EncryptedVolume)
 	return response, nil
 }
 
@@ -194,12 +188,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// return result
-	response := &pb.EncryptedVolume{}
-	err4 := deepcopier.Copy(in.EncryptedVolume).To(response)
-	if err4 != nil {
-		log.Printf("error: %v", err4)
-		return nil, err4
-	}
+	response := server.ProtoClone(in.EncryptedVolume)
 	return response, nil
 }
 
