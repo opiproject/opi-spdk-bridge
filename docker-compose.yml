@@ -17,6 +17,7 @@ services:
       - "4444:4444"
       - "5555:5555"
       - "7777:7777"
+      - "8888:8888"
     privileged: true
     networks:
       - opi
