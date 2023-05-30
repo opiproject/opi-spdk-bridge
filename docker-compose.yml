@@ -6,7 +6,7 @@ version: "3.7"
 services:
 
   spdk:
-    image: ghcr.io/opiproject/spdk:main@sha256:c0febaab2e8666fdca4dca5daa0ad118433bd5c17f303963de92efa355f3c86c
+    image: ghcr.io/opiproject/spdk:main@sha256:62503898428d0efeced6b17e696fd51fadcbbac936ea19a7a7787377b0a098d4
     volumes:
       - /dev/hugepages:/dev/hugepages
       - /dev/shm:/dev/shm
