@@ -80,6 +80,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		params := spdk.NvmfSubsystemAddHostParams{
 			Nqn:  in.NvmeSubsystem.Spec.Nqn,
 			Host: in.NvmeSubsystem.Spec.Hostnqn,
+			Psk:  "/tmp/opikey.txt",
 		}
 		var result spdk.NvmfSubsystemAddHostResult
 		err = s.rpc.Call("nvmf_subsystem_add_host", &params, &result)

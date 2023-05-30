@@ -37,7 +37,7 @@ func NewNvmeTCPTransport() NvmeTransport {
 func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = subsys.Spec.Nqn
-	result.SecureChannel = false
+	result.SecureChannel = len(subsys.Spec.Psk) > 0
 	result.ListenAddress.Trtype = "tcp"
 	result.ListenAddress.Traddr = ctrlr.GetSpec().GetFabricsId().GetTraddr()
 	result.ListenAddress.Trsvcid = ctrlr.GetSpec().GetFabricsId().GetTrsvcid()
