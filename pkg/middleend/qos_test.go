@@ -7,6 +7,7 @@ package middleend
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"testing"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -24,6 +25,27 @@ var (
 		LimitMax: &pb.QosLimit{RwBandwidthMbs: 1},
 	}
 )
+
+type stubJSONRRPC struct {
+	params []any
+}
+
+func (s *stubJSONRRPC) GetID() uint64 {
+	return 0
+}
+
+func (s *stubJSONRRPC) StartUnixListener() net.Listener {
+	return nil
+}
+
+func (s *stubJSONRRPC) GetVersion() string {
+	return ""
+}
+
+func (s *stubJSONRRPC) Call(_ string, param interface{}, _ interface{}) error {
+	s.params = append(s.params, param)
+	return nil
+}
 
 func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 	tests := map[string]struct {
@@ -275,6 +297,40 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("valid values are sent to SPDK", func(t *testing.T) {
+		testEnv := createTestEnvironment(false, []string{})
+		defer testEnv.Close()
+		stubRPC := &stubJSONRRPC{}
+		testEnv.opiSpdkServer.rpc = stubRPC
+
+		_, _ = testEnv.client.CreateQosVolume(testEnv.ctx, &pb.CreateQosVolumeRequest{
+			QosVolumeId: testQosVolumeID,
+			QosVolume: &pb.QosVolume{
+				VolumeId: &_go.ObjectKey{Value: "volume-42"},
+				LimitMax: &pb.QosLimit{
+					RwIopsKiops:    1,
+					RdBandwidthMbs: 2,
+					WrBandwidthMbs: 3,
+					RwBandwidthMbs: 4,
+				},
+			},
+		})
+		if len(stubRPC.params) != 1 {
+			t.Fatalf("Expect only one call to SPDK, received %v", stubRPC.params)
+		}
+		qosParams := stubRPC.params[0].(*spdk.BdevQoSParams)
+		expectedParams := spdk.BdevQoSParams{
+			Name:           "volume-42",
+			RwIosPerSec:    1000,
+			RMbytesPerSec:  2,
+			WMbytesPerSec:  3,
+			RwMbytesPerSec: 4,
+		}
+		if *qosParams != expectedParams {
+			t.Errorf("Expected qos params to be sent: %v, received %v", expectedParams, *qosParams)
+		}
+	})
 }
 
 func TestMiddleEnd_DeleteQosVolume(t *testing.T) {

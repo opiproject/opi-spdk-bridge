@@ -233,7 +233,7 @@ func (s *Server) setMaxLimit(qosVolumeID string, limit *pb.QosLimit) error {
 		RwIosPerSec:    int(limit.RwIopsKiops * 1000),
 		RwMbytesPerSec: int(limit.RwBandwidthMbs),
 		RMbytesPerSec:  int(limit.RdBandwidthMbs),
-		WMbytesPerSec:  int(limit.RdBandwidthMbs),
+		WMbytesPerSec:  int(limit.WrBandwidthMbs),
 	}
 	var result spdk.BdevQoSResult
 	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
