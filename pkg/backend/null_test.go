@@ -100,11 +100,12 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
+				testEnv.opiSpdkServer.Volumes.NullVolumes[fullname] = &testNullVolume
 			}
 			if tt.out != nil {
-				tt.out.Name = testNullVolumeID
+				tt.out.Name = fullname
 			}
 
 			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: testNullVolumeID}
@@ -720,7 +721,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 			false,
 		},
@@ -741,9 +742,11 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
+			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[fname2] = &testNullVolume
 
-			request := &pb.DeleteNullDebugRequest{Name: tt.in, AllowMissing: tt.missing}
+			request := &pb.DeleteNullDebugRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {

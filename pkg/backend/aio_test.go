@@ -101,11 +101,12 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
+				testEnv.opiSpdkServer.Volumes.AioVolumes[fullname] = &testAioVolume
 			}
 			if tt.out != nil {
-				tt.out.Name = testAioVolumeID
+				tt.out.Name = fullname
 			}
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: testAioVolumeID}
@@ -149,7 +150,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolume.Name),
+			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolumeID),
 			true,
 		},
 		"delete empty": {
@@ -181,7 +182,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Aio Dev: %v", "mytest"),
+			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolumeID),
 			true,
 		},
 		"delete ok create empty": {
@@ -709,7 +710,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 			false,
 		},
@@ -730,9 +731,11 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
+			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[fname2] = &testAioVolume
 
-			request := &pb.DeleteAioControllerRequest{Name: tt.in, AllowMissing: tt.missing}
+			request := &pb.DeleteAioControllerRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteAioController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
