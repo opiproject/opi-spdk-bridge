@@ -516,8 +516,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
+			status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
+			status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
 			true,
 			false,
 		},
@@ -587,14 +587,12 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			}
 			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {

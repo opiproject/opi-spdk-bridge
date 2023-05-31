@@ -91,6 +91,7 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		log.Printf("Could not delete: %v", in)
+		return nil, spdk.ErrUnexpectedSpdkCallResult
 	}
 	delete(s.Virt.BlkCtrls, controller.Name)
 	return &emptypb.Empty{}, nil
