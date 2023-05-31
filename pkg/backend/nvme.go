@@ -148,8 +148,15 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 // GetNVMfRemoteController gets an NVMf remote controller
 func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("GetNVMfRemoteController: Received from client: %v", in)
+	volume, ok := s.Volumes.NvmeVolumes[in.Name]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevNvmeGetControllerParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result []spdk.BdevNvmeGetControllerResult
 	err := s.rpc.Call("bdev_nvme_get_controllers", &params, &result)
@@ -178,5 +185,13 @@ func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemote
 // NVMfRemoteControllerStats gets NVMf remote controller stats
 func (s *Server) NVMfRemoteControllerStats(_ context.Context, in *pb.NVMfRemoteControllerStatsRequest) (*pb.NVMfRemoteControllerStatsResponse, error) {
 	log.Printf("Received: %v", in.GetId())
+	volume, ok := s.Volumes.NvmeVolumes[in.Id.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Id.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	return &pb.NVMfRemoteControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
