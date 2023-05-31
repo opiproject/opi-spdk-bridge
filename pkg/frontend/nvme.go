@@ -254,6 +254,10 @@ func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStats
 // CreateNvmeController creates an Nvme controller
 func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("Received from client: %v", in.NvmeController)
+	// check input parameters validity
+	if in.NvmeController.Spec == nil || in.NvmeController.Spec.SubsystemId == nil || in.NvmeController.Spec.SubsystemId.Value == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvmeControllerId != "" {
@@ -375,6 +379,10 @@ func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerSta
 // CreateNvmeNamespace creates an Nvme namespace
 func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("CreateNvmeNamespace: Received from client: %v", in)
+	// check input parameters validity
+	if in.NvmeNamespace.Spec == nil || in.NvmeNamespace.Spec.SubsystemId == nil || in.NvmeNamespace.Spec.SubsystemId.Value == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	name := uuid.New().String()
 	if in.NvmeNamespaceId != "" {
