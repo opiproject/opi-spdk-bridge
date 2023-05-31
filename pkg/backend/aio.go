@@ -174,8 +174,15 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 // GetAioController gets an Aio controller
 func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("GetAioController: Received from client: %v", in)
+	volume, ok := s.Volumes.AioVolumes[in.Name]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevGetBdevsParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
@@ -195,8 +202,15 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 // AioControllerStats gets an Aio controller stats
 func (s *Server) AioControllerStats(_ context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
 	log.Printf("AioControllerStats: Received from client: %v", in)
+	volume, ok := s.Volumes.AioVolumes[in.Handle.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Handle.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevGetIostatParams{
-		Name: in.GetHandle().GetValue(),
+		Name: name,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult

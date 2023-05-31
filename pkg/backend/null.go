@@ -175,8 +175,15 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 // GetNullDebug gets a a Null Debug instance
 func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("GetNullDebug: Received from client: %v", in)
+	volume, ok := s.Volumes.NullVolumes[in.Name]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevGetBdevsParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
@@ -196,8 +203,15 @@ func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*p
 // NullDebugStats gets a Null Debug instance stats
 func (s *Server) NullDebugStats(_ context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
 	log.Printf("NullDebugStats: Received from client: %v", in)
+	volume, ok := s.Volumes.NullVolumes[in.Handle.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Handle.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevGetIostatParams{
-		Name: in.Handle.Value,
+		Name: name,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult

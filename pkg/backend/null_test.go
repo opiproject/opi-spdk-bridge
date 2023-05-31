@@ -512,6 +512,14 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			"",
 			true,
 		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -519,6 +527,8 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.Volumes.NullVolumes["volume-test"] = &testNullVolume
 
 			request := &pb.GetNullDebugRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullDebug(testEnv.ctx, request)
@@ -596,7 +606,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			"Malloc0",
+			testNullVolumeID,
 			&pb.VolumeStats{
 				ReadBytesCount:    1,
 				ReadOpsCount:      2,
@@ -605,10 +615,18 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 				ReadLatencyTicks:  7,
 				WriteLatencyTicks: 8,
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"tick_rate":2490000000,"ticks":18787040917434338,"bdevs":[{"name":"Malloc0","bytes_read":1,"num_read_ops":2,"bytes_written":3,"num_write_ops":4,"bytes_unmapped":0,"num_unmap_ops":0,"read_latency_ticks":7,"write_latency_ticks":8,"unmap_latency_ticks":0}]}}`},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"tick_rate":2490000000,"ticks":18787040917434338,"bdevs":[{"name":"mytest","bytes_read":1,"num_read_ops":2,"bytes_written":3,"num_write_ops":4,"bytes_unmapped":0,"num_unmap_ops":0,"read_latency_ticks":7,"write_latency_ticks":8,"unmap_latency_ticks":0}]}}`},
 			codes.OK,
 			"",
 			true,
+		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
 		},
 	}
 
@@ -617,6 +635,8 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 
 			request := &pb.NullDebugStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NullDebugStats(testEnv.ctx, request)
