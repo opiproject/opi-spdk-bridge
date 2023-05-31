@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -79,8 +80,9 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevNullDeleteParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result spdk.BdevNullDeleteResult
 	err := s.rpc.Call("bdev_null_delete", &params, &result)
@@ -90,7 +92,7 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete Null Dev: %s", volume.Name)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", params.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -101,8 +103,9 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 // UpdateNullDebug updates a Null Debug instance
 func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
+	name := path.Base(in.NullDebug.Name)
 	params1 := spdk.BdevNullDeleteParams{
-		Name: in.NullDebug.Name,
+		Name: name,
 	}
 	var result1 spdk.BdevNullDeleteResult
 	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
@@ -112,12 +115,12 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not delete Null Dev: %s", in.NullDebug.Name)
+		msg := fmt.Sprintf("Could not delete Null Dev: %s", params1.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevNullCreateParams{
-		Name:      in.NullDebug.Name,
+		Name:      name,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -129,7 +132,7 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if result2 == "" {
-		msg := fmt.Sprintf("Could not create Null Dev: %s", in.NullDebug.Name)
+		msg := fmt.Sprintf("Could not create Null Dev: %s", params2.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}

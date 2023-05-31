@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -78,8 +79,9 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevAioDeleteParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result spdk.BdevAioDeleteResult
 	err := s.rpc.Call("bdev_aio_delete", &params, &result)
@@ -89,7 +91,7 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete Aio Dev: %s", volume.Name)
+		msg := fmt.Sprintf("Could not delete Aio Dev: %s", params.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
@@ -100,8 +102,9 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 // UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
+	name := path.Base(in.AioController.Name)
 	params1 := spdk.BdevAioDeleteParams{
-		Name: in.AioController.Name,
+		Name: name,
 	}
 	var result1 spdk.BdevAioDeleteResult
 	err1 := s.rpc.Call("bdev_aio_delete", &params1, &result1)
@@ -111,12 +114,12 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not delete Aio Dev: %s", in.AioController.Name)
+		msg := fmt.Sprintf("Could not delete Aio Dev: %s", params1.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevAioCreateParams{
-		Name:      in.AioController.Name,
+		Name:      name,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
@@ -128,7 +131,7 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if result2 == "" {
-		msg := fmt.Sprintf("Could not create Aio Dev: %s", in.AioController.Name)
+		msg := fmt.Sprintf("Could not create Aio Dev: %s", params2.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
