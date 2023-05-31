@@ -164,7 +164,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
 			}
 			if tt.out != nil {
-				tt.out.Spec.Name = testSubsystemID
+				tt.out.Name = testSubsystemID
 			}
 
 			request := &pb.CreateNvmeSubsystemRequest{NvmeSubsystem: tt.in, NvmeSubsystemId: testSubsystemID}
@@ -679,8 +679,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				},
 			},
 			&pb.NvmeController{
+				Name: testControllerID,
 				Spec: &pb.NvmeControllerSpec{
-					Name:             testControllerID,
 					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 					NvmeControllerId: -1,
@@ -724,7 +724,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Controllers[testControllerID] = &testController
 			}
 			if tt.out != nil {
-				tt.out.Spec.Name = testControllerID
+				tt.out.Name = testControllerID
 			}
 
 			request := &pb.CreateNvmeControllerRequest{NvmeController: tt.in, NvmeControllerId: testControllerID}
@@ -753,7 +753,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
-		Name:             testControllerID,
 		SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 		NvmeControllerId: 17,
@@ -768,9 +767,11 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	}{
 		"valid request without SPDK": {
 			&pb.NvmeController{
+				Name: testControllerID,
 				Spec: spec,
 			},
 			&pb.NvmeController{
+				Name: testControllerID,
 				Spec: spec,
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -834,8 +835,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			testSubsystemID,
 			[]*pb.NvmeController{
 				{
+					Name: testControllerID,
 					Spec: &pb.NvmeControllerSpec{
-						Name:             testControllerID,
 						SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 						PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
 						NvmeControllerId: 17,
@@ -845,8 +846,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 					},
 				},
 				{
+					Name: "controller-test1",
 					Spec: &pb.NvmeControllerSpec{
-						Name:             "controller-test1",
 						SubsystemId:      &pc.ObjectKey{Value: "subsystem-test1"},
 						PcieId:           &pb.PciEndpoint{PhysicalFunction: 2, VirtualFunction: 2},
 						NvmeControllerId: 17,
@@ -873,8 +874,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerID] = &testController
 			testEnv.opiSpdkServer.Nvme.Controllers["controller-test1"] = &pb.NvmeController{
+				Name: "controller-test1",
 				Spec: &pb.NvmeControllerSpec{
-					Name:             "controller-test1",
 					SubsystemId:      &pc.ObjectKey{Value: "subsystem-test1"},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 2, VirtualFunction: 2},
 					NvmeControllerId: 17,
@@ -918,8 +919,8 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 		"valid request with valid SPDK response": {
 			testControllerID,
 			&pb.NvmeController{
+				Name: testControllerID,
 				Spec: &pb.NvmeControllerSpec{
-					Name:             testControllerID,
 					NvmeControllerId: 17,
 				},
 				Status: &pb.NvmeControllerStatus{
@@ -1136,7 +1137,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceID] = &testNamespace
 			}
 			if tt.out != nil {
-				tt.out.Spec.Name = testNamespaceID
+				tt.out.Name = testNamespaceID
 			}
 
 			request := &pb.CreateNvmeNamespaceRequest{NvmeNamespace: tt.in, NvmeNamespaceId: testNamespaceID}
@@ -1165,7 +1166,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
-		Name:        testNamespaceID,
 		SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
 		HostNsid:    22,
 		VolumeId:    &pc.ObjectKey{Value: "Malloc1"},
@@ -1183,9 +1183,11 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	}{
 		"valid request without SPDK": {
 			&pb.NvmeNamespace{
+				Name: testNamespaceID,
 				Spec: spec,
 			},
 			&pb.NvmeNamespace{
+				Name: testNamespaceID,
 				Spec: spec,
 				Status: &pb.NvmeNamespaceStatus{
 					PciState:     2,
@@ -1493,8 +1495,8 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 		"valid request with valid SPDK response": {
 			testNamespaceID,
 			&pb.NvmeNamespace{
+				Name: testNamespaceID,
 				Spec: &pb.NvmeNamespaceSpec{
-					Name:     testNamespaceID,
 					HostNsid: 22,
 				},
 				Status: &pb.NvmeNamespaceStatus{

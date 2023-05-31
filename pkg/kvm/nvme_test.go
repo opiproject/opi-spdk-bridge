@@ -25,14 +25,14 @@ var (
 	testNvmeControllerID = "nvme-43"
 	testSubsystemID      = "subsystem0"
 	testSubsystem        = pb.NvmeSubsystem{
+		Name: testSubsystemID,
 		Spec: &pb.NvmeSubsystemSpec{
-			Name: testSubsystemID,
-			Nqn:  "nqn.2022-09.io.spdk:opi2",
+			Nqn: "nqn.2022-09.io.spdk:opi2",
 		},
 	}
 	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{NvmeControllerId: testNvmeControllerID, NvmeController: &pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
-			SubsystemId:      &pc.ObjectKey{Value: testSubsystem.Spec.Name},
+			SubsystemId:      &pc.ObjectKey{Value: testSubsystem.Name},
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 43, VirtualFunction: 0},
 			NvmeControllerId: 43,
 		},
@@ -114,7 +114,7 @@ func dirExists(dirname string) bool {
 func TestCreateNvmeController(t *testing.T) {
 	expectNotNilOut := proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
 	expectNotNilOut.Spec.NvmeControllerId = -1
-	expectNotNilOut.Spec.Name = testNvmeControllerID
+	expectNotNilOut.Name = testNvmeControllerID
 
 	tests := map[string]struct {
 		jsonRPC                       spdk.JSONRPC
@@ -199,8 +199,8 @@ func TestCreateNvmeController(t *testing.T) {
 				},
 			}, NvmeControllerId: testNvmeControllerID},
 			out: &pb.NvmeController{
+				Name: testNvmeControllerID,
 				Spec: &pb.NvmeControllerSpec{
-					Name:             testNvmeControllerID,
 					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
 					NvmeControllerId: -1,
@@ -407,7 +407,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			if !test.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerID] =
 					proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
-				opiSpdkServer.Nvme.Controllers[testNvmeControllerID].Spec.Name = testNvmeControllerID
+				opiSpdkServer.Nvme.Controllers[testNvmeControllerID].Name = testNvmeControllerID
 			}
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()

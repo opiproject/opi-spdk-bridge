@@ -81,7 +81,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 		_ = deleteControllerDir(s.ctrlrDir, dirName)
 		return out, err
 	}
-	name := out.Spec.Name
+	name := out.Name
 
 	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if monErr != nil {
