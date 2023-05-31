@@ -105,11 +105,12 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", controllerID)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerID] = &controller
+				testEnv.opiSpdkServer.Volumes.NvmeVolumes[fullname] = &controller
 			}
 			if tt.out != nil {
-				tt.out.Name = controllerID
+				tt.out.Name = fullname
 			}
 
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: controllerID}
@@ -642,7 +643,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 			false,
 		},
@@ -663,9 +664,11 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerID] = &controller
+			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", controllerID)
+			testEnv.opiSpdkServer.Volumes.NvmeVolumes[fname2] = &controller
 
-			request := &pb.DeleteNVMfRemoteControllerRequest{Name: tt.in, AllowMissing: tt.missing}
+			request := &pb.DeleteNVMfRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
