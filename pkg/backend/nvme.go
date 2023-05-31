@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -81,10 +82,11 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v -> %v", err, volume)
-		// return nil, err
+		return nil, err
 	}
+	name := path.Base(volume.Name)
 	params := spdk.BdevNvmeDetachControllerParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result spdk.BdevNvmeDetachControllerResult
 	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
@@ -93,8 +95,7 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	// delete(s.Volumes.NvmeVolumes, volume.Name)
-	delete(s.Volumes.NvmeVolumes, in.Name)
+	delete(s.Volumes.NvmeVolumes, volume.Name)
 	return &emptypb.Empty{}, nil
 }
 
