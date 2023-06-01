@@ -44,6 +44,14 @@ grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cl
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NVMfRemoteControllerService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullDebugService -l
 
+# check spdk sanity
+docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444 subnqn:nqn.2016-06.io.spdk:cnode1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
+grep "Total" log.txt
+echo -n NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ: > /tmp/opikey.txt
+chmod 0600 /tmp/opikey.txt
+docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages -v /tmp/opikey.txt:/tmp/opikey.txt ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:5555 subnqn:nqn.2016-06.io.spdk:cnode1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 -S ssl --psk-path /tmp/opikey.txt | tee log.txt
+grep "Total" log.txt
+
 # test nvme
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem1',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller1', nvme_controller : {spec : {subsystem_id : { value : 'subsystem1' }, nvme_controller_id: 2, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
