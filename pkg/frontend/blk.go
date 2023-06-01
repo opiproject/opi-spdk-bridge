@@ -20,6 +20,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -40,7 +41,7 @@ func sortVirtioBlks(virtioBlks []*pb.VirtioBlk) {
 }
 
 // CreateVirtioBlk creates a Virtio block device
-func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := uuid.New().String()
@@ -56,6 +57,20 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 		return controller, nil
 	}
 	// not found, so create a new one
+	if s.needToSetVirtioBlkQos(in.VirtioBlk) {
+		if _, err := s.Virt.qosProvider.CreateQosVolume(ctx, &pb.CreateQosVolumeRequest{
+			QosVolumeId: s.qosVolumeIDFromVirtioBlkName(name),
+			QosVolume: &pb.QosVolume{
+				VolumeId: in.VirtioBlk.VolumeId,
+				MaxLimit: in.VirtioBlk.MaxLimit,
+				MinLimit: in.VirtioBlk.MinLimit,
+			},
+		}); err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+	}
+
 	params := spdk.VhostCreateBlkControllerParams{
 		Ctrlr:   resourceID,
 		DevName: in.VirtioBlk.VolumeId.Value,
@@ -63,11 +78,13 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	var result spdk.VhostCreateBlkControllerResult
 	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
+		// TODO: cleanup QoS if needed
 		log.Printf("error: %v", err)
 		return nil, fmt.Errorf("%w for %v", spdk.ErrFailedSpdkCall, in)
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
+		// TODO: cleanup QoS if needed
 		log.Printf("Could not create: %v", in)
 		return nil, fmt.Errorf("%w for %v", spdk.ErrUnexpectedSpdkCallResult, in)
 	}
@@ -202,4 +219,14 @@ func (s *Server) VirtioBlkStats(_ context.Context, in *pb.VirtioBlkStatsRequest)
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
+}
+
+func (s *Server) needToSetVirtioBlkQos(virtioBlk *pb.VirtioBlk) bool {
+	return (virtioBlk.MaxLimit != nil && !proto.Equal(virtioBlk.MaxLimit, &pb.QosLimit{})) ||
+		(virtioBlk.MinLimit != nil && !proto.Equal(virtioBlk.MinLimit, &pb.QosLimit{}))
+}
+
+func (s *Server) qosVolumeIDFromVirtioBlkName(name string) string {
+	const virtioBlkRelatedQosVolumeNames = "__opi-internal-"
+	return virtioBlkRelatedQosVolumeNames + name
 }
