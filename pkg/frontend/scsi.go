@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -133,8 +134,15 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 // GetVirtioScsiController gets a Virtio SCSI controller
 func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("GetVirtioScsiController: Received from client: %v", in)
+	volume, ok := s.Virt.ScsiCtrls[in.Name]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.VhostGetControllersParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
@@ -268,8 +276,15 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 // GetVirtioScsiLun gets a Virtio SCSI LUN
 func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("GetVirtioScsiLun: Received from client: %v", in)
+	volume, ok := s.Virt.ScsiLuns[in.Name]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
 	params := spdk.VhostGetControllersParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
