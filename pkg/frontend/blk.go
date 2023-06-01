@@ -171,5 +171,13 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 // VirtioBlkStats gets a Virtio block device stats
 func (s *Server) VirtioBlkStats(_ context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
 	log.Printf("VirtioBlkStats: Received from client: %v", in)
+	volume, ok := s.Virt.BlkCtrls[in.ControllerId.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.ControllerId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
 }

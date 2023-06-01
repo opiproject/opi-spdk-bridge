@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"path"
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -241,6 +242,14 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 // NvmeSubsystemStats gets Nvme Subsystem stats
 func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStatsRequest) (*pb.NvmeSubsystemStatsResponse, error) {
 	log.Printf("NvmeSubsystemStats: Received from client: %v", in)
+	volume, ok := s.Nvme.Subsystems[in.SubsystemId.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.SubsystemId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	var result spdk.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
@@ -373,6 +382,14 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 // NvmeControllerStats gets an Nvme controller stats
 func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerStatsRequest) (*pb.NvmeControllerStatsResponse, error) {
 	log.Printf("NvmeControllerStats: Received from client: %v", in)
+	volume, ok := s.Nvme.Controllers[in.Id.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Id.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	return &pb.NvmeControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
@@ -586,5 +603,13 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 // NvmeNamespaceStats gets an Nvme namespace stats
 func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStatsRequest) (*pb.NvmeNamespaceStatsResponse, error) {
 	log.Printf("NvmeNamespaceStats: Received from client: %v", in)
+	volume, ok := s.Nvme.Namespaces[in.NamespaceId.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NamespaceId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	return &pb.NvmeNamespaceStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

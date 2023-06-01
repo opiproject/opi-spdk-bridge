@@ -439,11 +439,19 @@ func TestFrontEnd_VirtioBlkStats(t *testing.T) {
 		start   bool
 	}{
 		"unimplemented method": {
-			"test",
+			testVirtioCtrlID,
 			&pb.VolumeStats{},
 			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "VirtioBlkStats"),
+			false,
+		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
 		},
 	}
