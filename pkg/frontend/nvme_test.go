@@ -985,7 +985,7 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testControllerID,
 			&pb.VolumeStats{
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
@@ -995,6 +995,14 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 			"",
 			false,
 		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -1002,6 +1010,8 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerID] = &testController
 
 			request := &pb.NvmeControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeControllerStats(testEnv.ctx, request)
@@ -1563,7 +1573,7 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with valid SPDK response": {
-			testSubsystemID,
+			testNamespaceID,
 			&pb.VolumeStats{
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
@@ -1573,6 +1583,14 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 			"",
 			false,
 		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -1580,6 +1598,8 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceID] = &testNamespace
 
 			request := &pb.NvmeNamespaceStatsRequest{NamespaceId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeNamespaceStats(testEnv.ctx, request)

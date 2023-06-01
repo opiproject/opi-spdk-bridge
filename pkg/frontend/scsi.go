@@ -162,6 +162,14 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 // VirtioScsiControllerStats gets a Virtio SCSI controller stats
 func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
+	volume, ok := s.Virt.ScsiCtrls[in.ControllerId.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.ControllerId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	return &pb.VirtioScsiControllerStatsResponse{}, nil
 }
 
@@ -304,5 +312,13 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 // VirtioScsiLunStats gets a Virtio SCSI LUN stats
 func (s *Server) VirtioScsiLunStats(_ context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
 	log.Printf("Received from client: %v", in)
+	volume, ok := s.Virt.ScsiLuns[in.ControllerId.Value]
+	if !ok {
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.ControllerId.Value)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	name := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
 	return &pb.VirtioScsiLunStatsResponse{}, nil
 }
