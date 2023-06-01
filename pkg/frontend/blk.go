@@ -95,7 +95,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 }
 
 // DeleteVirtioBlk deletes a Virtio block device
-func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
 	controller, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
@@ -119,6 +119,16 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 	if !result {
 		log.Printf("Could not delete: %v", in)
 		return nil, spdk.ErrUnexpectedSpdkCallResult
+	}
+
+	if s.needToSetVirtioBlkQos(controller) {
+		if _, err := s.Virt.qosProvider.DeleteQosVolume(ctx,
+			&pb.DeleteQosVolumeRequest{
+				Name: s.qosVolumeIDFromVirtioBlkName(controller.Name),
+			}); err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 	}
 	delete(s.Virt.BlkCtrls, controller.Name)
 	return &emptypb.Empty{}, nil
