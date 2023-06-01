@@ -21,6 +21,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 type stubQosProvider struct {
@@ -43,38 +44,69 @@ var (
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
 	}
+	testVirtioCtrlWithQos = pb.VirtioBlk{
+		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
+		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+		MaxIoQps: 1,
+		MaxLimit: &pb.QosLimit{
+			RwBandwidthMbs: 1,
+		},
+	}
 )
 
 func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
-		in          *pb.VirtioBlk
-		out         *pb.VirtioBlk
-		spdk        []string
-		expectedErr error
+		in           *pb.VirtioBlk
+		out          *pb.VirtioBlk
+		spdk         []string
+		expectedErr  error
+		qosCreateErr error
 	}{
 		"valid virtio-blk creation": {
-			in:          &testVirtioCtrl,
-			out:         &testVirtioCtrl,
-			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
-			expectedErr: status.Error(codes.OK, ""),
+			in:           &testVirtioCtrl,
+			out:          &testVirtioCtrl,
+			spdk:         []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			expectedErr:  status.Error(codes.OK, ""),
+			qosCreateErr: nil,
 		},
 		"spdk virtio-blk creation error": {
-			in:          &testVirtioCtrl,
-			out:         nil,
-			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":false}`},
-			expectedErr: spdk.ErrFailedSpdkCall,
+			in:           &testVirtioCtrl,
+			out:          nil,
+			spdk:         []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":false}`},
+			expectedErr:  spdk.ErrFailedSpdkCall,
+			qosCreateErr: nil,
 		},
 		"spdk virtio-blk creation returned false response with no error": {
-			in:          &testVirtioCtrl,
-			out:         nil,
-			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			expectedErr: spdk.ErrUnexpectedSpdkCallResult,
+			in:           &testVirtioCtrl,
+			out:          nil,
+			spdk:         []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			expectedErr:  spdk.ErrUnexpectedSpdkCallResult,
+			qosCreateErr: nil,
+		},
+		"valid virtio-blk creation with qos limits": {
+			in:           &testVirtioCtrlWithQos,
+			out:          &testVirtioCtrlWithQos,
+			spdk:         []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			expectedErr:  status.Error(codes.OK, ""),
+			qosCreateErr: nil,
+		},
+		"valid virtio-blk creation with qos limits failure": {
+			in:           &testVirtioCtrlWithQos,
+			out:          nil,
+			spdk:         []string{},
+			expectedErr:  status.Error(codes.InvalidArgument, "invalid argument"),
+			qosCreateErr: status.Error(codes.InvalidArgument, "invalid argument"),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			testEnv := createTestEnvironment(true, test.spdk)
+			test.in = server.ProtoClone(test.in)
+			test.out = server.ProtoClone(test.out)
+
+			testEnv := createTestEnvironmentWithVirtioBlkQosProvider(
+				true, test.spdk, stubQosProvider{test.qosCreateErr},
+			)
 			defer testEnv.Close()
 
 			if test.out != nil {
