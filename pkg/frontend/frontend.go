@@ -31,6 +31,8 @@ type VirtioParameters struct {
 	BlkCtrls  map[string]*pb.VirtioBlk
 	ScsiCtrls map[string]*pb.VirtioScsiController
 	ScsiLuns  map[string]*pb.VirtioScsiLun
+
+	qosProvider VirtioBlkQosProvider
 }
 
 // Server contains frontend related OPI services
@@ -47,7 +49,7 @@ type Server struct {
 
 // NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC, qosProvider VirtioBlkQosProvider) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
@@ -60,6 +62,8 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),
 			ScsiCtrls: make(map[string]*pb.VirtioScsiController),
 			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
+
+			qosProvider: qosProvider,
 		},
 		Pagination: make(map[string]int),
 	}
@@ -67,11 +71,23 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 
 // NewServerWithSubsystemListener creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC and externally created SubsystemListener instead default one.
-func NewServerWithSubsystemListener(jsonRPC spdk.JSONRPC, sysListener SubsystemListener) *Server {
+func NewServerWithSubsystemListener(
+	jsonRPC spdk.JSONRPC, qosProvider VirtioBlkQosProvider, sysListener SubsystemListener,
+) *Server {
 	if sysListener == nil {
 		log.Panic("nil for SubsystemListener is not allowed")
 	}
-	server := NewServer(jsonRPC)
+	server := NewServer(jsonRPC, qosProvider)
 	server.Nvme.subsysListener = sysListener
 	return server
+}
+
+// VirtioBlkQosProviderFromMiddleendQosService provides QoS provider based on middleend QoS service
+func VirtioBlkQosProviderFromMiddleendQosService(
+	s pb.MiddleendQosVolumeServiceServer,
+) VirtioBlkQosProvider {
+	if s == nil {
+		log.Panic("nil middleend QoS service is not allowed")
+	}
+	return s
 }

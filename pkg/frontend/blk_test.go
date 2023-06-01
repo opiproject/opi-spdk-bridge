@@ -7,6 +7,7 @@ package frontend
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -21,6 +22,18 @@ import (
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
+
+type stubQosProvider struct {
+	err error
+}
+
+func (p stubQosProvider) CreateQosVolume(context.Context, *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
+	return &pb.QosVolume{}, p.err
+}
+
+func (p stubQosProvider) DeleteQosVolume(context.Context, *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, p.err
+}
 
 var (
 	testVirtioCtrlID  = "virtio-blk-42"

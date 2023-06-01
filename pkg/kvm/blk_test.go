@@ -141,7 +141,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(test.jsonRPC, stubQosProvider)
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
@@ -226,7 +226,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(test.jsonRPC, stubQosProvider)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID] =
 				proto.Clone(testCreateVirtioBlkRequest.VirtioBlk).(*pb.VirtioBlk)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID].Name = testVirtioBlkID

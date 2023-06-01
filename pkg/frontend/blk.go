@@ -23,6 +23,16 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// VirtioBlkQosProvider provides QoS capabilities for virtio-blk
+// At the moment it is just a couple of methods from middleend QoS service, but
+// it can be changed to less verbose later.
+// If client uses VirtioBlkQosProviderFromMiddleendQosService to create an instance,
+// the interface can be changed without affecting the client code.
+type VirtioBlkQosProvider interface {
+	CreateQosVolume(context.Context, *pb.CreateQosVolumeRequest) (*pb.QosVolume, error)
+	DeleteQosVolume(context.Context, *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error)
+}
+
 func sortVirtioBlks(virtioBlks []*pb.VirtioBlk) {
 	sort.Slice(virtioBlks, func(i int, j int) bool {
 		return virtioBlks[i].Name < virtioBlks[j].Name
