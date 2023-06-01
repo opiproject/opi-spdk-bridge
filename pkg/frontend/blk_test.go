@@ -387,6 +387,14 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			"",
 			true,
 		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+		},
 	}
 
 	// run tests

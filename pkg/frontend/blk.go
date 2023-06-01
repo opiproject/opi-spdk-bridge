@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path"
 	"sort"
 
 	"github.com/google/uuid"
@@ -139,14 +140,15 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 // GetVirtioBlk gets a Virtio block device
 func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("GetVirtioBlk: Received from client: %v", in)
-	_, ok := s.Virt.BlkCtrls[in.Name]
+	volume, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
-		msg := fmt.Sprintf("Could not find Controller: %s", in.Name)
-		log.Print(msg)
-		return nil, status.Errorf(codes.InvalidArgument, msg)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		log.Printf("error: %v", err)
+		return nil, err
 	}
+	name := path.Base(volume.Name)
 	params := spdk.VhostGetControllersParams{
-		Name: in.Name,
+		Name: name,
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
