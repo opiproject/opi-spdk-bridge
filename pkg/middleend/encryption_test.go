@@ -27,6 +27,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
 			&encryptedVolume,
@@ -35,6 +36,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Crypto Key: %v", "0123456789abcdef0123456789abcdef"),
 			true,
+			false,
 		},
 		"valid request with invalid marshal SPDK response": {
 			&encryptedVolume,
@@ -43,6 +45,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "json: cannot unmarshal string into Go value of type spdk.AccelCryptoKeyCreateResult"),
 			true,
+			false,
 		},
 		"valid request with empty SPDK response": {
 			&encryptedVolume,
@@ -51,6 +54,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch SPDK response": {
 			&encryptedVolume,
@@ -59,6 +63,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from SPDK response": {
 			&encryptedVolume,
@@ -67,14 +72,16 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid key and invalid bdev response": {
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not create Crypto Dev: %v", "crypto-test"),
+			fmt.Sprintf("Could not create Crypto Dev: %v", encryptedVolumeID),
 			true,
+			false,
 		},
 		"valid request with valid key and invalid marshal bdev response": {
 			&encryptedVolume,
@@ -83,6 +90,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevCryptoCreateResult"),
 			true,
+			false,
 		},
 		"valid request with valid key and error code bdev response": {
 			&encryptedVolume,
@@ -91,6 +99,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid key and ID mismatch bdev response": {
 			&encryptedVolume,
@@ -99,6 +108,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response and AES_XTS_128 cipher": {
 			&encryptedVolume,
@@ -107,6 +117,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"invalid request with AES_XTS_192 cipher": {
 			&pb.EncryptedVolume{
@@ -118,6 +129,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
 			false,
 		},
 		"valid request with valid SPDK response and AES_XTS_256 cipher": {
@@ -135,6 +147,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"invalid request with AES_CBC_128 cipher": {
 			&pb.EncryptedVolume{
@@ -146,6 +159,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
 			false,
 		},
 		"invalid request with AES_CBC_192 cipher": {
@@ -159,6 +173,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
 			false,
+			false,
 		},
 		"invalid request with AES_CBC_256 cipher": {
 			&pb.EncryptedVolume{
@@ -170,6 +185,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
 			false,
 		},
 		"invalid request with unspecified cipher": {
@@ -183,6 +199,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
 			false,
+			false,
 		},
 		"invalid request with invalid key size for AES_XTS_128": {
 			&pb.EncryptedVolume{
@@ -194,6 +211,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			fmt.Sprintf("expected key size %vb, provided size %vb", 256, (4 * 8)),
+			false,
 			false,
 		},
 		"invalid request with invalid key size for AES_XTS_256": {
@@ -207,6 +225,16 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("expected key size %vb, provided size %vb", 512, (4 * 8)),
 			false,
+			false,
+		},
+		"already exists": {
+			&encryptedVolume,
+			&encryptedVolume,
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
 		},
 	}
 
@@ -215,6 +243,10 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			if tt.exist {
+				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
+			}
 			if tt.out != nil {
 				tt.out.Name = encryptedVolumeID
 			}
@@ -289,7 +321,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not destroy Crypto Key: %v", "crypto-test"),
+			fmt.Sprintf("Could not destroy Crypto Key: %v", encryptedVolumeID),
 			true,
 		},
 		"bdev delete ok ; key delete empty": {
@@ -723,7 +755,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
@@ -731,7 +763,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -739,7 +771,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -747,7 +779,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -755,7 +787,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -763,14 +795,22 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			"Malloc0",
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
-				Name: "Malloc0",
+				Name: encryptedVolumeID,
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"crypto-test","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",
 			true,
+		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
 		},
 	}
 
@@ -779,6 +819,8 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
 
 			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
@@ -813,7 +855,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.InvalidArgument,
@@ -821,7 +863,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -829,7 +871,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -837,7 +879,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.Unknown,
@@ -845,7 +887,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -853,7 +895,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			"Malloc0",
+			encryptedVolumeID,
 			&pb.VolumeStats{
 				ReadBytesCount:    1,
 				ReadOpsCount:      2,
@@ -862,10 +904,18 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 				ReadLatencyTicks:  7,
 				WriteLatencyTicks: 8,
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"tick_rate":2490000000,"ticks":18787040917434338,"bdevs":[{"name":"Malloc0","bytes_read":1,"num_read_ops":2,"bytes_written":3,"num_write_ops":4,"bytes_unmapped":0,"num_unmap_ops":0,"read_latency_ticks":7,"write_latency_ticks":8,"unmap_latency_ticks":0}]}}`},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"tick_rate":2490000000,"ticks":18787040917434338,"bdevs":[{"name":"crypto-test","bytes_read":1,"num_read_ops":2,"bytes_written":3,"num_write_ops":4,"bytes_unmapped":0,"num_unmap_ops":0,"read_latency_ticks":7,"write_latency_ticks":8,"unmap_latency_ticks":0}]}}`},
 			codes.OK,
 			"",
 			true,
+		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
 		},
 	}
 
@@ -874,6 +924,8 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
 
 			request := &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.EncryptedVolumeStats(testEnv.ctx, request)
@@ -905,69 +957,96 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		"valid request with invalid bdev delete SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Crypto: %v", "crypto-test"),
+			fmt.Sprintf("Could not delete Crypto: %v", encryptedVolumeID),
 			true,
+			false,
 		},
 		"valid request with invalid bdev delete marshal SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "json: cannot unmarshal array into Go value of type spdk.BdevCryptoDeleteResult"),
 			true,
+			false,
 		},
 		"valid request with empty bdev delete SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "EOF"),
 			true,
+			false,
 		},
 		"valid request with ID mismatch on bdev delete SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"valid request with error code from bdev delete SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"valid request with key delete fails": {
-			"crypto-test",
+			encryptedVolumeID,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not destroy Crypto Key: %v", "crypto-test"),
+			fmt.Sprintf("Could not destroy Crypto Key: %v", encryptedVolumeID),
 			true,
+			false,
 		},
 		"valid request with error code from key delete SPDK response": {
-			"crypto-test",
+			encryptedVolumeID,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":true}`},
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_destroy: %v", "json response error: myopierr"),
+			true,
+			false,
+		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			false,
+			false,
+		},
+		"unknown key with missing allowed": {
+			"unknown-id",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.OK,
+			"",
+			false,
 			true,
 		},
 	}
@@ -978,7 +1057,9 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in}
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
+
+			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
