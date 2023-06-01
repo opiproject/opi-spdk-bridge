@@ -13,6 +13,7 @@ import (
 // VolumeParameters contains MiddleEnd volume related structures
 type VolumeParameters struct {
 	qosVolumes map[string]*pb.QosVolume
+	encVolumes map[string]*pb.EncryptedVolume
 }
 
 // Server contains middleend related OPI services
@@ -32,6 +33,7 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 		rpc: jsonRPC,
 		volumes: VolumeParameters{
 			qosVolumes: make(map[string]*pb.QosVolume),
+			encVolumes: make(map[string]*pb.EncryptedVolume),
 		},
 		Pagination: make(map[string]int),
 	}
