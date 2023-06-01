@@ -549,13 +549,15 @@ func TestFrontEnd_VirtioBlkStats(t *testing.T) {
 
 func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
-		in      string
-		out     *emptypb.Empty
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		start   bool
-		missing bool
+		in                 string
+		out                *emptypb.Empty
+		spdk               []string
+		errCode            codes.Code
+		errMsg             string
+		start              bool
+		missing            bool
+		existingController *pb.VirtioBlk
+		qosDeleteErr       error
 	}{
 		"valid request with invalid SPDK response": {
 			testVirtioCtrlID,
@@ -565,6 +567,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with empty SPDK response": {
 			testVirtioCtrlID,
@@ -574,6 +578,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("vhost_delete_controller: %v", "EOF"),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testVirtioCtrlID,
@@ -583,6 +589,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("vhost_delete_controller: %v", "json response ID mismatch"),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with error code from SPDK response": {
 			testVirtioCtrlID,
@@ -592,6 +600,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("vhost_delete_controller: %v", "json response error: myopierr"),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with valid SPDK response": {
 			testVirtioCtrlID,
@@ -601,6 +611,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			"",
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
@@ -610,6 +622,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
@@ -619,16 +633,44 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			"",
 			false,
 			true,
+			&testVirtioCtrl,
+			nil,
+		},
+		"valid request with valid SPDK response and max QoS limit virtio-blk": {
+			testVirtioCtrlID,
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			codes.OK,
+			"",
+			true,
+			false,
+			&testVirtioCtrlWithQos,
+			nil,
+		},
+		"valid request with valid SPDK response and max QoS limit error": {
+			testVirtioCtrlID,
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			status.Convert(spdk.ErrFailedSpdkCall).Code(),
+			status.Convert(spdk.ErrFailedSpdkCall).Message(),
+			true,
+			false,
+			&testVirtioCtrlWithQos,
+			spdk.ErrFailedSpdkCall,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			tt.existingController = server.ProtoClone(tt.existingController)
+
+			testEnv := createTestEnvironmentWithVirtioBlkQosProvider(
+				tt.start, tt.spdk, stubQosProvider{tt.qosDeleteErr},
+			)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = tt.existingController
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)
