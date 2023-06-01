@@ -246,7 +246,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"",
 		},
 		"pagination negative": {
-			"volume-test",
+			testVirtioCtrlID,
 			nil,
 			[]string{},
 			codes.InvalidArgument,
@@ -256,7 +256,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"",
 		},
 		"pagination error": {
-			"volume-test",
+			testVirtioCtrlID,
 			nil,
 			[]string{},
 			codes.NotFound,

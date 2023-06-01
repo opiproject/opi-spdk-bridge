@@ -263,7 +263,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 		token   string
 	}{
 		"valid request with invalid SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
@@ -273,7 +273,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"valid request with invalid marshal SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -283,7 +283,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"valid request with empty SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -293,7 +293,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"valid request with ID mismatch SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -303,7 +303,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"valid request with error code from SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -313,7 +313,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"valid request with valid SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			[]*pb.AioController{
 				{
 					Name:        "Malloc0",
@@ -337,7 +337,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"pagination overflow": {
-			"volume-test",
+			testAioVolumeID,
 			[]*pb.AioController{
 				{
 					Name:        "Malloc0",
@@ -358,7 +358,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"pagination negative": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{},
 			codes.InvalidArgument,
@@ -368,7 +368,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"pagination error": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -378,7 +378,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"unknown-pagination-token",
 		},
 		"pagination": {
-			"volume-test",
+			testAioVolumeID,
 			[]*pb.AioController{
 				{
 					Name:        "Malloc0",
@@ -394,7 +394,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 			"",
 		},
 		"pagination offset": {
-			"volume-test",
+			testAioVolumeID,
 			[]*pb.AioController{
 				{
 					Name:        "Malloc1",
@@ -455,7 +455,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
@@ -463,7 +463,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -471,7 +471,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -479,7 +479,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -487,7 +487,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -495,7 +495,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			"volume-test",
+			testAioVolumeID,
 			&pb.AioController{Name: "Malloc1", BlockSize: 512, BlocksCount: 131072},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
@@ -518,7 +518,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes["volume-test"] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 
 			request := &pb.GetAioControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetAioController(testEnv.ctx, request)
