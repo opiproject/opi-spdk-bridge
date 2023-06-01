@@ -262,7 +262,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		token   string
 	}{
 		"valid request with invalid SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
@@ -272,7 +272,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"valid request with invalid marshal SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -282,7 +282,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"valid request with empty SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -292,7 +292,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"valid request with ID mismatch SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -302,7 +302,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"valid request with error code from SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -312,7 +312,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"valid request with valid SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			[]*pb.NullDebug{
 				{
 					Name:        "Malloc0",
@@ -338,7 +338,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"pagination overflow": {
-			"volume-test",
+			testNullVolumeID,
 			[]*pb.NullDebug{
 				{
 					Name:        "Malloc0",
@@ -361,7 +361,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"pagination negative": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{},
 			codes.InvalidArgument,
@@ -371,7 +371,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"pagination error": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -381,7 +381,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"unknown-pagination-token",
 		},
 		"pagination": {
-			"volume-test",
+			testNullVolumeID,
 			[]*pb.NullDebug{
 				{
 					Name:        "Malloc0",
@@ -398,7 +398,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			"",
 		},
 		"pagination offset": {
-			"volume-test",
+			testNullVolumeID,
 			[]*pb.NullDebug{
 				{
 					Name:        "Malloc1",
@@ -460,7 +460,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 		start   bool
 	}{
 		"valid request with invalid SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
@@ -468,7 +468,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with invalid marshal SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -476,7 +476,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with empty SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -484,7 +484,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with ID mismatch SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -492,7 +492,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with error code from SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
@@ -500,7 +500,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
-			"volume-test",
+			testNullVolumeID,
 			&pb.NullDebug{
 				Name:        "Malloc1",
 				Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
@@ -528,7 +528,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes["volume-test"] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 
 			request := &pb.GetNullDebugRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullDebug(testEnv.ctx, request)

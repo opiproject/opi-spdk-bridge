@@ -1350,7 +1350,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"pagination negative": {
-			"volume-test",
+			testSubsystemID,
 			nil,
 			[]string{},
 			codes.InvalidArgument,
@@ -1360,7 +1360,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			"",
 		},
 		"pagination error": {
-			"volume-test",
+			testSubsystemID,
 			nil,
 			[]string{},
 			codes.NotFound,
