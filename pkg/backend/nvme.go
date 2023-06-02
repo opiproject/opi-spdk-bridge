@@ -33,12 +33,12 @@ func sortNVMfRemoteControllers(controllers []*pb.NVMfRemoteController) {
 func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMfRemoteControllerRequest) (*pb.NVMfRemoteController, error) {
 	log.Printf("CreateNVMfRemoteController: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.NvMfRemoteControllerId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Name)
-		name = in.NvMfRemoteControllerId
+		resourceID = in.NvMfRemoteControllerId
 	}
-	in.NvMfRemoteController.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.NvMfRemoteController.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Name]
 	if ok {
@@ -47,7 +47,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	}
 	// not found, so create a new one
 	params := spdk.BdevNvmeAttachControllerParams{
-		Name:    name,
+		Name:    resourceID,
 		Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
 		Traddr:  in.NvMfRemoteController.Traddr,
 		Adrfam:  strings.ReplaceAll(in.NvMfRemoteController.Adrfam.String(), "NVMF_ADRFAM_", ""),

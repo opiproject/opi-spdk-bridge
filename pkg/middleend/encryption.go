@@ -32,12 +32,12 @@ func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
 func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.EncryptedVolumeId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
-		name = in.EncryptedVolumeId
+		resourceID = in.EncryptedVolumeId
 	}
-	in.EncryptedVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.EncryptedVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
 
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
 		log.Printf("error: %v", err)
@@ -67,9 +67,9 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	}
 	// create bdev now
 	params := spdk.BdevCryptoCreateParams{
-		Name:         name,
+		Name:         resourceID,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      name,
+		KeyName:      resourceID,
 	}
 	var result spdk.BdevCryptoCreateResult
 	err := s.rpc.Call("bdev_crypto_create", &params, &result)

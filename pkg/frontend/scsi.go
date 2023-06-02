@@ -33,12 +33,12 @@ func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("CreateVirtioScsiController: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.VirtioScsiControllerId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Name)
-		name = in.VirtioScsiControllerId
+		resourceID = in.VirtioScsiControllerId
 	}
-	in.VirtioScsiController.Name = name
+	in.VirtioScsiController.Name = resourceID
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Name]
 	if ok {
@@ -47,7 +47,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	}
 	// not found, so create a new one
 	params := spdk.VhostCreateScsiControllerParams{
-		Ctrlr: name,
+		Ctrlr: resourceID,
 	}
 	var result spdk.VhostCreateScsiControllerResult
 	err := s.rpc.Call("vhost_create_scsi_controller", &params, &result)
@@ -177,12 +177,12 @@ func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiC
 func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("CreateVirtioScsiLun: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.VirtioScsiLunId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Name)
-		name = in.VirtioScsiLunId
+		resourceID = in.VirtioScsiLunId
 	}
-	in.VirtioScsiLun.Name = name
+	in.VirtioScsiLun.Name = resourceID
 	// idempotent API when called with same key, should return same object
 	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Name]
 	if ok {
@@ -195,7 +195,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		Num  int    `json:"scsi_target_num"`
 		Bdev string `json:"bdev_name"`
 	}{
-		Name: name,
+		Name: resourceID,
 		Num:  5,
 		Bdev: in.VirtioScsiLun.VolumeId.Value,
 	}
