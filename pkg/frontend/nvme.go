@@ -248,8 +248,8 @@ func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStats
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	var result spdk.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
@@ -388,8 +388,8 @@ func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerSta
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	return &pb.NvmeControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
@@ -609,7 +609,7 @@ func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStats
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	return &pb.NvmeNamespaceStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

@@ -140,9 +140,9 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.VhostGetControllersParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
@@ -168,8 +168,8 @@ func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiC
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	return &pb.VirtioScsiControllerStatsResponse{}, nil
 }
 
@@ -290,9 +290,9 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.VhostGetControllersParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
@@ -318,7 +318,7 @@ func (s *Server) VirtioScsiLunStats(_ context.Context, in *pb.VirtioScsiLunStats
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	return &pb.VirtioScsiLunStatsResponse{}, nil
 }

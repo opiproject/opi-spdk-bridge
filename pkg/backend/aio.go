@@ -79,9 +79,9 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevAioDeleteParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result spdk.BdevAioDeleteResult
 	err := s.rpc.Call("bdev_aio_delete", &params, &result)
@@ -102,9 +102,9 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 // UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
-	name := path.Base(in.AioController.Name)
+	resourceID := path.Base(in.AioController.Name)
 	params1 := spdk.BdevAioDeleteParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result1 spdk.BdevAioDeleteResult
 	err1 := s.rpc.Call("bdev_aio_delete", &params1, &result1)
@@ -119,7 +119,7 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevAioCreateParams{
-		Name:      name,
+		Name:      resourceID,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
@@ -180,9 +180,9 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevGetBdevsParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
@@ -208,9 +208,9 @@ func (s *Server) AioControllerStats(_ context.Context, in *pb.AioControllerStats
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevGetIostatParams{
-		Name: name,
+		Name: resourceID,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult

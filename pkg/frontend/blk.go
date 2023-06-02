@@ -146,9 +146,9 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.VhostGetControllersParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
@@ -177,7 +177,7 @@ func (s *Server) VirtioBlkStats(_ context.Context, in *pb.VirtioBlkStatsRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
 	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
 }
