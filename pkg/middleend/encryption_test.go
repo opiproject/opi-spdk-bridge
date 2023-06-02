@@ -244,11 +244,12 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
 			if tt.exist {
-				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
+				testEnv.opiSpdkServer.volumes.encVolumes[fullname] = &encryptedVolume
 			}
 			if tt.out != nil {
-				tt.out.Name = encryptedVolumeID
+				tt.out.Name = fullname
 			}
 
 			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: encryptedVolumeID}
@@ -809,7 +810,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 		},
 	}
@@ -820,9 +821,11 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
+			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
+			testEnv.opiSpdkServer.volumes.encVolumes[fname2] = &encryptedVolume
 
-			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
+			request := &pb.GetEncryptedVolumeRequest{Name: fname1}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if response.Name != tt.out.Name {
@@ -914,7 +917,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 		},
 	}
@@ -925,9 +928,11 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
+			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
+			testEnv.opiSpdkServer.volumes.encVolumes[fname2] = &encryptedVolume
 
-			request := &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: tt.in}}
+			request := &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: fname1}}
 			response, err := testEnv.client.EncryptedVolumeStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
@@ -1036,7 +1041,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 			false,
 		},
@@ -1057,9 +1062,11 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeID] = &encryptedVolume
+			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
+			testEnv.opiSpdkServer.volumes.encVolumes[fname2] = &encryptedVolume
 
-			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
+			request := &pb.DeleteEncryptedVolumeRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)
 			if err != nil {
 				if er, ok := status.FromError(err); ok {
