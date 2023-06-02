@@ -37,7 +37,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
 		name = in.EncryptedVolumeId
 	}
-	in.EncryptedVolume.Name = name
+	in.EncryptedVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
 
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
 		log.Printf("error: %v", err)
@@ -144,9 +144,10 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		log.Printf("error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	name := path.Base(in.EncryptedVolume.Name)
 	// first delete old bdev
 	params1 := spdk.BdevCryptoDeleteParams{
-		Name: in.EncryptedVolume.Name,
+		Name: name,
 	}
 	var result1 spdk.BdevCryptoDeleteResult
 	err1 := s.rpc.Call("bdev_crypto_delete", &params1, &result1)
@@ -156,13 +157,13 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not delete Crypto: %s", in.EncryptedVolume.Name)
+		msg := fmt.Sprintf("Could not delete Crypto: %s", params1.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// now delete a key
 	params0 := spdk.AccelCryptoKeyDestroyParams{
-		KeyName: in.EncryptedVolume.Name,
+		KeyName: name,
 	}
 	var result0 spdk.AccelCryptoKeyDestroyResult
 	err0 := s.rpc.Call("accel_crypto_key_destroy", &params0, &result0)
@@ -191,9 +192,9 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	// create bdev now
 	params3 := spdk.BdevCryptoCreateParams{
-		Name:         in.EncryptedVolume.Name,
+		Name:         name,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      in.EncryptedVolume.Name,
+		KeyName:      name,
 	}
 	var result3 spdk.BdevCryptoCreateResult
 	err3 := s.rpc.Call("bdev_crypto_create", &params3, &result3)
@@ -203,7 +204,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	log.Printf("Received from SPDK: %v", result3)
 	if result3 == "" {
-		msg := fmt.Sprintf("Could not create Crypto Dev: %s", in.EncryptedVolume.Name)
+		msg := fmt.Sprintf("Could not create Crypto Dev: %s", params3.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
