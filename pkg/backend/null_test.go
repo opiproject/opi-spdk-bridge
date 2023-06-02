@@ -216,6 +216,18 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			"",
 			true,
 		},
+		"valid request with unknown key": {
+			&pb.NullDebug{
+				Name:        "//storage.opiproject.org/volumes/unknown-id",
+				BlockSize:   512,
+				BlocksCount: 64,
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -223,6 +235,10 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
+			testNullVolume.Name = fullname
+			testEnv.opiSpdkServer.Volumes.NullVolumes[fullname] = &testNullVolume
 
 			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in}
 			response, err := testEnv.client.UpdateNullDebug(testEnv.ctx, request)

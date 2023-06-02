@@ -103,7 +103,16 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 // UpdateNullDebug updates a Null Debug instance
 func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
-	resourceID := path.Base(in.NullDebug.Name)
+	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Name]
+	if !ok {
+		if in.AllowMissing {
+			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NullDebug.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	resourceID := path.Base(volume.Name)
 	params1 := spdk.BdevNullDeleteParams{
 		Name: resourceID,
 	}

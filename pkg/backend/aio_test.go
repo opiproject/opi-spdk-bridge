@@ -217,6 +217,19 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			"",
 			true,
 		},
+		"valid request with unknown key": {
+			&pb.AioController{
+				Name:        "//storage.opiproject.org/volumes/unknown-id",
+				BlockSize:   512,
+				BlocksCount: 12,
+				Filename:    "/tmp/aio_bdev_file",
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			false,
+		},
 	}
 
 	// run tests
@@ -224,6 +237,10 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
+			testAioVolume.Name = fullname
+			testEnv.opiSpdkServer.Volumes.AioVolumes[fullname] = &testAioVolume
 
 			request := &pb.UpdateAioControllerRequest{AioController: tt.in}
 			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)

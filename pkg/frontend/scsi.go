@@ -97,6 +97,17 @@ func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirt
 // UpdateVirtioScsiController updates a Virtio SCSI controller
 func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	log.Printf("Received from client: %v", in)
+	volume, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Name]
+	if !ok {
+		if in.AllowMissing {
+			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VirtioScsiController.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: use resourceID=%v", resourceID)
 	return &pb.VirtioScsiController{}, nil
 }
 
@@ -248,6 +259,17 @@ func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiL
 // UpdateVirtioScsiLun updates a Virtio SCSI LUN
 func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	log.Printf("Received from client: %v", in)
+	volume, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Name]
+	if !ok {
+		if in.AllowMissing {
+			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VirtioScsiLun.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: use resourceID=%v", resourceID)
 	return &pb.VirtioScsiLun{}, nil
 }
 
