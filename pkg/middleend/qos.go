@@ -34,7 +34,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
 		name = in.QosVolumeId
 	}
-	in.QosVolume.Name = name
+	in.QosVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
 
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
