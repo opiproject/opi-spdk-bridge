@@ -100,9 +100,9 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	bdevCryptoDeleteParams := spdk.BdevCryptoDeleteParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var bdevCryptoDeleteResult spdk.BdevCryptoDeleteResult
 	err := s.rpc.Call("bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
@@ -118,7 +118,7 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 	}
 
 	keyDestroyParams := spdk.AccelCryptoKeyDestroyParams{
-		KeyName: name,
+		KeyName: resourceID,
 	}
 	var keyDestroyResult spdk.AccelCryptoKeyDestroyResult
 	err = s.rpc.Call("accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)
@@ -144,10 +144,10 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		log.Printf("error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	name := path.Base(in.EncryptedVolume.Name)
+	resourceID := path.Base(in.EncryptedVolume.Name)
 	// first delete old bdev
 	params1 := spdk.BdevCryptoDeleteParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result1 spdk.BdevCryptoDeleteResult
 	err1 := s.rpc.Call("bdev_crypto_delete", &params1, &result1)
@@ -163,7 +163,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	// now delete a key
 	params0 := spdk.AccelCryptoKeyDestroyParams{
-		KeyName: name,
+		KeyName: resourceID,
 	}
 	var result0 spdk.AccelCryptoKeyDestroyResult
 	err0 := s.rpc.Call("accel_crypto_key_destroy", &params0, &result0)
@@ -192,9 +192,9 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	// create bdev now
 	params3 := spdk.BdevCryptoCreateParams{
-		Name:         name,
+		Name:         resourceID,
 		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
-		KeyName:      name,
+		KeyName:      resourceID,
 	}
 	var result3 spdk.BdevCryptoCreateResult
 	err3 := s.rpc.Call("bdev_crypto_create", &params3, &result3)
@@ -254,9 +254,9 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevGetBdevsParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
@@ -282,9 +282,9 @@ func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeS
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevGetIostatParams{
-		Name: name,
+		Name: resourceID,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult

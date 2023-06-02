@@ -80,9 +80,9 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevNullDeleteParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result spdk.BdevNullDeleteResult
 	err := s.rpc.Call("bdev_null_delete", &params, &result)
@@ -103,9 +103,9 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 // UpdateNullDebug updates a Null Debug instance
 func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("UpdateNullDebug: Received from client: %v", in)
-	name := path.Base(in.NullDebug.Name)
+	resourceID := path.Base(in.NullDebug.Name)
 	params1 := spdk.BdevNullDeleteParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result1 spdk.BdevNullDeleteResult
 	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
@@ -120,7 +120,7 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevNullCreateParams{
-		Name:      name,
+		Name:      resourceID,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}
@@ -181,9 +181,9 @@ func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*p
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevGetBdevsParams{
-		Name: name,
+		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
@@ -209,9 +209,9 @@ func (s *Server) NullDebugStats(_ context.Context, in *pb.NullDebugStatsRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	name := path.Base(volume.Name)
+	resourceID := path.Base(volume.Name)
 	params := spdk.BdevGetIostatParams{
-		Name: name,
+		Name: resourceID,
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult
