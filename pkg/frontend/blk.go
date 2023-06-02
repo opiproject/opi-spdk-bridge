@@ -99,6 +99,17 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 // UpdateVirtioBlk updates a Virtio block device
 func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("UpdateVirtioBlk: Received from client: %v", in)
+	volume, ok := s.Virt.BlkCtrls[in.VirtioBlk.Name]
+	if !ok {
+		if in.AllowMissing {
+			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VirtioBlk.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	resourceID := path.Base(volume.Name)
+	log.Printf("TODO: use resourceID=%v", resourceID)
 	return nil, status.Errorf(codes.Unimplemented, "UpdateVirtioBlk method is not implemented")
 }
 

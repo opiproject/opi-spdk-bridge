@@ -103,11 +103,26 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		start   bool
 	}{
 		"unimplemented method": {
-			&pb.VirtioBlk{},
+			&pb.VirtioBlk{
+				Name: fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID),
+			},
 			nil,
 			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateVirtioBlk"),
+			false,
+		},
+		"valid request with unknown key": {
+			&pb.VirtioBlk{
+				Name:     "//storage.opiproject.org/volumes/unknown-id",
+				PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
+				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+				MaxIoQps: 1,
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
 			false,
 		},
 	}
@@ -117,6 +132,9 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
+
+			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID)
+			testEnv.opiSpdkServer.Virt.BlkCtrls[fullname] = &testVirtioCtrl
 
 			request := &pb.UpdateVirtioBlkRequest{VirtioBlk: tt.in}
 			response, err := testEnv.client.UpdateVirtioBlk(testEnv.ctx, request)

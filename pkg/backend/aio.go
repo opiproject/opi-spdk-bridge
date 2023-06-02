@@ -102,7 +102,16 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 // UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
-	resourceID := path.Base(in.AioController.Name)
+	volume, ok := s.Volumes.AioVolumes[in.AioController.Name]
+	if !ok {
+		if in.AllowMissing {
+			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.AioController.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	resourceID := path.Base(volume.Name)
 	params1 := spdk.BdevAioDeleteParams{
 		Name: resourceID,
 	}
