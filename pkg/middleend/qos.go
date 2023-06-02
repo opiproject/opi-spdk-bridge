@@ -29,12 +29,12 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.QosVolumeId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
-		name = in.QosVolumeId
+		resourceID = in.QosVolumeId
 	}
-	in.QosVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.QosVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
 
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)

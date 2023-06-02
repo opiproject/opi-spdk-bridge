@@ -33,12 +33,12 @@ func sortNullDebugs(nullDebugs []*pb.NullDebug) {
 func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
 	log.Printf("CreateNullDebug: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.NullDebugId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Name)
-		name = in.NullDebugId
+		resourceID = in.NullDebugId
 	}
-	in.NullDebug.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.NullDebug.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Name]
 	if ok {
@@ -47,7 +47,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	}
 	// not found, so create a new one
 	params := spdk.BdevNullCreateParams{
-		Name:      name,
+		Name:      resourceID,
 		BlockSize: 512,
 		NumBlocks: 64,
 	}

@@ -32,12 +32,12 @@ func sortAioControllers(controllers []*pb.AioController) {
 func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
-	name := uuid.New().String()
+	resourceID := uuid.New().String()
 	if in.AioControllerId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Name)
-		name = in.AioControllerId
+		resourceID = in.AioControllerId
 	}
-	in.AioController.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", name)
+	in.AioController.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Name]
 	if ok {
@@ -46,7 +46,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 	}
 	// not found, so create a new one
 	params := spdk.BdevAioCreateParams{
-		Name:      name,
+		Name:      resourceID,
 		BlockSize: 512,
 		Filename:  in.AioController.Filename,
 	}
