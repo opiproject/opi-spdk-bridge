@@ -244,12 +244,11 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
 			if tt.exist {
-				testEnv.opiSpdkServer.volumes.encVolumes[fullname] = &encryptedVolume
+				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
 			}
 			if tt.out != nil {
-				tt.out.Name = fullname
+				tt.out.Name = encryptedVolumeName
 			}
 
 			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: encryptedVolumeID}
@@ -822,8 +821,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
-			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
-			testEnv.opiSpdkServer.volumes.encVolumes[fname2] = &encryptedVolume
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
 
 			request := &pb.GetEncryptedVolumeRequest{Name: fname1}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
@@ -929,8 +927,7 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
-			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
-			testEnv.opiSpdkServer.volumes.encVolumes[fname2] = &encryptedVolume
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
 
 			request := &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: fname1}}
 			response, err := testEnv.client.EncryptedVolumeStats(testEnv.ctx, request)
@@ -1063,8 +1060,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
-			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
-			testEnv.opiSpdkServer.volumes.encVolumes[fname2] = &encryptedVolume
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
 
 			request := &pb.DeleteEncryptedVolumeRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)

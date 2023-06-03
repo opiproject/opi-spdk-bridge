@@ -22,8 +22,9 @@ import (
 )
 
 var (
-	controllerID = "OpiNvme8"
-	controller   = pb.NVMfRemoteController{
+	controllerID   = "OpiNvme8"
+	controllerName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", controllerID)
+	controller     = pb.NVMfRemoteController{
 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
 		Traddr:  "127.0.0.1",
@@ -105,12 +106,11 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", controllerID)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeVolumes[fullname] = &controller
+				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerName] = &controller
 			}
 			if tt.out != nil {
-				tt.out.Name = fullname
+				tt.out.Name = controllerName
 			}
 
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: controllerID}
@@ -665,8 +665,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
-			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", controllerID)
-			testEnv.opiSpdkServer.Volumes.NvmeVolumes[fname2] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerName] = &controller
 
 			request := &pb.DeleteNVMfRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)

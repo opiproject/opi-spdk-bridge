@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	testNullVolumeID = "mytest"
-	testNullVolume   = pb.NullDebug{
+	testNullVolumeID   = "mytest"
+	testNullVolumeName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
+	testNullVolume     = pb.NullDebug{
 		BlockSize:   512,
 		BlocksCount: 64,
 	}
@@ -100,12 +101,11 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[fullname] = &testNullVolume
+				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 			}
 			if tt.out != nil {
-				tt.out.Name = fullname
+				tt.out.Name = testNullVolumeName
 			}
 
 			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: testNullVolumeID}
@@ -236,9 +236,8 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
-			testNullVolume.Name = fullname
-			testEnv.opiSpdkServer.Volumes.NullVolumes[fullname] = &testNullVolume
+			testNullVolume.Name = testNullVolumeName
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
 			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in}
 			response, err := testEnv.client.UpdateNullDebug(testEnv.ctx, request)
@@ -759,8 +758,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
-			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
-			testEnv.opiSpdkServer.Volumes.NullVolumes[fname2] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
 			request := &pb.DeleteNullDebugRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)

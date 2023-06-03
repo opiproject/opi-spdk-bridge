@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	testAioVolumeID = "mytest"
-	testAioVolume   = pb.AioController{
+	testAioVolumeID   = "mytest"
+	testAioVolumeName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
+	testAioVolume     = pb.AioController{
 		BlockSize:   512,
 		BlocksCount: 12,
 		Filename:    "/tmp/aio_bdev_file",
@@ -101,12 +102,11 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes[fullname] = &testAioVolume
+				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 			}
 			if tt.out != nil {
-				tt.out.Name = fullname
+				tt.out.Name = testAioVolumeName
 			}
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: testAioVolumeID}
@@ -238,9 +238,8 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
-			testAioVolume.Name = fullname
-			testEnv.opiSpdkServer.Volumes.AioVolumes[fullname] = &testAioVolume
+			testAioVolume.Name = testAioVolumeName
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
 			request := &pb.UpdateAioControllerRequest{AioController: tt.in}
 			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)
@@ -749,8 +748,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
-			fname2 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
-			testEnv.opiSpdkServer.Volumes.AioVolumes[fname2] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
 			request := &pb.DeleteAioControllerRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteAioController(testEnv.ctx, request)
