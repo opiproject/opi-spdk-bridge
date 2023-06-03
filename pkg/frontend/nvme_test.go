@@ -23,14 +23,16 @@ import (
 )
 
 var (
-	testSubsystemID = "subsystem-test"
-	testSubsystem   = pb.NvmeSubsystem{
+	testSubsystemID   = "subsystem-test"
+	testSubsystemName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testSubsystemID)
+	testSubsystem     = pb.NvmeSubsystem{
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi3",
 		},
 	}
-	testControllerID = "controller-test"
-	testController   = pb.NvmeController{
+	testControllerID   = "controller-test"
+	testControllerName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testControllerID)
+	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
@@ -40,8 +42,9 @@ var (
 			Active: true,
 		},
 	}
-	testNamespaceID = "namespace-test"
-	testNamespace   = pb.NvmeNamespace{
+	testNamespaceID   = "namespace-test"
+	testNamespaceName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNamespaceID)
+	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid:    22,
 			SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
@@ -192,7 +195,6 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
-	fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testSubsystemID)
 	tests := map[string]struct {
 		in      *pb.NvmeSubsystem
 		out     *pb.NvmeSubsystem
@@ -203,7 +205,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 	}{
 		"unimplemented method": {
 			&pb.NvmeSubsystem{
-				Name: fullname,
+				Name: testSubsystemName,
 			},
 			nil,
 			[]string{""},
@@ -232,7 +234,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[fullname] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 
 			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
@@ -770,7 +772,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
-	fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testControllerID)
 	spec := &pb.NvmeControllerSpec{
 		SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
 		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
@@ -786,11 +787,11 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	}{
 		"valid request without SPDK": {
 			&pb.NvmeController{
-				Name: fullname,
+				Name: testControllerName,
 				Spec: spec,
 			},
 			&pb.NvmeController{
-				Name: fullname,
+				Name: testControllerName,
 				Spec: spec,
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -820,7 +821,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[fullname] = &testController
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
 
 			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in}
 			response, err := testEnv.client.UpdateNvmeController(testEnv.ctx, request)
@@ -1207,7 +1208,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
-	fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNamespaceID)
 	spec := &pb.NvmeNamespaceSpec{
 		SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
 		HostNsid:    22,
@@ -1226,11 +1226,11 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	}{
 		"valid request without SPDK": {
 			&pb.NvmeNamespace{
-				Name: fullname,
+				Name: testNamespaceName,
 				Spec: spec,
 			},
 			&pb.NvmeNamespace{
-				Name: fullname,
+				Name: testNamespaceName,
 				Spec: spec,
 				Status: &pb.NvmeNamespaceStatus{
 					PciState:     2,
@@ -1261,7 +1261,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Namespaces[fullname] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = &testNamespace
 
 			request := &pb.UpdateNvmeNamespaceRequest{NvmeNamespace: tt.in}
 			response, err := testEnv.client.UpdateNvmeNamespace(testEnv.ctx, request)

@@ -23,8 +23,9 @@ import (
 )
 
 var (
-	testVirtioCtrlID = "virtio-blk-42"
-	testVirtioCtrl   = pb.VirtioBlk{
+	testVirtioCtrlID  = "virtio-blk-42"
+	testVirtioCtrName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID)
+	testVirtioCtrl    = pb.VirtioBlk{
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
@@ -104,7 +105,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 	}{
 		"unimplemented method": {
 			&pb.VirtioBlk{
-				Name: fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID),
+				Name: testVirtioCtrName,
 			},
 			nil,
 			[]string{""},
@@ -133,8 +134,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fullname := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID)
-			testEnv.opiSpdkServer.Virt.BlkCtrls[fullname] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrName] = &testVirtioCtrl
 
 			request := &pb.UpdateVirtioBlkRequest{VirtioBlk: tt.in}
 			response, err := testEnv.client.UpdateVirtioBlk(testEnv.ctx, request)
