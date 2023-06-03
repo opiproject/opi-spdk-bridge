@@ -85,6 +85,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	}
 	response := server.ProtoClone(in.EncryptedVolume)
 	s.volumes.encVolumes[in.EncryptedVolume.Name] = response
+	log.Printf("CreateEncryptedVolume: Sending to client: %v", response)
 	return response, nil
 }
 

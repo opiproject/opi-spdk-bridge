@@ -69,6 +69,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	}
 	response := server.ProtoClone(in.NvMfRemoteController)
 	s.Volumes.NvmeVolumes[in.NvMfRemoteController.Name] = response
+	log.Printf("CreateNVMfRemoteController: Sending to client: %v", response)
 	return response, nil
 }
 

@@ -49,7 +49,9 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return nil, err
 	}
 
-	s.volumes.qosVolumes[in.QosVolume.Name] = proto.Clone(in.QosVolume).(*pb.QosVolume)
+	response := server.ProtoClone(in.QosVolume)
+	s.volumes.qosVolumes[in.QosVolume.Name] = response
+	log.Printf("CreateQosVolume: Sending to client: %v", response)
 	return in.QosVolume, nil
 }
 
