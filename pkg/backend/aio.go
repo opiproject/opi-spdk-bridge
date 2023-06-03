@@ -64,6 +64,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 	}
 	response := server.ProtoClone(in.AioController)
 	s.Volumes.AioVolumes[in.AioController.Name] = response
+	log.Printf("CreateAioController: Sending to client: %v", response)
 	return response, nil
 }
 

@@ -65,6 +65,7 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	}
 	response := server.ProtoClone(in.NullDebug)
 	s.Volumes.NullVolumes[in.NullDebug.Name] = response
+	log.Printf("CreateNullDebug: Sending to client: %v", response)
 	return response, nil
 }
 
