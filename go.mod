@@ -6,7 +6,7 @@ require (
 	github.com/digitalocean/go-qemu v0.0.0-20221209210016-f035778c97f7
 	github.com/google/uuid v1.3.0
 	github.com/opiproject/gospdk v0.0.0-20230601215713-d912b55f1d0a
-	github.com/opiproject/opi-api v0.0.0-20230602134632-f9df3ab8112b
+	github.com/opiproject/opi-api v0.0.0-20230603003023-432a550f4f6c
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )
