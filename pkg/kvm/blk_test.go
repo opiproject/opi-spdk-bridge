@@ -20,18 +20,19 @@ import (
 
 var (
 	testVirtioBlkID            = "virtio-blk-42"
+	testVirtioBlkName          = server.ResourceIDToVolumeName(testVirtioBlkID)
 	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlkId: testVirtioBlkID, VirtioBlk: &pb.VirtioBlk{
 		Name:     "",
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
 	}}
-	testDeleteVirtioBlkRequest = &pb.DeleteVirtioBlkRequest{Name: testVirtioBlkID}
+	testDeleteVirtioBlkRequest = &pb.DeleteVirtioBlkRequest{Name: testVirtioBlkName}
 )
 
 func TestCreateVirtioBlk(t *testing.T) {
 	expectNotNilOut := server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
-	expectNotNilOut.Name = testVirtioBlkID
+	expectNotNilOut.Name = testVirtioBlkName
 
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
@@ -87,7 +88,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 				MaxIoQps: 1,
 			}, VirtioBlkId: testVirtioBlkID},
 			out: &pb.VirtioBlk{
-				Name:     testVirtioBlkID,
+				Name:     testVirtioBlkName,
 				PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
 				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 				MaxIoQps: 1,
@@ -227,9 +228,9 @@ func TestDeleteVirtioBlk(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID] =
+			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName] =
 				proto.Clone(testCreateVirtioBlkRequest.VirtioBlk).(*pb.VirtioBlk)
-			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkID].Name = testVirtioBlkID
+			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName].Name = testVirtioBlkName
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
