@@ -40,7 +40,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	}
 	defer mon.Disconnect()
 
-	ctrlr := filepath.Join(s.ctrlrDir, out.Name)
+	ctrlr := filepath.Join(s.ctrlrDir, filepath.Base(out.Name))
 	qemuChardevID := toQemuID(out.Name)
 	if err := mon.AddChardev(qemuChardevID, ctrlr); err != nil {
 		log.Println("Couldn't add chardev:", err)
