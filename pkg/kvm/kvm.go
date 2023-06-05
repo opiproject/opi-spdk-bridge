@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
@@ -104,6 +105,7 @@ func isTCPAddress(qmpAddress string) bool {
 }
 
 func toQemuID(name string) string {
+	resourceID := filepath.Base(name)
 	// qemu id cannot start with numbers. Add prefix
-	return "opi-" + name
+	return "opi-" + resourceID
 }

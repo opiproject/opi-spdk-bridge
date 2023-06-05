@@ -43,7 +43,7 @@ func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
 
 func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
-	ctrlrDirPath := controllerDirPath(c.ctrlrDir, ctrlr.Spec.SubsystemId.Value)
+	ctrlrDirPath := controllerDirPath(c.ctrlrDir, filepath.Base(ctrlr.Spec.SubsystemId.Value))
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath
@@ -68,7 +68,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 
 	// Create request can miss Name field which is generated in spdk bridge.
 	// Use subsystem instead, since it is required to exist
-	dirName := in.NvmeController.Spec.SubsystemId.Value
+	dirName := filepath.Base(in.NvmeController.Spec.SubsystemId.Value)
 	err = createControllerDir(s.ctrlrDir, dirName)
 	if err != nil {
 		log.Print(err)
@@ -147,7 +147,7 @@ func (s *Server) findDirName(name string) (string, error) {
 	if !ok {
 		return "", errNoController
 	}
-	return ctrlr.Spec.SubsystemId.Value, nil
+	return filepath.Base(ctrlr.Spec.SubsystemId.Value), nil
 }
 
 func createControllerDir(ctrlrDir string, dirName string) error {
