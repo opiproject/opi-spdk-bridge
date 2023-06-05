@@ -108,7 +108,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeSubsystemId, in.NvmeSubsystem.Name)
 		resourceID = in.NvmeSubsystemId
 	}
-	in.NvmeSubsystem.Name = resourceID
+	in.NvmeSubsystem.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	subsys, ok := s.Nvme.Subsystems[in.NvmeSubsystem.Name]
 	if ok {
@@ -295,7 +295,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		resourceID = in.NvmeControllerId
 	}
-	in.NvmeController.Name = resourceID
+	in.NvmeController.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Nvme.Controllers[in.NvmeController.Name]
 	if ok {
@@ -444,7 +444,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Name)
 		resourceID = in.NvmeNamespaceId
 	}
-	in.NvmeNamespace.Name = resourceID
+	in.NvmeNamespace.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	namespace, ok := s.Nvme.Namespaces[in.NvmeNamespace.Name]
 	if ok {
