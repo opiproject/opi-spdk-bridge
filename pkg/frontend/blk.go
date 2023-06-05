@@ -44,7 +44,8 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioBlkId, in.VirtioBlk.Name)
 		resourceID = in.VirtioBlkId
 	}
-	in.VirtioBlk.Name = resourceID
+	in.VirtioBlk.Name = server.ResourceIDToVolumeName(resourceID)
+
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.BlkCtrls[in.VirtioBlk.Name]
 	if ok {
@@ -85,8 +86,9 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	resourceID := path.Base(controller.Name)
 	params := spdk.VhostDeleteControllerParams{
-		Ctrlr: in.Name,
+		Ctrlr: resourceID,
 	}
 	var result spdk.VhostDeleteControllerResult
 	err := s.rpc.Call("vhost_delete_controller", &params, &result)
@@ -145,7 +147,7 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioBlk{
-			Name:     r.Ctrlr,
+			Name:     server.ResourceIDToVolumeName(r.Ctrlr),
 			PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
 			VolumeId: &pc.ObjectKey{Value: "TBD"}}
 	}
@@ -180,7 +182,7 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.VirtioBlk{
-		Name:     result[0].Ctrlr,
+		Name:     in.Name,
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
 		VolumeId: &pc.ObjectKey{Value: "TBD"}}, nil
 }
