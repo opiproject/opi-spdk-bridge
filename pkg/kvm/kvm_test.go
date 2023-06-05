@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"github.com/opiproject/gospdk/spdk"
+	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 )
 
 var (
@@ -32,6 +34,10 @@ var (
 	qmplibTimeout             = 250 * time.Millisecond
 
 	pathRegexpStr = `\/[a-zA-Z\/\-\_0-9]*\/`
+
+	stubQosProvider = frontend.VirtioBlkQosProviderFromMiddleendQosService(
+		&pb.UnimplementedMiddleendQosVolumeServiceServer{},
+	)
 )
 
 type stubJSONRRPC struct {

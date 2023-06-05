@@ -7,6 +7,7 @@ package frontend
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -23,6 +24,18 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
+type stubQosProvider struct {
+	err error
+}
+
+func (p stubQosProvider) CreateQosVolume(context.Context, *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
+	return &pb.QosVolume{Name: "//storage.opiproject.org/volumes/id"}, p.err
+}
+
+func (p stubQosProvider) DeleteQosVolume(context.Context, *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, p.err
+}
+
 var (
 	testVirtioCtrlID  = "virtio-blk-42"
 	testVirtioCtrName = server.ResourceIDToVolumeName(testVirtioCtrlID)
@@ -31,38 +44,69 @@ var (
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 		MaxIoQps: 1,
 	}
+	testVirtioCtrlWithQos = pb.VirtioBlk{
+		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
+		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+		MaxIoQps: 1,
+		MaxLimit: &pb.QosLimit{
+			RwBandwidthMbs: 1,
+		},
+	}
 )
 
 func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
-		in          *pb.VirtioBlk
-		out         *pb.VirtioBlk
-		spdk        []string
-		expectedErr error
+		in           *pb.VirtioBlk
+		out          *pb.VirtioBlk
+		spdk         []string
+		expectedErr  error
+		qosCreateErr error
 	}{
 		"valid virtio-blk creation": {
-			in:          &testVirtioCtrl,
-			out:         &testVirtioCtrl,
-			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
-			expectedErr: status.Error(codes.OK, ""),
+			in:           &testVirtioCtrl,
+			out:          &testVirtioCtrl,
+			spdk:         []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			expectedErr:  status.Error(codes.OK, ""),
+			qosCreateErr: nil,
 		},
 		"spdk virtio-blk creation error": {
-			in:          &testVirtioCtrl,
-			out:         nil,
-			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":false}`},
-			expectedErr: spdk.ErrFailedSpdkCall,
+			in:           &testVirtioCtrl,
+			out:          nil,
+			spdk:         []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":false}`},
+			expectedErr:  spdk.ErrFailedSpdkCall,
+			qosCreateErr: nil,
 		},
 		"spdk virtio-blk creation returned false response with no error": {
-			in:          &testVirtioCtrl,
-			out:         nil,
-			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			expectedErr: spdk.ErrUnexpectedSpdkCallResult,
+			in:           &testVirtioCtrl,
+			out:          nil,
+			spdk:         []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			expectedErr:  spdk.ErrUnexpectedSpdkCallResult,
+			qosCreateErr: nil,
+		},
+		"valid virtio-blk creation with qos limits": {
+			in:           &testVirtioCtrlWithQos,
+			out:          &testVirtioCtrlWithQos,
+			spdk:         []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			expectedErr:  status.Error(codes.OK, ""),
+			qosCreateErr: nil,
+		},
+		"valid virtio-blk creation with qos limits failure": {
+			in:           &testVirtioCtrlWithQos,
+			out:          nil,
+			spdk:         []string{},
+			expectedErr:  status.Error(codes.InvalidArgument, "invalid argument"),
+			qosCreateErr: status.Error(codes.InvalidArgument, "invalid argument"),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			testEnv := createTestEnvironment(true, test.spdk)
+			test.in = server.ProtoClone(test.in)
+			test.out = server.ProtoClone(test.out)
+
+			testEnv := createTestEnvironmentWithVirtioBlkQosProvider(
+				true, test.spdk, stubQosProvider{test.qosCreateErr},
+			)
 			defer testEnv.Close()
 
 			if test.out != nil {
@@ -505,22 +549,26 @@ func TestFrontEnd_VirtioBlkStats(t *testing.T) {
 
 func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
-		in      string
-		out     *emptypb.Empty
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		start   bool
-		missing bool
+		in                 string
+		out                *emptypb.Empty
+		spdk               []string
+		errCode            codes.Code
+		errMsg             string
+		start              bool
+		missing            bool
+		existingController *pb.VirtioBlk
+		qosDeleteErr       error
 	}{
 		"valid request with invalid SPDK response": {
 			testVirtioCtrlID,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
+			status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
+			status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with empty SPDK response": {
 			testVirtioCtrlID,
@@ -530,6 +578,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("vhost_delete_controller: %v", "EOF"),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testVirtioCtrlID,
@@ -539,6 +589,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("vhost_delete_controller: %v", "json response ID mismatch"),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with error code from SPDK response": {
 			testVirtioCtrlID,
@@ -548,6 +600,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("vhost_delete_controller: %v", "json response error: myopierr"),
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with valid SPDK response": {
 			testVirtioCtrlID,
@@ -557,6 +611,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			"",
 			true,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
@@ -566,6 +622,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
 			false,
+			&testVirtioCtrl,
+			nil,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
@@ -575,27 +633,58 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			"",
 			false,
 			true,
+			&testVirtioCtrl,
+			nil,
+		},
+		"valid request with valid SPDK response and max QoS limit virtio-blk": {
+			testVirtioCtrlID,
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			codes.OK,
+			"",
+			true,
+			false,
+			&testVirtioCtrlWithQos,
+			nil,
+		},
+		"valid request with valid SPDK response and max QoS limit error": {
+			testVirtioCtrlID,
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			status.Convert(spdk.ErrFailedSpdkCall).Code(),
+			status.Convert(spdk.ErrFailedSpdkCall).Message(),
+			true,
+			false,
+			&testVirtioCtrlWithQos,
+			spdk.ErrFailedSpdkCall,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			tt.existingController = server.ProtoClone(tt.existingController)
+
+			testEnv := createTestEnvironmentWithVirtioBlkQosProvider(
+				tt.start, tt.spdk, stubQosProvider{tt.qosDeleteErr},
+			)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
+			tt.existingController.Name = testVirtioCtrlID
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = tt.existingController
+			if tt.existingController.MaxLimit != nil {
+				qosName := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID)
+				testEnv.opiSpdkServer.Virt.qosVolumeNames[testVirtioCtrlID] = qosName
+			}
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			}
 			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {

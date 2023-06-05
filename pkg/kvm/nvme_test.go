@@ -274,7 +274,7 @@ func TestCreateNvmeController(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(test.jsonRPC, stubQosProvider)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
@@ -402,7 +402,7 @@ func TestDeleteNvmeController(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(test.jsonRPC, stubQosProvider)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
 			if !test.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerID] =

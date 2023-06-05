@@ -66,16 +66,22 @@ func main() {
 
 	if useKvm {
 		log.Println("Creating KVM server.")
-		frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
-			kvm.NewVfiouserSubsystemListener(ctrlrDir))
+		frontendServer := frontend.NewServerWithSubsystemListener(
+			jsonRPC,
+			frontend.VirtioBlkQosProviderFromMiddleendQosService(middleendServer),
+			kvm.NewVfiouserSubsystemListener(ctrlrDir),
+		)
 		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir, buses)
 
 		pb.RegisterFrontendNvmeServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
-		frontendServer := frontend.NewServerWithSubsystemListener(jsonRPC,
-			frontend.NewTCPSubsystemListener(tcpTransportListenAddr))
+		frontendServer := frontend.NewServerWithSubsystemListener(
+			jsonRPC,
+			frontend.VirtioBlkQosProviderFromMiddleendQosService(middleendServer),
+			frontend.NewTCPSubsystemListener(tcpTransportListenAddr),
+		)
 		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)

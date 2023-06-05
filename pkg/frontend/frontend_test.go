@@ -47,10 +47,17 @@ func (e *testEnv) Close() {
 }
 
 func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
+	return createTestEnvironmentWithVirtioBlkQosProvider(
+		startSpdkServer, spdkResponses, stubQosProvider{})
+}
+
+func createTestEnvironmentWithVirtioBlkQosProvider(
+	startSpdkServer bool, spdkResponses []string, qosProvider VirtioBlkQosProvider,
+) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("frontend")
 	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, startSpdkServer, spdkResponses)
-	env.opiSpdkServer = NewServer(env.jsonRPC)
+	env.opiSpdkServer = NewServer(env.jsonRPC, qosProvider)
 
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx,
