@@ -13,6 +13,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	_go "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -20,7 +21,7 @@ import (
 
 var (
 	testQosVolumeID   = "qos-volume-42"
-	testQosVolumeName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testQosVolumeID)
+	testQosVolumeName = server.ResourceIDToVolumeName(testQosVolumeID)
 	testQosVolume     = &pb.QosVolume{
 		VolumeId: &_go.ObjectKey{Value: "volume-42"},
 		MaxLimit: &pb.QosLimit{RwBandwidthMbs: 1},
@@ -350,7 +351,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			in:          testQosVolumeID,
 			spdk:        []string{},
 			errCode:     codes.NotFound,
-			errMsg:      fmt.Sprintf("unable to find key //storage.opiproject.org/volumes/%s", testQosVolumeID),
+			errMsg:      fmt.Sprintf("unable to find key %s", server.ResourceIDToVolumeName(testQosVolumeID)),
 			start:       false,
 			existBefore: false,
 			existAfter:  false,
@@ -402,7 +403,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname1 := server.ResourceIDToVolumeName(tt.in)
 
 			request := &pb.DeleteQosVolumeRequest{Name: fname1}
 			if tt.existBefore {
@@ -848,7 +849,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			in:      "unknown-qos-volume-id",
 			out:     nil,
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %s", "//storage.opiproject.org/volumes/unknown-qos-volume-id"),
+			errMsg:  fmt.Sprintf("unable to find key %s", server.ResourceIDToVolumeName("unknown-qos-volume-id")),
 		},
 		"existing QoS volume": {
 			in:      testQosVolumeID,
@@ -862,7 +863,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 
-			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume
 
 			request := &pb.GetQosVolumeRequest{Name: fname1}

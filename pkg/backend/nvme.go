@@ -38,7 +38,7 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Name)
 		resourceID = in.NvMfRemoteControllerId
 	}
-	in.NvMfRemoteController.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
+	in.NvMfRemoteController.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NvmeVolumes[in.NvMfRemoteController.Name]
 	if ok {

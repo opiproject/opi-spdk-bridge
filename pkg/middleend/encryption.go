@@ -37,7 +37,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
 		resourceID = in.EncryptedVolumeId
 	}
-	in.EncryptedVolume.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
+	in.EncryptedVolume.Name = server.ResourceIDToVolumeName(resourceID)
 
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
 		log.Printf("error: %v", err)

@@ -18,11 +18,12 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 var (
 	testAioVolumeID   = "mytest"
-	testAioVolumeName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testAioVolumeID)
+	testAioVolumeName = server.ResourceIDToVolumeName(testAioVolumeID)
 	testAioVolume     = pb.AioController{
 		BlockSize:   512,
 		BlocksCount: 12,
@@ -219,7 +220,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.AioController{
-				Name:        "//storage.opiproject.org/volumes/unknown-id",
+				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
 				Filename:    "/tmp/aio_bdev_file",
@@ -227,7 +228,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -726,7 +727,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 			false,
 		},
@@ -747,7 +748,7 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
 			request := &pb.DeleteAioControllerRequest{Name: fname1, AllowMissing: tt.missing}
