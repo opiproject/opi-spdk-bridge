@@ -32,7 +32,8 @@ type VirtioParameters struct {
 	ScsiCtrls map[string]*pb.VirtioScsiController
 	ScsiLuns  map[string]*pb.VirtioScsiLun
 
-	qosProvider VirtioBlkQosProvider
+	qosProvider    VirtioBlkQosProvider
+	qosVolumeNames map[string]string
 }
 
 // Server contains frontend related OPI services
@@ -63,7 +64,8 @@ func NewServer(jsonRPC spdk.JSONRPC, qosProvider VirtioBlkQosProvider) *Server {
 			ScsiCtrls: make(map[string]*pb.VirtioScsiController),
 			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
 
-			qosProvider: qosProvider,
+			qosProvider:    qosProvider,
+			qosVolumeNames: make(map[string]string),
 		},
 		Pagination: make(map[string]int),
 	}

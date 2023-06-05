@@ -29,7 +29,7 @@ type stubQosProvider struct {
 }
 
 func (p stubQosProvider) CreateQosVolume(context.Context, *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
-	return &pb.QosVolume{}, p.err
+	return &pb.QosVolume{Name: "//storage.opiproject.org/volumes/id"}, p.err
 }
 
 func (p stubQosProvider) DeleteQosVolume(context.Context, *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
@@ -670,7 +670,12 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			)
 			defer testEnv.Close()
 
+			tt.existingController.Name = testVirtioCtrlID
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = tt.existingController
+			if tt.existingController.MaxLimit != nil {
+				qosName := fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID)
+				testEnv.opiSpdkServer.Virt.qosVolumeNames[testVirtioCtrlID] = qosName
+			}
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)

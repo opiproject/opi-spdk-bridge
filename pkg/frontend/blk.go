@@ -58,17 +58,19 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	}
 	// not found, so create a new one
 	if s.needToSetVirtioBlkQos(in.VirtioBlk) {
-		if _, err := s.Virt.qosProvider.CreateQosVolume(ctx, &pb.CreateQosVolumeRequest{
-			QosVolumeId: s.qosVolumeIDFromVirtioBlkName(name),
+		out, err := s.Virt.qosProvider.CreateQosVolume(ctx, &pb.CreateQosVolumeRequest{
+			QosVolumeId: s.qosVolumeIDFromVirtioBlkResourceID(resourceID),
 			QosVolume: &pb.QosVolume{
 				VolumeId: in.VirtioBlk.VolumeId,
 				MaxLimit: in.VirtioBlk.MaxLimit,
 				MinLimit: in.VirtioBlk.MinLimit,
 			},
-		}); err != nil {
+		})
+		if err != nil {
 			log.Printf("error: %v", err)
 			return nil, err
 		}
+		s.Virt.qosVolumeNames[in.VirtioBlk.Name] = out.Name
 	}
 
 	params := spdk.VhostCreateBlkControllerParams{
@@ -122,9 +124,13 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 	}
 
 	if s.needToSetVirtioBlkQos(controller) {
+		qosVolumeName, ok := s.Virt.qosVolumeNames[controller.Name]
+		if !ok {
+			return nil, status.Errorf(codes.Internal, "Underlying QosVolume name is not found")
+		}
 		if _, err := s.Virt.qosProvider.DeleteQosVolume(ctx,
 			&pb.DeleteQosVolumeRequest{
-				Name: s.qosVolumeIDFromVirtioBlkName(controller.Name),
+				Name: qosVolumeName,
 			}); err != nil {
 			log.Printf("error: %v", err)
 			return nil, err
@@ -236,7 +242,7 @@ func (s *Server) needToSetVirtioBlkQos(virtioBlk *pb.VirtioBlk) bool {
 		(virtioBlk.MinLimit != nil && !proto.Equal(virtioBlk.MinLimit, &pb.QosLimit{}))
 }
 
-func (s *Server) qosVolumeIDFromVirtioBlkName(name string) string {
-	const virtioBlkRelatedQosVolumeNames = "__opi-internal-"
-	return virtioBlkRelatedQosVolumeNames + name
+func (s *Server) qosVolumeIDFromVirtioBlkResourceID(id string) string {
+	const virtioBlkRelatedQosVolumePrefix = "__opi-internal-"
+	return virtioBlkRelatedQosVolumePrefix + id
 }
