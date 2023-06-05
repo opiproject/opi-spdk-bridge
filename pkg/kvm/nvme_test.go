@@ -18,14 +18,17 @@ import (
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/protobuf/proto"
 )
 
 var (
-	testNvmeControllerID = "nvme-43"
-	testSubsystemID      = "subsystem0"
-	testSubsystem        = pb.NvmeSubsystem{
-		Name: testSubsystemID,
+	testNvmeControllerID   = "nvme-43"
+	testNvmeControllerName = server.ResourceIDToVolumeName("nvme-43")
+	testSubsystemID        = "subsystem0"
+	testSubsystemName      = server.ResourceIDToVolumeName("subsystem0")
+	testSubsystem          = pb.NvmeSubsystem{
+		Name: testSubsystemName,
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi2",
 		},
@@ -40,7 +43,7 @@ var (
 			Active: true,
 		},
 	}}
-	testDeleteNvmeControllerRequest = &pb.DeleteNvmeControllerRequest{Name: testNvmeControllerID}
+	testDeleteNvmeControllerRequest = &pb.DeleteNvmeControllerRequest{Name: testNvmeControllerName}
 )
 
 func TestNewVfiouserSubsystemListener(t *testing.T) {
@@ -114,7 +117,7 @@ func dirExists(dirname string) bool {
 func TestCreateNvmeController(t *testing.T) {
 	expectNotNilOut := proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
 	expectNotNilOut.Spec.NvmeControllerId = -1
-	expectNotNilOut.Name = testNvmeControllerID
+	expectNotNilOut.Name = testNvmeControllerName
 
 	tests := map[string]struct {
 		jsonRPC                       spdk.JSONRPC
@@ -190,7 +193,7 @@ func TestCreateNvmeController(t *testing.T) {
 		"valid Nvme creation with on first bus location": {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
 					NvmeControllerId: 43,
 				},
@@ -199,9 +202,9 @@ func TestCreateNvmeController(t *testing.T) {
 				},
 			}, NvmeControllerId: testNvmeControllerID},
 			out: &pb.NvmeController{
-				Name: testNvmeControllerID,
+				Name: testNvmeControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
 					NvmeControllerId: -1,
 				},
@@ -239,7 +242,7 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						SubsystemId: &pc.ObjectKey{Value: testSubsystemID},
+						SubsystemId: &pc.ObjectKey{Value: testSubsystemName},
 						PcieId: &pb.PciEndpoint{
 							PhysicalFunction: -1,
 						},
@@ -258,7 +261,7 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
+						SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
 						PcieId:           nil,
 						NvmeControllerId: 43,
 					},
@@ -275,7 +278,7 @@ func TestCreateNvmeController(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
+			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
@@ -403,11 +406,11 @@ func TestDeleteNvmeController(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			opiSpdkServer.Nvme.Subsystems[testSubsystemID] = &testSubsystem
+			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			if !test.noController {
-				opiSpdkServer.Nvme.Controllers[testNvmeControllerID] =
+				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
 					proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
-				opiSpdkServer.Nvme.Controllers[testNvmeControllerID].Name = testNvmeControllerID
+				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerID
 			}
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
