@@ -18,11 +18,12 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 var (
 	testNullVolumeID   = "mytest"
-	testNullVolumeName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNullVolumeID)
+	testNullVolumeName = server.ResourceIDToVolumeName(testNullVolumeID)
 	testNullVolume     = pb.NullDebug{
 		BlockSize:   512,
 		BlocksCount: 64,
@@ -218,14 +219,14 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NullDebug{
-				Name:        "//storage.opiproject.org/volumes/unknown-id",
+				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
 			},
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -736,7 +737,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 			false,
 		},
@@ -757,7 +758,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := fmt.Sprintf("//storage.opiproject.org/volumes/%s", tt.in)
+			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
 			request := &pb.DeleteNullDebugRequest{Name: fname1, AllowMissing: tt.missing}

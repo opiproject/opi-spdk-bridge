@@ -37,7 +37,7 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Name)
 		resourceID = in.AioControllerId
 	}
-	in.AioController.Name = fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
+	in.AioController.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Name]
 	if ok {

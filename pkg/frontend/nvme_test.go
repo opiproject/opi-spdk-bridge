@@ -20,18 +20,19 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 var (
 	testSubsystemID   = "subsystem-test"
-	testSubsystemName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testSubsystemID)
+	testSubsystemName = server.ResourceIDToVolumeName(testSubsystemID)
 	testSubsystem     = pb.NvmeSubsystem{
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi3",
 		},
 	}
 	testControllerID   = "controller-test"
-	testControllerName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testControllerID)
+	testControllerName = server.ResourceIDToVolumeName(testControllerID)
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			SubsystemId:      &pc.ObjectKey{Value: testSubsystemID},
@@ -43,7 +44,7 @@ var (
 		},
 	}
 	testNamespaceID   = "namespace-test"
-	testNamespaceName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testNamespaceID)
+	testNamespaceName = server.ResourceIDToVolumeName(testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid:    22,
@@ -215,7 +216,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NvmeSubsystem{
-				Name: "//storage.opiproject.org/volumes/unknown-id",
+				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: &pb.NvmeSubsystemSpec{
 					Nqn: "nqn.2022-09.io.spdk:opi3",
 				},
@@ -223,7 +224,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -804,13 +805,13 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NvmeController{
-				Name: "//storage.opiproject.org/volumes/unknown-id",
+				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
 			},
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
@@ -1244,13 +1245,13 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.NvmeNamespace{
-				Name: "//storage.opiproject.org/volumes/unknown-id",
+				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
 			},
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}

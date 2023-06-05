@@ -7,7 +7,6 @@ package middleend
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -91,7 +90,7 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 
 var (
 	encryptedVolumeID   = "crypto-test"
-	encryptedVolumeName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", encryptedVolumeID)
+	encryptedVolumeName = server.ResourceIDToVolumeName(encryptedVolumeID)
 	encryptedVolume     = pb.EncryptedVolume{
 		VolumeId: &pc.ObjectKey{Value: "volume-test"},
 		Key:      []byte("0123456789abcdef0123456789abcdef"),

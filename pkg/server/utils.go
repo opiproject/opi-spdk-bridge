@@ -146,3 +146,8 @@ func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string
 func ProtoClone[T proto.Message](protoStruct T) T {
 	return proto.Clone(protoStruct).(T)
 }
+
+// ResourceIDToVolumeName creates name of volume resource based on ID
+func ResourceIDToVolumeName(resourceID string) string {
+	return fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
+}

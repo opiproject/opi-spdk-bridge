@@ -20,11 +20,12 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
 var (
 	testVirtioCtrlID  = "virtio-blk-42"
-	testVirtioCtrName = fmt.Sprintf("//storage.opiproject.org/volumes/%s", testVirtioCtrlID)
+	testVirtioCtrName = server.ResourceIDToVolumeName(testVirtioCtrlID)
 	testVirtioCtrl    = pb.VirtioBlk{
 		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
@@ -115,7 +116,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			&pb.VirtioBlk{
-				Name:     "//storage.opiproject.org/volumes/unknown-id",
+				Name:     server.ResourceIDToVolumeName("unknown-id"),
 				PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
 				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 				MaxIoQps: 1,
@@ -123,7 +124,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			nil,
 			[]string{""},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "//storage.opiproject.org/volumes/unknown-id"),
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 	}
