@@ -44,7 +44,8 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Name)
 		resourceID = in.VirtioScsiControllerId
 	}
-	in.VirtioScsiController.Name = resourceID
+	in.VirtioScsiController.Name = server.ResourceIDToVolumeName(resourceID)
+
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Name]
 	if ok {
@@ -83,8 +84,9 @@ func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirt
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	resourceID := path.Base(controller.Name)
 	params := spdk.VhostDeleteControllerParams{
-		Ctrlr: in.Name,
+		Ctrlr: resourceID,
 	}
 	var result spdk.VhostDeleteControllerResult
 	err := s.rpc.Call("vhost_delete_controller", &params, &result)
@@ -142,7 +144,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioScsiController{Name: r.Ctrlr}
+		Blobarray[i] = &pb.VirtioScsiController{Name: server.ResourceIDToVolumeName(r.Ctrlr)}
 	}
 	sortScsiControllers(Blobarray)
 	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray, NextPageToken: token}, nil
@@ -173,7 +175,7 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiController{Name: result[0].Ctrlr}, nil
+	return &pb.VirtioScsiController{Name: server.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
 }
 
 // VirtioScsiControllerStats gets a Virtio SCSI controller stats
@@ -204,7 +206,8 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Name)
 		resourceID = in.VirtioScsiLunId
 	}
-	in.VirtioScsiLun.Name = resourceID
+	in.VirtioScsiLun.Name = server.ResourceIDToVolumeName(resourceID)
+
 	// idempotent API when called with same key, should return same object
 	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Name]
 	if ok {
@@ -246,11 +249,12 @@ func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiL
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	resourceID := path.Base(lun.Name)
 	params := struct {
 		Name string `json:"ctrlr"`
 		Num  int    `json:"scsi_target_num"`
 	}{
-		Name: in.Name,
+		Name: resourceID,
 		Num:  5,
 	}
 	var result bool
@@ -309,7 +313,8 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 	Blobarray := make([]*pb.VirtioScsiLun, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: r.Ctrlr}}
+		Blobarray[i] = &pb.VirtioScsiLun{
+			VolumeId: &pc.ObjectKey{Value: server.ResourceIDToVolumeName(r.Ctrlr)}}
 	}
 	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray, NextPageToken: token}, nil
 }
@@ -339,7 +344,7 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: result[0].Ctrlr}}, nil
+	return &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: server.ResourceIDToVolumeName(result[0].Ctrlr)}}, nil
 }
 
 // VirtioScsiLunStats gets a Virtio SCSI LUN stats
