@@ -14,6 +14,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -29,7 +30,7 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
-	resourceID := uuid.New().String()
+	resourceID := resourceid.NewSystemGenerated()
 	if in.QosVolumeId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
 		resourceID = in.QosVolumeId

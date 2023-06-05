@@ -17,6 +17,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
+	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -32,7 +33,7 @@ func sortAioControllers(controllers []*pb.AioController) {
 func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
 	// see https://google.aip.dev/133#user-specified-ids
-	resourceID := uuid.New().String()
+	resourceID := resourceid.NewSystemGenerated()
 	if in.AioControllerId != "" {
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioControllerId, in.AioController.Name)
 		resourceID = in.AioControllerId
