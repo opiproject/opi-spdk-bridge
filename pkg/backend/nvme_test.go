@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	controllerID   = "OpiNvme8"
+	controllerID   = "opi-nvme8"
 	controllerName = server.ResourceIDToVolumeName(controllerID)
 	controller     = pb.NVMfRemoteController{
 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
@@ -467,7 +467,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
 				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"OpiNvme8","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
+			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"opi-nvme8","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
 			codes.OK,
 			"",
 			true,

@@ -36,6 +36,11 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvMfRemoteControllerId != "" {
+		err := resourceid.ValidateUserSettable(in.NvMfRemoteControllerId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfRemoteControllerId, in.NvMfRemoteController.Name)
 		resourceID = in.NvMfRemoteControllerId
 	}
