@@ -11,16 +11,8 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/opiproject/gospdk v0.0.0-20230515120524-37c85998ff39 h1:PS5lPK4scy8AUY3UTa2rnCXRN/9ExHWldf1Gaqk0+7E=
-github.com/opiproject/gospdk v0.0.0-20230515120524-37c85998ff39/go.mod h1:Unf3idtaelGKnTbIbJ+oKsxrBOFdVdFlDnwUKKVSxPQ=
 github.com/opiproject/gospdk v0.0.0-20230601215713-d912b55f1d0a h1:Bap/OuTiR/OqSWCyntyFmVKPPSbKTaulKD/QdPJ5ojs=
 github.com/opiproject/gospdk v0.0.0-20230601215713-d912b55f1d0a/go.mod h1:Unf3idtaelGKnTbIbJ+oKsxrBOFdVdFlDnwUKKVSxPQ=
-github.com/opiproject/opi-api v0.0.0-20230531200807-4aa6c73d421b h1:+W/+F5eDs5ZKyg+2dCvu6KI7FEXFcptwMvuBAPuWLUY=
-github.com/opiproject/opi-api v0.0.0-20230531200807-4aa6c73d421b/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
-github.com/opiproject/opi-api v0.0.0-20230602114114-0771d5245088 h1:ScoUBGOIqnTNLqLUImB8omrl5tZTaf27myFo0GyEoYA=
-github.com/opiproject/opi-api v0.0.0-20230602114114-0771d5245088/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
-github.com/opiproject/opi-api v0.0.0-20230602134632-f9df3ab8112b h1:JNIKIHzHKM4HKbdZsWVz+sCbpudftVsTsjaP7VZwvxU=
-github.com/opiproject/opi-api v0.0.0-20230602134632-f9df3ab8112b/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20230603003023-432a550f4f6c h1:EqlJl4rjIbCA8ZXXAoPtNba14BmJla8N5acy91SHis0=
 github.com/opiproject/opi-api v0.0.0-20230603003023-432a550f4f6c/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -75,3 +67,4 @@ google.golang.org/protobuf v1.30.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqw
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c h1:dUUwHk2QECo/6vqA44rthZ8ie2QXMNeKRTHCNY2nXvo=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+gotest.tools/v3 v3.4.0 h1:ZazjZUfuVeZGLAmlKKuyv3IKP5orXcwtOwDQH6YVr6o=

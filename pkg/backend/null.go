@@ -36,6 +36,11 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NullDebugId != "" {
+		err := resourceid.ValidateUserSettable(in.NullDebugId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Name)
 		resourceID = in.NullDebugId
 	}

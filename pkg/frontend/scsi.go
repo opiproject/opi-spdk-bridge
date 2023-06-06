@@ -36,6 +36,11 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.VirtioScsiControllerId != "" {
+		err := resourceid.ValidateUserSettable(in.VirtioScsiControllerId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Name)
 		resourceID = in.VirtioScsiControllerId
 	}
@@ -191,6 +196,11 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.VirtioScsiLunId != "" {
+		err := resourceid.ValidateUserSettable(in.VirtioScsiLunId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Name)
 		resourceID = in.VirtioScsiLunId
 	}

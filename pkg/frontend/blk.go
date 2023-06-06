@@ -36,6 +36,11 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.VirtioBlkId != "" {
+		err := resourceid.ValidateUserSettable(in.VirtioBlkId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioBlkId, in.VirtioBlk.Name)
 		resourceID = in.VirtioBlkId
 	}

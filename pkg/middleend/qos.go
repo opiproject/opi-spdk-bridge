@@ -32,6 +32,11 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 	log.Printf("CreateQosVolume: Received from client: %v", in)
 	resourceID := resourceid.NewSystemGenerated()
 	if in.QosVolumeId != "" {
+		err := resourceid.ValidateUserSettable(in.QosVolumeId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
 		resourceID = in.QosVolumeId
 	}

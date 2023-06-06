@@ -35,6 +35,11 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 
 	resourceID := resourceid.NewSystemGenerated()
 	if in.EncryptedVolumeId != "" {
+		err := resourceid.ValidateUserSettable(in.EncryptedVolumeId)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return nil, err
+		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
 		resourceID = in.EncryptedVolumeId
 	}

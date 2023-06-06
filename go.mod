@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/opiproject/gospdk v0.0.0-20230601215713-d912b55f1d0a
 	github.com/opiproject/opi-api v0.0.0-20230603003023-432a550f4f6c
+	go.einride.tech/aip v0.60.0
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )
@@ -14,7 +15,6 @@ require (
 require (
 	github.com/digitalocean/go-libvirt v0.0.0-20220804181439-8648fbde413e // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	go.einride.tech/aip v0.60.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
