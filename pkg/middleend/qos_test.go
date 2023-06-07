@@ -51,6 +51,7 @@ func (s *stubJSONRRPC) Call(_ string, param interface{}, _ interface{}) error {
 
 func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 	tests := map[string]struct {
+		id          string
 		in          *pb.QosVolume
 		out         *pb.QosVolume
 		spdk        []string
@@ -61,6 +62,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		existAfter  bool
 	}{
 		"min_limit is not supported": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MinLimit: &pb.QosLimit{
@@ -76,6 +78,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit rd_iops_kiops is not supported": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{
@@ -91,6 +94,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit wr_iops_kiops is not supported": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{
@@ -106,6 +110,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit rw_iops_kiops is negative": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{
@@ -121,6 +126,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit rd_bandwidth_kiops is negative": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{
@@ -136,6 +142,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit wr_bandwidth_kiops is negative": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{
@@ -151,6 +158,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit rw_bandwidth_kiops is negative": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{
@@ -166,6 +174,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"max_limit with all zero limits": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{},
@@ -179,6 +188,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"qos_volume name is ignored": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				Name:     server.ResourceIDToVolumeName("ignored-id"),
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -193,6 +203,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  true,
 		},
 		"volume_id is nil": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: nil,
 				MaxLimit: &pb.QosLimit{RwBandwidthMbs: 1},
@@ -206,6 +217,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"volume_id is empty": {
+			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeId: &_go.ObjectKey{Value: ""},
 				MaxLimit: &pb.QosLimit{RwBandwidthMbs: 1},
@@ -219,6 +231,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"qos volume already exists": {
+			id:          testQosVolumeID,
 			in:          testQosVolume,
 			out:         testQosVolume,
 			spdk:        []string{},
@@ -229,6 +242,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  true,
 		},
 		"SPDK call failed": {
+			id:          testQosVolumeID,
 			in:          testQosVolume,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
@@ -239,6 +253,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"SPDK call result false": {
+			id:          testQosVolumeID,
 			in:          testQosVolume,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -249,6 +264,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existAfter:  false,
 		},
 		"successful creation": {
+			id:          testQosVolumeID,
 			in:          testQosVolume,
 			out:         testQosVolume,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
@@ -271,7 +287,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 				tt.out.Name = testQosVolumeName
 			}
 
-			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in, QosVolumeId: testQosVolumeID}
+			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in, QosVolumeId: tt.id}
 			response, err := testEnv.client.CreateQosVolume(testEnv.ctx, request)
 
 			marshalledOut, _ := proto.Marshal(tt.out)

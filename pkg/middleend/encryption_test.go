@@ -22,6 +22,7 @@ import (
 
 func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 	tests := map[string]struct {
+		id      string
 		in      *pb.EncryptedVolume
 		out     *pb.EncryptedVolume
 		spdk    []string
@@ -31,6 +32,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -40,6 +42,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with invalid marshal SPDK response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -49,6 +52,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			nil,
 			[]string{""},
@@ -58,6 +62,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -67,6 +72,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -76,6 +82,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid key and invalid bdev response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -85,6 +92,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid key and invalid marshal bdev response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -94,6 +102,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid key and error code bdev response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -103,6 +112,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid key and ID mismatch bdev response": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -112,6 +122,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response and AES_XTS_128 cipher": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"my_crypto_bdev"}`},
@@ -121,6 +132,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with AES_XTS_192 cipher": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192,
@@ -134,6 +146,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response and AES_XTS_256 cipher": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
@@ -151,6 +164,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with AES_CBC_128 cipher": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128,
@@ -164,6 +178,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with AES_CBC_192 cipher": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192,
@@ -177,6 +192,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with AES_CBC_256 cipher": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256,
@@ -190,6 +206,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with unspecified cipher": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_UNSPECIFIED,
@@ -203,6 +220,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with invalid key size for AES_XTS_128": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
@@ -216,6 +234,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid request with invalid key size for AES_XTS_256": {
+			encryptedVolumeID,
 			&pb.EncryptedVolume{
 				VolumeId: encryptedVolume.VolumeId,
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
@@ -229,6 +248,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"already exists": {
+			encryptedVolumeID,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{""},
@@ -252,7 +272,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				tt.out.Name = encryptedVolumeName
 			}
 
-			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: encryptedVolumeID}
+			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: tt.id}
 			response, err := testEnv.client.CreateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				if string(response.Key) != string(tt.out.Key) &&

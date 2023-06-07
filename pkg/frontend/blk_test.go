@@ -35,24 +35,28 @@ var (
 
 func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
+		id          string
 		in          *pb.VirtioBlk
 		out         *pb.VirtioBlk
 		spdk        []string
 		expectedErr error
 	}{
 		"valid virtio-blk creation": {
+			id:          testVirtioCtrlID,
 			in:          &testVirtioCtrl,
 			out:         &testVirtioCtrl,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			expectedErr: status.Error(codes.OK, ""),
 		},
 		"spdk virtio-blk creation error": {
+			id:          testVirtioCtrlID,
 			in:          &testVirtioCtrl,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":false}`},
 			expectedErr: spdk.ErrFailedSpdkCall,
 		},
 		"spdk virtio-blk creation returned false response with no error": {
+			id:          testVirtioCtrlID,
 			in:          &testVirtioCtrl,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -69,7 +73,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 				test.out.Name = testVirtioCtrlName
 			}
 
-			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in, VirtioBlkId: testVirtioCtrlID}
+			request := &pb.CreateVirtioBlkRequest{VirtioBlk: test.in, VirtioBlkId: test.id}
 			response, err := testEnv.client.CreateVirtioBlk(testEnv.ctx, request)
 			if response != nil {
 				wantOut, _ := proto.Marshal(test.out)

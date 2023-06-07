@@ -37,6 +37,7 @@ var (
 
 func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	tests := map[string]struct {
+		id      string
 		in      *pb.NVMfRemoteController
 		out     *pb.NVMfRemoteController
 		spdk    []string
@@ -46,6 +47,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		exist   bool
 	}{
 		"valid request with invalid marshal SPDK response": {
+			controllerID,
 			&controller,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -55,6 +57,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
+			controllerID,
 			&controller,
 			nil,
 			[]string{""},
@@ -64,6 +67,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
+			controllerID,
 			&controller,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
@@ -73,6 +77,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
+			controllerID,
 			&controller,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
@@ -82,6 +87,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
+			controllerID,
 			&controller,
 			&controller,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":["my_remote_nvmf_bdev"]}`},
@@ -91,6 +97,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			false,
 		},
 		"already exists": {
+			controllerID,
 			&controller,
 			&controller,
 			[]string{""},
@@ -114,7 +121,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 				tt.out.Name = controllerName
 			}
 
-			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: controllerID}
+			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: tt.id}
 			response, err := testEnv.client.CreateNVMfRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
