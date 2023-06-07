@@ -17,7 +17,6 @@ import (
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -123,7 +122,7 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 
 	volumes := []*pb.QosVolume{}
 	for _, qosVolume := range s.volumes.qosVolumes {
-		volumes = append(volumes, proto.Clone(qosVolume).(*pb.QosVolume))
+		volumes = append(volumes, server.ProtoClone(qosVolume))
 	}
 	sortQosVolumes(volumes)
 
