@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 var (
@@ -457,6 +458,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		MaxLimit: &pb.QosLimit{RdBandwidthMbs: 1221},
 	}
 	tests := map[string]struct {
+		mask        *fieldmaskpb.FieldMask
 		in          *pb.QosVolume
 		out         *pb.QosVolume
 		spdk        []string
@@ -465,7 +467,24 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		start       bool
 		existBefore bool
 	}{
+		// "invalid fieldmask": {
+		// 	mask: &fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+		// 	in: &pb.QosVolume{
+		// 		Name:     testQosVolumeName,
+		// 		VolumeId: &_go.ObjectKey{Value: "volume-42"},
+		// 		MinLimit: &pb.QosLimit{
+		// 			RdIopsKiops: 100000,
+		// 		},
+		// 	},
+		// 	out:         nil,
+		// 	spdk:        []string{},
+		// 	errCode:     codes.Unknown,
+		// 	errMsg:      fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+		// 	start:       false,
+		// 	existBefore: true,
+		// },
 		"min_limit is not supported": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -481,6 +500,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit rd_iops_kiops is not supported": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -496,6 +516,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit wr_iops_kiops is not supported": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -511,6 +532,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit rw_iops_kiops is negative": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -526,6 +548,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit rd_bandwidth_kiops is negative": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -541,6 +564,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit wr_bandwidth_kiops is negative": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -556,6 +580,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit rw_bandwidth_kiops is negative": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -571,6 +596,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"max_limit with all zero limits": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -584,6 +610,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"qos_volume_id is empty": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     "",
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
@@ -597,6 +624,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"volume_id is nil": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: nil,
@@ -610,6 +638,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"volume_id is empty": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: ""},
@@ -623,6 +652,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"qos volume does not exist": {
+			mask:        nil,
 			in:          testQosVolume,
 			out:         nil,
 			spdk:        []string{},
@@ -632,6 +662,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: false,
 		},
 		"change underlying volume": {
+			mask: nil,
 			in: &pb.QosVolume{
 				Name:     testQosVolumeName,
 				VolumeId: &_go.ObjectKey{Value: "new-underlying-volume-id"},
@@ -646,6 +677,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"SPDK call failed": {
+			mask:        nil,
 			in:          testQosVolume,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
@@ -655,6 +687,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"SPDK call result false": {
+			mask:        nil,
 			in:          testQosVolume,
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -664,6 +697,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"successful update": {
+			mask:        nil,
 			in:          testQosVolume,
 			out:         testQosVolume,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
@@ -673,6 +707,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 		},
 		"update with the same limit values": {
+			mask:        nil,
 			in:          originalQosVolume,
 			out:         originalQosVolume,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
@@ -692,7 +727,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = originalQosVolume
 			}
 
-			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in}
+			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateQosVolume(testEnv.ctx, request)
 
 			marshalledOut, _ := proto.Marshal(tt.out)

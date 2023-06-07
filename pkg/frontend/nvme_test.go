@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -217,6 +218,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeSubsystem
 		out     *pb.NvmeSubsystem
 		spdk    []string
@@ -224,7 +226,19 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
+		"invalid fieldmask": {
+			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			&pb.NvmeSubsystem{
+				Name: testSubsystemName,
+			},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
+		},
 		"unimplemented method": {
+			nil,
 			&pb.NvmeSubsystem{
 				Name: testSubsystemName,
 			},
@@ -235,6 +249,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
+			nil,
 			&pb.NvmeSubsystem{
 				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: &pb.NvmeSubsystemSpec{
@@ -257,7 +272,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 
-			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in}
+			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
@@ -822,6 +837,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		NvmeControllerId: 17,
 	}
 	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeController
 		out     *pb.NvmeController
 		spdk    []string
@@ -829,7 +845,20 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
+		"invalid fieldmask": {
+			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			&pb.NvmeController{
+				Name: testControllerName,
+				Spec: spec,
+			},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
+		},
 		"valid request without SPDK": {
+			nil,
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: spec,
@@ -847,6 +876,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
+			nil,
 			&pb.NvmeController{
 				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
@@ -867,7 +897,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
 
-			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in}
+			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateNvmeController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
@@ -1281,6 +1311,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		Eui64:       1967554867335598546,
 	}
 	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeNamespace
 		out     *pb.NvmeNamespace
 		spdk    []string
@@ -1288,7 +1319,20 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
+		"invalid fieldmask": {
+			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			&pb.NvmeNamespace{
+				Name: testNamespaceName,
+				Spec: spec,
+			},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
+		},
 		"valid request without SPDK": {
+			nil,
 			&pb.NvmeNamespace{
 				Name: testNamespaceName,
 				Spec: spec,
@@ -1307,6 +1351,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
+			nil,
 			&pb.NvmeNamespace{
 				Name: server.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
@@ -1327,7 +1372,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = &testNamespace
 
-			request := &pb.UpdateNvmeNamespaceRequest{NvmeNamespace: tt.in}
+			request := &pb.UpdateNvmeNamespaceRequest{NvmeNamespace: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateNvmeNamespace(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

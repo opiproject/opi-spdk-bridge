@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -156,6 +157,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 
 func TestBackEnd_UpdateAioController(t *testing.T) {
 	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
 		in      *pb.AioController
 		out     *pb.AioController
 		spdk    []string
@@ -163,7 +165,17 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
+		"invalid fieldmask": {
+			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			&testAioVolume,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
+		},
 		"delete fails": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -172,6 +184,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete empty": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{""},
@@ -180,6 +193,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete ID mismatch": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -188,6 +202,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete exception": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -196,6 +211,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete ok create fails": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -204,6 +220,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete ok create empty": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -212,6 +229,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete ok create ID mismatch": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -220,6 +238,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"delete ok create exception": {
+			nil,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -228,6 +247,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
+			nil,
 			&testAioVolume,
 			&testAioVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -236,6 +256,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 		},
 		"valid request with unknown key": {
+			nil,
 			&pb.AioController{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
@@ -259,7 +280,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			testAioVolume.Name = testAioVolumeName
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
-			request := &pb.UpdateAioControllerRequest{AioController: tt.in}
+			request := &pb.UpdateAioControllerRequest{AioController: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
