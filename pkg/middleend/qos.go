@@ -53,7 +53,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 	response := server.ProtoClone(in.QosVolume)
 	s.volumes.qosVolumes[in.QosVolume.Name] = response
 	log.Printf("CreateQosVolume: Sending to client: %v", response)
-	return in.QosVolume, nil
+	return response, nil
 }
 
 // DeleteQosVolume deletes a QoS volume
