@@ -66,9 +66,9 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	if !result {
 		log.Printf("Could not create: %v", in)
 	}
-	s.Virt.ScsiCtrls[in.VirtioScsiController.Name] = in.VirtioScsiController
-	// s.VirtioCtrls[in.VirtioScsiController.Name].Status = &pb.VirtioScsiControllerStatus{Active: true}
 	response := server.ProtoClone(in.VirtioScsiController)
+	// response.Status = &pb.VirtioScsiControllerStatus{Active: true}
+	s.Virt.ScsiCtrls[in.VirtioScsiController.Name] = response
 	return response, nil
 }
 
@@ -234,9 +234,9 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	s.Virt.ScsiLuns[in.VirtioScsiLun.Name] = in.VirtioScsiLun
-	// s.ScsiLuns[in.VirtioScsiLun.Name].Status = &pb.VirtioScsiLunStatus{Active: true}
 	response := server.ProtoClone(in.VirtioScsiLun)
+	// response.Status = &pb.VirtioScsiLunStatus{Active: true}
+	s.Virt.ScsiLuns[in.VirtioScsiLun.Name] = response
 	return response, nil
 }
 

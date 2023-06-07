@@ -329,10 +329,10 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	s.Nvme.Controllers[in.NvmeController.Name] = in.NvmeController
-	s.Nvme.Controllers[in.NvmeController.Name].Spec.NvmeControllerId = -1
-	s.Nvme.Controllers[in.NvmeController.Name].Status = &pb.NvmeControllerStatus{Active: true}
 	response := server.ProtoClone(in.NvmeController)
+	response.Spec.NvmeControllerId = -1
+	response.Status = &pb.NvmeControllerStatus{Active: true}
+	s.Nvme.Controllers[in.NvmeController.Name] = response
 
 	return response, nil
 }
@@ -392,9 +392,9 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	s.Nvme.Controllers[in.NvmeController.Name] = in.NvmeController
-	s.Nvme.Controllers[in.NvmeController.Name].Status = &pb.NvmeControllerStatus{Active: true}
 	response := server.ProtoClone(in.NvmeController)
+	response.Status = &pb.NvmeControllerStatus{Active: true}
+	s.Nvme.Controllers[in.NvmeController.Name] = response
 	return response, nil
 }
 
@@ -490,10 +490,10 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	s.Nvme.Namespaces[in.NvmeNamespace.Name] = in.NvmeNamespace
 
 	response := server.ProtoClone(in.NvmeNamespace)
 	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
 	return response, nil
 }
 
@@ -555,10 +555,10 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	s.Nvme.Namespaces[in.NvmeNamespace.Name] = in.NvmeNamespace
-	s.Nvme.Namespaces[in.NvmeNamespace.Name].Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
-
 	response := server.ProtoClone(in.NvmeNamespace)
+	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
+
 	return response, nil
 }
 
