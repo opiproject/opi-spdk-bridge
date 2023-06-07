@@ -18,6 +18,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
+	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -113,6 +114,11 @@ func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirt
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
+	// update_mask = 2
+	if err := fieldmask.Validate(in.UpdateMask, in.VirtioScsiController); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
 	return &pb.VirtioScsiController{}, nil
 }
@@ -280,6 +286,11 @@ func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiL
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
+	// update_mask = 2
+	if err := fieldmask.Validate(in.UpdateMask, in.VirtioScsiLun); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
 	return &pb.VirtioScsiLun{}, nil
 }

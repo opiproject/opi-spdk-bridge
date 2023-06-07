@@ -18,6 +18,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
+	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -120,6 +121,11 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
+	// update_mask = 2
+	if err := fieldmask.Validate(in.UpdateMask, in.NullDebug); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	params1 := spdk.BdevNullDeleteParams{
 		Name: resourceID,
 	}
