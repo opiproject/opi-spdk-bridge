@@ -73,6 +73,18 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		start   bool
 		exist   bool
 	}{
+		"illegal resource_id": {
+			"CapitalLettersNotAllowed",
+			&pb.NvmeSubsystem{
+				Spec: spec,
+			},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
+			false,
+			false,
+		},
 		"valid request with invalid SPDK response": {
 			testSubsystemID,
 			&pb.NvmeSubsystem{
@@ -640,6 +652,22 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		start   bool
 		exist   bool
 	}{
+		"illegal resource_id": {
+			"CapitalLettersNotAllowed",
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					SubsystemId:      &pc.ObjectKey{Value: testSubsystemName},
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
+					NvmeControllerId: 1,
+				},
+			},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
+			false,
+			false,
+		},
 		"valid request with invalid SPDK response": {
 			testControllerID,
 			&pb.NvmeController{
@@ -1112,6 +1140,18 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		start   bool
 		exist   bool
 	}{
+		"illegal resource_id": {
+			"CapitalLettersNotAllowed",
+			&pb.NvmeNamespace{
+				Spec: spec,
+			},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
+			false,
+			false,
+		},
 		"valid request with invalid SPDK response": {
 			testNamespaceID,
 			&pb.NvmeNamespace{

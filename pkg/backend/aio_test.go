@@ -42,6 +42,16 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 		start   bool
 		exist   bool
 	}{
+		"illegal resource_id": {
+			"CapitalLettersNotAllowed",
+			&testAioVolume,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
+			false,
+			false,
+		},
 		"valid request with invalid SPDK response": {
 			testAioVolumeID,
 			&testAioVolume,

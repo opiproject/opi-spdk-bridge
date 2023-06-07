@@ -41,6 +41,13 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 		spdk        []string
 		expectedErr error
 	}{
+		// "illegal resource_id": {
+		// 	id:          "CapitalLettersNotAllowed",
+		// 	in:          &testVirtioCtrl,
+		// 	out:         nil,
+		// 	spdk:        []string{""},
+		// 	expectedErr: status.Error(codes.Unknown, fmt.Sprintf("error: user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0")),
+		// },
 		"valid virtio-blk creation": {
 			id:          testVirtioCtrlID,
 			in:          &testVirtioCtrl,
