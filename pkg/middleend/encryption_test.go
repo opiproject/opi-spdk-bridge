@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
@@ -298,6 +299,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 
 func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
 		in      *pb.EncryptedVolume
 		out     *pb.EncryptedVolume
 		spdk    []string
@@ -305,7 +307,17 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
+		// "invalid fieldmask": {
+		// 	&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+		// 	&encryptedVolume,
+		// 	nil,
+		// 	[]string{""},
+		// 	codes.Unknown,
+		// 	fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+		// 	false,
+		// },
 		"bdev delete fails": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -314,6 +326,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete empty": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{""},
@@ -322,6 +335,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ID mismatch": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -330,6 +344,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete exception": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -338,6 +353,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete fails": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -346,6 +362,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete empty": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -354,6 +371,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ID mismatch": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -362,6 +380,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete exception": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -370,6 +389,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create fails": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -378,6 +398,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create empty": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -386,6 +407,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create ID mismatch": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -394,6 +416,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create exception": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -402,6 +425,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create fails": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -410,6 +434,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create empty": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -418,6 +443,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create ID mismatch": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -426,6 +452,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create exception": {
+			nil,
 			&encryptedVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -434,6 +461,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"use AES_XTS_128 cipher ; bdev delete ok ; key delete ok ; key create ok ; bdev create ok": {
+			nil,
 			&encryptedVolume,
 			&encryptedVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -442,6 +470,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"use AES_XTS_192 cipher": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -455,6 +484,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"use AES_XTS_256 cipher ; bdev delete ok ; key delete ok ; key create ok ; bdev create ok": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -473,6 +503,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"use AES_CBC_128 cipher": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -486,6 +517,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"use AES_CBC_192 cipher": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -499,6 +531,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"use AES_CBC_256 cipher": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -512,6 +545,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"use UNSPECIFIED cipher": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -525,6 +559,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid key size for AES_XTS_128": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -538,6 +573,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"invalid key size for AES_XTS_256": {
+			nil,
 			&pb.EncryptedVolume{
 				Name:     encryptedVolumeID,
 				VolumeId: encryptedVolume.VolumeId,
@@ -558,7 +594,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in}
+			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

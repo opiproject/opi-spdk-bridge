@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -155,6 +156,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 
 func TestBackEnd_UpdateNullDebug(t *testing.T) {
 	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
 		in      *pb.NullDebug
 		out     *pb.NullDebug
 		spdk    []string
@@ -162,7 +164,17 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		errMsg  string
 		start   bool
 	}{
+		"invalid fieldmask": {
+			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			&testNullVolume,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
+		},
 		"delete fails": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -171,6 +183,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete empty": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{""},
@@ -179,6 +192,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete ID mismatch": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
@@ -187,6 +201,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete exception": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
@@ -195,6 +210,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete ok create fails": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -203,6 +219,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete ok create empty": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
@@ -211,6 +228,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete ok create ID mismatch": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -219,6 +237,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"delete ok create exception": {
+			nil,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -227,6 +246,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with valid SPDK response": {
+			nil,
 			&testNullVolume,
 			&testNullVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -235,6 +255,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 		},
 		"valid request with unknown key": {
+			nil,
 			&pb.NullDebug{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
@@ -257,7 +278,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			testNullVolume.Name = testNullVolumeName
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
-			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in}
+			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in, UpdateMask: tt.mask}
 			response, err := testEnv.client.UpdateNullDebug(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
