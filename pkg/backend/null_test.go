@@ -32,6 +32,7 @@ var (
 
 func TestBackEnd_CreateNullDebug(t *testing.T) {
 	tests := map[string]struct {
+		id      string
 		in      *pb.NullDebug
 		out     *pb.NullDebug
 		spdk    []string
@@ -41,6 +42,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
+			testNullVolumeID,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -50,6 +52,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
+			testNullVolumeID,
 			&testNullVolume,
 			nil,
 			[]string{""},
@@ -59,6 +62,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
+			testNullVolumeID,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -68,6 +72,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
+			testNullVolumeID,
 			&testNullVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -77,6 +82,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
+			testNullVolumeID,
 			&testNullVolume,
 			&testNullVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -86,6 +92,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			false,
 		},
 		"already exists": {
+			testNullVolumeID,
 			&testNullVolume,
 			&testNullVolume,
 			[]string{""},
@@ -109,7 +116,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 				tt.out.Name = testNullVolumeName
 			}
 
-			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: testNullVolumeID}
+			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: tt.id}
 			response, err := testEnv.client.CreateNullDebug(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

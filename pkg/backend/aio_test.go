@@ -33,6 +33,7 @@ var (
 
 func TestBackEnd_CreateAioController(t *testing.T) {
 	tests := map[string]struct {
+		id      string
 		in      *pb.AioController
 		out     *pb.AioController
 		spdk    []string
@@ -42,6 +43,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 		exist   bool
 	}{
 		"valid request with invalid SPDK response": {
+			testAioVolumeID,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
@@ -51,6 +53,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
+			testAioVolumeID,
 			&testAioVolume,
 			nil,
 			[]string{""},
@@ -60,6 +63,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
+			testAioVolumeID,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":""}`},
@@ -69,6 +73,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
+			testAioVolumeID,
 			&testAioVolume,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
@@ -78,6 +83,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
+			testAioVolumeID,
 			&testAioVolume,
 			&testAioVolume,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
@@ -87,6 +93,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 			false,
 		},
 		"already exists": {
+			testAioVolumeID,
 			&testAioVolume,
 			&testAioVolume,
 			[]string{""},
@@ -110,7 +117,7 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 				tt.out.Name = testAioVolumeName
 			}
 
-			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: testAioVolumeID}
+			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: tt.id}
 			response, err := testEnv.client.CreateAioController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
