@@ -42,7 +42,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if volume, ok := s.volumes.qosVolumes[in.QosVolume.Name]; ok {
-		log.Printf("Already existing QoS volume with id %v", in.QosVolume.Name)
+		log.Printf("Already existing QosVolume with name %v", in.QosVolume.Name)
 		return volume, nil
 	}
 
@@ -84,11 +84,11 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	qosVolumeID := in.QosVolume.Name
-	volume, ok := s.volumes.qosVolumes[qosVolumeID]
+	name := in.QosVolume.Name
+	volume, ok := s.volumes.qosVolumes[name]
 	if !ok {
-		log.Printf("Non-existing QoS volume with id %v", qosVolumeID)
-		return nil, status.Errorf(codes.NotFound, "volume_id %v does not exist", qosVolumeID)
+		log.Printf("Non-existing QoS volume with name %v", name)
+		return nil, status.Errorf(codes.NotFound, "unable to find key %s", name)
 	}
 
 	if volume.VolumeId.Value != in.QosVolume.VolumeId.Value {
@@ -102,7 +102,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		return nil, err
 	}
 
-	s.volumes.qosVolumes[qosVolumeID] = in.QosVolume
+	s.volumes.qosVolumes[name] = in.QosVolume
 	return in.QosVolume, nil
 }
 
@@ -189,7 +189,7 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	if volume.Name == "" {
-		return fmt.Errorf("qos_volume_id cannot be empty")
+		return fmt.Errorf("QoS volume name cannot be empty")
 	}
 	if volume.VolumeId == nil || volume.VolumeId.Value == "" {
 		return fmt.Errorf("volume_id cannot be empty")
@@ -230,9 +230,9 @@ func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	return nil
 }
 
-func (s *Server) setMaxLimit(qosVolumeID string, limit *pb.QosLimit) error {
+func (s *Server) setMaxLimit(underlyingVolume string, limit *pb.QosLimit) error {
 	params := spdk.BdevQoSParams{
-		Name:           qosVolumeID,
+		Name:           underlyingVolume,
 		RwIosPerSec:    int(limit.RwIopsKiops * 1000),
 		RwMbytesPerSec: int(limit.RwBandwidthMbs),
 		RMbytesPerSec:  int(limit.RdBandwidthMbs),
@@ -246,7 +246,7 @@ func (s *Server) setMaxLimit(qosVolumeID string, limit *pb.QosLimit) error {
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not set max QoS limit: %s on %v", limit, qosVolumeID)
+		msg := fmt.Sprintf("Could not set max QoS limit: %s on %v", limit, underlyingVolume)
 		log.Print(msg)
 		return spdk.ErrUnexpectedSpdkCallResult
 	}
@@ -254,6 +254,6 @@ func (s *Server) setMaxLimit(qosVolumeID string, limit *pb.QosLimit) error {
 	return nil
 }
 
-func (s *Server) cleanMaxLimit(qosVolumeID string) error {
-	return s.setMaxLimit(qosVolumeID, &pb.QosLimit{})
+func (s *Server) cleanMaxLimit(underlyingVolume string) error {
+	return s.setMaxLimit(underlyingVolume, &pb.QosLimit{})
 }

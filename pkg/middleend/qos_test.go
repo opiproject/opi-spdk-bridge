@@ -178,9 +178,9 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existBefore: false,
 			existAfter:  false,
 		},
-		"qos_volume_id is ignored": {
+		"qos_volume name is ignored": {
 			in: &pb.QosVolume{
-				Name:     "ignored-id",
+				Name:     server.ResourceIDToVolumeName("ignored-id"),
 				VolumeId: &_go.ObjectKey{Value: "volume-42"},
 				MaxLimit: &pb.QosLimit{RwBandwidthMbs: 1},
 			},
@@ -576,7 +576,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			out:         nil,
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
-			errMsg:      "qos_volume_id cannot be empty",
+			errMsg:      "QoS volume name cannot be empty",
 			start:       false,
 			existBefore: true,
 		},
@@ -611,7 +611,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			out:         nil,
 			spdk:        []string{},
 			errCode:     codes.NotFound,
-			errMsg:      fmt.Sprintf("volume_id %v does not exist", testQosVolumeName),
+			errMsg:      fmt.Sprintf("unable to find key %s", testQosVolumeName),
 			start:       false,
 			existBefore: false,
 		},
