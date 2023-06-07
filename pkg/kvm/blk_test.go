@@ -151,7 +151,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, test.buses)
 			kvmServer.timeout = qmplibTimeout
-			request := proto.Clone(test.in).(*pb.CreateVirtioBlkRequest)
+			request := server.ProtoClone(test.in)
 
 			out, err := kvmServer.CreateVirtioBlk(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
@@ -229,7 +229,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			opiSpdkServer := frontend.NewServer(test.jsonRPC)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName] =
-				proto.Clone(testCreateVirtioBlkRequest.VirtioBlk).(*pb.VirtioBlk)
+				server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName].Name = testVirtioBlkName
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
 			defer qmpServer.Stop()
@@ -239,7 +239,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
-			request := proto.Clone(testDeleteVirtioBlkRequest).(*pb.DeleteVirtioBlkRequest)
+			request := server.ProtoClone(testDeleteVirtioBlkRequest)
 
 			_, err := kvmServer.DeleteVirtioBlk(context.Background(), request)
 			if !errors.Is(err, test.expectError) {

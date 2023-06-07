@@ -115,7 +115,7 @@ func dirExists(dirname string) bool {
 }
 
 func TestCreateNvmeController(t *testing.T) {
-	expectNotNilOut := proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
+	expectNotNilOut := server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
 	expectNotNilOut.Spec.NvmeControllerId = -1
 	expectNotNilOut.Name = testNvmeControllerName
 
@@ -292,7 +292,7 @@ func TestCreateNvmeController(t *testing.T) {
 				os.Mkdir(testCtrlrDir, os.ModePerm) != nil {
 				log.Panicf("Couldn't create ctrlr dir for test")
 			}
-			request := proto.Clone(test.in).(*pb.CreateNvmeControllerRequest)
+			request := server.ProtoClone(test.in)
 
 			out, err := kvmServer.CreateNvmeController(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
@@ -409,7 +409,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			if !test.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
-					proto.Clone(testCreateNvmeControllerRequest.NvmeController).(*pb.NvmeController)
+					server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerID
 			}
 			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
@@ -432,7 +432,7 @@ func TestDeleteNvmeController(t *testing.T) {
 					}
 				}
 			}
-			request := proto.Clone(testDeleteNvmeControllerRequest).(*pb.DeleteNvmeControllerRequest)
+			request := server.ProtoClone(testDeleteNvmeControllerRequest)
 
 			_, err := kvmServer.DeleteNvmeController(context.Background(), request)
 			if !errors.Is(err, test.expectError) {
