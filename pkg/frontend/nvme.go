@@ -116,6 +116,14 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		log.Printf("Already existing NvmeSubsystem with id %v", in.NvmeSubsystem.Name)
 		return subsys, nil
 	}
+	// check if another object exists with same NQN, it is not allowed
+	for _, item := range s.Nvme.Subsystems {
+		if in.NvmeSubsystem.Spec.Nqn == item.Spec.Nqn {
+			msg := fmt.Sprintf("Could not create NQN: %s since object %s with same NQN already exists", in.NvmeSubsystem.Spec.Nqn, item.Name)
+			log.Print(msg)
+			return nil, status.Errorf(codes.AlreadyExists, msg)
+		}
+	}
 	// not found, so create a new one
 	params := spdk.NvmfCreateSubsystemParams{
 		Nqn:           in.NvmeSubsystem.Spec.Nqn,
