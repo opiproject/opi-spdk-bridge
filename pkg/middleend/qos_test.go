@@ -851,6 +851,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.volumes.qosVolumes = tt.existingVolumes
 			request := &pb.ListQosVolumesRequest{}
+			request.Parent = "todo"
 			request.PageSize = tt.size
 			request.PageToken = tt.token
 			testEnv.opiSpdkServer.Pagination[existingToken] = 1

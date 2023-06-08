@@ -14,6 +14,8 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+
+	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,6 +31,12 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.QosVolumeId != "" {
 		err := resourceid.ValidateUserSettable(in.QosVolumeId)
@@ -63,6 +71,12 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 // DeleteQosVolume deletes a QoS volume
 func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteQosVolume: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	qosVolume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -84,6 +98,12 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 // UpdateQosVolume updates a QoS volume
 func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("UpdateQosVolume: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -113,7 +133,12 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 // ListQosVolumes lists QoS volumes
 func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
 	log.Printf("ListQosVolume: Received from client: %v", in)
-
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	size, offset, err := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -140,6 +165,12 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 // GetQosVolume gets a QoS volume
 func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("GetQosVolume: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
@@ -152,6 +183,12 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 // QosVolumeStats gets a QoS volume stats
 func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest) (*pb.QosVolumeStatsResponse, error) {
 	log.Printf("QosVolumeStats: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	if in.VolumeId == nil || in.VolumeId.Value == "" {
 		return nil, status.Error(codes.InvalidArgument, "volume_id cannot be empty")
 	}
