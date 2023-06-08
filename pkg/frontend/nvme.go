@@ -18,6 +18,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
+	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
@@ -98,6 +99,11 @@ func (c *tcpSubsystemListener) Params(_ *pb.NvmeController, nqn string) spdk.Nvm
 // CreateNvmeSubsystem creates an Nvme Subsystem
 func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	log.Printf("CreateNvmeSubsystem: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeSubsystemId != "" {
@@ -160,6 +166,12 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 // DeleteNvmeSubsystem deletes an Nvme Subsystem
 func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsystemRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNvmeSubsystem: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -191,6 +203,12 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 // UpdateNvmeSubsystem updates an Nvme Subsystem
 func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	log.Printf("UpdateNvmeSubsystem: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Nvme.Subsystems[in.NvmeSubsystem.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -213,6 +231,12 @@ func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsyst
 // ListNvmeSubsystems lists Nvme Subsystems
 func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystemsRequest) (*pb.ListNvmeSubsystemsResponse, error) {
 	log.Printf("ListNvmeSubsystems: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
@@ -244,6 +268,12 @@ func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystems
 // GetNvmeSubsystem gets Nvme Subsystems
 func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	log.Printf("GetNvmeSubsystem: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
@@ -273,6 +303,12 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 // NvmeSubsystemStats gets Nvme Subsystem stats
 func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStatsRequest) (*pb.NvmeSubsystemStatsResponse, error) {
 	log.Printf("NvmeSubsystemStats: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Nvme.Subsystems[in.SubsystemId.Value]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.SubsystemId.Value)
@@ -294,6 +330,11 @@ func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStats
 // CreateNvmeController creates an Nvme controller
 func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("Received from client: %v", in.NvmeController)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// check input parameters validity
 	if in.NvmeController.Spec == nil || in.NvmeController.Spec.SubsystemId == nil || in.NvmeController.Spec.SubsystemId.Value == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
@@ -348,6 +389,12 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 // DeleteNvmeController deletes an Nvme controller
 func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received from client: %v", in.Name)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -384,6 +431,12 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 // UpdateNvmeController updates an Nvme controller
 func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("UpdateNvmeController: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Nvme.Controllers[in.NvmeController.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -409,6 +462,12 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 // ListNvmeControllers lists Nvme controllers
 func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControllersRequest) (*pb.ListNvmeControllersResponse, error) {
 	log.Printf("Received from client: %v", in.Parent)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	Blobarray := []*pb.NvmeController{}
 	for _, controller := range s.Nvme.Controllers {
 		Blobarray = append(Blobarray, controller)
@@ -422,6 +481,12 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 // GetNvmeController gets an Nvme controller
 func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("Received from client: %v", in.Name)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	controller, ok := s.Nvme.Controllers[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
@@ -434,6 +499,12 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 // NvmeControllerStats gets an Nvme controller stats
 func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerStatsRequest) (*pb.NvmeControllerStatsResponse, error) {
 	log.Printf("NvmeControllerStats: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Nvme.Controllers[in.Id.Value]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Id.Value)
@@ -448,6 +519,12 @@ func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerSta
 // CreateNvmeNamespace creates an Nvme namespace
 func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("CreateNvmeNamespace: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	// check input parameters validity
 	if in.NvmeNamespace.Spec == nil || in.NvmeNamespace.Spec.SubsystemId == nil || in.NvmeNamespace.Spec.SubsystemId.Value == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
@@ -508,6 +585,12 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 // DeleteNvmeNamespace deletes an Nvme namespace
 func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespaceRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNvmeNamespace: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -547,6 +630,12 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 // UpdateNvmeNamespace updates an Nvme namespace
 func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("UpdateNvmeNamespace: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Nvme.Namespaces[in.NvmeNamespace.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -573,6 +662,12 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 // ListNvmeNamespaces lists Nvme namespaces
 func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespacesRequest) (*pb.ListNvmeNamespacesResponse, error) {
 	log.Printf("ListNvmeNamespaces: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
@@ -626,6 +721,12 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 // GetNvmeNamespace gets an Nvme namespace
 func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("GetNvmeNamespace: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	namespace, ok := s.Nvme.Namespaces[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
@@ -676,6 +777,12 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 // NvmeNamespaceStats gets an Nvme namespace stats
 func (s *Server) NvmeNamespaceStats(_ context.Context, in *pb.NvmeNamespaceStatsRequest) (*pb.NvmeNamespaceStatsResponse, error) {
 	log.Printf("NvmeNamespaceStats: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Nvme.Namespaces[in.NamespaceId.Value]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NamespaceId.Value)

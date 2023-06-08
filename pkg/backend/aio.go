@@ -17,6 +17,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
 	"github.com/google/uuid"
+	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
@@ -33,6 +34,11 @@ func sortAioControllers(controllers []*pb.AioController) {
 // CreateAioController creates an Aio controller
 func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("CreateAioController: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.AioControllerId != "" {
@@ -78,6 +84,12 @@ func (s *Server) CreateAioController(_ context.Context, in *pb.CreateAioControll
 // DeleteAioController deletes an Aio controller
 func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteAioController: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -110,6 +122,12 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 // UpdateAioController updates an Aio controller
 func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("UpdateAioController: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -165,6 +183,12 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 // ListAioControllers lists Aio controllers
 func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllersRequest) (*pb.ListAioControllersResponse, error) {
 	log.Printf("ListAioControllers: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
@@ -196,6 +220,12 @@ func (s *Server) ListAioControllers(_ context.Context, in *pb.ListAioControllers
 // GetAioController gets an Aio controller
 func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequest) (*pb.AioController, error) {
 	log.Printf("GetAioController: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
@@ -224,6 +254,12 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 // AioControllerStats gets an Aio controller stats
 func (s *Server) AioControllerStats(_ context.Context, in *pb.AioControllerStatsRequest) (*pb.AioControllerStatsResponse, error) {
 	log.Printf("AioControllerStats: Received from client: %v", in)
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.Volumes.AioVolumes[in.Handle.Value]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Handle.Value)
