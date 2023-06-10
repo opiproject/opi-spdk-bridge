@@ -67,7 +67,7 @@ services:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 
   opi-spdk-client:
-    image: ghcr.io/opiproject/godpu:main@sha256:a38b0a2297b5541f998f86fcbea33a166d850f2f29fe7ae830f72e2c650a984c
+    image: ghcr.io/opiproject/godpu:main@sha256:0ed2a96666a41bf01d061bbdc9b0cd68758f952605734987c19150398bb8fdb5
     networks:
       - opi
     depends_on:
