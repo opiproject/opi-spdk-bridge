@@ -20,6 +20,7 @@ import (
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
+	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -110,6 +111,11 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.volumes.encVolumes[in.Name]
 	if !ok {
@@ -162,6 +168,11 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.EncryptedVolume.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -285,6 +296,11 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.volumes.encVolumes[in.Name]
 	if !ok {
@@ -316,6 +332,11 @@ func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeS
 	log.Printf("EncryptedVolumeStats: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.EncryptedVolumeId.Value); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}

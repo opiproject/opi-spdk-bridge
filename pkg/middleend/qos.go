@@ -17,6 +17,7 @@ import (
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
+	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -76,6 +77,11 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	qosVolume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
@@ -103,6 +109,11 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	// if err := resourcename.Validate(in.QosVolume.Name); err != nil {
+	// 	log.Printf("error: %v", err)
+	// 	return nil, err
+	// }
 	// fetch object from the database
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
@@ -170,6 +181,11 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
@@ -188,6 +204,11 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	// if err := resourcename.Validate(in.VolumeId.Value); err != nil {
+	// 	log.Printf("error: %v", err)
+	// 	return nil, err
+	// }
 	// fetch object from the database
 	if in.VolumeId == nil || in.VolumeId.Value == "" {
 		return nil, status.Error(codes.InvalidArgument, "volume_id cannot be empty")

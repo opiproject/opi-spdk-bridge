@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
+	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -93,6 +94,11 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NvmeVolumes[in.Name]
 	if !ok {
@@ -123,6 +129,11 @@ func (s *Server) NVMfRemoteControllerReset(_ context.Context, in *pb.NVMfRemoteC
 	log.Printf("Received: %v", in.GetId())
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Id.Value); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -183,6 +194,11 @@ func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemote
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NvmeVolumes[in.Name]
 	if !ok {
@@ -223,6 +239,11 @@ func (s *Server) NVMfRemoteControllerStats(_ context.Context, in *pb.NVMfRemoteC
 	log.Printf("Received: %v", in.GetId())
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Id.Value); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
