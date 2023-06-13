@@ -20,6 +20,7 @@ import (
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
+	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -89,6 +90,11 @@ func (s *Server) DeleteAioController(_ context.Context, in *pb.DeleteAioControll
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
@@ -124,6 +130,11 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	log.Printf("UpdateAioController: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.AioController.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -225,6 +236,11 @@ func (s *Server) GetAioController(_ context.Context, in *pb.GetAioControllerRequ
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// fetch object from the database
 	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
@@ -256,6 +272,11 @@ func (s *Server) AioControllerStats(_ context.Context, in *pb.AioControllerStats
 	log.Printf("AioControllerStats: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Handle.Value); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
