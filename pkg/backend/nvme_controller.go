@@ -10,8 +10,6 @@ import (
 	"log"
 	"path"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -60,15 +58,15 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 	}
 	// not found, so create a new one
 	params := spdk.BdevNvmeAttachControllerParams{
-		Name:    resourceID,
-		Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
-		Traddr:  in.NvMfRemoteController.Traddr,
-		Adrfam:  strings.ReplaceAll(in.NvMfRemoteController.Adrfam.String(), "NVMF_ADRFAM_", ""),
-		Trsvcid: fmt.Sprint(in.NvMfRemoteController.Trsvcid),
-		Subnqn:  in.NvMfRemoteController.Subnqn,
-		Hostnqn: in.NvMfRemoteController.Hostnqn,
-		Hdgst:   in.NvMfRemoteController.Hdgst,
-		Ddgst:   in.NvMfRemoteController.Ddgst,
+		// Name:    resourceID,
+		// Trtype:  strings.ReplaceAll(in.NvMfRemoteController.Trtype.String(), "NVME_TRANSPORT_", ""),
+		// Traddr:  in.NvMfRemoteController.Traddr,
+		// Adrfam:  strings.ReplaceAll(in.NvMfRemoteController.Adrfam.String(), "NVMF_ADRFAM_", ""),
+		// Trsvcid: fmt.Sprint(in.NvMfRemoteController.Trsvcid),
+		// Subnqn:  in.NvMfRemoteController.Subnqn,
+		// Hostnqn: in.NvMfRemoteController.Hostnqn,
+		// Hdgst:   in.NvMfRemoteController.Hdgst,
+		// Ddgst:   in.NvMfRemoteController.Ddgst,
 	}
 	var result []spdk.BdevNvmeAttachControllerResult
 	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
@@ -171,15 +169,15 @@ func (s *Server) ListNVMfRemoteControllers(_ context.Context, in *pb.ListNVMfRem
 	Blobarray := make([]*pb.NVMfRemoteController, len(result))
 	for i := range result {
 		r := &result[i]
-		port, _ := strconv.ParseInt(r.Ctrlrs[0].Trid.Trsvcid, 10, 64)
+		// port, _ := strconv.ParseInt(r.Ctrlrs[0].Trid.Trsvcid, 10, 64)
 		Blobarray[i] = &pb.NVMfRemoteController{
-			Name:    r.Name,
-			Hostnqn: r.Ctrlrs[0].Host.Nqn,
-			Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(r.Ctrlrs[0].Trid.Trtype)]),
-			Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(r.Ctrlrs[0].Trid.Adrfam)]),
-			Traddr:  r.Ctrlrs[0].Trid.Traddr,
-			Subnqn:  r.Ctrlrs[0].Trid.Subnqn,
-			Trsvcid: port,
+			Name: r.Name,
+			// Hostnqn: r.Ctrlrs[0].Host.Nqn,
+			// Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(r.Ctrlrs[0].Trid.Trtype)]),
+			// Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(r.Ctrlrs[0].Trid.Adrfam)]),
+			// Traddr:  r.Ctrlrs[0].Trid.Traddr,
+			// Subnqn:  r.Ctrlrs[0].Trid.Subnqn,
+			// Trsvcid: port,
 		}
 	}
 	sortNVMfRemoteControllers(Blobarray)
@@ -222,15 +220,15 @@ func (s *Server) GetNVMfRemoteController(_ context.Context, in *pb.GetNVMfRemote
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	port, _ := strconv.ParseInt(result[0].Ctrlrs[0].Trid.Trsvcid, 10, 64)
+	// port, _ := strconv.ParseInt(result[0].Ctrlrs[0].Trid.Trsvcid, 10, 64)
 	return &pb.NVMfRemoteController{
-		Name:    result[0].Name,
-		Hostnqn: result[0].Ctrlrs[0].Host.Nqn,
-		Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Trtype)]),
-		Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Adrfam)]),
-		Traddr:  result[0].Ctrlrs[0].Trid.Traddr,
-		Subnqn:  result[0].Ctrlrs[0].Trid.Subnqn,
-		Trsvcid: port,
+		Name: result[0].Name,
+		// Hostnqn: result[0].Ctrlrs[0].Host.Nqn,
+		// Trtype:  pb.NvmeTransportType(pb.NvmeTransportType_value["NVME_TRANSPORT_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Trtype)]),
+		// Adrfam:  pb.NvmeAddressFamily(pb.NvmeAddressFamily_value["NVMF_ADRFAM_"+strings.ToUpper(result[0].Ctrlrs[0].Trid.Adrfam)]),
+		// Traddr:  result[0].Ctrlrs[0].Trid.Traddr,
+		// Subnqn:  result[0].Ctrlrs[0].Trid.Subnqn,
+		// Trsvcid: port,
 	}, nil
 }
 
