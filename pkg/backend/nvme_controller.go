@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/opiproject/gospdk/spdk"
+	_go "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
@@ -307,6 +308,68 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 	delete(s.Volumes.NvmePaths, in.Name)
 
 	return &emptypb.Empty{}, nil
+}
+
+// ListNVMfRemoteNamespaces lists NVMfRemoteNamespaces exposed by connected NVMfRemoteController.
+func (s *Server) ListNVMfRemoteNamespaces(_ context.Context, in *pb.ListNVMfRemoteNamespacesRequest) (*pb.ListNVMfRemoteNamespacesResponse, error) {
+	log.Printf("ListNVMfRemoteNamespaces: Received from client: %v", in)
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	if _, ok := s.Volumes.NvmeControllers[in.Parent]; !ok {
+		err := status.Errorf(codes.InvalidArgument, "unable to find key %s", in.Parent)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	if perr != nil {
+		log.Printf("error: %v", perr)
+		return nil, perr
+	}
+
+	var result []spdk.BdevGetBdevsResult
+	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	log.Printf("Received from SPDK: %v", result)
+
+	Blobarray := []*pb.NVMfRemoteNamespace{}
+	resourceID := path.Base(in.Parent)
+	namespacePrefix := resourceID + "n"
+	for _, bdev := range result {
+		if strings.HasPrefix(bdev.Name, namespacePrefix) {
+			Blobarray = append(Blobarray, &pb.NVMfRemoteNamespace{
+				Name: server.ResourceIDToVolumeName(bdev.Name),
+				Uuid: &_go.Uuid{Value: bdev.UUID},
+			})
+		}
+	}
+
+	sortNVMfRemoteNamespaces(Blobarray)
+
+	token := ""
+	log.Printf("Limiting result len(%d) to [%d:%d]", len(Blobarray), offset, size)
+	Blobarray, hasMoreElements := server.LimitPagination(Blobarray, offset, size)
+	if hasMoreElements {
+		token = uuid.New().String()
+		s.Pagination[token] = offset + size
+	}
+
+	return &pb.ListNVMfRemoteNamespacesResponse{
+		NvMfRemoteNamespaces: Blobarray,
+		NextPageToken:        token,
+	}, nil
+}
+
+func sortNVMfRemoteNamespaces(namespaces []*pb.NVMfRemoteNamespace) {
+	sort.Slice(namespaces, func(i int, j int) bool {
+		return namespaces[i].Name < namespaces[j].Name
+	})
 }
 
 func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
