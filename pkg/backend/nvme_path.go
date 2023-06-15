@@ -119,7 +119,6 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
 	controller, ok := s.Volumes.NvmeControllers[nvmfPath.ControllerId.Value]
 	if !ok {
 		err := status.Errorf(codes.Internal, "unable to find NVMfRemoteController by key %s", nvmfPath.ControllerId.Value)
@@ -127,9 +126,8 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 		return nil, err
 	}
 
-	resourceID := path.Base(controller.Name)
 	params := spdk.BdevNvmeDetachControllerParams{
-		Name:    resourceID,
+		Name:    path.Base(controller.Name),
 		Trtype:  s.opiTransportToSpdk(nvmfPath.Trtype),
 		Traddr:  nvmfPath.Traddr,
 		Adrfam:  s.opiAdressFamilyToSpdk(nvmfPath.Adrfam),
