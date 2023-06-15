@@ -290,6 +290,6 @@ func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerSta
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
+	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return &pb.NvmeControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

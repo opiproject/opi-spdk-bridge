@@ -272,7 +272,7 @@ func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStats
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
+	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	var result spdk.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
 	if err != nil {

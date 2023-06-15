@@ -190,6 +190,6 @@ func (s *Server) NVMfRemoteControllerStats(_ context.Context, in *pb.NVMfRemoteC
 		return nil, err
 	}
 	name := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", name)
+	log.Printf("TODO: send name to SPDK and get back stats: %v", name)
 	return &pb.NVMfRemoteControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

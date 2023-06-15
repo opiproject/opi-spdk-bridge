@@ -251,7 +251,7 @@ func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiC
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
+	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return &pb.VirtioScsiControllerStatsResponse{}, nil
 }
 
@@ -480,6 +480,6 @@ func (s *Server) VirtioScsiLunStats(_ context.Context, in *pb.VirtioScsiLunStats
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
+	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return &pb.VirtioScsiLunStatsResponse{}, nil
 }

@@ -260,6 +260,6 @@ func (s *Server) VirtioBlkStats(_ context.Context, in *pb.VirtioBlkStatsRequest)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
-	log.Printf("TODO: send anme to SPDK and get back stats: %v", resourceID)
+	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
 }
