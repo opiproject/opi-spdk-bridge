@@ -17,7 +17,9 @@ import (
 type VolumeParameters struct {
 	AioVolumes  map[string]*pb.AioController
 	NullVolumes map[string]*pb.NullDebug
-	NvmeVolumes map[string]*pb.NVMfRemoteController
+
+	NvmeControllers map[string]*pb.NVMfRemoteController
+	NvmePaths       map[string]*pb.NVMfPath
 }
 
 // Server contains backend related OPI services
@@ -37,9 +39,10 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Volumes: VolumeParameters{
-			AioVolumes:  make(map[string]*pb.AioController),
-			NullVolumes: make(map[string]*pb.NullDebug),
-			NvmeVolumes: make(map[string]*pb.NVMfRemoteController),
+			AioVolumes:      make(map[string]*pb.AioController),
+			NullVolumes:     make(map[string]*pb.NullDebug),
+			NvmeControllers: make(map[string]*pb.NVMfRemoteController),
+			NvmePaths:       make(map[string]*pb.NVMfPath),
 		},
 		Pagination: make(map[string]int),
 	}

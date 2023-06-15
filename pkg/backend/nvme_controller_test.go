@@ -26,12 +26,7 @@ var (
 	controllerID   = "opi-nvme8"
 	controllerName = server.ResourceIDToVolumeName(controllerID)
 	controller     = pb.NVMfRemoteController{
-		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-		Traddr:  "127.0.0.1",
-		Trsvcid: 4444,
-		Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-		Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+		Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
 	}
 )
 
@@ -40,80 +35,33 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		id      string
 		in      *pb.NVMfRemoteController
 		out     *pb.NVMfRemoteController
-		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		exist   bool
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
 			&controller,
 			nil,
-			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			false,
-			false,
 		},
-		"valid request with invalid marshal SPDK response": {
-			controllerID,
-			&controller,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevNvmeAttachControllerResult"),
-			true,
-			false,
-		},
-		"valid request with empty SPDK response": {
-			controllerID,
-			&controller,
-			nil,
-			[]string{""},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_attach_controller: %v", "EOF"),
-			true,
-			false,
-		},
-		"valid request with ID mismatch SPDK response": {
-			controllerID,
-			&controller,
-			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response ID mismatch"),
-			true,
-			false,
-		},
-		"valid request with error code from SPDK response": {
-			controllerID,
-			&controller,
-			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response error: myopierr"),
-			true,
-			false,
-		},
-		"valid request with valid SPDK response": {
+
+		"valid request": {
 			controllerID,
 			&controller,
 			&controller,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":["my_remote_nvmf_bdev"]}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"already exists": {
 			controllerID,
 			&controller,
 			&controller,
-			[]string{""},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 	}
@@ -121,11 +69,11 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerName] = &controller
+				testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
 			}
 			if tt.out != nil {
 				tt.out.Name = controllerName
@@ -208,195 +156,118 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 
 func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	tests := map[string]struct {
-		in      string
-		out     []*pb.NVMfRemoteController
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		start   bool
-		size    int32
-		token   string
+		in                  string
+		out                 []*pb.NVMfRemoteController
+		errCode             codes.Code
+		errMsg              string
+		size                int32
+		token               string
+		existingControllers map[string]*pb.NVMfRemoteController
 	}{
-		"valid request with invalid SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
-			0,
-			"",
-		},
-		"valid request with invalid marshal SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevNvmeGetControllerResult"),
-			true,
-			0,
-			"",
-		},
-		"valid request with empty SPDK response": {
-			controllerID,
-			nil,
-			[]string{""},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "EOF"),
-			true,
-			0,
-			"",
-		},
-		"valid request with ID mismatch SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response ID mismatch"),
-			true,
-			0,
-			"",
-		},
-		"valid request with error code from SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response error: myopierr"),
-			true,
-			0,
-			"",
-		},
 		"valid request with valid SPDK response": {
 			controllerID,
 			[]*pb.NVMfRemoteController{
 				{
-					Name:    "OpiNvme12",
-					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-					Traddr:  "127.0.0.1",
-					Trsvcid: 4444,
-					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
 				{
-					Name:    "OpiNvme13",
-					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-					Traddr:  "127.0.0.1",
-					Trsvcid: 8888,
-					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[` +
-				`{"name":"OpiNvme13","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"8888","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]},` +
-				`{"name":"OpiNvme12","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}` +
-				`]}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
+			map[string]*pb.NVMfRemoteController{
+				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
+				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
+			},
 		},
 		"pagination overflow": {
 			controllerID,
 			[]*pb.NVMfRemoteController{
 				{
-					Name:    "OpiNvme12",
-					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-					Traddr:  "127.0.0.1",
-					Trsvcid: 4444,
-					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
 				{
-					Name:    "OpiNvme13",
-					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-					Traddr:  "127.0.0.1",
-					Trsvcid: 8888,
-					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"OpiNvme12","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]},{"name":"OpiNvme13","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"8888","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
 			codes.OK,
 			"",
-			true,
 			1000,
 			"",
+			map[string]*pb.NVMfRemoteController{
+				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
+				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
+			},
 		},
 		"pagination negative": {
 			controllerID,
 			nil,
-			[]string{},
 			codes.InvalidArgument,
 			"negative PageSize is not allowed",
-			false,
 			-10,
 			"",
+			map[string]*pb.NVMfRemoteController{
+				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
+				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
+			},
 		},
 		"pagination error": {
 			controllerID,
 			nil,
-			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
-			false,
 			0,
 			"unknown-pagination-token",
+			map[string]*pb.NVMfRemoteController{
+				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
+				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
+			},
 		},
 		"pagination": {
 			controllerID,
 			[]*pb.NVMfRemoteController{
 				{
-					Name:    "OpiNvme12",
-					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-					Traddr:  "127.0.0.1",
-					Trsvcid: 4444,
-					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"OpiNvme12","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]},{"name":"OpiNvme13","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"8888","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"",
+			map[string]*pb.NVMfRemoteController{
+				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
+				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
+			},
 		},
 		"pagination offset": {
 			controllerID,
 			[]*pb.NVMfRemoteController{
 				{
-					Name:    "OpiNvme13",
-					Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-					Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-					Traddr:  "127.0.0.1",
-					Trsvcid: 8888,
-					Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-					Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"OpiNvme12","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]},{"name":"OpiNvme13","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"8888","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"existing-pagination-token",
+			map[string]*pb.NVMfRemoteController{
+				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
+				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
+			},
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
+			testEnv.opiSpdkServer.Volumes.NvmeControllers = tt.existingControllers
 
 			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNVMfRemoteControllers(testEnv.ctx, request)
@@ -428,84 +299,33 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.NVMfRemoteController
-		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
-		"valid request with invalid SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
-			true,
-		},
-		"valid request with invalid marshal SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevNvmeGetControllerResult"),
-			true,
-		},
-		"valid request with empty SPDK response": {
-			controllerID,
-			nil,
-			[]string{""},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "EOF"),
-			true,
-		},
-		"valid request with ID mismatch SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response ID mismatch"),
-			true,
-		},
-		"valid request with error code from SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response error: myopierr"),
-			true,
-		},
-		"valid request with valid SPDK response": {
+		"valid request": {
 			controllerID,
 			&pb.NVMfRemoteController{
-				Name:    controllerID,
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
-				Subnqn:  "nqn.2016-06.io.spdk:cnode1",
-				Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+				Name:      controllerName,
+				Multipath: controller.Multipath,
 			},
-			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"opi-nvme8","ctrlrs":[{"state":"enabled","trid":{"trtype":"TCP","adrfam":"IPv4","traddr":"127.0.0.1","trsvcid":"4444","subnqn":"nqn.2016-06.io.spdk:cnode1"},"cntlid":1,"host":{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c","addr":"","svcid":""}}]}]}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerID] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerID] = &controller
 
 			request := &pb.GetNVMfRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNVMfRemoteController(testEnv.ctx, request)
@@ -568,7 +388,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerID] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerID] = &controller
 
 			request := &pb.NVMfRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NVMfRemoteControllerStats(testEnv.ctx, request)
@@ -596,82 +416,29 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
-		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
-		"valid request with invalid SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete Crypto: %v", controllerID),
-			true,
-			false,
-		},
-		"valid request with invalid marshal SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go value of type spdk.BdevNvmeDetachControllerResult"),
-			true,
-			false,
-		},
-		"valid request with empty SPDK response": {
-			controllerID,
-			nil,
-			[]string{""},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_detach_controller: %v", "EOF"),
-			true,
-			false,
-		},
-		"valid request with ID mismatch SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response ID mismatch"),
-			true,
-			false,
-		},
-		"valid request with error code from SPDK response": {
-			controllerID,
-			nil,
-			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
-			codes.Unknown,
-			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response error: myopierr"),
-			true,
-			false,
-		},
-		"valid request with valid SPDK response": {
+		"valid request": {
 			controllerID,
 			&emptypb.Empty{},
-			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
 			&emptypb.Empty{},
-			[]string{""},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 	}
@@ -679,11 +446,11 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
-			testEnv.opiSpdkServer.Volumes.NvmeVolumes[controllerName] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
 
 			request := &pb.DeleteNVMfRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
