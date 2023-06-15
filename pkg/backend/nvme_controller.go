@@ -36,6 +36,11 @@ func (s *Server) CreateNVMfRemoteController(_ context.Context, in *pb.CreateNVMf
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	if in.NvMfRemoteController.Multipath == pb.NvmeMultipath_NVME_MULTIPATH_UNSPECIFIED {
+		msg := "Multipath type should be specified"
+		log.Printf("error: %v", msg)
+		return nil, status.Error(codes.InvalidArgument, msg)
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvMfRemoteControllerId != "" {
