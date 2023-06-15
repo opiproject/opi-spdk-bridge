@@ -17,6 +17,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
+	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -96,6 +97,19 @@ func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest)
 // DeleteNVMfPath deletes a NVMf path
 func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNVMfPath: Received from client: %v", in)
+
+	// check required fields
+	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	nvmfPath, ok := s.Volumes.NvmePaths[in.Name]
 	if !ok {
 		if in.AllowMissing {
