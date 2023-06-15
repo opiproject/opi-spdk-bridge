@@ -61,7 +61,7 @@ It is just an example and implies SPDK just as example, not mandated by OPI.
 
 ## Real DPU/IPU example
 
-on DPU/IPU (i.e. with IP=10.10.10.1) run
+on DPU/IPU (i.e. with IP=10.10.10.10) run
 
 ```bash
 $ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 ghcr.io/opiproject/opi-spdk-bridge:main
