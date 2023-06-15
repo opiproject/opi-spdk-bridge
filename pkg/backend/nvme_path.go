@@ -142,7 +142,7 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
-		return nil, spdk.ErrFailedSpdkCall
+		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 
