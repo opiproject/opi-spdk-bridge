@@ -7,9 +7,11 @@ package backend
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -152,6 +154,119 @@ func TestBackEnd_CreateNVMfPath(t *testing.T) {
 						t.Error("error message: expected", tt.errMsg, "received", er.Message())
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestBackEnd_DeleteNVMfPath(t *testing.T) {
+	tests := map[string]struct {
+		in      string
+		out     *emptypb.Empty
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		start   bool
+		missing bool
+	}{
+		"valid request with invalid SPDK response": {
+			testNvmePathID,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			codes.InvalidArgument,
+			fmt.Sprintf("Could not delete Null Dev: %s", testNvmePathID),
+			true,
+			false,
+		},
+		"valid request with invalid marshal SPDK response": {
+			testNvmePathID,
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json: cannot unmarshal array into Go value of type spdk.BdevNvmeDetachControllerResult"),
+			true,
+			false,
+		},
+		"valid request with empty SPDK response": {
+			testNvmePathID,
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("bdev_nvme_detach_controller: %v", "EOF"),
+			true,
+			false,
+		},
+		"valid request with ID mismatch SPDK response": {
+			testNvmePathID,
+			nil,
+			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response ID mismatch"),
+			true,
+			false,
+		},
+		"valid request with error code from SPDK response": {
+			testNvmePathID,
+			nil,
+			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
+			codes.Unknown,
+			fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response error: myopierr"),
+			true,
+			false,
+		},
+		"valid request with valid SPDK response": {
+			testNvmePathID,
+			&emptypb.Empty{},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
+			codes.OK,
+			"",
+			true,
+			false,
+		},
+		"valid request with unknown key": {
+			"unknown-id",
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			false,
+			false,
+		},
+		"unknown key with missing allowed": {
+			"unknown-id",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.OK,
+			"",
+			false,
+			true,
+		},
+	}
+
+	// run tests
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			defer testEnv.Close()
+
+			fname1 := server.ResourceIDToVolumeName(tt.in)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
+
+			request := &pb.DeleteNVMfPathRequest{Name: fname1, AllowMissing: tt.missing}
+			response, err := testEnv.client.DeleteNVMfPath(testEnv.ctx, request)
+			if err != nil {
+				if er, ok := status.FromError(err); ok {
+					if er.Code() != tt.errCode {
+						t.Error("error code: expected", tt.errCode, "received", er.Code())
+					}
+					if er.Message() != tt.errMsg {
+						t.Error("error message: expected", tt.errMsg, "received", er.Message())
+					}
+				}
+			}
+			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
+				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
 			}
 		})
 	}
