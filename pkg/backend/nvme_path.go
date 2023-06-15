@@ -57,16 +57,6 @@ func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest)
 	}
 
 	multipath := ""
-	if numberOfPaths, ok := s.Volumes.NvmeNumberOfPaths[in.NvMfPath.ControllerId.Value]; ok {
-		if numberOfPaths < 1 {
-			log.Printf("error: Entry with number of paths for %v exists with zero paths", in.NvMfPath.ControllerId.Value)
-			return nil, status.Error(codes.Internal, "Internal error")
-		}
-		// set multipath parameter only when at least one path already exists
-		multipath = strings.ToLower(
-			strings.ReplaceAll(controller.Multipath.String(), "NVME_MULTIPATH_", ""),
-		)
-	}
 	params := spdk.BdevNvmeAttachControllerParams{
 		Name:      path.Base(controller.Name),
 		Trtype:    s.opiTransportToSpdk(in.NvMfPath.Trtype),
@@ -89,7 +79,6 @@ func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest)
 
 	response := server.ProtoClone(in.NvMfPath)
 	s.Volumes.NvmePaths[in.NvMfPath.Name] = response
-	s.Volumes.NvmeNumberOfPaths[in.NvMfPath.ControllerId.Value]++
 	log.Printf("CreateNVMfPath: Sending to client: %v", response)
 	return response, nil
 }
@@ -143,10 +132,6 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 	}
 	log.Printf("Received from SPDK: %v", result)
 
-	s.Volumes.NvmeNumberOfPaths[nvmfPath.ControllerId.Value]--
-	if s.Volumes.NvmeNumberOfPaths[nvmfPath.ControllerId.Value] == 0 {
-		delete(s.Volumes.NvmeNumberOfPaths, nvmfPath.ControllerId.Value)
-	}
 	delete(s.Volumes.NvmePaths, in.Name)
 
 	return &emptypb.Empty{}, nil

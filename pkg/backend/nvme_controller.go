@@ -89,9 +89,6 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		log.Printf("error: %v -> %v", err, volume)
 		return nil, err
 	}
-	if s.Volumes.NvmeNumberOfPaths[in.Name] != 0 {
-		return nil, status.Error(codes.FailedPrecondition, "NvmfPaths exist for controller")
-	}
 	delete(s.Volumes.NvmeControllers, volume.Name)
 	return &emptypb.Empty{}, nil
 }
