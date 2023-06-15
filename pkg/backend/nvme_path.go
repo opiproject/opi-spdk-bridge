@@ -57,6 +57,10 @@ func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest)
 	}
 
 	multipath := ""
+	if numberOfPaths := s.numberOfPathsForController(controller.Name); numberOfPaths > 0 {
+		// set multipath parameter only when at least one path already exists
+		multipath = s.opiMultipathToSpdk(controller.Multipath)
+	}
 	params := spdk.BdevNvmeAttachControllerParams{
 		Name:      path.Base(controller.Name),
 		Trtype:    s.opiTransportToSpdk(in.NvMfPath.Trtype),
@@ -143,4 +147,20 @@ func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
 
 func (s *Server) opiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
 	return strings.ReplaceAll(adrfam.String(), "NVMF_ADRFAM_", "")
+}
+
+func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {
+	return strings.ToLower(
+		strings.ReplaceAll(multipath.String(), "NVME_MULTIPATH_", ""),
+	)
+}
+
+func (s *Server) numberOfPathsForController(controllerName string) int {
+	numberOfPaths := 0
+	for _, path := range s.Volumes.NvmePaths {
+		if path.ControllerId.Value == controllerName {
+			numberOfPaths++
+		}
+	}
+	return numberOfPaths
 }

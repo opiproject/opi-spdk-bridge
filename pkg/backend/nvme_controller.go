@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
@@ -88,6 +89,9 @@ func (s *Server) DeleteNVMfRemoteController(_ context.Context, in *pb.DeleteNVMf
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v -> %v", err, volume)
 		return nil, err
+	}
+	if s.numberOfPathsForController(in.Name) > 0 {
+		return nil, status.Error(codes.FailedPrecondition, "NvmfPaths exist for controller")
 	}
 	delete(s.Volumes.NvmeControllers, volume.Name)
 	return &emptypb.Empty{}, nil
