@@ -23,9 +23,11 @@ import (
 )
 
 var (
-	controllerID   = "opi-nvme8"
-	controllerName = server.ResourceIDToVolumeName(controllerID)
-	controller     = pb.NVMfRemoteController{
+	testNvmeCtrlID   = "opi-nvme8"
+	testNvmeCtrlName = server.ResourceIDToVolumeName(testNvmeCtrlID)
+	testNvmeCtrl     = pb.NVMfRemoteController{
+		Hdgst:     false,
+		Ddgst:     false,
 		Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
 	}
 )
@@ -41,7 +43,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
-			&controller,
+			&testNvmeCtrl,
 			nil,
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
@@ -49,17 +51,17 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 		},
 
 		"valid request": {
-			controllerID,
-			&controller,
-			&controller,
+			testNvmeCtrlID,
+			&testNvmeCtrl,
+			&testNvmeCtrl,
 			codes.OK,
 			"",
 			false,
 		},
 		"already exists": {
-			controllerID,
-			&controller,
-			&controller,
+			testNvmeCtrlID,
+			&testNvmeCtrl,
+			&testNvmeCtrl,
 			codes.OK,
 			"",
 			true,
@@ -73,10 +75,10 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
+				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 			}
 			if tt.out != nil {
-				tt.out.Name = controllerName
+				tt.out.Name = testNvmeCtrlName
 			}
 
 			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: tt.id}
@@ -114,7 +116,7 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 		start   bool
 	}{
 		"valid request without SPDK": {
-			controllerID,
+			testNvmeCtrlID,
 			&emptypb.Empty{},
 			[]string{""},
 			codes.OK,
@@ -165,7 +167,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 		existingControllers map[string]*pb.NVMfRemoteController
 	}{
 		"valid request with valid SPDK response": {
-			controllerID,
+			testNvmeCtrlID,
 			[]*pb.NVMfRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
@@ -184,7 +186,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			},
 		},
 		"pagination overflow": {
-			controllerID,
+			testNvmeCtrlID,
 			[]*pb.NVMfRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
@@ -203,7 +205,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			},
 		},
 		"pagination negative": {
-			controllerID,
+			testNvmeCtrlID,
 			nil,
 			codes.InvalidArgument,
 			"negative PageSize is not allowed",
@@ -215,7 +217,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			},
 		},
 		"pagination error": {
-			controllerID,
+			testNvmeCtrlID,
 			nil,
 			codes.NotFound,
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
@@ -227,7 +229,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			},
 		},
 		"pagination": {
-			controllerID,
+			testNvmeCtrlID,
 			[]*pb.NVMfRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
@@ -243,7 +245,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			},
 		},
 		"pagination offset": {
-			controllerID,
+			testNvmeCtrlID,
 			[]*pb.NVMfRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme13"),
@@ -303,10 +305,10 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request": {
-			controllerID,
+			testNvmeCtrlID,
 			&pb.NVMfRemoteController{
-				Name:      controllerName,
-				Multipath: controller.Multipath,
+				Name:      testNvmeCtrlName,
+				Multipath: testNvmeCtrl.Multipath,
 			},
 			codes.OK,
 			"",
@@ -325,7 +327,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(false, []string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerID] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
 
 			request := &pb.GetNVMfRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNVMfRemoteController(testEnv.ctx, request)
@@ -362,7 +364,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 		start   bool
 	}{
 		"valid request with valid SPDK response": {
-			controllerID,
+			testNvmeCtrlID,
 			&pb.VolumeStats{
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
@@ -388,7 +390,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerID] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
 
 			request := &pb.NVMfRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NVMfRemoteControllerStats(testEnv.ctx, request)
@@ -421,7 +423,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 		missing bool
 	}{
 		"valid request": {
-			controllerID,
+			testNvmeCtrlID,
 			&emptypb.Empty{},
 			codes.OK,
 			"",
@@ -450,7 +452,7 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 
 			request := &pb.DeleteNVMfRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
