@@ -142,7 +142,28 @@ func (s *Server) UpdateAioController(_ context.Context, in *pb.UpdateAioControll
 	volume, ok := s.Volumes.AioVolumes[in.AioController.Name]
 	if !ok {
 		if in.AllowMissing {
-			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
+			params := spdk.BdevAioCreateParams{
+				Name:      path.Base(in.AioController.Name),
+				BlockSize: 512,
+				Filename:  in.AioController.Filename,
+			}
+			var result spdk.BdevAioCreateResult
+			err := s.rpc.Call("bdev_aio_create", &params, &result)
+			if err != nil {
+				log.Printf("error: %v", err)
+				return nil, err
+			}
+			log.Printf("Received from SPDK: %v", result)
+			if result == "" {
+				msg := fmt.Sprintf("Could not create Aio Dev: %s", params.Name)
+				log.Print(msg)
+				return nil, status.Errorf(codes.InvalidArgument, msg)
+			}
+			response := server.ProtoClone(in.AioController)
+			s.Volumes.AioVolumes[in.AioController.Name] = response
+			log.Printf("CreateAioController: Sending to client: %v", response)
+			return response, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.AioController.Name)
 		log.Printf("error: %v", err)

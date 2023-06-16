@@ -143,7 +143,28 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Name]
 	if !ok {
 		if in.AllowMissing {
-			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
+			params := spdk.BdevNullCreateParams{
+				Name:      path.Base(in.NullDebug.Name),
+				BlockSize: 512,
+				NumBlocks: 64,
+			}
+			var result spdk.BdevNullCreateResult
+			err := s.rpc.Call("bdev_null_create", &params, &result)
+			if err != nil {
+				log.Printf("error: %v", err)
+				return nil, err
+			}
+			log.Printf("Received from SPDK: %v", result)
+			if result == "" {
+				msg := fmt.Sprintf("Could not create Null Dev: %s", params.Name)
+				log.Print(msg)
+				return nil, status.Errorf(codes.InvalidArgument, msg)
+			}
+			response := server.ProtoClone(in.NullDebug)
+			s.Volumes.NullVolumes[in.NullDebug.Name] = response
+			log.Printf("CreateNullDebug: Sending to client: %v", response)
+			return response, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NullDebug.Name)
 		log.Printf("error: %v", err)
