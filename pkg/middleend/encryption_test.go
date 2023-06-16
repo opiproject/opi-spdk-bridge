@@ -1135,6 +1135,15 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 			true,
 		},
+		"malformed name": {
+			"-ABC-DEF",
+			&emptypb.Empty{},
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+			false,
+		},
 	}
 
 	// run tests

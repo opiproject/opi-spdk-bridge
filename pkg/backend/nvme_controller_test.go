@@ -443,6 +443,13 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			"",
 			true,
 		},
+		"malformed name": {
+			"-ABC-DEF",
+			&emptypb.Empty{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
 	}
 
 	// run tests
