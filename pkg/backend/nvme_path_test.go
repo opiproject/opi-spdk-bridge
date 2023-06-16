@@ -282,6 +282,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -290,6 +291,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
 			false,
 		},
 		// "delete fails": {
@@ -300,6 +302,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.InvalidArgument,
 		// 	fmt.Sprintf("Could not delete Null Dev: %s", testNvmePathID),
 		// 	true,
+		//	false,
 		// },
 		// "delete empty": {
 		// 	nil,
@@ -309,6 +312,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("bdev_nvme_detach_controller: %v", "EOF"),
 		// 	true,
+		//	false,
 		// },
 		// "delete ID mismatch": {
 		// 	nil,
@@ -318,6 +322,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response ID mismatch"),
 		// 	true,
+		//	false,
 		// },
 		// "delete exception": {
 		// 	nil,
@@ -327,6 +332,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("bdev_nvme_detach_controller: %v", "json response error: myopierr"),
 		// 	true,
+		//	false,
 		// },
 		// "delete ok create fails": {
 		// 	nil,
@@ -336,6 +342,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.InvalidArgument,
 		// 	fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
 		// 	true,
+		//	false,
 		// },
 		// "delete ok create empty": {
 		// 	nil,
@@ -345,6 +352,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("bdev_nvme_attach_controller: %v", "EOF"),
 		// 	true,
+		//	false,
 		// },
 		// "delete ok create ID mismatch": {
 		// 	nil,
@@ -354,6 +362,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response ID mismatch"),
 		// 	true,
+		//	false,
 		// },
 		// "delete ok create exception": {
 		// 	nil,
@@ -363,6 +372,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response error: myopierr"),
 		// 	true,
+		//	false,
 		// },
 		// "valid request with valid SPDK response": {
 		// 	nil,
@@ -372,6 +382,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// 	codes.OK,
 		// 	"",
 		// 	true,
+		//	false,
 		// },
 		"valid request with unknown key": {
 			nil,
@@ -387,6 +398,23 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
+			false,
+		},
+		"unknown key with missing allowed": {
+			nil,
+			&pb.NVMfPath{
+				Name:    server.ResourceIDToVolumeName("unknown-id"),
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+				Traddr:  "127.0.0.1",
+				Trsvcid: 4444,
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			false,
+			true,
 		},
 	}
 
@@ -399,7 +427,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 			testNvmePath.Name = testNvmePathName
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
 
-			request := &pb.UpdateNVMfPathRequest{NvMfPath: tt.in, UpdateMask: tt.mask}
+			request := &pb.UpdateNVMfPathRequest{NvMfPath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNVMfPath(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

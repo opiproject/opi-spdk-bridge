@@ -306,6 +306,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		// "invalid fieldmask": {
 		// 	&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -315,6 +316,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		// 	codes.Unknown,
 		// 	fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
 		// 	false,
+		//  false,
 		// },
 		"bdev delete fails": {
 			nil,
@@ -324,6 +326,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete Crypto: %s", encryptedVolumeID),
 			true,
+			false,
 		},
 		"bdev delete empty": {
 			nil,
@@ -333,6 +336,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "EOF"),
 			true,
+			false,
 		},
 		"bdev delete ID mismatch": {
 			nil,
@@ -342,6 +346,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"bdev delete exception": {
 			nil,
@@ -351,6 +356,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_delete: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete fails": {
 			nil,
@@ -360,6 +366,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not destroy Crypto Key: %v", encryptedVolumeID),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete empty": {
 			nil,
@@ -369,6 +376,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_destroy: %v", "EOF"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ID mismatch": {
 			nil,
@@ -378,6 +386,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_destroy: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete exception": {
 			nil,
@@ -387,6 +396,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_destroy: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create fails": {
 			nil,
@@ -396,6 +406,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Crypto Key: %v", "0123456789abcdef0123456789abcdef"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create empty": {
 			nil,
@@ -405,6 +416,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "EOF"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create ID mismatch": {
 			nil,
@@ -414,6 +426,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create exception": {
 			nil,
@@ -423,6 +436,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("accel_crypto_key_create: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create fails": {
 			nil,
@@ -432,6 +446,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Crypto Dev: %v", encryptedVolumeID),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create empty": {
 			nil,
@@ -441,6 +456,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "EOF"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create ID mismatch": {
 			nil,
@@ -450,6 +466,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create exception": {
 			nil,
@@ -459,6 +476,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"use AES_XTS_128 cipher ; bdev delete ok ; key delete ok ; key create ok ; bdev create ok": {
 			nil,
@@ -468,6 +486,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"use AES_XTS_192 cipher": {
 			nil,
@@ -481,6 +500,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
 			false,
 		},
 		"use AES_XTS_256 cipher ; bdev delete ok ; key delete ok ; key create ok ; bdev create ok": {
@@ -501,6 +521,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"use AES_CBC_128 cipher": {
 			nil,
@@ -514,6 +535,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
 			false,
 		},
 		"use AES_CBC_192 cipher": {
@@ -529,6 +551,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
 			false,
+			false,
 		},
 		"use AES_CBC_256 cipher": {
 			nil,
@@ -542,6 +565,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
+			false,
 			false,
 		},
 		"use UNSPECIFIED cipher": {
@@ -557,6 +581,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
 			false,
+			false,
 		},
 		"invalid key size for AES_XTS_128": {
 			nil,
@@ -570,6 +595,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			fmt.Sprintf("expected key size %vb, provided size %vb", 256, (4 * 8)),
+			false,
 			false,
 		},
 		"invalid key size for AES_XTS_256": {
@@ -585,6 +611,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("expected key size %vb, provided size %vb", 512, (4 * 8)),
 			false,
+			false,
 		},
 	}
 
@@ -594,7 +621,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in, UpdateMask: tt.mask}
+			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateEncryptedVolume(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

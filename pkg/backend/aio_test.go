@@ -164,6 +164,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -172,6 +173,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			false,
 			false,
 		},
 		"delete fails": {
@@ -182,6 +184,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete Aio Dev: %s", testAioVolumeID),
 			true,
+			false,
 		},
 		"delete empty": {
 			nil,
@@ -191,6 +194,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_delete: %v", "EOF"),
 			true,
+			false,
 		},
 		"delete ID mismatch": {
 			nil,
@@ -200,6 +204,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_delete: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"delete exception": {
 			nil,
@@ -209,6 +214,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_delete: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"delete ok create fails": {
 			nil,
@@ -218,6 +224,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Aio Dev: %v", testAioVolumeID),
 			true,
+			false,
 		},
 		"delete ok create empty": {
 			nil,
@@ -227,6 +234,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_create: %v", "EOF"),
 			true,
+			false,
 		},
 		"delete ok create ID mismatch": {
 			nil,
@@ -236,6 +244,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_create: %v", "json response ID mismatch"),
 			true,
+			false,
 		},
 		"delete ok create exception": {
 			nil,
@@ -245,6 +254,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("bdev_aio_create: %v", "json response error: myopierr"),
 			true,
+			false,
 		},
 		"valid request with valid SPDK response": {
 			nil,
@@ -254,6 +264,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			false,
 		},
 		"valid request with unknown key": {
 			nil,
@@ -268,6 +279,22 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
+			false,
+		},
+		"unknown key with missing allowed": {
+			nil,
+			&pb.AioController{
+				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				BlockSize:   512,
+				BlocksCount: 12,
+				Filename:    "/tmp/aio_bdev_file",
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			false,
+			true,
 		},
 	}
 
@@ -280,7 +307,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			testAioVolume.Name = testAioVolumeName
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
-			request := &pb.UpdateAioControllerRequest{AioController: tt.in, UpdateMask: tt.mask}
+			request := &pb.UpdateAioControllerRequest{AioController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
