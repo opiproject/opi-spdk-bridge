@@ -32,7 +32,7 @@ var (
 		Trsvcid:      4444,
 		Subnqn:       "nqn.2016-06.io.spdk:cnode1",
 		Hostnqn:      "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-		ControllerId: &pc.ObjectKey{Value: controllerName},
+		ControllerId: &pc.ObjectKey{Value: testNvmeCtrlName},
 	}
 )
 
@@ -125,7 +125,7 @@ func TestBackEnd_CreateNVMfPath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 			if tt.exist {
 				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
 			}
@@ -252,7 +252,7 @@ func TestBackEnd_DeleteNVMfPath(t *testing.T) {
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[controllerName] = &controller
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 
 			request := &pb.DeleteNVMfPathRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNVMfPath(testEnv.ctx, request)
