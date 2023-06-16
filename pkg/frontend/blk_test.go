@@ -116,6 +116,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -127,6 +128,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
 			false,
+			false,
 		},
 		"unimplemented method": {
 			nil,
@@ -137,6 +139,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateVirtioBlk"),
+			false,
 			false,
 		},
 		"valid request with unknown key": {
@@ -152,6 +155,22 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
+			false,
+		},
+		"unknown key with missing allowed": {
+			nil,
+			&pb.VirtioBlk{
+				Name:     server.ResourceIDToVolumeName("unknown-id"),
+				PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
+				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
+				MaxIoQps: 1,
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			false,
+			true,
 		},
 	}
 
@@ -163,7 +182,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = &testVirtioCtrl
 
-			request := &pb.UpdateVirtioBlkRequest{VirtioBlk: tt.in, UpdateMask: tt.mask}
+			request := &pb.UpdateVirtioBlkRequest{VirtioBlk: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateVirtioBlk(testEnv.ctx, request)
 			if response != nil {
 				t.Error("response: expected", codes.Unimplemented, "received", response)

@@ -301,6 +301,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		start   bool
+		missing bool
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -312,6 +313,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
 			false,
+			false,
 		},
 		"unimplemented method": {
 			nil,
@@ -322,6 +324,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			[]string{""},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateNvmeSubsystem"),
+			false,
 			false,
 		},
 		"valid request with unknown key": {
@@ -337,6 +340,22 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
+			false,
+		},
+		"unknown key with missing allowed": {
+			nil,
+			&pb.NvmeSubsystem{
+				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Spec: &pb.NvmeSubsystemSpec{
+					Nqn: "nqn.2022-09.io.spdk:opi3",
+				},
+			},
+			nil,
+			[]string{""},
+			codes.NotFound,
+			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			false,
+			true,
 		},
 	}
 
@@ -348,7 +367,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 
-			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in, UpdateMask: tt.mask}
+			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data

@@ -466,6 +466,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		errMsg      string
 		start       bool
 		existBefore bool
+		missing     bool
 	}{
 		// "invalid fieldmask": {
 		// 	mask: &fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
@@ -482,6 +483,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		// 	errMsg:      fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
 		// 	start:       false,
 		// 	existBefore: true,
+		//	missing:	 false,
 		// },
 		"min_limit is not supported": {
 			mask: nil,
@@ -498,6 +500,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume min_limit is not supported",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit rd_iops_kiops is not supported": {
 			mask: nil,
@@ -514,6 +517,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit rd_iops_kiops is not supported",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit wr_iops_kiops is not supported": {
 			mask: nil,
@@ -530,6 +534,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit wr_iops_kiops is not supported",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit rw_iops_kiops is negative": {
 			mask: nil,
@@ -546,6 +551,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit rw_iops_kiops cannot be negative",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit rd_bandwidth_kiops is negative": {
 			mask: nil,
@@ -562,6 +568,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit rd_bandwidth_mbs cannot be negative",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit wr_bandwidth_kiops is negative": {
 			mask: nil,
@@ -578,6 +585,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit wr_bandwidth_mbs cannot be negative",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit rw_bandwidth_kiops is negative": {
 			mask: nil,
@@ -594,6 +602,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit rw_bandwidth_mbs cannot be negative",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"max_limit with all zero limits": {
 			mask: nil,
@@ -608,6 +617,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume max_limit should set limit",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"qos_volume_id is empty": {
 			mask: nil,
@@ -622,6 +632,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "QoS volume name cannot be empty",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"volume_id is nil": {
 			mask: nil,
@@ -636,6 +647,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "volume_id cannot be empty",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"volume_id is empty": {
 			mask: nil,
@@ -650,6 +662,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "volume_id cannot be empty",
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"qos volume does not exist": {
 			mask:        nil,
@@ -660,6 +673,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      fmt.Sprintf("unable to find key %s", testQosVolumeName),
 			start:       false,
 			existBefore: false,
+			missing:     false,
 		},
 		"change underlying volume": {
 			mask: nil,
@@ -675,6 +689,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 				originalQosVolume.VolumeId.Value, "new-underlying-volume-id"),
 			start:       false,
 			existBefore: true,
+			missing:     false,
 		},
 		"SPDK call failed": {
 			mask:        nil,
@@ -685,6 +700,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
 			start:       true,
 			existBefore: true,
+			missing:     false,
 		},
 		"SPDK call result false": {
 			mask:        nil,
@@ -695,6 +711,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
 			start:       true,
 			existBefore: true,
+			missing:     false,
 		},
 		"successful update": {
 			mask:        nil,
@@ -705,6 +722,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "",
 			start:       true,
 			existBefore: true,
+			missing:     false,
 		},
 		"update with the same limit values": {
 			mask:        nil,
@@ -715,6 +733,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errMsg:      "",
 			start:       true,
 			existBefore: true,
+			missing:     false,
 		},
 	}
 
@@ -727,7 +746,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = originalQosVolume
 			}
 
-			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in, UpdateMask: tt.mask}
+			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateQosVolume(testEnv.ctx, request)
 
 			marshalledOut, _ := proto.Marshal(tt.out)
