@@ -319,6 +319,12 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
 		},
+		"malformed name": {
+			"-ABC-DEF",
+			nil,
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+		},
 	}
 
 	// run tests

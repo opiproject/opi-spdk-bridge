@@ -896,6 +896,14 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
+		"malformed name": {
+			"-ABC-DEF",
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
 	}
 
 	// run tests
