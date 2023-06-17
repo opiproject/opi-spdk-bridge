@@ -5,10 +5,10 @@ go 1.19
 require (
 	github.com/digitalocean/go-qemu v0.0.0-20221209210016-f035778c97f7
 	github.com/google/uuid v1.3.0
-	github.com/opiproject/gospdk v0.0.0-20230615112113-12a52a623c70
+	github.com/opiproject/gospdk v0.0.0-20230617012653-6fe2a5b162b8
 	github.com/opiproject/opi-api v0.0.0-20230615175343-c311c6c3cd13
 	go.einride.tech/aip v0.60.0
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.0
 	google.golang.org/protobuf v1.30.0
 )
 
