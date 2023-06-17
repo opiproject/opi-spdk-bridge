@@ -13,6 +13,8 @@ github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/opiproject/gospdk v0.0.0-20230615112113-12a52a623c70 h1:uRg12IPMoJdwgviPEGB2zZBAqnKAOgRteQ4ggyui/qw=
 github.com/opiproject/gospdk v0.0.0-20230615112113-12a52a623c70/go.mod h1:Unf3idtaelGKnTbIbJ+oKsxrBOFdVdFlDnwUKKVSxPQ=
+github.com/opiproject/gospdk v0.0.0-20230617012653-6fe2a5b162b8 h1:IkEl2lXDFogjmBxsB8qIFNrh5HV7eMkBOokChceb5QA=
+github.com/opiproject/gospdk v0.0.0-20230617012653-6fe2a5b162b8/go.mod h1:/LOOupb1RGssmi2OWstiDh/vctbHIoB3cMhZjHxVqgg=
 github.com/opiproject/opi-api v0.0.0-20230615133417-473a14c3541d h1:FQncsBSZV6SSCTM4hV0aWf3w4sepx96A96GXlDQQ79E=
 github.com/opiproject/opi-api v0.0.0-20230615133417-473a14c3541d/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20230615175343-c311c6c3cd13 h1:brneaf2KpxyoPbx5pj8LbOjTCIHoxmE7Laz7WOFzFsY=
@@ -68,6 +70,8 @@ google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc h1:
 google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc/go.mod h1:66JfowdXAEgad5O9NnYcsNPLCPZJD++2L9X0PCMODrA=
 google.golang.org/grpc v1.55.0 h1:3Oj82/tFSCeUrRTg/5E/7d/W5A1tj6Ky1ABAuZuv5ag=
 google.golang.org/grpc v1.55.0/go.mod h1:iYEXKGkEBhg1PjZQvoYEVPTDkHo1/bjTnfwTeGONTY8=
+google.golang.org/grpc v1.56.0 h1:+y7Bs8rtMd07LeXmL3NxcTLn7mUkbKZqEpPhMNkwJEE=
+google.golang.org/grpc v1.56.0/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
 google.golang.org/protobuf v1.30.0 h1:kPPoIgf3TsEvrm0PFe15JQ+570QVxYzEvvHqChK+cng=
