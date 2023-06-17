@@ -71,7 +71,7 @@ jobs:
 
     - uses: actions/checkout@v3
     - uses: docker/setup-qemu-action@v2
-    - uses: docker/setup-buildx-action@bdd549bec0b79f87fdf6064e966f34404a39cc33
+    - uses: docker/setup-buildx-action@ecf95283f03858871ff00b787d79c419715afc34
 
     - name: Start containers
       run: docker-compose up --build --force-recreate --detach
