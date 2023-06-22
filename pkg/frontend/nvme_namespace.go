@@ -94,6 +94,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 
 	response := server.ProtoClone(in.NvmeNamespace)
 	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	response.Spec.HostNsid = int32(result)
 	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
 	return response, nil
 }
