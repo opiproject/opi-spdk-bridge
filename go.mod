@@ -8,7 +8,7 @@ require (
 	github.com/opiproject/gospdk v0.0.0-20230617012653-6fe2a5b162b8
 	github.com/opiproject/opi-api v0.0.0-20230617012429-e33accd8da8d
 	go.einride.tech/aip v0.60.0
-	google.golang.org/grpc v1.56.0
+	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.30.0
 )
 
