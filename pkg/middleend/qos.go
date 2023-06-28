@@ -109,11 +109,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	// if err := resourcename.Validate(in.QosVolume.Name); err != nil {
-	// 	log.Printf("error: %v", err)
-	// 	return nil, err
-	// }
+
 	// fetch object from the database
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
@@ -252,6 +248,10 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	if volume.Name == "" {
 		return fmt.Errorf("QoS volume name cannot be empty")
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(volume.Name); err != nil {
+		return err
 	}
 	if volume.VolumeId == nil || volume.VolumeId.Value == "" {
 		return fmt.Errorf("volume_id cannot be empty")
