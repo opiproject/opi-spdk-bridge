@@ -613,6 +613,16 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			false,
 			false,
 		},
+		"malformed name": {
+			nil,
+			&pb.EncryptedVolume{Name: "-ABC-DEF"},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+			false,
+		},
 	}
 
 	// run tests

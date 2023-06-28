@@ -735,6 +735,17 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			existBefore: true,
 			missing:     false,
 		},
+		"malformed name": {
+			mask:        nil,
+			in:          &pb.QosVolume{Name: "-ABC-DEF"},
+			out:         nil,
+			spdk:        []string{""},
+			errCode:     codes.InvalidArgument,
+			errMsg:      fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			start:       false,
+			existBefore: false,
+			missing:     false,
+		},
 	}
 
 	for name, tt := range tests {
