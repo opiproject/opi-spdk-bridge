@@ -297,6 +297,16 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			true,
 			true,
 		},
+		"malformed name": {
+			nil,
+			&pb.NullDebug{Name: "-ABC-DEF"},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+			false,
+		},
 	}
 
 	// run tests

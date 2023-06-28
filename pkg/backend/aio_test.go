@@ -301,6 +301,16 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			true,
 			true,
 		},
+		"malformed name": {
+			nil,
+			&pb.AioController{Name: "-ABC-DEF"},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+			false,
+		},
 	}
 
 	// run tests
