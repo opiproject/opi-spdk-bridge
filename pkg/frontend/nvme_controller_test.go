@@ -398,6 +398,16 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			false,
 			true,
 		},
+		"malformed name": {
+			nil,
+			&pb.NvmeController{Name: "-ABC-DEF"},
+			nil,
+			[]string{""},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+			false,
+		},
 	}
 
 	// run tests
