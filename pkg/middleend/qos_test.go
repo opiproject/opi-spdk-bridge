@@ -1026,6 +1026,14 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			errMsg:  "",
 			start:   true,
 		},
+		"malformed name": {
+			in:      &_go.ObjectKey{Value: "-ABC-DEF"},
+			out:     nil,
+			spdk:    []string{""},
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			start:   false,
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
