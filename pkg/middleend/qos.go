@@ -204,15 +204,15 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	// if err := resourcename.Validate(in.VolumeId.Value); err != nil {
-	// 	log.Printf("error: %v", err)
-	// 	return nil, err
-	// }
-	// fetch object from the database
 	if in.VolumeId == nil || in.VolumeId.Value == "" {
 		return nil, status.Error(codes.InvalidArgument, "volume_id cannot be empty")
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.VolumeId.Value); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
 	volume, ok := s.volumes.qosVolumes[in.VolumeId.Value]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VolumeId.Value)
