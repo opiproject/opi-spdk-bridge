@@ -283,15 +283,15 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				}
 			}
 
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
 			}
 		})
 	}
@@ -644,15 +644,15 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 				}
 			}
 
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
 			}
 		})
 	}
@@ -669,12 +669,12 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 		size    int32
 		token   string
 	}{
-		"valid request with invalid SPDK response": {
+		"valid request with empty result SPDK response": {
 			"volume-test",
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
-			codes.InvalidArgument,
-			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
+			codes.OK,
+			"",
 			true,
 			0,
 			"",
@@ -825,15 +825,15 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 				}
 			}
 
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
 			}
 		})
 	}
@@ -934,15 +934,15 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 				}
 			}
 
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
 			}
 		})
 	}
@@ -1047,15 +1047,15 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 				}
 			}
 
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
 			}
 		})
 	}
@@ -1183,16 +1183,18 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 
 			request := &pb.DeleteEncryptedVolumeRequest{Name: fname1, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)
-			if err != nil {
-				if er, ok := status.FromError(err); ok {
-					if er.Code() != tt.errCode {
-						t.Error("error code: expected", tt.errCode, "received", er.Code())
-					}
-					if er.Message() != tt.errMsg {
-						t.Error("error message: expected", tt.errMsg, "received", er.Message())
-					}
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
 			}
+
 			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
 				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
 			}
