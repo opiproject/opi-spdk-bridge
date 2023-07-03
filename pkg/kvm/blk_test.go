@@ -7,7 +7,6 @@ package kvm
 import (
 	"bytes"
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -15,6 +14,8 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -36,7 +37,8 @@ func TestCreateVirtioBlk(t *testing.T) {
 
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
-		expectError          error
+		errCode              codes.Code
+		errMsg               string
 		nonDefaultQmpAddress string
 		buses                []string
 
@@ -55,21 +57,24 @@ func TestCreateVirtioBlk(t *testing.T) {
 				ExpectQueryPci(testVirtioBlkID),
 		},
 		"spdk failed to create virtio-blk": {
-			in:          testCreateVirtioBlkRequest,
-			jsonRPC:     alwaysFailingJSONRPC,
-			expectError: errStub,
+			in:      testCreateVirtioBlkRequest,
+			jsonRPC: alwaysFailingJSONRPC,
+			errCode: status.Convert(errStub).Code(),
+			errMsg:  status.Convert(errStub).Message(),
 		},
 		"qemu chardev add failed": {
-			in:          testCreateVirtioBlkRequest,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			expectError: errAddChardevFailed,
+			in:      testCreateVirtioBlkRequest,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			errCode: status.Convert(errAddChardevFailed).Code(),
+			errMsg:  status.Convert(errAddChardevFailed).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectAddChardev(testVirtioBlkID).WithErrorResponse(),
 		},
 		"qemu device add failed": {
-			in:          testCreateVirtioBlkRequest,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			expectError: errAddDeviceFailed,
+			in:      testCreateVirtioBlkRequest,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			errCode: status.Convert(errAddDeviceFailed).Code(),
+			errMsg:  status.Convert(errAddDeviceFailed).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectAddChardev(testVirtioBlkID).
 				ExpectAddVirtioBlk(testVirtioBlkID, testVirtioBlkID).WithErrorResponse().
@@ -79,7 +84,8 @@ func TestCreateVirtioBlk(t *testing.T) {
 			in:                   testCreateVirtioBlkRequest,
 			nonDefaultQmpAddress: "/dev/null",
 			jsonRPC:              alwaysSuccessfulJSONRPC,
-			expectError:          errMonitorCreation,
+			errCode:              status.Convert(errMonitorCreation).Code(),
+			errMsg:               status.Convert(errMonitorCreation).Message(),
 		},
 		"valid virtio-blk creation with on first bus location": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
@@ -111,11 +117,12 @@ func TestCreateVirtioBlk(t *testing.T) {
 				ExpectQueryPci(testVirtioBlkID),
 		},
 		"virtio-blk creation with physical function goes out of buses": {
-			in:          testCreateVirtioBlkRequest,
-			out:         nil,
-			expectError: errDeviceEndpoint,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			buses:       []string{"pci.opi.0"},
+			in:      testCreateVirtioBlkRequest,
+			out:     nil,
+			errCode: status.Convert(errDeviceEndpoint).Code(),
+			errMsg:  status.Convert(errDeviceEndpoint).Message(),
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			buses:   []string{"pci.opi.0"},
 		},
 		"negative physical function": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
@@ -123,10 +130,11 @@ func TestCreateVirtioBlk(t *testing.T) {
 				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 				MaxIoQps: 1,
 			}, VirtioBlkId: testVirtioBlkID},
-			out:         nil,
-			expectError: errDeviceEndpoint,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			buses:       []string{"pci.opi.0"},
+			out:     nil,
+			errCode: status.Convert(errDeviceEndpoint).Code(),
+			errMsg:  status.Convert(errDeviceEndpoint).Message(),
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			buses:   []string{"pci.opi.0"},
 		},
 		"nil pcie endpoint": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
@@ -134,9 +142,10 @@ func TestCreateVirtioBlk(t *testing.T) {
 				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
 				MaxIoQps: 1,
 			}, VirtioBlkId: testVirtioBlkID},
-			out:         nil,
-			expectError: errNoPcieEndpoint,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
+			out:     nil,
+			errCode: status.Convert(errNoPcieEndpoint).Code(),
+			errMsg:  status.Convert(errNoPcieEndpoint).Message(),
+			jsonRPC: alwaysSuccessfulJSONRPC,
 		},
 	}
 
@@ -154,9 +163,18 @@ func TestCreateVirtioBlk(t *testing.T) {
 			request := server.ProtoClone(test.in)
 
 			out, err := kvmServer.CreateVirtioBlk(context.Background(), request)
-			if !errors.Is(err, test.expectError) {
-				t.Errorf("Expected error %v, got %v", test.expectError, err)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != test.errCode {
+					t.Error("error code: expected", test.errCode, "received", er.Code())
+				}
+				if er.Message() != test.errMsg {
+					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expected grpc error status")
 			}
+
 			gotOut, _ := proto.Marshal(out)
 			wantOut, _ := proto.Marshal(test.out)
 			if !bytes.Equal(gotOut, wantOut) {
@@ -172,7 +190,8 @@ func TestCreateVirtioBlk(t *testing.T) {
 func TestDeleteVirtioBlk(t *testing.T) {
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
-		expectError          error
+		errCode              codes.Code
+		errMsg               string
 		nonDefaultQmpAddress string
 
 		mockQmpCalls *mockQmpCalls
@@ -184,36 +203,41 @@ func TestDeleteVirtioBlk(t *testing.T) {
 				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"qemu device delete failed": {
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			expectError: errDevicePartiallyDeleted,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			errCode: status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:  status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteVirtioBlk(testVirtioBlkID).WithErrorResponse().
 				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"qemu device delete failed by timeout": {
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			expectError: errDevicePartiallyDeleted,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			errCode: status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:  status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteVirtioBlk(testVirtioBlkID).
 				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"qemu chardev delete failed": {
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			expectError: errDevicePartiallyDeleted,
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			errCode: status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:  status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteVirtioBlkWithEvent(testVirtioBlkID).
 				ExpectDeleteChardev(testVirtioBlkID).WithErrorResponse(),
 		},
 		"spdk failed to delete virtio-blk": {
-			jsonRPC:     alwaysFailingJSONRPC,
-			expectError: errDevicePartiallyDeleted,
+			jsonRPC: alwaysFailingJSONRPC,
+			errCode: status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:  status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteVirtioBlkWithEvent(testVirtioBlkID).
 				ExpectDeleteChardev(testVirtioBlkID),
 		},
 		"all qemu and spdk calls failed": {
-			jsonRPC:     alwaysFailingJSONRPC,
-			expectError: errDeviceNotDeleted,
+			jsonRPC: alwaysFailingJSONRPC,
+			errCode: status.Convert(errDeviceNotDeleted).Code(),
+			errMsg:  status.Convert(errDeviceNotDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteVirtioBlk(testVirtioBlkID).WithErrorResponse().
 				ExpectDeleteChardev(testVirtioBlkID).WithErrorResponse(),
@@ -221,7 +245,8 @@ func TestDeleteVirtioBlk(t *testing.T) {
 		"failed to create monitor": {
 			nonDefaultQmpAddress: "/dev/null",
 			jsonRPC:              alwaysSuccessfulJSONRPC,
-			expectError:          errMonitorCreation,
+			errCode:              status.Convert(errMonitorCreation).Code(),
+			errMsg:               status.Convert(errMonitorCreation).Message(),
 		},
 	}
 
@@ -242,9 +267,18 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			request := server.ProtoClone(testDeleteVirtioBlkRequest)
 
 			_, err := kvmServer.DeleteVirtioBlk(context.Background(), request)
-			if !errors.Is(err, test.expectError) {
-				t.Errorf("Expected %v, got %v", test.expectError, err)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != test.errCode {
+					t.Error("error code: expected", test.errCode, "received", er.Code())
+				}
+				if er.Message() != test.errMsg {
+					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expected grpc error status")
 			}
+
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")
 			}

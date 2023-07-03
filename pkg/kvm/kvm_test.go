@@ -5,7 +5,6 @@
 package kvm
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -18,10 +17,12 @@ import (
 	"time"
 
 	"github.com/opiproject/gospdk/spdk"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
-	errStub                 = errors.New("stub error")
+	errStub                 = status.Error(codes.Internal, "stub error")
 	alwaysSuccessfulJSONRPC = stubJSONRRPC{nil}
 	alwaysFailingJSONRPC    = stubJSONRRPC{errStub}
 
