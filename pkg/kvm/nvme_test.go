@@ -7,7 +7,6 @@ package kvm
 import (
 	"bytes"
 	"context"
-	"errors"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,6 +18,8 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -126,9 +127,10 @@ func TestCreateNvmeController(t *testing.T) {
 		ctrlrDirExistsAfterOperation  bool
 		buses                         []string
 
-		in          *pb.CreateNvmeControllerRequest
-		out         *pb.NvmeController
-		expectError error
+		in      *pb.CreateNvmeControllerRequest
+		out     *pb.NvmeController
+		errCode codes.Code
+		errMsg  string
 
 		mockQmpCalls *mockQmpCalls
 	}{
@@ -138,7 +140,8 @@ func TestCreateNvmeController(t *testing.T) {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  true,
-			expectError:                   nil,
+			errCode:                       codes.OK,
+			errMsg:                        "",
 			mockQmpCalls: newMockQmpCalls().
 				ExpectAddNvmeController(testNvmeControllerID, testSubsystemID).
 				ExpectQueryPci(testNvmeControllerID),
@@ -148,14 +151,16 @@ func TestCreateNvmeController(t *testing.T) {
 			jsonRPC:                       alwaysFailingJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
-			expectError:                   errStub,
+			errCode:                       status.Convert(errStub).Code(),
+			errMsg:                        status.Convert(errStub).Message(),
 		},
 		"qemu Nvme controller add failed": {
 			in:                            testCreateNvmeControllerRequest,
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
-			expectError:                   errAddDeviceFailed,
+			errCode:                       status.Convert(errAddDeviceFailed).Code(),
+			errMsg:                        status.Convert(errAddDeviceFailed).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectAddNvmeController(testNvmeControllerID, testSubsystemID).WithErrorResponse(),
 		},
@@ -165,14 +170,16 @@ func TestCreateNvmeController(t *testing.T) {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
-			expectError:                   errMonitorCreation,
+			errCode:                       status.Convert(errMonitorCreation).Code(),
+			errMsg:                        status.Convert(errMonitorCreation).Message(),
 		},
 		"Ctrlr dir already exists": {
 			in:                            testCreateNvmeControllerRequest,
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
-			expectError:                   errFailedToCreateNvmeDir,
+			errCode:                       status.Convert(errFailedToCreateNvmeDir).Code(),
+			errMsg:                        status.Convert(errFailedToCreateNvmeDir).Message(),
 		},
 		"empty subsystem in request": {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
@@ -188,7 +195,8 @@ func TestCreateNvmeController(t *testing.T) {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
-			expectError:                   errInvalidSubsystem,
+			errCode:                       status.Convert(errInvalidSubsystem).Code(),
+			errMsg:                        status.Convert(errInvalidSubsystem).Message(),
 		},
 		"valid Nvme creation with on first bus location": {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
@@ -232,11 +240,12 @@ func TestCreateNvmeController(t *testing.T) {
 				ExpectQueryPci(testNvmeControllerID),
 		},
 		"Nvme creation with physical function goes out of buses": {
-			in:          testCreateNvmeControllerRequest,
-			out:         nil,
-			expectError: errDeviceEndpoint,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			buses:       []string{"pci.opi.0"},
+			in:      testCreateNvmeControllerRequest,
+			out:     nil,
+			errCode: status.Convert(errDeviceEndpoint).Code(),
+			errMsg:  status.Convert(errDeviceEndpoint).Message(),
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			buses:   []string{"pci.opi.0"},
 		},
 		"negative physical function": {
 			in: &pb.CreateNvmeControllerRequest{
@@ -252,10 +261,11 @@ func TestCreateNvmeController(t *testing.T) {
 						Active: true,
 					},
 				}, NvmeControllerId: testNvmeControllerID},
-			out:         nil,
-			expectError: errDeviceEndpoint,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
-			buses:       []string{"pci.opi.0"},
+			out:     nil,
+			errCode: status.Convert(errDeviceEndpoint).Code(),
+			errMsg:  status.Convert(errDeviceEndpoint).Message(),
+			jsonRPC: alwaysSuccessfulJSONRPC,
+			buses:   []string{"pci.opi.0"},
 		},
 		"nil pcie endpoint": {
 			in: &pb.CreateNvmeControllerRequest{
@@ -269,9 +279,10 @@ func TestCreateNvmeController(t *testing.T) {
 						Active: true,
 					},
 				}, NvmeControllerId: testNvmeControllerID},
-			out:         nil,
-			expectError: errNoPcieEndpoint,
-			jsonRPC:     alwaysSuccessfulJSONRPC,
+			out:     nil,
+			errCode: status.Convert(errNoPcieEndpoint).Code(),
+			errMsg:  status.Convert(errNoPcieEndpoint).Message(),
+			jsonRPC: alwaysSuccessfulJSONRPC,
 		},
 	}
 
@@ -295,9 +306,17 @@ func TestCreateNvmeController(t *testing.T) {
 			request := server.ProtoClone(test.in)
 
 			out, err := kvmServer.CreateNvmeController(context.Background(), request)
-			if !errors.Is(err, test.expectError) {
-				t.Errorf("Expected error %v, got %v", test.expectError, err)
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != test.errCode {
+					t.Error("error code: expected", test.errCode, "received", er.Code())
+				}
+				if er.Message() != test.errMsg {
+					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expected grpc error status")
 			}
+
 			gotOut, _ := proto.Marshal(out)
 			wantOut, _ := proto.Marshal(test.out)
 			if !bytes.Equal(gotOut, wantOut) {
@@ -323,7 +342,8 @@ func TestDeleteNvmeController(t *testing.T) {
 		ctrlrDirExistsAfterOperation  bool
 		nonEmptyCtrlrDirAfterSpdkCall bool
 		noController                  bool
-		expectError                   error
+		errCode                       codes.Code
+		errMsg                        string
 
 		mockQmpCalls *mockQmpCalls
 	}{
@@ -332,7 +352,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
-			expectError:                   nil,
+			errCode:                       codes.OK,
+			errMsg:                        "",
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).
 				ExpectNoDeviceQueryPci(),
@@ -342,7 +363,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
-			expectError:                   errDevicePartiallyDeleted,
+			errCode:                       status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:                        status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).WithErrorResponse(),
 		},
@@ -351,7 +373,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  false,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
-			expectError:                   errDevicePartiallyDeleted,
+			errCode:                       status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:                        status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).
 				ExpectNoDeviceQueryPci(),
@@ -362,14 +385,16 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
-			expectError:                   errMonitorCreation,
+			errCode:                       status.Convert(errMonitorCreation).Code(),
+			errMsg:                        status.Convert(errMonitorCreation).Message(),
 		},
 		"ctrlr dir is not empty after SPDK call": {
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
 			nonEmptyCtrlrDirAfterSpdkCall: true,
-			expectError:                   errDevicePartiallyDeleted,
+			errCode:                       status.Convert(errDevicePartiallyDeleted).Code(),
+			errMsg:                        status.Convert(errDevicePartiallyDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).
 				ExpectNoDeviceQueryPci(),
@@ -379,7 +404,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
-			expectError:                   nil,
+			errCode:                       codes.OK,
+			errMsg:                        "",
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).
 				ExpectNoDeviceQueryPci(),
@@ -389,7 +415,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsBeforeOperation: true,
 			ctrlrDirExistsAfterOperation:  true,
 			nonEmptyCtrlrDirAfterSpdkCall: true,
-			expectError:                   errDeviceNotDeleted,
+			errCode:                       status.Convert(errDeviceNotDeleted).Code(),
+			errMsg:                        status.Convert(errDeviceNotDeleted).Message(),
 			mockQmpCalls: newMockQmpCalls().
 				ExpectDeleteNvmeController(testNvmeControllerID).WithErrorResponse(),
 		},
@@ -399,7 +426,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsAfterOperation:  true,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
 			noController:                  true,
-			expectError:                   errNoController,
+			errCode:                       status.Convert(errNoController).Code(),
+			errMsg:                        status.Convert(errNoController).Message(),
 		},
 	}
 
@@ -435,9 +463,18 @@ func TestDeleteNvmeController(t *testing.T) {
 			request := server.ProtoClone(testDeleteNvmeControllerRequest)
 
 			_, err := kvmServer.DeleteNvmeController(context.Background(), request)
-			if !errors.Is(err, test.expectError) {
-				t.Errorf("Expected error %v, got %v", test.expectError, err)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != test.errCode {
+					t.Error("error code: expected", test.errCode, "received", er.Code())
+				}
+				if er.Message() != test.errMsg {
+					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Errorf("expected grpc error status")
 			}
+
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")
 			}
