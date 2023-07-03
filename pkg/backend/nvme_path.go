@@ -145,6 +145,11 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not delete Nvme Path: %s", path.Base(in.Name))
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
 
 	delete(s.Volumes.NvmePaths, in.Name)
 
