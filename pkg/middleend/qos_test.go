@@ -305,7 +305,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
-				t.Errorf("expect grpc error status")
+				t.Error("expected grpc error status")
 			}
 
 			vol, ok := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName]
@@ -440,7 +440,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
-				t.Errorf("expect grpc error status")
+				t.Error("expected grpc error status")
 			}
 
 			_, ok := testEnv.opiSpdkServer.volumes.qosVolumes[fname1]
@@ -774,7 +774,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
-				t.Errorf("expect grpc error status")
+				t.Error("expected grpc error status")
 			}
 
 			vol := testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName]
@@ -896,7 +896,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
-				t.Errorf("expect grpc error status")
+				t.Error("expected grpc error status")
 			}
 
 			if response != nil {
@@ -959,7 +959,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
-				t.Errorf("expect grpc error status")
+				t.Error("expected grpc error status")
 			}
 
 			if tt.errCode == codes.OK && !proto.Equal(tt.out, response) {
@@ -1053,7 +1053,7 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
-				t.Errorf("expect grpc error status")
+				t.Error("expected grpc error status")
 			}
 
 			if tt.errCode == codes.OK && !proto.Equal(tt.out, response) {
