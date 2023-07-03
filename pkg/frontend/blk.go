@@ -69,12 +69,13 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
-		return nil, fmt.Errorf("%w for %v", spdk.ErrFailedSpdkCall, in)
+		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		log.Printf("Could not create: %v", in)
-		return nil, fmt.Errorf("%w for %v", spdk.ErrUnexpectedSpdkCallResult, in)
+		msg := fmt.Sprintf("Could not create virtio-blk: %s", resourceID)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := server.ProtoClone(in.VirtioBlk)
 	// response.Status = &pb.NvmeControllerStatus{Active: true}
@@ -117,7 +118,9 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		log.Printf("Could not delete: %v", in)
+		msg := fmt.Sprintf("Could not delete virtio-blk: %s", resourceID)
+		log.Print(msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Virt.BlkCtrls, controller.Name)
 	return &emptypb.Empty{}, nil
