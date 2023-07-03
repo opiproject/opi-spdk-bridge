@@ -57,7 +57,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 		"spdk failed to create virtio-blk": {
 			in:          testCreateVirtioBlkRequest,
 			jsonRPC:     alwaysFailingJSONRPC,
-			expectError: spdk.ErrFailedSpdkCall,
+			expectError: errStub,
 		},
 		"qemu chardev add failed": {
 			in:          testCreateVirtioBlkRequest,
