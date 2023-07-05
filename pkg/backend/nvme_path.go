@@ -27,41 +27,41 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func sortNVMfPaths(paths []*pb.NVMfPath) {
+func sortNvmePaths(paths []*pb.NvmePath) {
 	sort.Slice(paths, func(i int, j int) bool {
 		return paths[i].Subnqn < paths[j].Subnqn
 	})
 }
 
-// CreateNVMfPath creates a new NVMf path
-func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest) (*pb.NVMfPath, error) {
-	log.Printf("CreateNVMfPath: Received from client: %v", in)
+// CreateNvmePath creates a new Nvme path
+func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest) (*pb.NvmePath, error) {
+	log.Printf("CreateNvmePath: Received from client: %v", in)
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	resourceID := resourceid.NewSystemGenerated()
-	if in.NvMfPathId != "" {
-		err := resourceid.ValidateUserSettable(in.NvMfPathId)
+	if in.NvmePathId != "" {
+		err := resourceid.ValidateUserSettable(in.NvmePathId)
 		if err != nil {
 			log.Printf("error: %v", err)
 			return nil, err
 		}
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvMfPathId, in.NvMfPath.Name)
-		resourceID = in.NvMfPathId
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmePathId, in.NvmePath.Name)
+		resourceID = in.NvmePathId
 	}
-	in.NvMfPath.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NvmePath.Name = server.ResourceIDToVolumeName(resourceID)
 
-	nvmfPath, ok := s.Volumes.NvmePaths[in.NvMfPath.Name]
+	nvmePath, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
 	if ok {
-		log.Printf("Already existing NVMfPath with id %v", in.NvMfPath.Name)
-		return nvmfPath, nil
+		log.Printf("Already existing NvmePath with id %v", in.NvmePath.Name)
+		return nvmePath, nil
 	}
 
-	controller, ok := s.Volumes.NvmeControllers[in.NvMfPath.ControllerId.Value]
+	controller, ok := s.Volumes.NvmeControllers[in.NvmePath.ControllerId.Value]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find NVMfRemoteController by key %s", in.NvMfPath.ControllerId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.NvmePath.ControllerId.Value)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -73,12 +73,12 @@ func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest)
 	}
 	params := spdk.BdevNvmeAttachControllerParams{
 		Name:      path.Base(controller.Name),
-		Trtype:    s.opiTransportToSpdk(in.NvMfPath.Trtype),
-		Traddr:    in.NvMfPath.Traddr,
-		Adrfam:    s.opiAdressFamilyToSpdk(in.NvMfPath.Adrfam),
-		Trsvcid:   fmt.Sprint(in.NvMfPath.Trsvcid),
-		Subnqn:    in.NvMfPath.Subnqn,
-		Hostnqn:   in.NvMfPath.Hostnqn,
+		Trtype:    s.opiTransportToSpdk(in.NvmePath.Trtype),
+		Traddr:    in.NvmePath.Traddr,
+		Adrfam:    s.opiAdressFamilyToSpdk(in.NvmePath.Adrfam),
+		Trsvcid:   fmt.Sprint(in.NvmePath.Trsvcid),
+		Subnqn:    in.NvmePath.Subnqn,
+		Hostnqn:   in.NvmePath.Hostnqn,
 		Multipath: multipath,
 		Hdgst:     controller.Hdgst,
 		Ddgst:     controller.Ddgst,
@@ -91,15 +91,15 @@ func (s *Server) CreateNVMfPath(_ context.Context, in *pb.CreateNVMfPathRequest)
 	}
 	log.Printf("Received from SPDK: %v", result)
 
-	response := server.ProtoClone(in.NvMfPath)
-	s.Volumes.NvmePaths[in.NvMfPath.Name] = response
-	log.Printf("CreateNVMfPath: Sending to client: %v", response)
+	response := server.ProtoClone(in.NvmePath)
+	s.Volumes.NvmePaths[in.NvmePath.Name] = response
+	log.Printf("CreateNvmePath: Sending to client: %v", response)
 	return response, nil
 }
 
-// DeleteNVMfPath deletes a NVMf path
-func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNVMfPath: Received from client: %v", in)
+// DeleteNvmePath deletes a Nvme path
+func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest) (*emptypb.Empty, error) {
+	log.Printf("DeleteNvmePath: Received from client: %v", in)
 
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
@@ -113,7 +113,7 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 		return nil, err
 	}
 
-	nvmfPath, ok := s.Volumes.NvmePaths[in.Name]
+	nvmePath, ok := s.Volumes.NvmePaths[in.Name]
 	if !ok {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
@@ -122,20 +122,20 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	controller, ok := s.Volumes.NvmeControllers[nvmfPath.ControllerId.Value]
+	controller, ok := s.Volumes.NvmeControllers[nvmePath.ControllerId.Value]
 	if !ok {
-		err := status.Errorf(codes.Internal, "unable to find NVMfRemoteController by key %s", nvmfPath.ControllerId.Value)
+		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", nvmePath.ControllerId.Value)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	params := spdk.BdevNvmeDetachControllerParams{
 		Name:    path.Base(controller.Name),
-		Trtype:  s.opiTransportToSpdk(nvmfPath.Trtype),
-		Traddr:  nvmfPath.Traddr,
-		Adrfam:  s.opiAdressFamilyToSpdk(nvmfPath.Adrfam),
-		Trsvcid: fmt.Sprint(nvmfPath.Trsvcid),
-		Subnqn:  nvmfPath.Subnqn,
+		Trtype:  s.opiTransportToSpdk(nvmePath.Trtype),
+		Traddr:  nvmePath.Traddr,
+		Adrfam:  s.opiAdressFamilyToSpdk(nvmePath.Adrfam),
+		Trsvcid: fmt.Sprint(nvmePath.Trsvcid),
+		Subnqn:  nvmePath.Subnqn,
 	}
 
 	var result spdk.BdevNvmeDetachControllerResult
@@ -156,44 +156,44 @@ func (s *Server) DeleteNVMfPath(_ context.Context, in *pb.DeleteNVMfPathRequest)
 	return &emptypb.Empty{}, nil
 }
 
-// UpdateNVMfPath updates an Nvme path
-func (s *Server) UpdateNVMfPath(_ context.Context, in *pb.UpdateNVMfPathRequest) (*pb.NVMfPath, error) {
-	log.Printf("UpdateNVMfPath: Received from client: %v", in)
+// UpdateNvmePath updates an Nvme path
+func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
+	log.Printf("UpdateNvmePath: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvMfPath.Name); err != nil {
+	if err := resourcename.Validate(in.NvmePath.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmePaths[in.NvMfPath.Name]
+	volume, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvMfPath.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmePath.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
-	if err := fieldmask.Validate(in.UpdateMask, in.NvMfPath); err != nil {
+	if err := fieldmask.Validate(in.UpdateMask, in.NvmePath); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	response := server.ProtoClone(in.NvMfPath)
-	// s.Volumes.NvmePaths[in.NvMfPath.Name] = response
+	response := server.ProtoClone(in.NvmePath)
+	// s.Volumes.NvmePaths[in.NvmePath.Name] = response
 	return response, nil
 }
 
-// ListNVMfPaths lists Nvme path
-func (s *Server) ListNVMfPaths(_ context.Context, in *pb.ListNVMfPathsRequest) (*pb.ListNVMfPathsResponse, error) {
-	log.Printf("ListNVMfPaths: Received from client: %v", in)
+// ListNvmePaths lists Nvme path
+func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (*pb.ListNvmePathsResponse, error) {
+	log.Printf("ListNvmePaths: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -219,18 +219,18 @@ func (s *Server) ListNVMfPaths(_ context.Context, in *pb.ListNVMfPathsRequest) (
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
 	}
-	Blobarray := make([]*pb.NVMfPath, len(result))
+	Blobarray := make([]*pb.NvmePath, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NVMfPath{Name: r.Name /* TODO: fill this */}
+		Blobarray[i] = &pb.NvmePath{Name: r.Name /* TODO: fill this */}
 	}
-	sortNVMfPaths(Blobarray)
-	return &pb.ListNVMfPathsResponse{NvMfPaths: Blobarray, NextPageToken: token}, nil
+	sortNvmePaths(Blobarray)
+	return &pb.ListNvmePathsResponse{NvmePaths: Blobarray, NextPageToken: token}, nil
 }
 
-// GetNVMfPath gets Nvme path
-func (s *Server) GetNVMfPath(_ context.Context, in *pb.GetNVMfPathRequest) (*pb.NVMfPath, error) {
-	log.Printf("GetNVMfPath: Received from client: %v", in)
+// GetNvmePath gets Nvme path
+func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.NvmePath, error) {
+	log.Printf("GetNvmePath: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -260,7 +260,7 @@ func (s *Server) GetNVMfPath(_ context.Context, in *pb.GetNVMfPathRequest) (*pb.
 	for i := range result {
 		r := &result[i]
 		if r.Name != "" {
-			return &pb.NVMfPath{ /* TODO: fill this */ }, nil
+			return &pb.NvmePath{ /* TODO: fill this */ }, nil
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", path.Subnqn)
@@ -268,9 +268,9 @@ func (s *Server) GetNVMfPath(_ context.Context, in *pb.GetNVMfPathRequest) (*pb.
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
-// NVMfPathStats gets Nvme path stats
-func (s *Server) NVMfPathStats(_ context.Context, in *pb.NVMfPathStatsRequest) (*pb.NVMfPathStatsResponse, error) {
-	log.Printf("NVMfPathStats: Received from client: %v", in)
+// NvmePathStats gets Nvme path stats
+func (s *Server) NvmePathStats(_ context.Context, in *pb.NvmePathStatsRequest) (*pb.NvmePathStatsResponse, error) {
+	log.Printf("NvmePathStats: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -297,7 +297,7 @@ func (s *Server) NVMfPathStats(_ context.Context, in *pb.NVMfPathStatsRequest) (
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NVMfPathStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+	return &pb.NvmePathStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
@@ -305,7 +305,7 @@ func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
 }
 
 func (s *Server) opiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
-	return strings.ReplaceAll(adrfam.String(), "NVMF_ADRFAM_", "")
+	return strings.ReplaceAll(adrfam.String(), "NVME_ADRFAM_", "")
 }
 
 func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {

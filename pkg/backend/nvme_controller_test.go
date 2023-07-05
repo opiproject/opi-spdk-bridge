@@ -25,18 +25,18 @@ import (
 var (
 	testNvmeCtrlID   = "opi-nvme8"
 	testNvmeCtrlName = server.ResourceIDToVolumeName(testNvmeCtrlID)
-	testNvmeCtrl     = pb.NVMfRemoteController{
+	testNvmeCtrl     = pb.NvmeRemoteController{
 		Hdgst:     false,
 		Ddgst:     false,
 		Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
 	}
 )
 
-func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
+func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		id      string
-		in      *pb.NVMfRemoteController
-		out     *pb.NVMfRemoteController
+		in      *pb.NvmeRemoteController
+		out     *pb.NvmeRemoteController
 		errCode codes.Code
 		errMsg  string
 		exist   bool
@@ -81,8 +81,8 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 				tt.out.Name = testNvmeCtrlName
 			}
 
-			request := &pb.CreateNVMfRemoteControllerRequest{NvMfRemoteController: tt.in, NvMfRemoteControllerId: tt.id}
-			response, err := testEnv.client.CreateNVMfRemoteController(testEnv.ctx, request)
+			request := &pb.CreateNvmeRemoteControllerRequest{NvmeRemoteController: tt.in, NvmeRemoteControllerId: tt.id}
+			response, err := testEnv.client.CreateNvmeRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
 				mtt, _ := proto.Marshal(tt.out)
@@ -106,7 +106,7 @@ func TestBackEnd_CreateNVMfRemoteController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
+func TestBackEnd_NvmeRemoteControllerReset(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -131,8 +131,8 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 			testEnv := createTestEnvironment(tt.start, tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.NVMfRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.NVMfRemoteControllerReset(testEnv.ctx, request)
+			request := &pb.NvmeRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			response, err := testEnv.client.NvmeRemoteControllerReset(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
 				mtt, _ := proto.Marshal(tt.out)
@@ -156,19 +156,19 @@ func TestBackEnd_NVMfRemoteControllerReset(t *testing.T) {
 	}
 }
 
-func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
+func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 	tests := map[string]struct {
 		in                  string
-		out                 []*pb.NVMfRemoteController
+		out                 []*pb.NvmeRemoteController
 		errCode             codes.Code
 		errMsg              string
 		size                int32
 		token               string
-		existingControllers map[string]*pb.NVMfRemoteController
+		existingControllers map[string]*pb.NvmeRemoteController
 	}{
 		"valid request with valid SPDK response": {
 			testNvmeCtrlID,
-			[]*pb.NVMfRemoteController{
+			[]*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
@@ -180,14 +180,14 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			0,
 			"",
-			map[string]*pb.NVMfRemoteController{
+			map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination overflow": {
 			testNvmeCtrlID,
-			[]*pb.NVMfRemoteController{
+			[]*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
@@ -199,7 +199,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			1000,
 			"",
-			map[string]*pb.NVMfRemoteController{
+			map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
@@ -211,7 +211,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"negative PageSize is not allowed",
 			-10,
 			"",
-			map[string]*pb.NVMfRemoteController{
+			map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
@@ -223,14 +223,14 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
 			0,
 			"unknown-pagination-token",
-			map[string]*pb.NVMfRemoteController{
+			map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination": {
 			testNvmeCtrlID,
-			[]*pb.NVMfRemoteController{
+			[]*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
@@ -239,14 +239,14 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			1,
 			"",
-			map[string]*pb.NVMfRemoteController{
+			map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination offset": {
 			testNvmeCtrlID,
-			[]*pb.NVMfRemoteController{
+			[]*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
@@ -255,7 +255,7 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			"",
 			1,
 			"existing-pagination-token",
-			map[string]*pb.NVMfRemoteController{
+			map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
@@ -271,11 +271,11 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 			testEnv.opiSpdkServer.Volumes.NvmeControllers = tt.existingControllers
 
-			request := &pb.ListNVMfRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
-			response, err := testEnv.client.ListNVMfRemoteControllers(testEnv.ctx, request)
+			request := &pb.ListNvmeRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			response, err := testEnv.client.ListNvmeRemoteControllers(testEnv.ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.NvMfRemoteControllers, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.NvMfRemoteControllers)
+				if !reflect.DeepEqual(response.NvmeRemoteControllers, tt.out) {
+					t.Error("response: expected", tt.out, "received", response.NvmeRemoteControllers)
 				}
 				// Empty NextPageToken indicates end of results list
 				if tt.size != 1 && response.NextPageToken != "" {
@@ -297,16 +297,16 @@ func TestBackEnd_ListNVMfRemoteControllers(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
+func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     *pb.NVMfRemoteController
+		out     *pb.NvmeRemoteController
 		errCode codes.Code
 		errMsg  string
 	}{
 		"valid request": {
 			testNvmeCtrlID,
-			&pb.NVMfRemoteController{
+			&pb.NvmeRemoteController{
 				Name:      testNvmeCtrlName,
 				Multipath: testNvmeCtrl.Multipath,
 			},
@@ -335,8 +335,8 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
 
-			request := &pb.GetNVMfRemoteControllerRequest{Name: tt.in}
-			response, err := testEnv.client.GetNVMfRemoteController(testEnv.ctx, request)
+			request := &pb.GetNvmeRemoteControllerRequest{Name: tt.in}
+			response, err := testEnv.client.GetNvmeRemoteController(testEnv.ctx, request)
 			if response != nil {
 				// if !reflect.DeepEqual(response, tt.out) {
 				mtt, _ := proto.Marshal(tt.out)
@@ -360,7 +360,7 @@ func TestBackEnd_GetNVMfRemoteController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
+func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -406,8 +406,8 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
 
-			request := &pb.NVMfRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.NVMfRemoteControllerStats(testEnv.ctx, request)
+			request := &pb.NvmeRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			response, err := testEnv.client.NvmeRemoteControllerStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response)
@@ -428,7 +428,7 @@ func TestBackEnd_NVMfRemoteControllerStats(t *testing.T) {
 	}
 }
 
-func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
+func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -475,8 +475,8 @@ func TestBackEnd_DeleteNVMfRemoteController(t *testing.T) {
 			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 
-			request := &pb.DeleteNVMfRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
-			response, err := testEnv.client.DeleteNVMfRemoteController(testEnv.ctx, request)
+			request := &pb.DeleteNvmeRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
+			response, err := testEnv.client.DeleteNvmeRemoteController(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {

@@ -23,7 +23,7 @@ import (
 // TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
 
 type backendClient struct {
-	pb.NVMfRemoteControllerServiceClient
+	pb.NvmeRemoteControllerServiceClient
 	pb.NullDebugServiceClient
 	pb.AioControllerServiceClient
 }
@@ -65,7 +65,7 @@ func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEn
 	env.conn = conn
 
 	env.client = &backendClient{
-		pb.NewNVMfRemoteControllerServiceClient(env.conn),
+		pb.NewNvmeRemoteControllerServiceClient(env.conn),
 		pb.NewNullDebugServiceClient(env.conn),
 		pb.NewAioControllerServiceClient(env.conn),
 	}
@@ -76,7 +76,7 @@ func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEn
 func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
-	pb.RegisterNVMfRemoteControllerServiceServer(server, opiSpdkServer)
+	pb.RegisterNvmeRemoteControllerServiceServer(server, opiSpdkServer)
 	pb.RegisterNullDebugServiceServer(server, opiSpdkServer)
 	pb.RegisterAioControllerServiceServer(server, opiSpdkServer)
 
