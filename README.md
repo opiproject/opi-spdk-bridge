@@ -1,6 +1,7 @@
 # OPI storage gRPC to SPDK json-rpc bridge
 
 [![Linters](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/linters.yml)
+[![CodeQL](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/codeql.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/codeql.yml)
 [![tests](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/opiproject/opi-spdk-bridge/actions/workflows/docker-publish.yml)
 [![License](https://img.shields.io/github/license/opiproject/opi-spdk-bridge?style=flat-square&color=blue&label=License)](https://github.com/opiproject/opi-spdk-bridge/blob/master/LICENSE)
 [![codecov](https://codecov.io/gh/opiproject/opi-spdk-bridge/branch/main/graph/badge.svg)](https://codecov.io/gh/opiproject/opi-spdk-bridge)
