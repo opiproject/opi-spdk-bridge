@@ -25,9 +25,9 @@ import (
 var (
 	testNvmePathID   = "mytest"
 	testNvmePathName = server.ResourceIDToVolumeName(testNvmePathID)
-	testNvmePath     = pb.NVMfPath{
+	testNvmePath     = pb.NvmePath{
 		Trtype:       pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		Adrfam:       pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		Adrfam:       pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		Traddr:       "127.0.0.1",
 		Trsvcid:      4444,
 		Subnqn:       "nqn.2016-06.io.spdk:cnode1",
@@ -36,11 +36,11 @@ var (
 	}
 )
 
-func TestBackEnd_CreateNVMfPath(t *testing.T) {
+func TestBackEnd_CreateNvmePath(t *testing.T) {
 	tests := map[string]struct {
 		id      string
-		in      *pb.NVMfPath
-		out     *pb.NVMfPath
+		in      *pb.NvmePath
+		out     *pb.NvmePath
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -133,8 +133,8 @@ func TestBackEnd_CreateNVMfPath(t *testing.T) {
 				tt.out.Name = testNvmePathName
 			}
 
-			request := &pb.CreateNVMfPathRequest{NvMfPath: tt.in, NvMfPathId: tt.id}
-			response, err := testEnv.client.CreateNVMfPath(testEnv.ctx, request)
+			request := &pb.CreateNvmePathRequest{NvmePath: tt.in, NvmePathId: tt.id}
+			response, err := testEnv.client.CreateNvmePath(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out)
@@ -160,7 +160,7 @@ func TestBackEnd_CreateNVMfPath(t *testing.T) {
 	}
 }
 
-func TestBackEnd_DeleteNVMfPath(t *testing.T) {
+func TestBackEnd_DeleteNvmePath(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -263,8 +263,8 @@ func TestBackEnd_DeleteNVMfPath(t *testing.T) {
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 
-			request := &pb.DeleteNVMfPathRequest{Name: fname1, AllowMissing: tt.missing}
-			response, err := testEnv.client.DeleteNVMfPath(testEnv.ctx, request)
+			request := &pb.DeleteNvmePathRequest{Name: fname1, AllowMissing: tt.missing}
+			response, err := testEnv.client.DeleteNvmePath(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {
@@ -284,11 +284,11 @@ func TestBackEnd_DeleteNVMfPath(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateNVMfPath(t *testing.T) {
+func TestBackEnd_UpdateNvmePath(t *testing.T) {
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
-		in      *pb.NVMfPath
-		out     *pb.NVMfPath
+		in      *pb.NvmePath
+		out     *pb.NvmePath
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -397,10 +397,10 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		// },
 		"valid request with unknown key": {
 			nil,
-			&pb.NVMfPath{
+			&pb.NvmePath{
 				Name:    server.ResourceIDToVolumeName("unknown-id"),
 				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+				Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 				Traddr:  "127.0.0.1",
 				Trsvcid: 4444,
 			},
@@ -413,10 +413,10 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		},
 		"unknown key with missing allowed": {
 			nil,
-			&pb.NVMfPath{
+			&pb.NvmePath{
 				Name:    server.ResourceIDToVolumeName("unknown-id"),
 				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+				Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 				Traddr:  "127.0.0.1",
 				Trsvcid: 4444,
 			},
@@ -429,7 +429,7 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NVMfPath{Name: "-ABC-DEF"},
+			&pb.NvmePath{Name: "-ABC-DEF"},
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -448,8 +448,8 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 			testNvmePath.Name = testNvmePathName
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
 
-			request := &pb.UpdateNVMfPathRequest{NvMfPath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
-			response, err := testEnv.client.UpdateNVMfPath(testEnv.ctx, request)
+			request := &pb.UpdateNvmePathRequest{NvmePath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
+			response, err := testEnv.client.UpdateNvmePath(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out)
@@ -475,10 +475,10 @@ func TestBackEnd_UpdateNVMfPath(t *testing.T) {
 	}
 }
 
-func TestBackEnd_ListNVMfPaths(t *testing.T) {
+func TestBackEnd_ListNvmePaths(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     []*pb.NVMfPath
+		out     []*pb.NvmePath
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -538,18 +538,18 @@ func TestBackEnd_ListNVMfPaths(t *testing.T) {
 		// },
 		// "valid request with valid SPDK response": {
 		// 	testNvmePathID,
-		// 	[]*pb.NVMfPath{
+		// 	[]*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc0",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
 		// 		{
 		// 			Name:    "Malloc1",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -566,18 +566,18 @@ func TestBackEnd_ListNVMfPaths(t *testing.T) {
 		// },
 		// "pagination overflow": {
 		// 	testNvmePathID,
-		// 	[]*pb.NVMfPath{
+		// 	[]*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc0",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
 		// 		{
 		// 			Name:    "Malloc1",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -611,11 +611,11 @@ func TestBackEnd_ListNVMfPaths(t *testing.T) {
 		// },
 		// "pagination": {
 		// 	testNvmePathID,
-		// 	[]*pb.NVMfPath{
+		// 	[]*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc0",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -629,11 +629,11 @@ func TestBackEnd_ListNVMfPaths(t *testing.T) {
 		// },
 		// "pagination offset": {
 		// 	testNvmePathID,
-		// 	[]*pb.NVMfPath{
+		// 	[]*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc1",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -655,11 +655,11 @@ func TestBackEnd_ListNVMfPaths(t *testing.T) {
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListNVMfPathsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
-			response, err := testEnv.client.ListNVMfPaths(testEnv.ctx, request)
+			request := &pb.ListNvmePathsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			response, err := testEnv.client.ListNvmePaths(testEnv.ctx, request)
 			if response != nil {
-				if !reflect.DeepEqual(response.NvMfPaths, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.NvMfPaths)
+				if !reflect.DeepEqual(response.NvmePaths, tt.out) {
+					t.Error("response: expected", tt.out, "received", response.NvmePaths)
 				}
 				// Empty NextPageToken indicates end of results list
 				if tt.size != 1 && response.NextPageToken != "" {
@@ -681,10 +681,10 @@ func TestBackEnd_ListNVMfPaths(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetNVMfPath(t *testing.T) {
+func TestBackEnd_GetNvmePath(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     *pb.NVMfPath
+		out     *pb.NvmePath
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -732,10 +732,10 @@ func TestBackEnd_GetNVMfPath(t *testing.T) {
 		},
 		// "valid request with valid SPDK response": {
 		// 	testNvmePathID,
-		// 	&pb.NVMfPath{
+		// 	&pb.NvmePath{
 		// 		Name:    "Malloc1",
 		// 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		// 		Adrfam:  pb.NvmeAddressFamily_NVMF_ADRFAM_IPV4,
+		// 		Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 		Traddr:  "127.0.0.1",
 		// 		Trsvcid: 4444,
 		// 	},
@@ -770,8 +770,8 @@ func TestBackEnd_GetNVMfPath(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = &testNvmePath
 
-			request := &pb.GetNVMfPathRequest{Name: tt.in}
-			response, err := testEnv.client.GetNVMfPath(testEnv.ctx, request)
+			request := &pb.GetNvmePathRequest{Name: tt.in}
+			response, err := testEnv.client.GetNvmePath(testEnv.ctx, request)
 			if response != nil {
 				// Marshall the request and response, so we can just compare the contained data
 				mtt, _ := proto.Marshal(tt.out)
@@ -796,7 +796,7 @@ func TestBackEnd_GetNVMfPath(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NVMfPathStats(t *testing.T) {
+func TestBackEnd_NvmePathStats(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -886,8 +886,8 @@ func TestBackEnd_NVMfPathStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = &testNvmePath
 
-			request := &pb.NVMfPathStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.NVMfPathStats(testEnv.ctx, request)
+			request := &pb.NvmePathStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			response, err := testEnv.client.NvmePathStats(testEnv.ctx, request)
 			if response != nil {
 				if !reflect.DeepEqual(response.Stats, tt.out) {
 					t.Error("response: expected", tt.out, "received", response)
