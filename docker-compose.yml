@@ -16,6 +16,7 @@ services:
       - "9009:9009"
       - "4444:4444"
       - "5555:5555"
+      - "7777:7777"
     privileged: true
     networks:
       - opi
@@ -62,7 +63,7 @@ services:
     depends_on:
       spdk:
         condition: service_healthy
-    command: sh -c "/opi-spdk-bridge -port=50051 -spdk_addr=/var/tmp/spdk.sock -tcp_trid=$$(getent hosts spdk | awk '{ print $$1 }'):4444"
+    command: sh -c "/opi-spdk-bridge -port=50051 -spdk_addr=/var/tmp/spdk.sock -tcp_trid=$$(getent hosts spdk | awk '{ print $$1 }'):7777"
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 

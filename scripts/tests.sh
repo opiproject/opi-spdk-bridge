@@ -59,8 +59,8 @@ grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeSubsystem "{name : '//storage.opiproject.org/volumes/subsystem1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeController "{name : '//storage.opiproject.org/volumes/controller1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeNamespace "{name :  '//storage.opiproject.org/volumes/namespace1'}"
-docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444'
-docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444 subnqn:nqn.2022-09.io.spdk:opitest1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
+docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777'
+docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777 subnqn:nqn.2022-09.io.spdk:opitest1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
 grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeNamespace "{name : '//storage.opiproject.org/volumes/namespace1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : '//storage.opiproject.org/volumes/controller1'}"
