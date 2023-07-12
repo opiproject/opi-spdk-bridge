@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 concurrency:
   # if workflow for PR or push is already running stop it, and start new one
   group: poc-storage-${{ github.ref }}
@@ -17,6 +20,10 @@ concurrency:
 jobs:
   storage-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     steps:
     - uses: actions/checkout@v3
     - uses: docker/setup-qemu-action@v2
