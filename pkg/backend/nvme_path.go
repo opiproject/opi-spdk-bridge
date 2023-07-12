@@ -71,6 +71,12 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		// set multipath parameter only when at least one path already exists
 		multipath = s.opiMultipathToSpdk(controller.Multipath)
 	}
+	psk := ""
+	if len(controller.Psk) > 0 {
+		log.Printf("Notice, TLS is used to establish connection: to %v", in.NvmePath)
+		// TODO: write controller.Psk to file /tmp/opikey.txt
+		psk = "/tmp/opikey.txt"
+	}
 	params := spdk.BdevNvmeAttachControllerParams{
 		Name:      path.Base(controller.Name),
 		Trtype:    s.opiTransportToSpdk(in.NvmePath.Trtype),
@@ -82,6 +88,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		Multipath: multipath,
 		Hdgst:     controller.Hdgst,
 		Ddgst:     controller.Ddgst,
+		Psk:       psk,
 	}
 	var result []spdk.BdevNvmeAttachControllerResult
 	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
