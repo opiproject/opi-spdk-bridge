@@ -149,36 +149,36 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 	}
 
-	for testName, test := range tests {
+	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
-			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
+			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
-			if test.nonDefaultQmpAddress != "" {
-				qmpAddress = test.nonDefaultQmpAddress
+			if tt.nonDefaultQmpAddress != "" {
+				qmpAddress = tt.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, test.buses)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, tt.buses)
 			kvmServer.timeout = qmplibTimeout
-			request := server.ProtoClone(test.in)
+			request := server.ProtoClone(tt.in)
 
 			out, err := kvmServer.CreateVirtioBlk(context.Background(), request)
 
 			if er, ok := status.FromError(err); ok {
-				if er.Code() != test.errCode {
-					t.Error("error code: expected", test.errCode, "received", er.Code())
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
-				if er.Message() != test.errMsg {
-					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
 				t.Errorf("expected grpc error status")
 			}
 
 			gotOut, _ := proto.Marshal(out)
-			wantOut, _ := proto.Marshal(test.out)
+			wantOut, _ := proto.Marshal(tt.out)
 			if !bytes.Equal(gotOut, wantOut) {
-				t.Errorf("Expected out %v, got %v", test.out, out)
+				t.Errorf("Expected out %v, got %v", tt.out, out)
 			}
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")
@@ -250,17 +250,17 @@ func TestDeleteVirtioBlk(t *testing.T) {
 		},
 	}
 
-	for testName, test := range tests {
+	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName] =
 				server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName].Name = testVirtioBlkName
-			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
+			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
-			if test.nonDefaultQmpAddress != "" {
-				qmpAddress = test.nonDefaultQmpAddress
+			if tt.nonDefaultQmpAddress != "" {
+				qmpAddress = tt.nonDefaultQmpAddress
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
@@ -269,11 +269,11 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			_, err := kvmServer.DeleteVirtioBlk(context.Background(), request)
 
 			if er, ok := status.FromError(err); ok {
-				if er.Code() != test.errCode {
-					t.Error("error code: expected", test.errCode, "received", er.Code())
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
-				if er.Message() != test.errMsg {
-					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
 				t.Errorf("expected grpc error status")

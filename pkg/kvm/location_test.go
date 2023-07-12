@@ -39,17 +39,17 @@ func TestNewDeviceLocator(t *testing.T) {
 		},
 	}
 
-	for testName, test := range tests {
+	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			defer func() {
 				r := recover()
-				if (r != nil) != test.wantPanic {
-					t.Errorf("newDeviceLocator() recover = %v, wantPanic = %v", r, test.wantPanic)
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("newDeviceLocator() recover = %v, wantPanic = %v", r, tt.wantPanic)
 				}
 			}()
-			before := newDeviceLocator(test.buses)
-			if !reflect.DeepEqual(before, test.expectLocator) {
-				t.Error("response: expected", test.expectLocator, "received", before)
+			before := newDeviceLocator(tt.buses)
+			if !reflect.DeepEqual(before, tt.expectLocator) {
+				t.Error("response: expected", tt.expectLocator, "received", before)
 			}
 		})
 	}

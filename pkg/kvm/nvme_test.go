@@ -286,48 +286,48 @@ func TestCreateNvmeController(t *testing.T) {
 		},
 	}
 
-	for testName, test := range tests {
+	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
+			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
-			if test.nonDefaultQmpAddress != "" {
-				qmpAddress = test.nonDefaultQmpAddress
+			if tt.nonDefaultQmpAddress != "" {
+				qmpAddress = tt.nonDefaultQmpAddress
 			}
-			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, test.buses)
+			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, tt.buses)
 			kvmServer.timeout = qmplibTimeout
 			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
-			if test.ctrlrDirExistsBeforeOperation &&
+			if tt.ctrlrDirExistsBeforeOperation &&
 				os.Mkdir(testCtrlrDir, os.ModePerm) != nil {
 				log.Panicf("Couldn't create ctrlr dir for test")
 			}
-			request := server.ProtoClone(test.in)
+			request := server.ProtoClone(tt.in)
 
 			out, err := kvmServer.CreateNvmeController(context.Background(), request)
 			if er, ok := status.FromError(err); ok {
-				if er.Code() != test.errCode {
-					t.Error("error code: expected", test.errCode, "received", er.Code())
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
-				if er.Message() != test.errMsg {
-					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
 				t.Errorf("expected grpc error status")
 			}
 
 			gotOut, _ := proto.Marshal(out)
-			wantOut, _ := proto.Marshal(test.out)
+			wantOut, _ := proto.Marshal(tt.out)
 			if !bytes.Equal(gotOut, wantOut) {
-				t.Errorf("Expected out %v, got %v", test.out, out)
+				t.Errorf("Expected out %v, got %v", tt.out, out)
 			}
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")
 			}
 			ctrlrDirExists := dirExists(testCtrlrDir)
-			if test.ctrlrDirExistsAfterOperation != ctrlrDirExists {
-				t.Errorf("Expect controller dir exists %v, got %v", test.ctrlrDirExistsAfterOperation, ctrlrDirExists)
+			if tt.ctrlrDirExistsAfterOperation != ctrlrDirExists {
+				t.Errorf("Expect controller dir exists %v, got %v", tt.ctrlrDirExistsAfterOperation, ctrlrDirExists)
 			}
 		})
 	}
@@ -431,30 +431,30 @@ func TestDeleteNvmeController(t *testing.T) {
 		},
 	}
 
-	for testName, test := range tests {
+	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(test.jsonRPC)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			if !test.noController {
+			if !tt.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
 					server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerID
 			}
-			qmpServer := startMockQmpServer(t, test.mockQmpCalls)
+			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
-			if test.nonDefaultQmpAddress != "" {
-				qmpAddress = test.nonDefaultQmpAddress
+			if tt.nonDefaultQmpAddress != "" {
+				qmpAddress = tt.nonDefaultQmpAddress
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
 			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
-			if test.ctrlrDirExistsBeforeOperation {
+			if tt.ctrlrDirExistsBeforeOperation {
 				if err := os.Mkdir(testCtrlrDir, os.ModePerm); err != nil {
 					log.Panic(err)
 				}
 
-				if test.nonEmptyCtrlrDirAfterSpdkCall {
+				if tt.nonEmptyCtrlrDirAfterSpdkCall {
 					if err := os.Mkdir(filepath.Join(testCtrlrDir, "ctrlr"), os.ModeDir); err != nil {
 						log.Panic(err)
 					}
@@ -465,11 +465,11 @@ func TestDeleteNvmeController(t *testing.T) {
 			_, err := kvmServer.DeleteNvmeController(context.Background(), request)
 
 			if er, ok := status.FromError(err); ok {
-				if er.Code() != test.errCode {
-					t.Error("error code: expected", test.errCode, "received", er.Code())
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
 				}
-				if er.Message() != test.errMsg {
-					t.Error("error message: expected", test.errMsg, "received", er.Message())
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
 				}
 			} else {
 				t.Errorf("expected grpc error status")
@@ -479,9 +479,9 @@ func TestDeleteNvmeController(t *testing.T) {
 				t.Errorf("Not all expected calls were performed")
 			}
 			ctrlrDirExists := dirExists(testCtrlrDir)
-			if ctrlrDirExists != test.ctrlrDirExistsAfterOperation {
+			if ctrlrDirExists != tt.ctrlrDirExistsAfterOperation {
 				t.Errorf("Expect controller dir exists %v, got %v",
-					test.ctrlrDirExistsAfterOperation, ctrlrDirExists)
+					tt.ctrlrDirExistsAfterOperation, ctrlrDirExists)
 			}
 		})
 	}
