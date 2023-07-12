@@ -77,6 +77,7 @@ func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
 func (c *tcpSubsystemListener) Params(_ *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = nqn
+	result.SecureChannel = false
 	result.ListenAddress.Trtype = "tcp"
 	result.ListenAddress.Traddr = c.listenAddr.String()
 	result.ListenAddress.Trsvcid = c.listenPort
