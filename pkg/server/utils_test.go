@@ -39,3 +39,49 @@ func TestProtoClone(t *testing.T) {
 		})
 	}
 }
+
+func TestEqualProtoSlices(t *testing.T) {
+	tests := map[string]struct {
+		x     []*pb.NvmeController
+		y     []*pb.NvmeController
+		equal bool
+	}{
+		"nils": {
+			x:     nil,
+			y:     nil,
+			equal: true,
+		},
+		"nil, empty array": {
+			x:     nil,
+			y:     []*pb.NvmeController{},
+			equal: true,
+		},
+		"nil, non empty array": {
+			x:     nil,
+			y:     []*pb.NvmeController{{Name: "0"}},
+			equal: false,
+		},
+		"both non empty arrays": {
+			x:     []*pb.NvmeController{{Name: "0"}, {Name: "1"}},
+			y:     []*pb.NvmeController{{Name: "0"}, {Name: "1"}},
+			equal: true,
+		},
+		"non empty but different arrays": {
+			x:     []*pb.NvmeController{{Name: "0"}, {Name: "1"}},
+			y:     []*pb.NvmeController{{Name: "0"}, {Name: "2"}},
+			equal: false,
+		},
+		"non empty arrays with different sizes": {
+			x:     []*pb.NvmeController{{Name: "0"}, {Name: "1"}},
+			y:     []*pb.NvmeController{{Name: "0"}},
+			equal: false,
+		},
+	}
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			if EqualProtoSlices(tt.x, tt.y) != tt.equal {
+				t.Errorf("Expect x: %v and y: %v are equal: %v", tt.x, tt.y, tt.equal)
+			}
+		})
+	}
+}
