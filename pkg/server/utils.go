@@ -147,6 +147,21 @@ func ProtoClone[T proto.Message](protoStruct T) T {
 	return proto.Clone(protoStruct).(T)
 }
 
+// EqualProtoSlices reports if 2 slices containing proto structures are equal
+func EqualProtoSlices[T proto.Message](x, y []T) bool {
+	if len(x) != len(y) {
+		return false
+	}
+
+	for i := 0; i < len(x); i++ {
+		if !proto.Equal(x[i], y[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ResourceIDToVolumeName creates name of volume resource based on ID
 func ResourceIDToVolumeName(resourceID string) string {
 	return fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
