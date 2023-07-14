@@ -6,7 +6,6 @@
 package backend
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
@@ -83,13 +82,9 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 
 			request := &pb.CreateNvmeRemoteControllerRequest{NvmeRemoteController: tt.in, NvmeRemoteControllerId: tt.id}
 			response, err := testEnv.client.CreateNvmeRemoteController(testEnv.ctx, request)
-			if response != nil {
-				// if !reflect.DeepEqual(response, tt.out) {
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -133,13 +128,9 @@ func TestBackEnd_NvmeRemoteControllerReset(t *testing.T) {
 
 			request := &pb.NvmeRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeRemoteControllerReset(testEnv.ctx, request)
-			if response != nil {
-				// if !reflect.DeepEqual(response, tt.out) {
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -273,14 +264,14 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 
 			request := &pb.ListNvmeRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeRemoteControllers(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.NvmeRemoteControllers, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.NvmeRemoteControllers)
-				}
-				// Empty NextPageToken indicates end of results list
-				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
-				}
+
+			if !server.EqualProtoSlices(response.GetNvmeRemoteControllers(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetNvmeRemoteControllers())
+			}
+
+			// Empty NextPageToken indicates end of results list
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, received non-empty next page token", response.GetNextPageToken())
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -337,13 +328,9 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 
 			request := &pb.GetNvmeRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeRemoteController(testEnv.ctx, request)
-			if response != nil {
-				// if !reflect.DeepEqual(response, tt.out) {
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -408,10 +395,9 @@ func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
 
 			request := &pb.NvmeRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeRemoteControllerStats(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Stats, tt.out) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response.GetStats(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetStats())
 			}
 
 			if er, ok := status.FromError(err); ok {
