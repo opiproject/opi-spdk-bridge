@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
@@ -129,15 +129,9 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 
 			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: tt.id}
 			response, err := testEnv.client.CreateNullDebug(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -320,15 +314,9 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 
 			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNullDebug(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -521,14 +509,13 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 
 			request := &pb.ListNullDebugsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNullDebugs(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.NullDebugs, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.NullDebugs)
-				}
-				// Empty NextPageToken indicates end of results list
-				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
-				}
+
+			if !server.EqualProtoSlices(response.GetNullDebugs(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetNullDebugs())
+			}
+
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, received non-empty next page token", response.GetNextPageToken())
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -635,14 +622,9 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 
 			request := &pb.GetNullDebugRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullDebug(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -751,10 +733,9 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 
 			request := &pb.NullDebugStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NullDebugStats(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Stats, tt.out) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response.GetStats(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetStats())
 			}
 
 			if er, ok := status.FromError(err); ok {
