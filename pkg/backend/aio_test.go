@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
@@ -130,15 +130,9 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 
 			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: tt.id}
 			response, err := testEnv.client.CreateAioController(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -324,15 +318,9 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 
 			request := &pb.UpdateAioControllerRequest{AioController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -519,14 +507,14 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 
 			request := &pb.ListAioControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListAioControllers(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.AioControllers, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.AioControllers)
-				}
-				// Empty NextPageToken indicates end of results list
-				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
-				}
+
+			if !server.EqualProtoSlices(response.GetAioControllers(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetAioControllers())
+			}
+
+			// Empty NextPageToken indicates end of results list
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, received non-empty next page token", response.GetNextPageToken())
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -628,14 +616,9 @@ func TestBackEnd_GetAioController(t *testing.T) {
 
 			request := &pb.GetAioControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetAioController(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -744,10 +727,9 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 
 			request := &pb.AioControllerStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.AioControllerStats(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Stats, tt.out) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(tt.out, response.GetStats()) {
+				t.Error("response: expected", tt.out, "received", response.GetStats())
 			}
 
 			if er, ok := status.FromError(err); ok {
