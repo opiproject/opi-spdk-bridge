@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
 package backend
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
@@ -135,15 +135,9 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 
 			request := &pb.CreateNvmePathRequest{NvmePath: tt.in, NvmePathId: tt.id}
 			response, err := testEnv.client.CreateNvmePath(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -450,15 +444,9 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 
 			request := &pb.UpdateNvmePathRequest{NvmePath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmePath(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -657,14 +645,14 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 
 			request := &pb.ListNvmePathsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmePaths(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.NvmePaths, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.NvmePaths)
-				}
-				// Empty NextPageToken indicates end of results list
-				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
-				}
+
+			if !server.EqualProtoSlices(response.GetNvmePaths(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetNvmePaths())
+			}
+
+			// Empty NextPageToken indicates end of results list
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, receieved non-empty next page token", response.GetNextPageToken())
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -772,14 +760,9 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 
 			request := &pb.GetNvmePathRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmePath(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -888,10 +871,9 @@ func TestBackEnd_NvmePathStats(t *testing.T) {
 
 			request := &pb.NvmePathStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmePathStats(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Stats, tt.out) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response.GetStats(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetStats())
 			}
 
 			if er, ok := status.FromError(err); ok {
