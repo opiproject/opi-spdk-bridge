@@ -3,7 +3,7 @@ module github.com/opiproject/opi-spdk-bridge
 go 1.19
 
 require (
-	github.com/digitalocean/go-qemu v0.0.0-20221209210016-f035778c97f7
+	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
 	github.com/google/uuid v1.3.0
 	github.com/opiproject/gospdk v0.0.0-20230706153333-46d1efd3dfde
 	github.com/opiproject/opi-api v0.0.0-20230712141241-3ccebf87270b
