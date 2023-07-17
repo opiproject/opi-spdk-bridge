@@ -65,10 +65,10 @@ func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
 }
 
 // CreateTestSpdkServer creates a mock spdk server for testing
-func CreateTestSpdkServer(socket string, startSpdkServer bool, spdkResponses []string) (net.Listener, spdk.JSONRPC) {
+func CreateTestSpdkServer(socket string, spdkResponses []string) (net.Listener, spdk.JSONRPC) {
 	jsonRPC := spdk.NewSpdkJSONRPC(socket)
 	ln := jsonRPC.StartUnixListener()
-	if startSpdkServer {
+	if len(spdkResponses) > 0 {
 		go spdkMockServerCommunicate(jsonRPC, ln, spdkResponses)
 	}
 	return ln, jsonRPC.(*spdk.SpdkJSONRPC)
