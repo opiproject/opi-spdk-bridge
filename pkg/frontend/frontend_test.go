@@ -49,7 +49,7 @@ func (e *testEnv) Close() {
 func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("frontend")
-	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, startSpdkServer, spdkResponses)
+	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
 	env.opiSpdkServer = NewServer(env.jsonRPC)
 
 	ctx := context.Background()
