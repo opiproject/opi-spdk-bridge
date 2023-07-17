@@ -61,7 +61,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		exist   bool
 	}{
 		"illegal resource_id": {
@@ -70,10 +69,9 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				Spec: spec,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
-			false,
 			false,
 		},
 		"valid request with invalid SPDK response": {
@@ -85,7 +83,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":-1}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NS: %v", testNamespaceName),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -97,7 +94,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_ns: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -109,7 +105,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":-1}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_ns: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -121,7 +116,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":-1}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_ns: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -139,7 +133,6 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":22}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"already exists": {
@@ -148,10 +141,9 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				Spec: spec,
 			},
 			&testNamespace,
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 	}
@@ -159,7 +151,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
@@ -199,7 +191,6 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
@@ -208,7 +199,6 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete NS: %v", testNamespaceName),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -217,7 +207,6 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_ns: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -226,7 +215,6 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_ns: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -235,7 +223,6 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_ns: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -244,34 +231,30 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"valid request with unknown key": {
 			server.ResourceIDToVolumeName("unknown-namespace-id"),
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-namespace-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
 			server.ResourceIDToVolumeName("unknown-id"),
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -279,7 +262,7 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
@@ -322,7 +305,6 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"invalid fieldmask": {
@@ -332,10 +314,9 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 				Spec: spec,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
-			false,
 			false,
 		},
 		"valid request without SPDK": {
@@ -352,10 +333,9 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 					PciOperState: 1,
 				},
 			},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			false,
 		},
 		"valid request with unknown key": {
@@ -365,10 +345,9 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 				Spec: spec,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
@@ -378,20 +357,18 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 				Spec: spec,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			true,
 		},
 		"malformed name": {
 			nil,
 			&pb.NvmeNamespace{Name: "-ABC-DEF"},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -399,7 +376,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = &testNamespace
@@ -449,7 +426,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		size    int32
 		token   string
 	}{
@@ -459,7 +435,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not find any namespaces for NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
 			0,
 			"",
 		},
@@ -469,7 +444,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go value of type []spdk.NvmfGetSubsystemsResult"),
-			true,
 			0,
 			"",
 		},
@@ -479,7 +453,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "EOF"),
-			true,
 			0,
 			"",
 		},
@@ -489,7 +462,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response ID mismatch"),
-			true,
 			0,
 			"",
 		},
@@ -499,7 +471,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response error: myopierr"),
-			true,
 			0,
 			"",
 		},
@@ -519,7 +490,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 				`]}]}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
 		},
@@ -533,7 +503,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"Nvme","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":11,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":12,"bdev_name":"Malloc1","name":"Malloc1","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":13,"bdev_name":"Malloc2","name":"Malloc2","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},
 			codes.OK,
 			"",
-			true,
 			1000,
 			"",
 		},
@@ -543,7 +512,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"negative PageSize is not allowed",
-			false,
 			-10,
 			"",
 		},
@@ -553,7 +521,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
-			false,
 			0,
 			"unknown-pagination-token",
 		},
@@ -565,7 +532,6 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"Nvme","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":11,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":12,"bdev_name":"Malloc1","name":"Malloc1","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":13,"bdev_name":"Malloc2","name":"Malloc2","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"",
 		},
@@ -577,17 +543,15 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"Nvme","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":11,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":12,"bdev_name":"Malloc1","name":"Malloc1","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"},{"nsid":13,"bdev_name":"Malloc2","name":"Malloc2","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"existing-pagination-token",
 		},
 		"valid request with unknown key": {
 			"unknown-namespace-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("unable to find subsystem %v", "unknown-namespace-id"),
-			false,
 			0,
 			"",
 		},
@@ -596,7 +560,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
@@ -638,7 +602,6 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with invalid SPDK response": {
 			testNamespaceName,
@@ -646,7 +609,6 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not find NQN: %v", "nqn.2022-09.io.spdk:opi3"),
-			true,
 		},
 		"valid request with invalid marshal SPDK response": {
 			testNamespaceName,
@@ -654,7 +616,6 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json: cannot unmarshal bool into Go value of type []spdk.NvmfGetSubsystemsResult"),
-			true,
 		},
 		"valid request with empty SPDK response": {
 			testNamespaceName,
@@ -662,7 +623,6 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "EOF"),
-			true,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testNamespaceName,
@@ -670,7 +630,6 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response ID mismatch"),
-			true,
 		},
 		"valid request with error code from SPDK response": {
 			testNamespaceName,
@@ -678,7 +637,6 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("nvmf_get_subsystems: %v", "json response error: myopierr"),
-			true,
 		},
 		"valid request with valid SPDK response": {
 			testNamespaceName,
@@ -695,30 +653,27 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"Nvme","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":22,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			"unknown-namespace-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-namespace-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
@@ -752,7 +707,6 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with valid SPDK response": {
 			testNamespaceName,
@@ -760,33 +714,30 @@ func TestFrontEnd_NvmeNamespaceStats(t *testing.T) {
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
 			},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 		},
 		"valid request with unknown key": {
 			server.ResourceIDToVolumeName("unknown-id"),
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = &testNamespace
