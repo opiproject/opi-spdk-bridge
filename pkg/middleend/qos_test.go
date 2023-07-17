@@ -5,7 +5,6 @@
 package middleend
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"testing"
@@ -291,9 +290,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			request := &pb.CreateQosVolumeRequest{QosVolume: tt.in, QosVolumeId: tt.id}
 			response, err := testEnv.client.CreateQosVolume(testEnv.ctx, request)
 
-			marshalledOut, _ := proto.Marshal(tt.out)
-			marshalledResponse, _ := proto.Marshal(response)
-			if !bytes.Equal(marshalledOut, marshalledResponse) {
+			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
 			}
 
@@ -760,9 +757,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateQosVolume(testEnv.ctx, request)
 
-			marshalledOut, _ := proto.Marshal(tt.out)
-			marshalledResponse, _ := proto.Marshal(response)
-			if !bytes.Equal(marshalledOut, marshalledResponse) {
+			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
 			}
 
@@ -888,6 +883,15 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 
 			response, err := testEnv.client.ListQosVolumes(testEnv.ctx, request)
 
+			if !server.EqualProtoSlices(response.GetQosVolumes(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetQosVolumes())
+			}
+
+			// Empty NextPageToken indicates end of results list
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, received non-empty next page token", response.GetNextPageToken())
+			}
+
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {
 					t.Error("error code: expected", tt.errCode, "received", er.Code())
@@ -897,24 +901,6 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 				}
 			} else {
 				t.Error("expected grpc error status")
-			}
-
-			if response != nil {
-				if len(tt.out) != len(response.QosVolumes) {
-					t.Error("Expected", tt.out, "received", response.QosVolumes)
-				} else {
-					for _, expectVol := range tt.out {
-						found := false
-						for _, receivedVol := range response.QosVolumes {
-							if proto.Equal(expectVol, receivedVol) {
-								found = true
-							}
-						}
-						if !found {
-							t.Error("expect ", expectVol, "received in", response.QosVolumes)
-						}
-					}
-				}
 			}
 		})
 	}
@@ -951,6 +937,10 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			request := &pb.GetQosVolumeRequest{Name: fname1}
 			response, err := testEnv.client.GetQosVolume(testEnv.ctx, request)
 
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
+			}
+
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {
 					t.Error("error code: expected", tt.errCode, "received", er.Code())
@@ -960,10 +950,6 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 				}
 			} else {
 				t.Error("expected grpc error status")
-			}
-
-			if tt.errCode == codes.OK && !proto.Equal(tt.out, response) {
-				t.Error("expect QoS volume", tt.out, "is equal to", response)
 			}
 		})
 	}
@@ -1045,6 +1031,10 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			request := &pb.QosVolumeStatsRequest{VolumeId: tt.in}
 			response, err := testEnv.client.QosVolumeStats(testEnv.ctx, request)
 
+			if !proto.Equal(tt.out, response) {
+				t.Error("response: expected", tt.out, "received", response)
+			}
+
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {
 					t.Error("error code: expected", tt.errCode, "received", er.Code())
@@ -1054,10 +1044,6 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 				}
 			} else {
 				t.Error("expected grpc error status")
-			}
-
-			if tt.errCode == codes.OK && !proto.Equal(tt.out, response) {
-				t.Error("expect QoS volume stats", tt.out, "is equal to", response)
 			}
 		})
 	}
