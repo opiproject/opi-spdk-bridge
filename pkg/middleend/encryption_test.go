@@ -6,7 +6,6 @@
 package middleend
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
@@ -85,7 +84,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		"valid request with valid key and invalid bdev response": {
 			encryptedVolumeID,
 			&encryptedVolume,
-			&encryptedVolume,
+			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Crypto Dev: %v", encryptedVolumeID),
@@ -95,7 +94,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		"valid request with valid key and invalid marshal bdev response": {
 			encryptedVolumeID,
 			&encryptedVolume,
-			&encryptedVolume,
+			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevCryptoCreateResult"),
@@ -105,7 +104,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		"valid request with valid key and error code bdev response": {
 			encryptedVolumeID,
 			&encryptedVolume,
-			&encryptedVolume,
+			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response error: myopierr"),
@@ -115,7 +114,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		"valid request with valid key and ID mismatch bdev response": {
 			encryptedVolumeID,
 			&encryptedVolume,
-			&encryptedVolume,
+			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_crypto_create: %v", "json response ID mismatch"),
@@ -139,7 +138,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_192,
 				Key:      []byte("0123456789abcdef0123456789abcdef0123456789abcdef"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
@@ -171,7 +170,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_128,
 				Key:      []byte("0123456789abcdef"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
@@ -185,7 +184,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_192,
 				Key:      []byte("0123456789abcdef01234567"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
@@ -199,7 +198,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_CBC_256,
 				Key:      []byte("0123456789abcdef0123456789abcdef"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
@@ -213,7 +212,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_UNSPECIFIED,
 				Key:      []byte("0123456789abcdef0123456789abcdef"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			"only AES_XTS_256 and AES_XTS_128 are supported",
@@ -227,7 +226,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
 				Key:      []byte("1234"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			fmt.Sprintf("expected key size %vb, provided size %vb", 256, (4 * 8)),
@@ -241,7 +240,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256,
 				Key:      []byte("1234"),
 			},
-			&encryptedVolume,
+			nil,
 			[]string{},
 			codes.InvalidArgument,
 			fmt.Sprintf("expected key size %vb, provided size %vb", 512, (4 * 8)),
@@ -275,12 +274,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 
 			request := &pb.CreateEncryptedVolumeRequest{EncryptedVolume: tt.in, EncryptedVolumeId: tt.id}
 			response, err := testEnv.client.CreateEncryptedVolume(testEnv.ctx, request)
-			if response != nil {
-				if string(response.Key) != string(tt.out.Key) &&
-					response.Name != tt.out.Name &&
-					response.VolumeId.Value != tt.out.VolumeId.Value {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -633,15 +629,9 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 
 			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateEncryptedVolume(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -815,14 +805,14 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 
 			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListEncryptedVolumes(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.EncryptedVolumes, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.EncryptedVolumes)
-				}
-				// Empty NextPageToken indicates end of results list
-				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
-				}
+
+			if !server.EqualProtoSlices(response.GetEncryptedVolumes(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetEncryptedVolumes())
+			}
+
+			// Empty NextPageToken indicates end of results list
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, received non-empty next page token", response.GetNextPageToken())
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -927,11 +917,9 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 
 			request := &pb.GetEncryptedVolumeRequest{Name: fname1}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
-			if response != nil {
-				if response.Name != tt.out.Name {
-					// if !reflect.DeepEqual(response, tt.out) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -1041,10 +1029,9 @@ func TestMiddleEnd_EncryptedVolumeStats(t *testing.T) {
 
 			request := &pb.EncryptedVolumeStatsRequest{EncryptedVolumeId: &pc.ObjectKey{Value: fname1}}
 			response, err := testEnv.client.EncryptedVolumeStats(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Stats, tt.out) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(tt.out, response.GetStats()) {
+				t.Error("response: expected", tt.out, "received", response.GetStats())
 			}
 
 			if er, ok := status.FromError(err); ok {
