@@ -75,7 +75,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			testEnv := createTestEnvironment(true, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			if tt.out != nil {
@@ -111,7 +111,6 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"invalid fieldmask": {
@@ -120,10 +119,9 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 				Name: testVirtioCtrlName,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
-			false,
 			false,
 		},
 		"unimplemented method": {
@@ -132,10 +130,9 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 				Name: testVirtioCtrlName,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "UpdateVirtioBlk"),
-			false,
 			false,
 		},
 		"valid request with unknown key": {
@@ -147,10 +144,9 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 				MaxIoQps: 1,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
@@ -162,20 +158,18 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 				MaxIoQps: 1,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			true,
 		},
 		"malformed name": {
 			nil,
 			&pb.VirtioBlk{Name: "-ABC-DEF"},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -183,7 +177,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = &testVirtioCtrl
@@ -216,7 +210,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		size    int32
 		token   string
 	}{
@@ -226,7 +219,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
 		},
@@ -236,7 +228,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "EOF"),
-			true,
 			0,
 			"",
 		},
@@ -246,7 +237,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "json response ID mismatch"),
-			true,
 			0,
 			"",
 		},
@@ -256,7 +246,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "json response error: myopierr"),
-			true,
 			0,
 			"",
 		},
@@ -286,7 +275,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 				`],"error":{"code":0,"message":""}}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
 		},
@@ -312,7 +300,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"VblkEmu0pf0","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"virtio-blk-42","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"VblkEmu0pf2","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"}],"error":{"code":0,"message":""}}`},
 			codes.OK,
 			"",
-			true,
 			1000,
 			"",
 		},
@@ -322,7 +309,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"negative PageSize is not allowed",
-			false,
 			-10,
 			"",
 		},
@@ -332,7 +318,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
-			false,
 			0,
 			"unknown-pagination-token",
 		},
@@ -348,7 +333,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"VblkEmu0pf0","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"virtio-blk-42","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"VblkEmu0pf2","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"}],"error":{"code":0,"message":""}}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"",
 		},
@@ -364,7 +348,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"VblkEmu0pf0","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"virtio-blk-42","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"},{"ctrlr":"VblkEmu0pf2","emulation_manager":"mlx5_0","type":"virtio_blk","pci_index":0,"pci_bdf":"ca:00.4"}],"error":{"code":0,"message":""}}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"existing-pagination-token",
 		},
@@ -373,7 +356,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
@@ -411,7 +394,6 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with invalid SPDK response": {
 			testVirtioCtrlName,
@@ -419,7 +401,6 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("expecting exactly 1 result, got %d", 0),
-			true,
 		},
 		"valid request with empty SPDK response": {
 			testVirtioCtrlName,
@@ -427,7 +408,6 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "EOF"),
-			true,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testVirtioCtrlName,
@@ -435,7 +415,6 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "json response ID mismatch"),
-			true,
 		},
 		"valid request with error code from SPDK response": {
 			testVirtioCtrlName,
@@ -443,7 +422,6 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("vhost_get_controllers: %v", "json response error: myopierr"),
-			true,
 		},
 		"valid request with valid SPDK response": {
 			testVirtioCtrlName,
@@ -455,30 +433,27 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"virtio-blk-42","iops_threshold":60000,"cpumask":"0x2","delay_base_us":100}],"error":{"code":0,"message":""}}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = &testVirtioCtrl
@@ -512,38 +487,34 @@ func TestFrontEnd_VirtioBlkStats(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"unimplemented method": {
 			testVirtioCtrlID,
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unimplemented,
 			fmt.Sprintf("%v method is not implemented", "VirtioBlkStats"),
-			false,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
@@ -576,7 +547,6 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
@@ -585,7 +555,6 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete virtio-blk: %s", testVirtioCtrlID),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -594,7 +563,6 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("vhost_delete_controller: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -603,7 +571,6 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("vhost_delete_controller: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -612,7 +579,6 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("vhost_delete_controller: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -621,34 +587,30 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -656,7 +618,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
