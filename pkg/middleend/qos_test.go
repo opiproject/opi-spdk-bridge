@@ -57,7 +57,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		spdk        []string
 		errCode     codes.Code
 		errMsg      string
-		start       bool
 		existBefore bool
 		existAfter  bool
 	}{
@@ -73,7 +72,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume min_limit is not supported",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -89,7 +87,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rd_iops_kiops is not supported",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -105,7 +102,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit wr_iops_kiops is not supported",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -121,7 +117,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rw_iops_kiops cannot be negative",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -137,7 +132,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rd_bandwidth_mbs cannot be negative",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -153,7 +147,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit wr_bandwidth_mbs cannot be negative",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -169,7 +162,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rw_bandwidth_mbs cannot be negative",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -183,7 +175,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit should set limit",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -198,7 +189,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       true,
 			existBefore: false,
 			existAfter:  true,
 		},
@@ -212,7 +202,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "volume_id cannot be empty",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -226,7 +215,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "volume_id cannot be empty",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -237,7 +225,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       false,
 			existBefore: true,
 			existAfter:  true,
 		},
@@ -248,7 +235,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
 			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
 			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
-			start:       true,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -259,7 +245,6 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
 			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
-			start:       true,
 			existBefore: false,
 			existAfter:  false,
 		},
@@ -270,14 +255,13 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       true,
 			existBefore: false,
 			existAfter:  true,
 		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			if tt.existBefore {
@@ -316,7 +300,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 	}
 
 	t.Run("valid values are sent to SPDK", func(t *testing.T) {
-		testEnv := createTestEnvironment(false, []string{})
+		testEnv := createTestEnvironment([]string{})
 		defer testEnv.Close()
 		stubRPC := &stubJSONRRPC{}
 		testEnv.opiSpdkServer.rpc = stubRPC
@@ -366,7 +350,6 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.NotFound,
 			errMsg:      fmt.Sprintf("unable to find key %s", server.ResourceIDToVolumeName(testQosVolumeID)),
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 			missing:     false,
@@ -376,7 +359,6 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       false,
 			existBefore: false,
 			existAfter:  false,
 			missing:     true,
@@ -386,7 +368,6 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
 			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
 			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
-			start:       true,
 			existBefore: true,
 			existAfter:  true,
 			missing:     false,
@@ -396,7 +377,6 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
 			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
-			start:       true,
 			existBefore: true,
 			existAfter:  true,
 			missing:     false,
@@ -406,7 +386,6 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       true,
 			existBefore: true,
 			existAfter:  false,
 			missing:     false,
@@ -414,7 +393,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
@@ -461,7 +440,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		spdk        []string
 		errCode     codes.Code
 		errMsg      string
-		start       bool
 		existBefore bool
 		missing     bool
 	}{
@@ -478,7 +456,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		// 	spdk:        []string{},
 		// 	errCode:     codes.Unknown,
 		// 	errMsg:      fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
-		// 	start:       false,
 		// 	existBefore: true,
 		//	missing:	 false,
 		// },
@@ -495,7 +472,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume min_limit is not supported",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -512,7 +488,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rd_iops_kiops is not supported",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -529,7 +504,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit wr_iops_kiops is not supported",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -546,7 +520,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rw_iops_kiops cannot be negative",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -563,7 +536,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rd_bandwidth_mbs cannot be negative",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -580,7 +552,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit wr_bandwidth_mbs cannot be negative",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -597,7 +568,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit rw_bandwidth_mbs cannot be negative",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -612,7 +582,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume max_limit should set limit",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -627,7 +596,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "QoS volume name cannot be empty",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -642,7 +610,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "volume_id cannot be empty",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -657,7 +624,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      "volume_id cannot be empty",
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -668,7 +634,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{},
 			errCode:     codes.NotFound,
 			errMsg:      fmt.Sprintf("unable to find key %s", testQosVolumeName),
-			start:       false,
 			existBefore: false,
 			missing:     false,
 		},
@@ -684,7 +649,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			errCode: codes.InvalidArgument,
 			errMsg: fmt.Sprintf("Change of underlying volume %v to a new one %v is forbidden",
 				originalQosVolume.VolumeId.Value, "new-underlying-volume-id"),
-			start:       false,
 			existBefore: true,
 			missing:     false,
 		},
@@ -695,7 +659,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
 			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
 			errMsg:      status.Convert(spdk.ErrFailedSpdkCall).Message(),
-			start:       true,
 			existBefore: true,
 			missing:     false,
 		},
@@ -706,7 +669,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
 			errMsg:      status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
-			start:       true,
 			existBefore: true,
 			missing:     false,
 		},
@@ -717,7 +679,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       true,
 			existBefore: true,
 			missing:     false,
 		},
@@ -728,7 +689,6 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
-			start:       true,
 			existBefore: true,
 			missing:     false,
 		},
@@ -736,10 +696,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			mask:        nil,
 			in:          &pb.QosVolume{Name: "-ABC-DEF"},
 			out:         nil,
-			spdk:        []string{""},
+			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
 			errMsg:      fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			start:       false,
 			existBefore: false,
 			missing:     false,
 		},
@@ -747,7 +706,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			if tt.existBefore {
@@ -872,7 +831,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(false, []string{})
+			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.volumes.qosVolumes = tt.existingVolumes
 			request := &pb.ListQosVolumesRequest{}
@@ -928,7 +887,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(false, []string{})
+			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
@@ -962,7 +921,6 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"empty QoS volume id is not allowed ": {
 			in:      nil,
@@ -970,7 +928,6 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			spdk:    []string{},
 			errCode: codes.InvalidArgument,
 			errMsg:  "volume_id cannot be empty",
-			start:   false,
 		},
 		"unknown QoS volume Id": {
 			in:      &_go.ObjectKey{Value: "unknown-qos-volume-id"},
@@ -978,7 +935,6 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			spdk:    []string{},
 			errCode: codes.NotFound,
 			errMsg:  fmt.Sprintf("unable to find key %s", "unknown-qos-volume-id"),
-			start:   false,
 		},
 		"SPDK call failed": {
 			in:      &_go.ObjectKey{Value: testQosVolumeName},
@@ -986,7 +942,6 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"some internal error"}}`},
 			errCode: status.Convert(spdk.ErrFailedSpdkCall).Code(),
 			errMsg:  status.Convert(spdk.ErrFailedSpdkCall).Message(),
-			start:   true,
 		},
 		"SPDK call result false": {
 			in:      &_go.ObjectKey{Value: testQosVolumeName},
@@ -994,7 +949,6 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,"bdevs":[]}}`},
 			errCode: status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
 			errMsg:  status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
-			start:   true,
 		},
 		"successful QoS volume stats": {
 			in: &_go.ObjectKey{Value: testQosVolumeName},
@@ -1010,20 +964,18 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 			},
 			errCode: codes.OK,
 			errMsg:  "",
-			start:   true,
 		},
 		"malformed name": {
 			in:      &_go.ObjectKey{Value: "-ABC-DEF"},
 			out:     nil,
-			spdk:    []string{""},
+			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			start:   false,
 		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume

@@ -46,7 +46,7 @@ func (e *testEnv) Close() {
 	server.CloseGrpcConnection(e.conn)
 }
 
-func createTestEnvironment(startSpdkServer bool, spdkResponses []string) *testEnv {
+func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("middleend")
 	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
