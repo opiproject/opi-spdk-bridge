@@ -5,7 +5,6 @@
 package kvm
 
 import (
-	"bytes"
 	"context"
 	"log"
 	"os"
@@ -306,6 +305,11 @@ func TestCreateNvmeController(t *testing.T) {
 			request := server.ProtoClone(tt.in)
 
 			out, err := kvmServer.CreateNvmeController(context.Background(), request)
+
+			if !proto.Equal(out, tt.out) {
+				t.Error("response: expected", tt.out, "received", out)
+			}
+
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {
 					t.Error("error code: expected", tt.errCode, "received", er.Code())
@@ -317,11 +321,6 @@ func TestCreateNvmeController(t *testing.T) {
 				t.Errorf("expected grpc error status")
 			}
 
-			gotOut, _ := proto.Marshal(out)
-			wantOut, _ := proto.Marshal(tt.out)
-			if !bytes.Equal(gotOut, wantOut) {
-				t.Errorf("Expected out %v, got %v", tt.out, out)
-			}
 			if !qmpServer.WereExpectedCallsPerformed() {
 				t.Errorf("Not all expected calls were performed")
 			}
