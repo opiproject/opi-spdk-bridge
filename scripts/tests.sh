@@ -52,6 +52,10 @@ chmod 0600 /tmp/opikey.txt
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages -v /tmp/opikey.txt:/tmp/opikey.txt ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:5555 subnqn:nqn.2016-06.io.spdk:cnode1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 -S ssl --psk-path /tmp/opikey.txt | tee log.txt
 grep "Total" log.txt
 
+# get spdk IP
+SPDK_NAME=$(docker-compose ps spdk | awk '/spdk/{print $1}')
+SPDK_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${SPDK_NAME}")
+
 # test nvme
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem1',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller1', nvme_controller : {spec : {subsystem_id : { value : '//storage.opiproject.org/volumes/subsystem1' }, nvme_controller_id: 2, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
@@ -62,6 +66,12 @@ grep "Total" log.txt
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777'
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777 subnqn:nqn.2022-09.io.spdk:opitest1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
 grep "Total" log.txt
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_MULTIPATH'}, nvme_remote_controller_id: 'nvmetcp12'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmePath "{nvme_path : {controller_id: {value: '//storage.opiproject.org/volumes/nvmetcp12'}, traddr:\"$SPDK_IP\", subnqn:'nqn.2022-09.io.spdk:opitest1', trsvcid:'7777', trtype:'NVME_TRANSPORT_TCP', adrfam:'NVME_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}, nvme_path_id: 'nvmetcp12path0'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmetcp12'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmePath "{name: '//storage.opiproject.org/volumes/nvmetcp12path0'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmePath "{name: '//storage.opiproject.org/volumes/nvmetcp12path0'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmetcp12'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeNamespace "{name : '//storage.opiproject.org/volumes/namespace1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : '//storage.opiproject.org/volumes/controller1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeSubsystem "{name : '//storage.opiproject.org/volumes/subsystem1'}"

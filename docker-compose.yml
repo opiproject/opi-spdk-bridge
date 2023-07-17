@@ -42,7 +42,7 @@ services:
             ./rpc.py nvmf_subsystem_add_listener nqn.2016-06.io.spdk:cnode1 -t tcp -a  `hostname -i` -f ipv4 -s 4444 && \
             ./rpc.py nvmf_subsystem_add_listener nqn.2016-06.io.spdk:cnode1 -t tcp -a  `hostname -i` -f ipv4 -s 5555 --secure-channel && \
             ./rpc.py nvmf_subsystem_add_host nqn.2016-06.io.spdk:cnode1 nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c --psk /tmp/opikey.txt && \
-            ./rpc.py nvmf_subsystem_add_ns nqn.2016-06.io.spdk:cnode1 Malloc2 -n 3  && \
+            ./rpc.py nvmf_subsystem_add_ns nqn.2016-06.io.spdk:cnode1 Malloc2 -n 3 --nguid ABCDEF0123456789ABCDEF0123456789 && \
             ./rpc_http_proxy.py 0.0.0.0 9009 spdkuser spdkpass'
     healthcheck:
       test: ["CMD-SHELL", "python3 /usr/libexec/spdk/scripts/rpc.py spdk_get_version || exit 1"]
