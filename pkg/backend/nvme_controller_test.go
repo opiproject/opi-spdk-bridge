@@ -70,7 +70,7 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(false, []string{})
+			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
 			if tt.exist {
@@ -108,22 +108,20 @@ func TestBackEnd_NvmeRemoteControllerReset(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request without SPDK": {
 			testNvmeCtrlID,
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			request := &pb.NvmeRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
@@ -256,7 +254,7 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(false, []string{})
+			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
@@ -321,7 +319,7 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(false, []string{})
+			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
@@ -354,7 +352,6 @@ func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with valid SPDK response": {
 			testNvmeCtrlID,
@@ -362,33 +359,30 @@ func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
 			},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
@@ -455,7 +449,7 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(false, []string{})
+			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
