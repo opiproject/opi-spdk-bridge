@@ -6,7 +6,6 @@
 package frontend
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"testing"
@@ -169,12 +168,9 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 
 			request := &pb.CreateNvmeSubsystemRequest{NvmeSubsystem: tt.in, NvmeSubsystemId: tt.id}
 			response, err := testEnv.client.CreateNvmeSubsystem(testEnv.ctx, request)
-			if response != nil {
-				mtt, _ := proto.Marshal(tt.out)
-				mResponse, _ := proto.Marshal(response)
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out, "received", response)
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -390,18 +386,9 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 
 			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
-			if response != nil {
-				// Marshall the request and response, so we can just compare the contained data
-				mtt, _ := proto.Marshal(tt.out.Spec)
-				mResponse, _ := proto.Marshal(response.Spec)
 
-				// Compare the marshalled messages
-				if !bytes.Equal(mtt, mResponse) {
-					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
-				}
-				if !reflect.DeepEqual(response.Status, tt.out.Status) {
-					t.Error("response: expected", tt.out.GetStatus(), "received", response.GetStatus())
-				}
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -564,14 +551,14 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 
 			request := &pb.ListNvmeSubsystemsRequest{Parent: "todo", PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeSubsystems(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.NvmeSubsystems, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.NvmeSubsystems)
-				}
-				// Empty NextPageToken indicates end of results list
-				if tt.size != 1 && response.NextPageToken != "" {
-					t.Error("Expected end of results, receieved non-empty next page token", response.NextPageToken)
-				}
+
+			if !server.EqualProtoSlices(response.GetNvmeSubsystems(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetNvmeSubsystems())
+			}
+
+			// Empty NextPageToken indicates end of results list
+			if tt.size != 1 && response.GetNextPageToken() != "" {
+				t.Error("Expected end of results, received non-empty next page token", response.GetNextPageToken())
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -674,13 +661,9 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 
 			request := &pb.GetNvmeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeSubsystem(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Spec, tt.out.Spec) {
-					t.Error("response: expected", tt.out.GetSpec(), "received", response.GetSpec())
-				}
-				if !reflect.DeepEqual(response.Status, tt.out.Status) {
-					t.Error("response: expected", tt.out.GetStatus(), "received", response.GetStatus())
-				}
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
@@ -768,10 +751,9 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 
 			request := &pb.NvmeSubsystemStatsRequest{SubsystemId: &pc.ObjectKey{Value: tt.in}}
 			response, err := testEnv.client.NvmeSubsystemStats(testEnv.ctx, request)
-			if response != nil {
-				if !reflect.DeepEqual(response.Stats, tt.out) {
-					t.Error("response: expected", tt.out, "received", response.Stats)
-				}
+
+			if !proto.Equal(response.GetStats(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetStats())
 			}
 
 			if er, ok := status.FromError(err); ok {
