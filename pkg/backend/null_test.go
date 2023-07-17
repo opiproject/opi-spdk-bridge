@@ -39,17 +39,15 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		exist   bool
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
 			&testNullVolume,
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
-			false,
 			false,
 		},
 		"valid request with invalid SPDK response": {
@@ -59,7 +57,6 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Null Dev: %v", testNullVolumeID),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -69,7 +66,6 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_create: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -79,7 +75,6 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_create: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -89,7 +84,6 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_create: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -99,17 +93,15 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"already exists": {
 			testNullVolumeID,
 			&testNullVolume,
 			&testNullVolume,
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 	}
@@ -117,7 +109,7 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			if tt.exist {
@@ -156,17 +148,15 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
 			&testNullVolume,
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
-			false,
 			false,
 		},
 		"delete fails": {
@@ -176,7 +166,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolumeID),
-			true,
 			false,
 		},
 		"delete empty": {
@@ -186,7 +175,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "EOF"),
-			true,
 			false,
 		},
 		"delete ID mismatch": {
@@ -196,7 +184,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"delete exception": {
@@ -206,7 +193,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"delete ok create fails": {
@@ -216,7 +202,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create Null Dev: %v", "mytest"),
-			true,
 			false,
 		},
 		"delete ok create empty": {
@@ -226,7 +211,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_create: %v", "EOF"),
-			true,
 			false,
 		},
 		"delete ok create ID mismatch": {
@@ -236,7 +220,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_create: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"delete ok create exception": {
@@ -246,7 +229,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_create: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -256,7 +238,6 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"valid request with unknown key": {
@@ -267,10 +248,9 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 				BlocksCount: 64,
 			},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
@@ -289,16 +269,14 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			codes.OK,
 			"",
 			true,
-			true,
 		},
 		"malformed name": {
 			nil,
 			&pb.NullDebug{Name: "-ABC-DEF"},
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -306,7 +284,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testNullVolume.Name = testNullVolumeName
@@ -340,7 +318,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		size    int32
 		token   string
 	}{
@@ -350,7 +327,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
 		},
@@ -360,7 +336,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevGetBdevsResult"),
-			true,
 			0,
 			"",
 		},
@@ -370,7 +345,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
-			true,
 			0,
 			"",
 		},
@@ -380,7 +354,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
-			true,
 			0,
 			"",
 		},
@@ -390,7 +363,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
-			true,
 			0,
 			"",
 		},
@@ -416,7 +388,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 				`]}`},
 			codes.OK,
 			"",
-			true,
 			0,
 			"",
 		},
@@ -439,7 +410,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",
-			true,
 			1000,
 			"",
 		},
@@ -449,7 +419,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{},
 			codes.InvalidArgument,
 			"negative PageSize is not allowed",
-			false,
 			-10,
 			"",
 		},
@@ -459,7 +428,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
-			false,
 			0,
 			"unknown-pagination-token",
 		},
@@ -476,7 +444,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"",
 		},
@@ -493,7 +460,6 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc0","aliases":["11d3902e-d9bb-49a7-bb27-cd7261ef3217"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"11d3902e-d9bb-49a7-bb27-cd7261ef3217","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}},{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",
-			true,
 			1,
 			"existing-pagination-token",
 		},
@@ -502,7 +468,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
@@ -539,7 +505,6 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with invalid SPDK response": {
 			testNullVolumeID,
@@ -547,7 +512,6 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
-			true,
 		},
 		"valid request with invalid marshal SPDK response": {
 			testNullVolumeID,
@@ -555,7 +519,6 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevGetBdevsResult"),
-			true,
 		},
 		"valid request with empty SPDK response": {
 			testNullVolumeID,
@@ -563,7 +526,6 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
-			true,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testNullVolumeID,
@@ -571,7 +533,6 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
-			true,
 		},
 		"valid request with error code from SPDK response": {
 			testNullVolumeID,
@@ -579,7 +540,6 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
-			true,
 		},
 		"valid request with valid SPDK response": {
 			testNullVolumeID,
@@ -592,30 +552,27 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
@@ -648,7 +605,6 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 	}{
 		"valid request with invalid SPDK response": {
 			testNullVolumeID,
@@ -656,7 +612,6 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
-			true,
 		},
 		"valid request with invalid marshal SPDK response": {
 			testNullVolumeID,
@@ -664,7 +619,6 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevGetIostatResult"),
-			true,
 		},
 		"valid request with empty SPDK response": {
 			testNullVolumeID,
@@ -672,7 +626,6 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_iostat: %v", "EOF"),
-			true,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testNullVolumeID,
@@ -680,7 +633,6 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_iostat: %v", "json response ID mismatch"),
-			true,
 		},
 		"valid request with error code from SPDK response": {
 			testNullVolumeID,
@@ -688,7 +640,6 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_iostat: %v", "json response error: myopierr"),
-			true,
 		},
 		"valid request with valid SPDK response": {
 			testNullVolumeID,
@@ -703,30 +654,27 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":{"tick_rate":2490000000,"ticks":18787040917434338,"bdevs":[{"name":"mytest","bytes_read":1,"num_read_ops":2,"bytes_written":3,"num_write_ops":4,"bytes_unmapped":0,"num_unmap_ops":0,"read_latency_ticks":7,"write_latency_ticks":8,"unmap_latency_ticks":0}]}}`},
 			codes.OK,
 			"",
-			true,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
-			false,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 		},
 	}
 
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
@@ -759,7 +707,6 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
-		start   bool
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
@@ -768,7 +715,6 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete Null Dev: %s", testNullVolumeID),
-			true,
 			false,
 		},
 		"valid request with empty SPDK response": {
@@ -777,7 +723,6 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "EOF"),
-			true,
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -786,7 +731,6 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "json response ID mismatch"),
-			true,
 			false,
 		},
 		"valid request with error code from SPDK response": {
@@ -795,7 +739,6 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_null_delete: %v", "json response error: myopierr"),
-			true,
 			false,
 		},
 		"valid request with valid SPDK response": {
@@ -804,34 +747,30 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
 			"",
-			true,
 			false,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
 			nil,
-			[]string{""},
+			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
 			false,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.OK,
 			"",
-			false,
 			true,
 		},
 		"malformed name": {
 			"-ABC-DEF",
 			&emptypb.Empty{},
-			[]string{""},
+			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
 			false,
 		},
 	}
@@ -839,7 +778,7 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 	// run tests
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.start, tt.spdk)
+			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
