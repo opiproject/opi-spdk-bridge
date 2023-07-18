@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -74,8 +75,16 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	psk := ""
 	if len(controller.Psk) > 0 {
 		log.Printf("Notice, TLS is used to establish connection: to %v", in.NvmePath)
-		// TODO: write controller.Psk to file /tmp/opikey.txt
-		psk = "/tmp/opikey.txt"
+		keyFile, err := s.keyToTemporaryFile(controller.Psk)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			err := os.Remove(keyFile)
+			log.Printf("Cleanup key file %v: %v", keyFile, err)
+		}()
+
+		psk = keyFile
 	}
 	params := spdk.BdevNvmeAttachControllerParams{
 		Name:      path.Base(controller.Name),
@@ -329,4 +338,22 @@ func (s *Server) numberOfPathsForController(controllerName string) int {
 		}
 	}
 	return numberOfPaths
+}
+
+func (s *Server) keyToTemporaryFile(pskKey []byte) (string, error) {
+	keyFile, err := s.psk.createTempFile("", "opikey")
+	if err != nil {
+		log.Printf("error: failed to create file for key: %v", err)
+		return "", status.Error(codes.Internal, "failed to handle key")
+	}
+
+	const keyPermissions = 0600
+	if err := s.psk.writeKey(keyFile.Name(), pskKey, keyPermissions); err != nil {
+		log.Printf("error: failed to write to key file: %v", err)
+		removeErr := os.Remove(keyFile.Name())
+		log.Printf("Delete key file after key write: %v", removeErr)
+		return "", status.Error(codes.Internal, "failed to handle key")
+	}
+
+	return keyFile.Name(), nil
 }

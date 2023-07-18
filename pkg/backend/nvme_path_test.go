@@ -6,7 +6,10 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -152,6 +155,95 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 				}
 			} else {
 				t.Error("expected grpc error status")
+			}
+		})
+	}
+	pskTests := map[string]struct {
+		createErr error
+		writeErr  error
+		spdk      []string
+		errCode   codes.Code
+		errMsg    string
+	}{
+		"tmp key file creation failed": {
+			createErr: errors.New("stub error"),
+			writeErr:  nil,
+			spdk:      []string{},
+			errCode:   codes.Internal,
+			errMsg:    "failed to handle key",
+		},
+		"tmp key file write failed": {
+			createErr: nil,
+			writeErr:  errors.New("stub error"),
+			spdk:      []string{},
+			errCode:   codes.Internal,
+			errMsg:    "failed to handle key",
+		},
+		"tmp key file removed after successful call": {
+			createErr: nil,
+			writeErr:  nil,
+			spdk:      []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
+			errCode:   codes.OK,
+			errMsg:    "",
+		},
+	}
+
+	for name, tt := range pskTests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment(tt.spdk)
+			defer testEnv.Close()
+
+			const expectedKey = "NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] =
+				&pb.NvmeRemoteController{
+					Hdgst: false, Ddgst: false, Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
+					Psk: []byte(expectedKey),
+				}
+
+			createdKeyFile := ""
+			origCreateTempFile := testEnv.opiSpdkServer.psk.createTempFile
+			testEnv.opiSpdkServer.psk.createTempFile =
+				func(dir, pattern string) (*os.File, error) {
+					if tt.createErr == nil {
+						keyFile, _ := origCreateTempFile(t.TempDir(), pattern)
+						createdKeyFile = keyFile.Name()
+						return keyFile, nil
+					}
+					return nil, tt.createErr
+				}
+			origWriteKey := testEnv.opiSpdkServer.psk.writeKey
+			testEnv.opiSpdkServer.psk.writeKey =
+				func(keyFile string, key []byte, perm os.FileMode) error {
+					if createdKeyFile != keyFile {
+						t.Errorf("Expected key is written to: %v, instead: %v", createdKeyFile, keyFile)
+					}
+					if _, err := os.Stat(createdKeyFile); err != nil {
+						t.Errorf("Expected temporary key file %v exists", createdKeyFile)
+					}
+					_ = origWriteKey(keyFile, key, perm)
+					written, _ := os.ReadFile(filepath.Clean(keyFile))
+					if string(written) != expectedKey {
+						t.Errorf("Expected psk key: %v is written, received: %v", expectedKey, key)
+					}
+					return tt.writeErr
+				}
+
+			request := &pb.CreateNvmePathRequest{NvmePath: &testNvmePath, NvmePathId: "nvmetcppath0"}
+			_, err := testEnv.client.CreateNvmePath(testEnv.ctx, request)
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
+			}
+
+			if _, err := os.Stat(createdKeyFile); err == nil {
+				t.Errorf("Expect temporary key file %v is removed", createdKeyFile)
 			}
 		})
 	}
