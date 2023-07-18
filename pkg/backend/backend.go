@@ -6,6 +6,8 @@
 package backend
 
 import (
+	"os"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
@@ -31,6 +33,12 @@ type Server struct {
 	rpc        spdk.JSONRPC
 	Volumes    VolumeParameters
 	Pagination map[string]int
+	psk        psk
+}
+
+type psk struct {
+	createTempFile func(dir, pattern string) (*os.File, error)
+	writeKey       func(keyFile string, key []byte, perm os.FileMode) error
 }
 
 // NewServer creates initialized instance of BackEnd server communicating
@@ -45,5 +53,9 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 			NvmePaths:       make(map[string]*pb.NvmePath),
 		},
 		Pagination: make(map[string]int),
+		psk: psk{
+			createTempFile: os.CreateTemp,
+			writeKey:       os.WriteFile,
+		},
 	}
 }
