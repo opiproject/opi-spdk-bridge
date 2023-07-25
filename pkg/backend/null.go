@@ -27,15 +27,15 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func sortNullDebugs(nullDebugs []*pb.NullDebug) {
-	sort.Slice(nullDebugs, func(i int, j int) bool {
-		return nullDebugs[i].Name < nullDebugs[j].Name
+func sortNullVolumes(volumes []*pb.NullVolume) {
+	sort.Slice(volumes, func(i int, j int) bool {
+		return volumes[i].Name < volumes[j].Name
 	})
 }
 
-// CreateNullDebug creates a Null Debug instance
-func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugRequest) (*pb.NullDebug, error) {
-	log.Printf("CreateNullDebug: Received from client: %v", in)
+// CreateNullVolume creates a Null volume instance
+func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequest) (*pb.NullVolume, error) {
+	log.Printf("CreateNullVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -43,20 +43,20 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
-	if in.NullDebugId != "" {
-		err := resourceid.ValidateUserSettable(in.NullDebugId)
+	if in.NullVolumeId != "" {
+		err := resourceid.ValidateUserSettable(in.NullVolumeId)
 		if err != nil {
 			log.Printf("error: %v", err)
 			return nil, err
 		}
-		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullDebugId, in.NullDebug.Name)
-		resourceID = in.NullDebugId
+		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullVolumeId, in.NullVolume.Name)
+		resourceID = in.NullVolumeId
 	}
-	in.NullDebug.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NullVolume.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Name]
+	volume, ok := s.Volumes.NullVolumes[in.NullVolume.Name]
 	if ok {
-		log.Printf("Already existing NullDebug with id %v", in.NullDebug.Name)
+		log.Printf("Already existing NullVolume with id %v", in.NullVolume.Name)
 		return volume, nil
 	}
 	// not found, so create a new one
@@ -77,15 +77,15 @@ func (s *Server) CreateNullDebug(_ context.Context, in *pb.CreateNullDebugReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NullDebug)
-	s.Volumes.NullVolumes[in.NullDebug.Name] = response
-	log.Printf("CreateNullDebug: Sending to client: %v", response)
+	response := server.ProtoClone(in.NullVolume)
+	s.Volumes.NullVolumes[in.NullVolume.Name] = response
+	log.Printf("CreateNullVolume: Sending to client: %v", response)
 	return response, nil
 }
 
-// DeleteNullDebug deletes a Null Debug instance
-func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNullDebug: Received from client: %v", in)
+// DeleteNullVolume deletes a Null volume instance
+func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequest) (*emptypb.Empty, error) {
+	log.Printf("DeleteNullVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -126,26 +126,26 @@ func (s *Server) DeleteNullDebug(_ context.Context, in *pb.DeleteNullDebugReques
 	return &emptypb.Empty{}, nil
 }
 
-// UpdateNullDebug updates a Null Debug instance
-func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugRequest) (*pb.NullDebug, error) {
-	log.Printf("UpdateNullDebug: Received from client: %v", in)
+// UpdateNullVolume updates a Null volume instance
+func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequest) (*pb.NullVolume, error) {
+	log.Printf("UpdateNullVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NullDebug.Name); err != nil {
+	if err := resourcename.Validate(in.NullVolume.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NullVolumes[in.NullDebug.Name]
+	volume, ok := s.Volumes.NullVolumes[in.NullVolume.Name]
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
 			params := spdk.BdevNullCreateParams{
-				Name:      path.Base(in.NullDebug.Name),
+				Name:      path.Base(in.NullVolume.Name),
 				BlockSize: 512,
 				NumBlocks: 64,
 			}
@@ -161,18 +161,18 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 				log.Print(msg)
 				return nil, status.Errorf(codes.InvalidArgument, msg)
 			}
-			response := server.ProtoClone(in.NullDebug)
-			s.Volumes.NullVolumes[in.NullDebug.Name] = response
-			log.Printf("CreateNullDebug: Sending to client: %v", response)
+			response := server.ProtoClone(in.NullVolume)
+			s.Volumes.NullVolumes[in.NullVolume.Name] = response
+			log.Printf("CreateNullVolume: Sending to client: %v", response)
 			return response, nil
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NullDebug.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NullVolume.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
-	if err := fieldmask.Validate(in.UpdateMask, in.NullDebug); err != nil {
+	if err := fieldmask.Validate(in.UpdateMask, in.NullVolume); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -208,14 +208,14 @@ func (s *Server) UpdateNullDebug(_ context.Context, in *pb.UpdateNullDebugReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NullDebug)
-	s.Volumes.NullVolumes[in.NullDebug.Name] = response
+	response := server.ProtoClone(in.NullVolume)
+	s.Volumes.NullVolumes[in.NullVolume.Name] = response
 	return response, nil
 }
 
-// ListNullDebugs lists Null Debug instances
-func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest) (*pb.ListNullDebugsResponse, error) {
-	log.Printf("ListNullDebugs: Received from client: %v", in)
+// ListNullVolumes lists Null volume instances
+func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesRequest) (*pb.ListNullVolumesResponse, error) {
+	log.Printf("ListNullVolumes: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -241,18 +241,18 @@ func (s *Server) ListNullDebugs(_ context.Context, in *pb.ListNullDebugsRequest)
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
 	}
-	Blobarray := make([]*pb.NullDebug, len(result))
+	Blobarray := make([]*pb.NullVolume, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NullDebug{Name: r.Name, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
+		Blobarray[i] = &pb.NullVolume{Name: r.Name, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
-	sortNullDebugs(Blobarray)
-	return &pb.ListNullDebugsResponse{NullDebugs: Blobarray, NextPageToken: token}, nil
+	sortNullVolumes(Blobarray)
+	return &pb.ListNullVolumesResponse{NullVolumes: Blobarray, NextPageToken: token}, nil
 }
 
-// GetNullDebug gets a a Null Debug instance
-func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*pb.NullDebug, error) {
-	log.Printf("GetNullDebug: Received from client: %v", in)
+// GetNullVolume gets a a Null volume instance
+func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (*pb.NullVolume, error) {
+	log.Printf("GetNullVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -286,12 +286,12 @@ func (s *Server) GetNullDebug(_ context.Context, in *pb.GetNullDebugRequest) (*p
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullDebug{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
+	return &pb.NullVolume{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
-// NullDebugStats gets a Null Debug instance stats
-func (s *Server) NullDebugStats(_ context.Context, in *pb.NullDebugStatsRequest) (*pb.NullDebugStatsResponse, error) {
-	log.Printf("NullDebugStats: Received from client: %v", in)
+// NullVolumeStats gets a Null volume instance stats
+func (s *Server) NullVolumeStats(_ context.Context, in *pb.NullVolumeStatsRequest) (*pb.NullVolumeStatsResponse, error) {
+	log.Printf("NullVolumeStats: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -326,7 +326,7 @@ func (s *Server) NullDebugStats(_ context.Context, in *pb.NullDebugStatsRequest)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullDebugStatsResponse{Stats: &pb.VolumeStats{
+	return &pb.NullVolumeStatsResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
 		ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
 		WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),

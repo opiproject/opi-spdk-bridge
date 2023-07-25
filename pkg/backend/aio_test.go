@@ -25,18 +25,18 @@ import (
 var (
 	testAioVolumeID   = "mytest"
 	testAioVolumeName = server.ResourceIDToVolumeName(testAioVolumeID)
-	testAioVolume     = pb.AioController{
+	testAioVolume     = pb.AioVolume{
 		BlockSize:   512,
 		BlocksCount: 12,
 		Filename:    "/tmp/aio_bdev_file",
 	}
 )
 
-func TestBackEnd_CreateAioController(t *testing.T) {
+func TestBackEnd_CreateAioVolume(t *testing.T) {
 	tests := map[string]struct {
 		id      string
-		in      *pb.AioController
-		out     *pb.AioController
+		in      *pb.AioVolume
+		out     *pb.AioVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -120,8 +120,8 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 				tt.out.Name = testAioVolumeName
 			}
 
-			request := &pb.CreateAioControllerRequest{AioController: tt.in, AioControllerId: tt.id}
-			response, err := testEnv.client.CreateAioController(testEnv.ctx, request)
+			request := &pb.CreateAioVolumeRequest{AioVolume: tt.in, AioVolumeId: tt.id}
+			response, err := testEnv.client.CreateAioVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -141,11 +141,11 @@ func TestBackEnd_CreateAioController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateAioController(t *testing.T) {
+func TestBackEnd_UpdateAioVolume(t *testing.T) {
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
-		in      *pb.AioController
-		out     *pb.AioController
+		in      *pb.AioVolume
+		out     *pb.AioVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -243,7 +243,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			nil,
-			&pb.AioController{
+			&pb.AioVolume{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
@@ -257,13 +257,13 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		},
 		"unknown key with missing allowed": {
 			nil,
-			&pb.AioController{
+			&pb.AioVolume{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
 				Filename:    "/tmp/aio_bdev_file",
 			},
-			&pb.AioController{
+			&pb.AioVolume{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
@@ -276,7 +276,7 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.AioController{Name: "-ABC-DEF"},
+			&pb.AioVolume{Name: "-ABC-DEF"},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -294,8 +294,8 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 			testAioVolume.Name = testAioVolumeName
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
-			request := &pb.UpdateAioControllerRequest{AioController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
-			response, err := testEnv.client.UpdateAioController(testEnv.ctx, request)
+			request := &pb.UpdateAioVolumeRequest{AioVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
+			response, err := testEnv.client.UpdateAioVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -315,10 +315,10 @@ func TestBackEnd_UpdateAioController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_ListAioControllers(t *testing.T) {
+func TestBackEnd_ListAioVolumes(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     []*pb.AioController
+		out     []*pb.AioVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -372,7 +372,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			testAioVolumeID,
-			[]*pb.AioController{
+			[]*pb.AioVolume{
 				{
 					Name:        "Malloc0",
 					BlockSize:   512,
@@ -395,7 +395,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 		},
 		"pagination overflow": {
 			testAioVolumeID,
-			[]*pb.AioController{
+			[]*pb.AioVolume{
 				{
 					Name:        "Malloc0",
 					BlockSize:   512,
@@ -433,7 +433,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 		},
 		"pagination": {
 			testAioVolumeID,
-			[]*pb.AioController{
+			[]*pb.AioVolume{
 				{
 					Name:        "Malloc0",
 					BlockSize:   512,
@@ -448,7 +448,7 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 		},
 		"pagination offset": {
 			testAioVolumeID,
-			[]*pb.AioController{
+			[]*pb.AioVolume{
 				{
 					Name:        "Malloc1",
 					BlockSize:   512,
@@ -471,11 +471,11 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListAioControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
-			response, err := testEnv.client.ListAioControllers(testEnv.ctx, request)
+			request := &pb.ListAioVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			response, err := testEnv.client.ListAioVolumes(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetAioControllers(), tt.out) {
-				t.Error("response: expected", tt.out, "received", response.GetAioControllers())
+			if !server.EqualProtoSlices(response.GetAioVolumes(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetAioVolumes())
 			}
 
 			// Empty NextPageToken indicates end of results list
@@ -497,10 +497,10 @@ func TestBackEnd_ListAioControllers(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetAioController(t *testing.T) {
+func TestBackEnd_GetAioVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     *pb.AioController
+		out     *pb.AioVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -542,7 +542,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			testAioVolumeID,
-			&pb.AioController{Name: "Malloc1", BlockSize: 512, BlocksCount: 131072},
+			&pb.AioVolume{Name: "Malloc1", BlockSize: 512, BlocksCount: 131072},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"name":"Malloc1","aliases":["88112c76-8c49-4395-955a-0d695b1d2099"],"product_name":"Malloc disk","block_size":512,"num_blocks":131072,"uuid":"88112c76-8c49-4395-955a-0d695b1d2099","assigned_rate_limits":{"rw_ios_per_sec":0,"rw_mbytes_per_sec":0,"r_mbytes_per_sec":0,"w_mbytes_per_sec":0},"claimed":false,"zoned":false,"supported_io_types":{"read":true,"write":true,"unmap":true,"write_zeroes":true,"flush":true,"reset":true,"compare":false,"compare_and_write":false,"abort":true,"nvme_admin":false,"nvme_io":false},"driver_specific":{}}]}`},
 			codes.OK,
 			"",
@@ -571,8 +571,8 @@ func TestBackEnd_GetAioController(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 
-			request := &pb.GetAioControllerRequest{Name: tt.in}
-			response, err := testEnv.client.GetAioController(testEnv.ctx, request)
+			request := &pb.GetAioVolumeRequest{Name: tt.in}
+			response, err := testEnv.client.GetAioVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -592,7 +592,7 @@ func TestBackEnd_GetAioController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_AioControllerStats(t *testing.T) {
+func TestBackEnd_AioVolumeStats(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -673,8 +673,8 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 
-			request := &pb.AioControllerStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.AioControllerStats(testEnv.ctx, request)
+			request := &pb.AioVolumeStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
+			response, err := testEnv.client.AioVolumeStats(testEnv.ctx, request)
 
 			if !proto.Equal(tt.out, response.GetStats()) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())
@@ -694,7 +694,7 @@ func TestBackEnd_AioControllerStats(t *testing.T) {
 	}
 }
 
-func TestBackEnd_DeleteAioController(t *testing.T) {
+func TestBackEnd_DeleteAioVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -778,8 +778,8 @@ func TestBackEnd_DeleteAioController(t *testing.T) {
 			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
 
-			request := &pb.DeleteAioControllerRequest{Name: fname1, AllowMissing: tt.missing}
-			response, err := testEnv.client.DeleteAioController(testEnv.ctx, request)
+			request := &pb.DeleteAioVolumeRequest{Name: fname1, AllowMissing: tt.missing}
+			response, err := testEnv.client.DeleteAioVolume(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {
