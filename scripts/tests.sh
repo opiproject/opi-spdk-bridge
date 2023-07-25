@@ -35,14 +35,14 @@ docker run --network=host --rm docker.io/namely/grpc-cli ls 127.0.0.1:50051
 # check reflection
 grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cli)
 "${grpc_cli[@]}" ls opi-spdk-server:50051
-"${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.AioControllerService -l
+"${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.AioVolumeService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendVirtioBlkService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.FrontendVirtioScsiService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.MiddleendEncryptionService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.MiddleendQosVolumeService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NvmeRemoteControllerService -l
-"${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullDebugService -l
+"${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullVolumeService -l
 
 # check spdk sanity
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444 subnqn:nqn.2016-06.io.spdk:cnode1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt

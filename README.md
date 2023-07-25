@@ -118,14 +118,14 @@ See services
 ```bash
 $ grpc_cli ls opi-spdk-server:50051
 grpc.reflection.v1alpha.ServerReflection
-opi_api.storage.v1.AioControllerService
+opi_api.storage.v1.AioVolumeService
 opi_api.storage.v1.FrontendNvmeService
 opi_api.storage.v1.FrontendVirtioBlkService
 opi_api.storage.v1.FrontendVirtioScsiService
 opi_api.storage.v1.MiddleendEncryptionService
 opi_api.storage.v1.MiddleendQosVolumeService
 opi_api.storage.v1.NvmeRemoteControllerService
-opi_api.storage.v1.NullDebugService
+opi_api.storage.v1.NullVolumeService
 ```
 
 See commands

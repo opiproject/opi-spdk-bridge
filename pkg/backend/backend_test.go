@@ -24,8 +24,8 @@ import (
 
 type backendClient struct {
 	pb.NvmeRemoteControllerServiceClient
-	pb.NullDebugServiceClient
-	pb.AioControllerServiceClient
+	pb.NullVolumeServiceClient
+	pb.AioVolumeServiceClient
 }
 
 type testEnv struct {
@@ -66,8 +66,8 @@ func createTestEnvironment(spdkResponses []string) *testEnv {
 
 	env.client = &backendClient{
 		pb.NewNvmeRemoteControllerServiceClient(env.conn),
-		pb.NewNullDebugServiceClient(env.conn),
-		pb.NewAioControllerServiceClient(env.conn),
+		pb.NewNullVolumeServiceClient(env.conn),
+		pb.NewAioVolumeServiceClient(env.conn),
 	}
 
 	return env
@@ -77,8 +77,8 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 	pb.RegisterNvmeRemoteControllerServiceServer(server, opiSpdkServer)
-	pb.RegisterNullDebugServiceServer(server, opiSpdkServer)
-	pb.RegisterAioControllerServiceServer(server, opiSpdkServer)
+	pb.RegisterNullVolumeServiceServer(server, opiSpdkServer)
+	pb.RegisterAioVolumeServiceServer(server, opiSpdkServer)
 
 	go func() {
 		if err := server.Serve(listener); err != nil {

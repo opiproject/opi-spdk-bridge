@@ -25,17 +25,17 @@ import (
 var (
 	testNullVolumeID   = "mytest"
 	testNullVolumeName = server.ResourceIDToVolumeName(testNullVolumeID)
-	testNullVolume     = pb.NullDebug{
+	testNullVolume     = pb.NullVolume{
 		BlockSize:   512,
 		BlocksCount: 64,
 	}
 )
 
-func TestBackEnd_CreateNullDebug(t *testing.T) {
+func TestBackEnd_CreateNullVolume(t *testing.T) {
 	tests := map[string]struct {
 		id      string
-		in      *pb.NullDebug
-		out     *pb.NullDebug
+		in      *pb.NullVolume
+		out     *pb.NullVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -119,8 +119,8 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 				tt.out.Name = testNullVolumeName
 			}
 
-			request := &pb.CreateNullDebugRequest{NullDebug: tt.in, NullDebugId: tt.id}
-			response, err := testEnv.client.CreateNullDebug(testEnv.ctx, request)
+			request := &pb.CreateNullVolumeRequest{NullVolume: tt.in, NullVolumeId: tt.id}
+			response, err := testEnv.client.CreateNullVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -140,11 +140,11 @@ func TestBackEnd_CreateNullDebug(t *testing.T) {
 	}
 }
 
-func TestBackEnd_UpdateNullDebug(t *testing.T) {
+func TestBackEnd_UpdateNullVolume(t *testing.T) {
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
-		in      *pb.NullDebug
-		out     *pb.NullDebug
+		in      *pb.NullVolume
+		out     *pb.NullVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -242,7 +242,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		},
 		"valid request with unknown key": {
 			nil,
-			&pb.NullDebug{
+			&pb.NullVolume{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
@@ -255,12 +255,12 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		},
 		"unknown key with missing allowed": {
 			nil,
-			&pb.NullDebug{
+			&pb.NullVolume{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
 			},
-			&pb.NullDebug{
+			&pb.NullVolume{
 				Name:        server.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
@@ -272,7 +272,7 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NullDebug{Name: "-ABC-DEF"},
+			&pb.NullVolume{Name: "-ABC-DEF"},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -290,8 +290,8 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 			testNullVolume.Name = testNullVolumeName
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
-			request := &pb.UpdateNullDebugRequest{NullDebug: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
-			response, err := testEnv.client.UpdateNullDebug(testEnv.ctx, request)
+			request := &pb.UpdateNullVolumeRequest{NullVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
+			response, err := testEnv.client.UpdateNullVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -311,10 +311,10 @@ func TestBackEnd_UpdateNullDebug(t *testing.T) {
 	}
 }
 
-func TestBackEnd_ListNullDebugs(t *testing.T) {
+func TestBackEnd_ListNullVolumes(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     []*pb.NullDebug
+		out     []*pb.NullVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -368,7 +368,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			testNullVolumeID,
-			[]*pb.NullDebug{
+			[]*pb.NullVolume{
 				{
 					Name:        "Malloc0",
 					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
@@ -393,7 +393,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		},
 		"pagination overflow": {
 			testNullVolumeID,
-			[]*pb.NullDebug{
+			[]*pb.NullVolume{
 				{
 					Name:        "Malloc0",
 					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
@@ -433,7 +433,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		},
 		"pagination": {
 			testNullVolumeID,
-			[]*pb.NullDebug{
+			[]*pb.NullVolume{
 				{
 					Name:        "Malloc0",
 					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
@@ -449,7 +449,7 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 		},
 		"pagination offset": {
 			testNullVolumeID,
-			[]*pb.NullDebug{
+			[]*pb.NullVolume{
 				{
 					Name:        "Malloc1",
 					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
@@ -473,11 +473,11 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListNullDebugsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
-			response, err := testEnv.client.ListNullDebugs(testEnv.ctx, request)
+			request := &pb.ListNullVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			response, err := testEnv.client.ListNullVolumes(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetNullDebugs(), tt.out) {
-				t.Error("response: expected", tt.out, "received", response.GetNullDebugs())
+			if !server.EqualProtoSlices(response.GetNullVolumes(), tt.out) {
+				t.Error("response: expected", tt.out, "received", response.GetNullVolumes())
 			}
 
 			if tt.size != 1 && response.GetNextPageToken() != "" {
@@ -498,10 +498,10 @@ func TestBackEnd_ListNullDebugs(t *testing.T) {
 	}
 }
 
-func TestBackEnd_GetNullDebug(t *testing.T) {
+func TestBackEnd_GetNullVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
-		out     *pb.NullDebug
+		out     *pb.NullVolume
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
@@ -543,7 +543,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			testNullVolumeID,
-			&pb.NullDebug{
+			&pb.NullVolume{
 				Name:        "Malloc1",
 				Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
 				BlockSize:   512,
@@ -577,8 +577,8 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 
-			request := &pb.GetNullDebugRequest{Name: tt.in}
-			response, err := testEnv.client.GetNullDebug(testEnv.ctx, request)
+			request := &pb.GetNullVolumeRequest{Name: tt.in}
+			response, err := testEnv.client.GetNullVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -598,7 +598,7 @@ func TestBackEnd_GetNullDebug(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NullDebugStats(t *testing.T) {
+func TestBackEnd_NullVolumeStats(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -679,8 +679,8 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 
-			request := &pb.NullDebugStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.NullDebugStats(testEnv.ctx, request)
+			request := &pb.NullVolumeStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
+			response, err := testEnv.client.NullVolumeStats(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())
@@ -700,7 +700,7 @@ func TestBackEnd_NullDebugStats(t *testing.T) {
 	}
 }
 
-func TestBackEnd_DeleteNullDebug(t *testing.T) {
+func TestBackEnd_DeleteNullVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -784,8 +784,8 @@ func TestBackEnd_DeleteNullDebug(t *testing.T) {
 			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
-			request := &pb.DeleteNullDebugRequest{Name: fname1, AllowMissing: tt.missing}
-			response, err := testEnv.client.DeleteNullDebug(testEnv.ctx, request)
+			request := &pb.DeleteNullVolumeRequest{Name: fname1, AllowMissing: tt.missing}
+			response, err := testEnv.client.DeleteNullVolume(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
 				if er.Code() != tt.errCode {

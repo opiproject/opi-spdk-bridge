@@ -82,8 +82,8 @@ func main() {
 	}
 
 	pb.RegisterNvmeRemoteControllerServiceServer(s, backendServer)
-	pb.RegisterNullDebugServiceServer(s, backendServer)
-	pb.RegisterAioControllerServiceServer(s, backendServer)
+	pb.RegisterNullVolumeServiceServer(s, backendServer)
+	pb.RegisterAioVolumeServiceServer(s, backendServer)
 	pb.RegisterMiddleendEncryptionServiceServer(s, middleendServer)
 	pb.RegisterMiddleendQosVolumeServiceServer(s, middleendServer)
 
