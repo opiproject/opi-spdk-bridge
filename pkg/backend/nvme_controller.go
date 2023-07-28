@@ -99,14 +99,14 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 
 // NvmeRemoteControllerReset resets an Nvme remote controller
 func (s *Server) NvmeRemoteControllerReset(_ context.Context, in *pb.NvmeRemoteControllerResetRequest) (*emptypb.Empty, error) {
-	log.Printf("Received: %v", in.GetId())
+	log.Printf("Received: %v", in.GetName())
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Id.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -171,21 +171,21 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 
 // NvmeRemoteControllerStats gets Nvme remote controller stats
 func (s *Server) NvmeRemoteControllerStats(_ context.Context, in *pb.NvmeRemoteControllerStatsRequest) (*pb.NvmeRemoteControllerStatsResponse, error) {
-	log.Printf("Received: %v", in.GetId())
+	log.Printf("Received: %v", in.GetName())
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Id.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmeControllers[in.Id.Value]
+	volume, ok := s.Volumes.NvmeControllers[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Id.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}

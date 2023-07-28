@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
@@ -26,13 +25,13 @@ var (
 	testNvmePathID   = "mytest"
 	testNvmePathName = server.ResourceIDToVolumeName(testNvmePathID)
 	testNvmePath     = pb.NvmePath{
-		Trtype:       pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		Adrfam:       pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
-		Traddr:       "127.0.0.1",
-		Trsvcid:      4444,
-		Subnqn:       "nqn.2016-06.io.spdk:cnode1",
-		Hostnqn:      "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
-		ControllerId: &pc.ObjectKey{Value: testNvmeCtrlName},
+		Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		Adrfam:            pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		Traddr:            "127.0.0.1",
+		Trsvcid:           4444,
+		Subnqn:            "nqn.2016-06.io.spdk:cnode1",
+		Hostnqn:           "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+		ControllerNameRef: testNvmeCtrlName,
 	}
 )
 
@@ -807,7 +806,7 @@ func TestBackEnd_NvmePathStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = &testNvmePath
 
-			request := &pb.NvmePathStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			request := &pb.NvmePathStatsRequest{Name: tt.in}
 			response, err := testEnv.client.NvmePathStats(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
