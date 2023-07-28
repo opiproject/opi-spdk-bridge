@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
@@ -124,7 +123,7 @@ func TestBackEnd_NvmeRemoteControllerReset(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.NvmeRemoteControllerResetRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			request := &pb.NvmeRemoteControllerResetRequest{Name: tt.in}
 			response, err := testEnv.client.NvmeRemoteControllerReset(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
@@ -387,7 +386,7 @@ func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
 
-			request := &pb.NvmeRemoteControllerStatsRequest{Id: &pc.ObjectKey{Value: tt.in}}
+			request := &pb.NvmeRemoteControllerStatsRequest{Name: tt.in}
 			response, err := testEnv.client.NvmeRemoteControllerStats(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {

@@ -59,9 +59,9 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		return nvmePath, nil
 	}
 
-	controller, ok := s.Volumes.NvmeControllers[in.NvmePath.ControllerId.Value]
+	controller, ok := s.Volumes.NvmeControllers[in.NvmePath.ControllerNameRef]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.NvmePath.ControllerId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.NvmePath.ControllerNameRef)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -129,9 +129,9 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	controller, ok := s.Volumes.NvmeControllers[nvmePath.ControllerId.Value]
+	controller, ok := s.Volumes.NvmeControllers[nvmePath.ControllerNameRef]
 	if !ok {
-		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", nvmePath.ControllerId.Value)
+		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", nvmePath.ControllerNameRef)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -284,14 +284,14 @@ func (s *Server) NvmePathStats(_ context.Context, in *pb.NvmePathStatsRequest) (
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Id.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmePaths[in.Id.Value]
+	volume, ok := s.Volumes.NvmePaths[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Id.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -324,7 +324,7 @@ func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {
 func (s *Server) numberOfPathsForController(controllerName string) int {
 	numberOfPaths := 0
 	for _, path := range s.Volumes.NvmePaths {
-		if path.ControllerId.Value == controllerName {
+		if path.ControllerNameRef == controllerName {
 			numberOfPaths++
 		}
 	}
