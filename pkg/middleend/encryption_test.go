@@ -237,6 +237,15 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			"",
 			true,
 		},
+		"no required field": {
+			encryptedVolumeID,
+			nil,
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: encrypted_volume",
+			false,
+		},
 	}
 
 	// run tests
@@ -733,6 +742,15 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			1,
 			"existing-pagination-token",
 		},
+		"no required field": {
+			"",
+			[]*pb.EncryptedVolume{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: parent",
+			0,
+			"",
+		},
 	}
 
 	// run tests
@@ -778,42 +796,42 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request with invalid SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.InvalidArgument,
 			fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 		},
 		"valid request with invalid marshal SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevGetBdevsResult"),
 		},
 		"valid request with empty SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{""},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
 		},
 		"valid request with ID mismatch SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
 		},
 		"valid request with error code from SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			codes.Unknown,
 			fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
 		},
 		"valid request with valid SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			&pb.EncryptedVolume{
 				Name: encryptedVolumeID,
 			},
@@ -822,18 +840,25 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			"",
 		},
 		"valid request with unknown key": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 		},
 		"malformed name": {
-			"-ABC-DEF",
+			server.ResourceIDToVolumeName("-ABC-DEF"),
 			nil,
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+		},
+		"no required field": {
+			"",
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 		},
 	}
 
@@ -843,10 +868,9 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
 
-			request := &pb.GetEncryptedVolumeRequest{Name: fname1}
+			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
@@ -980,7 +1004,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid bdev delete SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -988,7 +1012,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with invalid bdev delete marshal SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			codes.Unknown,
@@ -996,7 +1020,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with empty bdev delete SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -1004,7 +1028,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch on bdev delete SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -1012,7 +1036,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with error code from bdev delete SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -1020,7 +1044,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			codes.OK,
@@ -1028,7 +1052,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with key delete fails": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -1036,7 +1060,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with error code from key delete SPDK response": {
-			encryptedVolumeID,
+			encryptedVolumeName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":true}`},
 			codes.Unknown,
@@ -1044,7 +1068,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -1052,7 +1076,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			false,
 		},
 		"unknown key with missing allowed": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,
@@ -1060,11 +1084,19 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			true,
 		},
 		"malformed name": {
-			"-ABC-DEF",
+			server.ResourceIDToVolumeName("-ABC-DEF"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required field": {
+			"",
+			&emptypb.Empty{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 			false,
 		},
 	}
@@ -1075,10 +1107,9 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
 
-			request := &pb.DeleteEncryptedVolumeRequest{Name: fname1, AllowMissing: tt.missing}
+			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
