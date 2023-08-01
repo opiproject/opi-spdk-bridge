@@ -104,6 +104,15 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 			"",
 			true,
 		},
+		"no required field": {
+			testAioVolumeID,
+			nil,
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: null_volume",
+			false,
+		},
 	}
 
 	// run tests
@@ -463,6 +472,15 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			1,
 			"existing-pagination-token",
 		},
+		"no required field": {
+			"",
+			[]*pb.NullVolume{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: parent",
+			0,
+			"",
+		},
 	}
 
 	// run tests
@@ -566,6 +584,13 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+		},
+		"no required field": {
+			"",
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 		},
 	}
 
@@ -710,7 +735,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			testNullVolumeID,
+			testNullVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -718,7 +743,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
-			testNullVolumeID,
+			testNullVolumeName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -726,7 +751,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testNullVolumeID,
+			testNullVolumeName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -734,7 +759,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			testNullVolumeID,
+			testNullVolumeName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -742,7 +767,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			testNullVolumeID,
+			testNullVolumeName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
@@ -750,7 +775,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -758,7 +783,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			false,
 		},
 		"unknown key with missing allowed": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,
@@ -766,11 +791,19 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			true,
 		},
 		"malformed name": {
-			"-ABC-DEF",
+			server.ResourceIDToVolumeName("-ABC-DEF"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required field": {
+			"",
+			&emptypb.Empty{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 			false,
 		},
 	}
@@ -781,10 +814,9 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
 
-			request := &pb.DeleteNullVolumeRequest{Name: fname1, AllowMissing: tt.missing}
+			request := &pb.DeleteNullVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullVolume(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
