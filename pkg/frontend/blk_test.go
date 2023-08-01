@@ -71,6 +71,14 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			errCode: codes.InvalidArgument,
 			errMsg:  fmt.Sprintf("Could not create virtio-blk: %s", testVirtioCtrlID),
 		},
+		"no required field": {
+			id:      testVirtioCtrlID,
+			in:      nil,
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Unknown,
+			errMsg:  "missing required field: virtio_blk",
+		},
 	}
 
 	for testName, tt := range tests {
@@ -351,6 +359,15 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			1,
 			"existing-pagination-token",
 		},
+		"no required field": {
+			"",
+			[]*pb.VirtioBlk{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: parent",
+			0,
+			"",
+		},
 	}
 
 	// run tests
@@ -447,6 +464,13 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+		},
+		"no required field": {
+			"",
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 		},
 	}
 
@@ -611,6 +635,14 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required field": {
+			"",
+			&emptypb.Empty{},
+			[]string{},
+			codes.Unknown,
+			"missing required field: name",
 			false,
 		},
 	}
