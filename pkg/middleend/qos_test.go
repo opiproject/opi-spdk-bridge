@@ -258,6 +258,16 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			existBefore: false,
 			existAfter:  true,
 		},
+		"no required field": {
+			id:          testQosVolumeID,
+			in:          nil,
+			out:         nil,
+			spdk:        []string{},
+			errCode:     codes.Unknown,
+			errMsg:      "missing required field: qos_volume",
+			existBefore: false,
+			existAfter:  false,
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -757,6 +767,8 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		MaxLimit: &pb.QosLimit{RwBandwidthMbs: 5},
 	}
 	existingToken := "existing-pagination-token"
+	testParent := "todo"
+
 	tests := map[string]struct {
 		out             []*pb.QosVolume
 		existingVolumes map[string]*pb.QosVolume
@@ -764,8 +776,10 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		errMsg          string
 		size            int32
 		token           string
+		in              string
 	}{
 		"no qos volumes were created": {
+			in:              testParent,
 			out:             []*pb.QosVolume{},
 			existingVolumes: map[string]*pb.QosVolume{},
 			errCode:         codes.OK,
@@ -774,6 +788,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			token:           "",
 		},
 		"qos volumes were created": {
+			in:  testParent,
 			out: []*pb.QosVolume{qosVolume0, qosVolume1},
 			existingVolumes: map[string]*pb.QosVolume{
 				qosVolume0.Name: qosVolume0,
@@ -785,6 +800,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			token:   "",
 		},
 		"pagination": {
+			in:  testParent,
 			out: []*pb.QosVolume{qosVolume0},
 			existingVolumes: map[string]*pb.QosVolume{
 				qosVolume0.Name: qosVolume0,
@@ -796,6 +812,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			token:   "",
 		},
 		"pagination offset": {
+			in:  testParent,
 			out: []*pb.QosVolume{qosVolume1},
 			existingVolumes: map[string]*pb.QosVolume{
 				qosVolume0.Name: qosVolume0,
@@ -807,6 +824,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			token:   existingToken,
 		},
 		"pagination negative": {
+			in:  testParent,
 			out: nil,
 			existingVolumes: map[string]*pb.QosVolume{
 				qosVolume0.Name: qosVolume0,
@@ -818,6 +836,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			token:   "",
 		},
 		"pagination error": {
+			in:  testParent,
 			out: nil,
 			existingVolumes: map[string]*pb.QosVolume{
 				qosVolume0.Name: qosVolume0,
@@ -828,6 +847,15 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			size:    0,
 			token:   "unknown-pagination-token",
 		},
+		"no required field": {
+			in:              "",
+			out:             nil,
+			existingVolumes: make(map[string]*pb.QosVolume),
+			errCode:         codes.Unknown,
+			errMsg:          "missing required field: parent",
+			size:            0,
+			token:           "",
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -835,7 +863,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.volumes.qosVolumes = tt.existingVolumes
 			request := &pb.ListQosVolumesRequest{}
-			request.Parent = "todo"
+			request.Parent = tt.in
 			request.PageSize = tt.size
 			request.PageToken = tt.token
 			testEnv.opiSpdkServer.Pagination[existingToken] = 1
@@ -873,16 +901,22 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 		errMsg  string
 	}{
 		"unknown QoS volume name": {
-			in:      "unknown-qos-volume-id",
+			in:      server.ResourceIDToVolumeName("unknown-qos-volume-id"),
 			out:     nil,
 			errCode: codes.NotFound,
 			errMsg:  fmt.Sprintf("unable to find key %s", server.ResourceIDToVolumeName("unknown-qos-volume-id")),
 		},
 		"existing QoS volume": {
-			in:      testQosVolumeID,
+			in:      testQosVolumeName,
 			out:     testQosVolume,
 			errCode: codes.OK,
 			errMsg:  "",
+		},
+		"no required field": {
+			"",
+			nil,
+			codes.Unknown,
+			"missing required field: name",
 		},
 	}
 	for name, tt := range tests {
@@ -890,10 +924,9 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume
 
-			request := &pb.GetQosVolumeRequest{Name: fname1}
+			request := &pb.GetQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetQosVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
