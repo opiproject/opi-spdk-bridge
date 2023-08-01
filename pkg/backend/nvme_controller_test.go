@@ -64,6 +64,14 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 			"",
 			true,
 		},
+		"no required field": {
+			testAioVolumeID,
+			nil,
+			nil,
+			codes.Unknown,
+			"missing required field: nvme_remote_controller",
+			false,
+		},
 	}
 
 	// run tests
@@ -248,6 +256,15 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
+		"no required field": {
+			"",
+			[]*pb.NvmeRemoteController{},
+			codes.Unknown,
+			"missing required field: parent",
+			0,
+			"",
+			map[string]*pb.NvmeRemoteController{},
+		},
 	}
 
 	// run tests
@@ -312,6 +329,12 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 			nil,
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+		},
+		"no required field": {
+			"",
+			nil,
+			codes.Unknown,
+			"missing required field: name",
 		},
 	}
 
@@ -416,31 +439,38 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 		missing bool
 	}{
 		"valid request": {
-			testNvmeCtrlID,
+			testNvmeCtrlName,
 			&emptypb.Empty{},
 			codes.OK,
 			"",
 			false,
 		},
 		"valid request with unknown key": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			nil,
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
-			"unknown-id",
+			server.ResourceIDToVolumeName("unknown-id"),
 			&emptypb.Empty{},
 			codes.OK,
 			"",
 			true,
 		},
 		"malformed name": {
-			"-ABC-DEF",
+			server.ResourceIDToVolumeName("-ABC-DEF"),
 			&emptypb.Empty{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required field": {
+			"",
+			&emptypb.Empty{},
+			codes.Unknown,
+			"missing required field: name",
 			false,
 		},
 	}
@@ -451,10 +481,9 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
 
-			request := &pb.DeleteNvmeRemoteControllerRequest{Name: fname1, AllowMissing: tt.missing}
+			request := &pb.DeleteNvmeRemoteControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeRemoteController(testEnv.ctx, request)
 
 			if er, ok := status.FromError(err); ok {
