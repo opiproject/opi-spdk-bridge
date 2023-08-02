@@ -275,9 +275,9 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
-// NvmePathStats gets Nvme path stats
-func (s *Server) NvmePathStats(_ context.Context, in *pb.NvmePathStatsRequest) (*pb.NvmePathStatsResponse, error) {
-	log.Printf("NvmePathStats: Received from client: %v", in)
+// StatsNvmePath gets Nvme path stats
+func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (*pb.StatsNvmePathResponse, error) {
+	log.Printf("StatsNvmePath: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -304,7 +304,7 @@ func (s *Server) NvmePathStats(_ context.Context, in *pb.NvmePathStatsRequest) (
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NvmePathStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+	return &pb.StatsNvmePathResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }
 
 func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {

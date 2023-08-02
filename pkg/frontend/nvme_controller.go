@@ -270,9 +270,9 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 	return &pb.NvmeController{Name: in.Name, Spec: &pb.NvmeControllerSpec{NvmeControllerId: controller.Spec.NvmeControllerId}, Status: &pb.NvmeControllerStatus{Active: true}}, nil
 }
 
-// NvmeControllerStats gets an Nvme controller stats
-func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerStatsRequest) (*pb.NvmeControllerStatsResponse, error) {
-	log.Printf("NvmeControllerStats: Received from client: %v", in)
+// StatsNvmeController gets an Nvme controller stats
+func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
+	log.Printf("StatsNvmeController: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -292,5 +292,5 @@ func (s *Server) NvmeControllerStats(_ context.Context, in *pb.NvmeControllerSta
 	}
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
-	return &pb.NvmeControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+	return &pb.StatsNvmeControllerResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
@@ -617,7 +616,7 @@ func TestBackEnd_GetAioVolume(t *testing.T) {
 	}
 }
 
-func TestBackEnd_AioVolumeStats(t *testing.T) {
+func TestBackEnd_StatsAioVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -698,8 +697,8 @@ func TestBackEnd_AioVolumeStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
 
-			request := &pb.AioVolumeStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.AioVolumeStats(testEnv.ctx, request)
+			request := &pb.StatsAioVolumeRequest{Name: tt.in}
+			response, err := testEnv.client.StatsAioVolume(testEnv.ctx, request)
 
 			if !proto.Equal(tt.out, response.GetStats()) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())

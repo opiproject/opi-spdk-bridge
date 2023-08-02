@@ -378,11 +378,12 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 		"valid request with unknown key": {
 			nil,
 			&pb.NvmePath{
-				Name:    server.ResourceIDToVolumeName("unknown-id"),
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
+				Name:              server.ResourceIDToVolumeName("unknown-id"),
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Adrfam:            pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+				Traddr:            "127.0.0.1",
+				Trsvcid:           4444,
+				ControllerNameRef: "TBD",
 			},
 			nil,
 			[]string{},
@@ -393,11 +394,12 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 		"unknown key with missing allowed": {
 			nil,
 			&pb.NvmePath{
-				Name:    server.ResourceIDToVolumeName("unknown-id"),
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
-				Traddr:  "127.0.0.1",
-				Trsvcid: 4444,
+				Name:              server.ResourceIDToVolumeName("unknown-id"),
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Adrfam:            pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+				Traddr:            "127.0.0.1",
+				Trsvcid:           4444,
+				ControllerNameRef: "TBD",
 			},
 			nil,
 			[]string{},
@@ -407,7 +409,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NvmePath{Name: "-ABC-DEF"},
+			&pb.NvmePath{Name: "-ABC-DEF", ControllerNameRef: "TBD"},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -757,7 +759,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NvmePathStats(t *testing.T) {
+func TestBackEnd_StatsNvmePath(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -838,8 +840,8 @@ func TestBackEnd_NvmePathStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = &testNvmePath
 
-			request := &pb.NvmePathStatsRequest{Name: tt.in}
-			response, err := testEnv.client.NvmePathStats(testEnv.ctx, request)
+			request := &pb.StatsNvmePathRequest{Name: tt.in}
+			response, err := testEnv.client.StatsNvmePath(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())

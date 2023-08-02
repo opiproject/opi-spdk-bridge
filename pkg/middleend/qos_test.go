@@ -947,20 +947,20 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 	}
 }
 
-func TestMiddleEnd_QosVolumeStats(t *testing.T) {
+func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      *_go.ObjectKey
-		out     *pb.QosVolumeStatsResponse
+		out     *pb.StatsQosVolumeResponse
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
 	}{
 		"empty QoS volume id is not allowed ": {
-			in:      nil,
+			in:      &_go.ObjectKey{Value: ""},
 			out:     nil,
 			spdk:    []string{},
-			errCode: codes.InvalidArgument,
-			errMsg:  "volume_id cannot be empty",
+			errCode: codes.Unknown,
+			errMsg:  "missing required field: name",
 		},
 		"unknown QoS volume Id": {
 			in:      &_go.ObjectKey{Value: "unknown-qos-volume-id"},
@@ -985,11 +985,10 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 		},
 		"successful QoS volume stats": {
 			in: &_go.ObjectKey{Value: testQosVolumeName},
-			out: &pb.QosVolumeStatsResponse{
+			out: &pb.StatsQosVolumeResponse{
 				Stats: &pb.VolumeStats{
 					ReadBytesCount: 36864,
 				},
-				Id: &_go.ObjectKey{Value: testQosVolumeName},
 			},
 			spdk: []string{
 				`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,` +
@@ -1013,8 +1012,8 @@ func TestMiddleEnd_QosVolumeStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume
 
-			request := &pb.QosVolumeStatsRequest{VolumeId: tt.in}
-			response, err := testEnv.client.QosVolumeStats(testEnv.ctx, request)
+			request := &pb.StatsQosVolumeRequest{Name: tt.in.Value}
+			response, err := testEnv.client.StatsQosVolume(testEnv.ctx, request)
 
 			if !proto.Equal(tt.out, response) {
 				t.Error("response: expected", tt.out, "received", response)

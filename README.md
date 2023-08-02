@@ -83,7 +83,7 @@ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_outp
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeNamespace "{nvme_namespace : {spec : {subsystem_name_ref : '//storage.opiproject.org/volumes/subsystem2', volume_name_ref : 'Malloc0', 'host_nsid' : '10', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } }, nvme_namespace_id: 'namespace1'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeNamespaces "{parent : '//storage.opiproject.org/volumes/subsystem2'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeNamespace "{name : '//storage.opiproject.org/volumes/namespace1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 NvmeNamespaceStats "{name : '//storage.opiproject.org/volumes/namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 StatsNvmeNamespace "{name : '//storage.opiproject.org/volumes/namespace1'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_MULTIPATH'}, nvme_remote_controller_id: 'nvmetcp12'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeRemoteControllers "{parent : 'todo'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmetcp12'}"
@@ -140,19 +140,19 @@ service FrontendNvmeService {
   rpc UpdateNvmeSubsystem(opi_api.storage.v1.UpdateNvmeSubsystemRequest) returns (opi_api.storage.v1.NvmeSubsystem) {}
   rpc ListNvmeSubsystem(opi_api.storage.v1.ListNvmeSubsystemRequest) returns (opi_api.storage.v1.ListNvmeSubsystemResponse) {}
   rpc GetNvmeSubsystem(opi_api.storage.v1.GetNvmeSubsystemRequest) returns (opi_api.storage.v1.NvmeSubsystem) {}
-  rpc NvmeSubsystemStats(opi_api.storage.v1.NvmeSubsystemStatsRequest) returns (opi_api.storage.v1.NvmeSubsystemStatsResponse) {}
+  rpc StatsNvmeSubsystem(opi_api.storage.v1.StatsNvmeSubsystemRequest) returns (opi_api.storage.v1.StatsNvmeSubsystemResponse) {}
   rpc CreateNvmeController(opi_api.storage.v1.CreateNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
   rpc DeleteNvmeController(opi_api.storage.v1.DeleteNvmeControllerRequest) returns (google.protobuf.Empty) {}
   rpc UpdateNvmeController(opi_api.storage.v1.UpdateNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
   rpc ListNvmeController(opi_api.storage.v1.ListNvmeControllerRequest) returns (opi_api.storage.v1.ListNvmeControllerResponse) {}
   rpc GetNvmeController(opi_api.storage.v1.GetNvmeControllerRequest) returns (opi_api.storage.v1.NvmeController) {}
-  rpc NvmeControllerStats(opi_api.storage.v1.NvmeControllerStatsRequest) returns (opi_api.storage.v1.NvmeControllerStatsResponse) {}
+  rpc StatsNvmeController(opi_api.storage.v1.StatsNvmeControllerRequest) returns (opi_api.storage.v1.StatsNvmeControllerResponse) {}
   rpc CreateNvmeNamespace(opi_api.storage.v1.CreateNvmeNamespaceRequest) returns (opi_api.storage.v1.NvmeNamespace) {}
   rpc DeleteNvmeNamespace(opi_api.storage.v1.DeleteNvmeNamespaceRequest) returns (google.protobuf.Empty) {}
   rpc UpdateNvmeNamespace(opi_api.storage.v1.UpdateNvmeNamespaceRequest) returns (opi_api.storage.v1.NvmeNamespace) {}
   rpc ListNvmeNamespace(opi_api.storage.v1.ListNvmeNamespaceRequest) returns (opi_api.storage.v1.ListNvmeNamespaceResponse) {}
   rpc GetNvmeNamespace(opi_api.storage.v1.GetNvmeNamespaceRequest) returns (opi_api.storage.v1.NvmeNamespace) {}
-  rpc NvmeNamespaceStats(opi_api.storage.v1.NvmeNamespaceStatsRequest) returns (opi_api.storage.v1.NvmeNamespaceStatsResponse) {}
+  rpc StatsNvmeNamespace(opi_api.storage.v1.StatsNvmeNamespaceRequest) returns (opi_api.storage.v1.StatsNvmeNamespaceResponse) {}
 }
 ```
 

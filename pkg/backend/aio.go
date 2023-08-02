@@ -288,23 +288,23 @@ func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*p
 	return &pb.AioVolume{Name: result[0].Name, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
-// AioVolumeStats gets an Aio volume stats
-func (s *Server) AioVolumeStats(_ context.Context, in *pb.AioVolumeStatsRequest) (*pb.AioVolumeStatsResponse, error) {
-	log.Printf("AioVolumeStats: Received from client: %v", in)
+// StatsAioVolume gets an Aio volume stats
+func (s *Server) StatsAioVolume(_ context.Context, in *pb.StatsAioVolumeRequest) (*pb.StatsAioVolumeResponse, error) {
+	log.Printf("StatsAioVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Handle.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.AioVolumes[in.Handle.Value]
+	volume, ok := s.Volumes.AioVolumes[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Handle.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func (s *Server) AioVolumeStats(_ context.Context, in *pb.AioVolumeStatsRequest)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.AioVolumeStatsResponse{Stats: &pb.VolumeStats{
+	return &pb.StatsAioVolumeResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
 		ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
 		WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),
