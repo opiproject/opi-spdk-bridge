@@ -289,23 +289,23 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 	return &pb.NullVolume{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
-// NullVolumeStats gets a Null volume instance stats
-func (s *Server) NullVolumeStats(_ context.Context, in *pb.NullVolumeStatsRequest) (*pb.NullVolumeStatsResponse, error) {
-	log.Printf("NullVolumeStats: Received from client: %v", in)
+// StatsNullVolume gets a Null volume instance stats
+func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeRequest) (*pb.StatsNullVolumeResponse, error) {
+	log.Printf("StatsNullVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Handle.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NullVolumes[in.Handle.Value]
+	volume, ok := s.Volumes.NullVolumes[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Handle.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func (s *Server) NullVolumeStats(_ context.Context, in *pb.NullVolumeStatsReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullVolumeStatsResponse{Stats: &pb.VolumeStats{
+	return &pb.StatsNullVolumeResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
 		ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
 		WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),

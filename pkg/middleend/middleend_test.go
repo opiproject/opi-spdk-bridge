@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
@@ -92,8 +91,8 @@ var (
 	encryptedVolumeID   = "crypto-test"
 	encryptedVolumeName = server.ResourceIDToVolumeName(encryptedVolumeID)
 	encryptedVolume     = pb.EncryptedVolume{
-		VolumeId: &pc.ObjectKey{Value: "volume-test"},
-		Key:      []byte("0123456789abcdef0123456789abcdef"),
-		Cipher:   pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+		VolumeNameRef: "volume-test",
+		Key:           []byte("0123456789abcdef0123456789abcdef"),
+		Cipher:        pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
 	}
 )

@@ -623,7 +623,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NullVolumeStats(t *testing.T) {
+func TestBackEnd_StatsNullVolume(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -704,8 +704,8 @@ func TestBackEnd_NullVolumeStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
 
-			request := &pb.NullVolumeStatsRequest{Handle: &pc.ObjectKey{Value: tt.in}}
-			response, err := testEnv.client.NullVolumeStats(testEnv.ctx, request)
+			request := &pb.StatsNullVolumeRequest{Name: tt.in}
+			response, err := testEnv.client.StatsNullVolume(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())

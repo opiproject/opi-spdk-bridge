@@ -192,26 +192,23 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 	return volume, nil
 }
 
-// QosVolumeStats gets a QoS volume stats
-func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest) (*pb.QosVolumeStatsResponse, error) {
-	log.Printf("QosVolumeStats: Received from client: %v", in)
+// StatsQosVolume gets a QoS volume stats
+func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest) (*pb.StatsQosVolumeResponse, error) {
+	log.Printf("StatsQosVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	if in.VolumeId == nil || in.VolumeId.Value == "" {
-		return nil, status.Error(codes.InvalidArgument, "volume_id cannot be empty")
-	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.VolumeId.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.volumes.qosVolumes[in.VolumeId.Value]
+	volume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VolumeId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -230,7 +227,7 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 		return nil, spdk.ErrUnexpectedSpdkCallResult
 	}
 
-	return &pb.QosVolumeStatsResponse{
+	return &pb.StatsQosVolumeResponse{
 		Stats: &pb.VolumeStats{
 			ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
 			ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
@@ -241,8 +238,7 @@ func (s *Server) QosVolumeStats(_ context.Context, in *pb.QosVolumeStatsRequest)
 			ReadLatencyTicks:  int32(result.Bdevs[0].ReadLatencyTicks),
 			WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
 			UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
-		},
-		Id: in.VolumeId}, nil
+		}}, nil
 }
 
 func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {

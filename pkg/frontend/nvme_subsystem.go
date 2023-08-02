@@ -251,23 +251,23 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
-// NvmeSubsystemStats gets Nvme Subsystem stats
-func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStatsRequest) (*pb.NvmeSubsystemStatsResponse, error) {
-	log.Printf("NvmeSubsystemStats: Received from client: %v", in)
+// StatsNvmeSubsystem gets Nvme Subsystem stats
+func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystemRequest) (*pb.StatsNvmeSubsystemResponse, error) {
+	log.Printf("StatsNvmeSubsystem: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.SubsystemNameRef); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Nvme.Subsystems[in.SubsystemNameRef]
+	volume, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.SubsystemNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -280,5 +280,5 @@ func (s *Server) NvmeSubsystemStats(_ context.Context, in *pb.NvmeSubsystemStats
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	return &pb.NvmeSubsystemStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+	return &pb.StatsNvmeSubsystemResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

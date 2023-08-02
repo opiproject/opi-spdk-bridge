@@ -108,7 +108,7 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NvmeRemoteControllerReset(t *testing.T) {
+func TestBackEnd_ResetNvmeRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -131,8 +131,8 @@ func TestBackEnd_NvmeRemoteControllerReset(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			request := &pb.NvmeRemoteControllerResetRequest{Name: tt.in}
-			response, err := testEnv.client.NvmeRemoteControllerReset(testEnv.ctx, request)
+			request := &pb.ResetNvmeRemoteControllerRequest{Name: tt.in}
+			response, err := testEnv.client.ResetNvmeRemoteController(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
 				t.Error("response: expected", tt.out, "received", response)
@@ -367,7 +367,7 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 	}
 }
 
-func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
+func TestBackEnd_StatsNvmeRemoteController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -409,8 +409,8 @@ func TestBackEnd_NvmeRemoteControllerStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
 
-			request := &pb.NvmeRemoteControllerStatsRequest{Name: tt.in}
-			response, err := testEnv.client.NvmeRemoteControllerStats(testEnv.ctx, request)
+			request := &pb.StatsNvmeRemoteControllerRequest{Name: tt.in}
+			response, err := testEnv.client.StatsNvmeRemoteController(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())

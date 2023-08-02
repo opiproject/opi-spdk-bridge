@@ -28,7 +28,7 @@ func TestFrontEnd_GetVirtioScsiController(_ *testing.T) {
 
 }
 
-func TestFrontEnd_VirtioScsiControllerStats(_ *testing.T) {
+func TestFrontEnd_StatsVirtioScsiController(_ *testing.T) {
 
 }
 
@@ -52,6 +52,6 @@ func TestFrontEnd_GetVirtioScsiLun(_ *testing.T) {
 
 }
 
-func TestFrontEnd_VirtioScsiLunStats(_ *testing.T) {
+func TestFrontEnd_StatsVirtioScsiLun(_ *testing.T) {
 
 }

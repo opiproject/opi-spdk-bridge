@@ -13,7 +13,6 @@ import (
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
@@ -63,7 +62,7 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	// not found, so create a new one
 	params := spdk.VhostCreateBlkControllerParams{
 		Ctrlr:   resourceID,
-		DevName: in.VirtioBlk.VolumeId.Value,
+		DevName: in.VirtioBlk.VolumeNameRef,
 	}
 	var result spdk.VhostCreateBlkControllerResult
 	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
@@ -191,9 +190,9 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioBlk{
-			Name:     server.ResourceIDToVolumeName(r.Ctrlr),
-			PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
-			VolumeId: &pc.ObjectKey{Value: "TBD"}}
+			Name:          server.ResourceIDToVolumeName(r.Ctrlr),
+			PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+			VolumeNameRef: "TBD"}
 	}
 	sortVirtioBlks(Blobarray)
 
@@ -237,32 +236,32 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.VirtioBlk{
-		Name:     in.Name,
-		PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
-		VolumeId: &pc.ObjectKey{Value: "TBD"}}, nil
+		Name:          in.Name,
+		PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+		VolumeNameRef: "TBD"}, nil
 }
 
-// VirtioBlkStats gets a Virtio block device stats
-func (s *Server) VirtioBlkStats(_ context.Context, in *pb.VirtioBlkStatsRequest) (*pb.VirtioBlkStatsResponse, error) {
-	log.Printf("VirtioBlkStats: Received from client: %v", in)
+// StatsVirtioBlk gets a Virtio block device stats
+func (s *Server) StatsVirtioBlk(_ context.Context, in *pb.StatsVirtioBlkRequest) (*pb.StatsVirtioBlkResponse, error) {
+	log.Printf("StatsVirtioBlk: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.ControllerId.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Virt.BlkCtrls[in.ControllerId.Value]
+	volume, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.ControllerId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
-	return nil, status.Errorf(codes.Unimplemented, "VirtioBlkStats method is not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "StatsVirtioBlk method is not implemented")
 }

@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -22,10 +21,10 @@ var (
 	testVirtioBlkID            = "virtio-blk-42"
 	testVirtioBlkName          = server.ResourceIDToVolumeName(testVirtioBlkID)
 	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlkId: testVirtioBlkID, VirtioBlk: &pb.VirtioBlk{
-		Name:     "",
-		PcieId:   &pb.PciEndpoint{PhysicalFunction: 42},
-		VolumeId: &pc.ObjectKey{Value: "Malloc42"},
-		MaxIoQps: 1,
+		Name:          "",
+		PcieId:        &pb.PciEndpoint{PhysicalFunction: 42},
+		VolumeNameRef: "Malloc42",
+		MaxIoQps:      1,
 	}}
 	testDeleteVirtioBlkRequest = &pb.DeleteVirtioBlkRequest{Name: testVirtioBlkName}
 )
@@ -88,15 +87,15 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 		"valid virtio-blk creation with on first bus location": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
-				PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
-				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
-				MaxIoQps: 1,
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
 			}, VirtioBlkId: testVirtioBlkID},
 			out: &pb.VirtioBlk{
-				Name:     testVirtioBlkName,
-				PcieId:   &pb.PciEndpoint{PhysicalFunction: 1},
-				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
-				MaxIoQps: 1,
+				Name:          testVirtioBlkName,
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
 			},
 			jsonRPC: alwaysSuccessfulJSONRPC,
 			buses:   []string{"pci.opi.0", "pci.opi.1"},
@@ -125,9 +124,9 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 		"negative physical function": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
-				PcieId:   &pb.PciEndpoint{PhysicalFunction: -1},
-				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
-				MaxIoQps: 1,
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: -1},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
 			}, VirtioBlkId: testVirtioBlkID},
 			out:     nil,
 			errCode: status.Convert(errDeviceEndpoint).Code(),
@@ -137,9 +136,9 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 		"nil pcie endpoint": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
-				PcieId:   nil,
-				VolumeId: &pc.ObjectKey{Value: "Malloc42"},
-				MaxIoQps: 1,
+				PcieId:        nil,
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
 			}, VirtioBlkId: testVirtioBlkID},
 			out:     nil,
 			errCode: status.Convert(errNoPcieEndpoint).Code(),

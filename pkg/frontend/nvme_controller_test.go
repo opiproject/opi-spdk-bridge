@@ -605,7 +605,7 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 	}
 }
 
-func TestFrontEnd_NvmeControllerStats(t *testing.T) {
+func TestFrontEnd_StatsNvmeController(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -647,8 +647,8 @@ func TestFrontEnd_NvmeControllerStats(t *testing.T) {
 
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
 
-			request := &pb.NvmeControllerStatsRequest{Name: tt.in}
-			response, err := testEnv.client.NvmeControllerStats(testEnv.ctx, request)
+			request := &pb.StatsNvmeControllerRequest{Name: tt.in}
+			response, err := testEnv.client.StatsNvmeController(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())

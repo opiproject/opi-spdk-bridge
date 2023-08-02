@@ -82,7 +82,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	// create bdev now
 	params := spdk.BdevCryptoCreateParams{
 		Name:         resourceID,
-		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
+		BaseBdevName: in.EncryptedVolume.VolumeNameRef,
 		KeyName:      resourceID,
 	}
 	var result spdk.BdevCryptoCreateResult
@@ -230,7 +230,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	// create bdev now
 	params3 := spdk.BdevCryptoCreateParams{
 		Name:         resourceID,
-		BaseBdevName: in.EncryptedVolume.VolumeId.Value,
+		BaseBdevName: in.EncryptedVolume.VolumeNameRef,
 		KeyName:      resourceID,
 	}
 	var result3 spdk.BdevCryptoCreateResult
@@ -327,23 +327,23 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 	return &pb.EncryptedVolume{Name: result[0].Name}, nil
 }
 
-// EncryptedVolumeStats gets an encrypted volume stats
-func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeStatsRequest) (*pb.EncryptedVolumeStatsResponse, error) {
-	log.Printf("EncryptedVolumeStats: Received from client: %v", in)
+// StatsEncryptedVolume gets an encrypted volume stats
+func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVolumeRequest) (*pb.StatsEncryptedVolumeResponse, error) {
+	log.Printf("StatsEncryptedVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.EncryptedVolumeId.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.volumes.encVolumes[in.EncryptedVolumeId.Value]
+	volume, ok := s.volumes.encVolumes[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.EncryptedVolumeId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func (s *Server) EncryptedVolumeStats(_ context.Context, in *pb.EncryptedVolumeS
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.EncryptedVolumeStatsResponse{Stats: &pb.VolumeStats{
+	return &pb.StatsEncryptedVolumeResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
 		ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),
 		WriteBytesCount:   int32(result.Bdevs[0].BytesWritten),

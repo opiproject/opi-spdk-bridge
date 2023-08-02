@@ -230,8 +230,8 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 	return &pb.VirtioScsiController{Name: server.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
 }
 
-// VirtioScsiControllerStats gets a Virtio SCSI controller stats
-func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiControllerStatsRequest) (*pb.VirtioScsiControllerStatsResponse, error) {
+// StatsVirtioScsiController gets a Virtio SCSI controller stats
+func (s *Server) StatsVirtioScsiController(_ context.Context, in *pb.StatsVirtioScsiControllerRequest) (*pb.StatsVirtioScsiControllerResponse, error) {
 	log.Printf("Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
@@ -239,20 +239,20 @@ func (s *Server) VirtioScsiControllerStats(_ context.Context, in *pb.VirtioScsiC
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.ControllerId.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Virt.ScsiCtrls[in.ControllerId.Value]
+	volume, ok := s.Virt.ScsiCtrls[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.ControllerId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
-	return &pb.VirtioScsiControllerStatsResponse{}, nil
+	return &pb.StatsVirtioScsiControllerResponse{}, nil
 }
 
 // CreateVirtioScsiLun creates a Virtio SCSI LUN
@@ -459,8 +459,8 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 	return &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: server.ResourceIDToVolumeName(result[0].Ctrlr)}}, nil
 }
 
-// VirtioScsiLunStats gets a Virtio SCSI LUN stats
-func (s *Server) VirtioScsiLunStats(_ context.Context, in *pb.VirtioScsiLunStatsRequest) (*pb.VirtioScsiLunStatsResponse, error) {
+// StatsVirtioScsiLun gets a Virtio SCSI LUN stats
+func (s *Server) StatsVirtioScsiLun(_ context.Context, in *pb.StatsVirtioScsiLunRequest) (*pb.StatsVirtioScsiLunResponse, error) {
 	log.Printf("Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
@@ -468,18 +468,18 @@ func (s *Server) VirtioScsiLunStats(_ context.Context, in *pb.VirtioScsiLunStats
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.ControllerId.Value); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Virt.ScsiLuns[in.ControllerId.Value]
+	volume, ok := s.Virt.ScsiLuns[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.ControllerId.Value)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
-	return &pb.VirtioScsiLunStatsResponse{}, nil
+	return &pb.StatsVirtioScsiLunResponse{}, nil
 }

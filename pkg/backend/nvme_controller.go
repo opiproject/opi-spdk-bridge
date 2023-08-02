@@ -97,8 +97,8 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 	return &emptypb.Empty{}, nil
 }
 
-// NvmeRemoteControllerReset resets an Nvme remote controller
-func (s *Server) NvmeRemoteControllerReset(_ context.Context, in *pb.NvmeRemoteControllerResetRequest) (*emptypb.Empty, error) {
+// ResetNvmeRemoteController resets an Nvme remote controller
+func (s *Server) ResetNvmeRemoteController(_ context.Context, in *pb.ResetNvmeRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received: %v", in.GetName())
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
@@ -169,8 +169,8 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 	return response, nil
 }
 
-// NvmeRemoteControllerStats gets Nvme remote controller stats
-func (s *Server) NvmeRemoteControllerStats(_ context.Context, in *pb.NvmeRemoteControllerStatsRequest) (*pb.NvmeRemoteControllerStatsResponse, error) {
+// StatsNvmeRemoteController gets Nvme remote controller stats
+func (s *Server) StatsNvmeRemoteController(_ context.Context, in *pb.StatsNvmeRemoteControllerRequest) (*pb.StatsNvmeRemoteControllerResponse, error) {
 	log.Printf("Received: %v", in.GetName())
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
@@ -191,5 +191,5 @@ func (s *Server) NvmeRemoteControllerStats(_ context.Context, in *pb.NvmeRemoteC
 	}
 	name := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", name)
-	return &pb.NvmeRemoteControllerStatsResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+	return &pb.StatsNvmeRemoteControllerResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

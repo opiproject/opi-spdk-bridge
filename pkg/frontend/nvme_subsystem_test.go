@@ -681,7 +681,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 	}
 }
 
-func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
+func TestFrontEnd_StatsNvmeSubsystem(t *testing.T) {
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -743,8 +743,8 @@ func TestFrontEnd_NvmeSubsystemStats(t *testing.T) {
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 
-			request := &pb.NvmeSubsystemStatsRequest{SubsystemNameRef: tt.in}
-			response, err := testEnv.client.NvmeSubsystemStats(testEnv.ctx, request)
+			request := &pb.StatsNvmeSubsystemRequest{Name: tt.in}
+			response, err := testEnv.client.StatsNvmeSubsystem(testEnv.ctx, request)
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())
