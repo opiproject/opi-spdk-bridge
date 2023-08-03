@@ -56,6 +56,9 @@ type Server struct {
 // NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
 func NewServer(jsonRPC spdk.JSONRPC) *Server {
+	if jsonRPC == nil {
+		log.Panic("nil for JSONRPC is not allowed")
+	}
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
