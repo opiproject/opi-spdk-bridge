@@ -65,9 +65,9 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	}
 }
 
-// NewServerWithSubsystemListener creates initialized instance of FrontEnd server communicating
+// NewCustomizedServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC and externally created SubsystemListener instead default one.
-func NewServerWithSubsystemListener(jsonRPC spdk.JSONRPC, sysListener SubsystemListener) *Server {
+func NewCustomizedServer(jsonRPC spdk.JSONRPC, sysListener SubsystemListener) *Server {
 	if sysListener == nil {
 		log.Panic("nil for SubsystemListener is not allowed")
 	}
