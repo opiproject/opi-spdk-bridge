@@ -59,7 +59,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return volume, nil
 	}
 
-	if err := s.setMaxLimit(in.QosVolume.VolumeId.Value, in.QosVolume.MaxLimit); err != nil {
+	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.MaxLimit); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 		return nil, err
 	}
 
-	if err := s.cleanMaxLimit(qosVolume.VolumeId.Value); err != nil {
+	if err := s.cleanMaxLimit(qosVolume.VolumeNameRef); err != nil {
 		return nil, err
 	}
 
@@ -122,14 +122,14 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		return nil, status.Errorf(codes.NotFound, "unable to find key %s", name)
 	}
 
-	if volume.VolumeId.Value != in.QosVolume.VolumeId.Value {
+	if volume.VolumeNameRef != in.QosVolume.VolumeNameRef {
 		msg := fmt.Sprintf("Change of underlying volume %v to a new one %v is forbidden",
-			volume.VolumeId.Value, in.QosVolume.VolumeId.Value)
+			volume.VolumeNameRef, in.QosVolume.VolumeNameRef)
 		log.Println("error:", msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	log.Println("Set new max limit values")
-	if err := s.setMaxLimit(in.QosVolume.VolumeId.Value, in.QosVolume.MaxLimit); err != nil {
+	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.MaxLimit); err != nil {
 		return nil, err
 	}
 
@@ -213,7 +213,7 @@ func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest)
 		return nil, err
 	}
 	params := spdk.BdevGetIostatParams{
-		Name: volume.VolumeId.Value,
+		Name: volume.VolumeNameRef,
 	}
 	var result spdk.BdevGetIostatResult
 	err := s.rpc.Call("bdev_get_iostat", &params, &result)
@@ -248,9 +248,6 @@ func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
 	if err := resourcename.Validate(volume.Name); err != nil {
 		return err
-	}
-	if volume.VolumeId == nil || volume.VolumeId.Value == "" {
-		return fmt.Errorf("volume_id cannot be empty")
 	}
 
 	if volume.MinLimit != nil {
