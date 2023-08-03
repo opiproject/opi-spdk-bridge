@@ -949,42 +949,42 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 
 func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 	tests := map[string]struct {
-		in      *_go.ObjectKey
+		in      string
 		out     *pb.StatsQosVolumeResponse
 		spdk    []string
 		errCode codes.Code
 		errMsg  string
 	}{
-		"empty QoS volume id is not allowed ": {
-			in:      &_go.ObjectKey{Value: ""},
+		"empty QoS volume name is not allowed ": {
+			in:      "",
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: name",
 		},
 		"unknown QoS volume Id": {
-			in:      &_go.ObjectKey{Value: "unknown-qos-volume-id"},
+			in:      "unknown-qos-volume-id",
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
 			errMsg:  fmt.Sprintf("unable to find key %s", "unknown-qos-volume-id"),
 		},
 		"SPDK call failed": {
-			in:      &_go.ObjectKey{Value: testQosVolumeName},
+			in:      testQosVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"some internal error"}}`},
 			errCode: status.Convert(spdk.ErrFailedSpdkCall).Code(),
 			errMsg:  status.Convert(spdk.ErrFailedSpdkCall).Message(),
 		},
 		"SPDK call result false": {
-			in:      &_go.ObjectKey{Value: testQosVolumeName},
+			in:      testQosVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate": 3300000000,"ticks": 5,"bdevs":[]}}`},
 			errCode: status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
 			errMsg:  status.Convert(spdk.ErrUnexpectedSpdkCallResult).Message(),
 		},
 		"successful QoS volume stats": {
-			in: &_go.ObjectKey{Value: testQosVolumeName},
+			in: testQosVolumeName,
 			out: &pb.StatsQosVolumeResponse{
 				Stats: &pb.VolumeStats{
 					ReadBytesCount: 36864,
@@ -998,7 +998,7 @@ func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 			errMsg:  "",
 		},
 		"malformed name": {
-			in:      &_go.ObjectKey{Value: "-ABC-DEF"},
+			in:      "-ABC-DEF",
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -1012,7 +1012,7 @@ func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 
 			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume
 
-			request := &pb.StatsQosVolumeRequest{Name: tt.in.Value}
+			request := &pb.StatsQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsQosVolume(testEnv.ctx, request)
 
 			if !proto.Equal(tt.out, response) {
