@@ -33,6 +33,50 @@ func sortVirtioBlks(virtioBlks []*pb.VirtioBlk) {
 	})
 }
 
+type vhostUserBlkTransport struct{}
+
+// NewVhostUserBlkTransport creates objects to handle vhost user blk transport
+// specifics
+func NewVhostUserBlkTransport() VirtioBlkTransport {
+	return &vhostUserBlkTransport{}
+}
+
+func (v vhostUserBlkTransport) CreateParams(virtioBlk *pb.VirtioBlk) (any, error) {
+	if err := v.verifyTransportSpecificParams(virtioBlk); err != nil {
+		return nil, err
+	}
+
+	resourceID := path.Base(virtioBlk.Name)
+	return spdk.VhostCreateBlkControllerParams{
+		Ctrlr:   resourceID,
+		DevName: virtioBlk.VolumeNameRef,
+	}, nil
+}
+
+func (v vhostUserBlkTransport) DeleteParams(virtioBlk *pb.VirtioBlk) (any, error) {
+	if err := v.verifyTransportSpecificParams(virtioBlk); err != nil {
+		return nil, err
+	}
+
+	resourceID := path.Base(virtioBlk.Name)
+	return spdk.VhostDeleteControllerParams{
+		Ctrlr: resourceID,
+	}, nil
+}
+
+func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.VirtioBlk) error {
+	pcieID := virtioBlk.PcieId
+	if pcieID.PortId.Value != 0 {
+		return fmt.Errorf("only port 0 is supported")
+	}
+
+	if pcieID.VirtualFunction.Value != 0 {
+		return fmt.Errorf("virtual functions are not supported for vhost user")
+	}
+
+	return nil
+}
+
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	log.Printf("CreateVirtioBlk: Received from client: %v", in)
@@ -66,12 +110,14 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 		return controller, nil
 	}
 	// not found, so create a new one
-	params := spdk.VhostCreateBlkControllerParams{
-		Ctrlr:   resourceID,
-		DevName: in.VirtioBlk.VolumeNameRef,
+	params, err := s.Virt.transport.CreateParams(in.VirtioBlk)
+	if err != nil {
+		log.Printf("error: failed to create params for spdk call: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
 	var result spdk.VhostCreateBlkControllerResult
-	err := s.rpc.Call("vhost_create_blk_controller", &params, &result)
+	err = s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -111,19 +157,22 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	resourceID := path.Base(controller.Name)
-	params := spdk.VhostDeleteControllerParams{
-		Ctrlr: resourceID,
+
+	params, err := s.Virt.transport.DeleteParams(controller)
+	if err != nil {
+		log.Printf("error: failed to create params for spdk call: %v. Inconsistent entry in db?", err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
+
 	var result spdk.VhostDeleteControllerResult
-	err := s.rpc.Call("vhost_delete_controller", &params, &result)
+	err = s.rpc.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete virtio-blk: %s", resourceID)
+		msg := fmt.Sprintf("Could not delete virtio-blk: %s", in.Name)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
