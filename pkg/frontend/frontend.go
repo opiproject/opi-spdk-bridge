@@ -26,11 +26,19 @@ type NvmeParameters struct {
 	subsysListener SubsystemListener
 }
 
+// VirtioBlkTransport interface is used to provide SPDK call params to create/delete
+// virtio-blk controllers depending on used transport type.
+type VirtioBlkTransport interface {
+	CreateParams(virtioBlk *pb.VirtioBlk) (any, error)
+	DeleteParams(virtioBlk *pb.VirtioBlk) (any, error)
+}
+
 // VirtioParameters contains all VirtIO related structures
 type VirtioParameters struct {
 	BlkCtrls  map[string]*pb.VirtioBlk
 	ScsiCtrls map[string]*pb.VirtioScsiController
 	ScsiLuns  map[string]*pb.VirtioScsiLun
+	transport VirtioBlkTransport
 }
 
 // Server contains frontend related OPI services
@@ -60,18 +68,29 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),
 			ScsiCtrls: make(map[string]*pb.VirtioScsiController),
 			ScsiLuns:  make(map[string]*pb.VirtioScsiLun),
+			transport: NewVhostUserBlkTransport(),
 		},
 		Pagination: make(map[string]int),
 	}
 }
 
 // NewCustomizedServer creates initialized instance of FrontEnd server communicating
-// with provided jsonRPC and externally created SubsystemListener instead default one.
-func NewCustomizedServer(jsonRPC spdk.JSONRPC, sysListener SubsystemListener) *Server {
+// with provided jsonRPC and externally created SubsystemListener and VirtioBlkTransport
+func NewCustomizedServer(
+	jsonRPC spdk.JSONRPC,
+	sysListener SubsystemListener,
+	virtioBlkTransport VirtioBlkTransport,
+) *Server {
 	if sysListener == nil {
 		log.Panic("nil for SubsystemListener is not allowed")
 	}
+
+	if virtioBlkTransport == nil {
+		log.Panic("nil for VirtioBlkTransport is not allowed")
+	}
+
 	server := NewServer(jsonRPC)
 	server.Nvme.subsysListener = sysListener
+	server.Virt.transport = virtioBlkTransport
 	return server
 }
