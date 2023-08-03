@@ -99,6 +99,30 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 		},
+		"virtual functions are not supported for vhost user": {
+			id: testVirtioCtrlID,
+			in: &pb.VirtioBlk{
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(1), PortId: wrapperspb.Int32(0)},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  "virtual functions are not supported for vhost user",
+		},
+		"only port 0 is supported for vhost user": {
+			id: testVirtioCtrlID,
+			in: &pb.VirtioBlk{
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(1)},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  "only port 0 is supported",
+		},
 	}
 
 	for testName, tt := range tests {
@@ -598,6 +622,9 @@ func TestFrontEnd_StatsVirtioBlk(t *testing.T) {
 }
 
 func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
+	pfIndex := 0
+	vfIndex := 1
+
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -605,6 +632,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		missing bool
+		pfVf    int
 	}{
 		"valid request with invalid SPDK response": {
 			testVirtioCtrlID,
@@ -613,6 +641,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete virtio-blk: %s", testVirtioCtrlID),
 			false,
+			pfIndex,
 		},
 		"valid request with empty SPDK response": {
 			testVirtioCtrlID,
@@ -621,6 +650,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("vhost_delete_controller: %v", "EOF"),
 			false,
+			pfIndex,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testVirtioCtrlID,
@@ -629,6 +659,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("vhost_delete_controller: %v", "json response ID mismatch"),
 			false,
+			pfIndex,
 		},
 		"valid request with error code from SPDK response": {
 			testVirtioCtrlID,
@@ -637,6 +668,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("vhost_delete_controller: %v", "json response error: myopierr"),
 			false,
+			pfIndex,
 		},
 		"valid request with valid SPDK response": {
 			testVirtioCtrlID,
@@ -645,6 +677,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			pfIndex,
 		},
 		"valid request with unknown key": {
 			"unknown-id",
@@ -653,6 +686,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", "unknown-id"),
 			false,
+			pfIndex,
 		},
 		"unknown key with missing allowed": {
 			"unknown-id",
@@ -661,6 +695,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			pfIndex,
 		},
 		"malformed name": {
 			"-ABC-DEF",
@@ -669,6 +704,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
+			pfIndex,
 		},
 		"no required field": {
 			"",
@@ -677,6 +713,16 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			codes.Unknown,
 			"missing required field: name",
 			false,
+			pfIndex,
+		},
+		"entry with invalid address in db": {
+			testVirtioCtrlID,
+			&emptypb.Empty{},
+			[]string{},
+			codes.Internal,
+			"virtual functions are not supported for vhost user",
+			false,
+			vfIndex,
 		},
 	}
 
@@ -686,7 +732,9 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = server.ProtoClone(&testVirtioCtrl)
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID].PcieId.VirtualFunction =
+				wrapperspb.Int32(int32(tt.pfVf))
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)
