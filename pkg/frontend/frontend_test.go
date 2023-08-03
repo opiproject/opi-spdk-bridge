@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"testing"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -87,5 +88,59 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 
 	return func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
+	}
+}
+
+func TestFrontEnd_NewCustomizedServer(t *testing.T) {
+	validJSONRPC := spdk.NewSpdkJSONRPC("/some/path")
+	validSubsyListener := NewTCPSubsystemListener("10.10.10.10:1234")
+	validVirtioBLkTransport := NewVhostUserBlkTransport()
+
+	tests := map[string]struct {
+		jsonRPC            spdk.JSONRPC
+		subsysListener     SubsystemListener
+		virtioBlkTransport VirtioBlkTransport
+		wantPanic          bool
+	}{
+		"nil json rpc": {
+			jsonRPC:            nil,
+			subsysListener:     validSubsyListener,
+			virtioBlkTransport: validVirtioBLkTransport,
+			wantPanic:          true,
+		},
+		"nil subsystem listener": {
+			jsonRPC:            validJSONRPC,
+			subsysListener:     nil,
+			virtioBlkTransport: validVirtioBLkTransport,
+			wantPanic:          true,
+		},
+		"nil virtio blk transport": {
+			jsonRPC:            validJSONRPC,
+			subsysListener:     validSubsyListener,
+			virtioBlkTransport: nil,
+			wantPanic:          true,
+		},
+		"all valid arguments": {
+			jsonRPC:            validJSONRPC,
+			subsysListener:     validSubsyListener,
+			virtioBlkTransport: validVirtioBLkTransport,
+			wantPanic:          false,
+		},
+	}
+
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("NewCustomizedServer() recover = %v, wantPanic = %v", r, tt.wantPanic)
+				}
+			}()
+
+			server := NewCustomizedServer(tt.jsonRPC, tt.subsysListener, tt.virtioBlkTransport)
+			if server == nil && !tt.wantPanic {
+				t.Error("expected non nil server or panic")
+			}
+		})
 	}
 }
