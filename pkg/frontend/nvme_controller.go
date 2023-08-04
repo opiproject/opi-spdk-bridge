@@ -98,6 +98,11 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 	if in.NvmeController.Spec == nil || in.NvmeController.Spec.SubsystemNameRef == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.NvmeController.Spec.SubsystemNameRef); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeControllerId != "" {
