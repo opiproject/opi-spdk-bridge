@@ -40,11 +40,12 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 		errMsg  string
 	}{
 		// "illegal resource_id": {
-		// 	id:          "CapitalLettersNotAllowed",
-		// 	in:          &testVirtioCtrl,
-		// 	out:         nil,
-		// 	spdk:        []string{""},
-		// 	expectedErr: status.Error(codes.Unknown, fmt.Sprintf("error: user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0")),
+		// 	id:      "CapitalLettersNotAllowed",
+		// 	in:      &testVirtioCtrl,
+		// 	out:     nil,
+		// 	spdk:    []string{""},
+		// 	errCode: codes.Unknown,
+		// 	errMsg:  fmt.Sprintf("error: user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 		// },
 		"valid virtio-blk creation": {
 			id:      testVirtioCtrlID,
@@ -77,6 +78,22 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: virtio_blk",
+		},
+		"no required volume field": {
+			id:      testVirtioCtrlID,
+			in:      &pb.VirtioBlk{},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Unknown,
+			errMsg:  "missing required field: virtio_blk.volume_name_ref",
+		},
+		"malformed volume name": {
+			id:      testVirtioCtrlID,
+			in:      &pb.VirtioBlk{VolumeNameRef: "-ABC-DEF"},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 		},
 	}
 
@@ -175,6 +192,15 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		"malformed name": {
 			nil,
 			&pb.VirtioBlk{Name: "-ABC-DEF", VolumeNameRef: "TBD"},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"malformed volume name": {
+			nil,
+			&pb.VirtioBlk{Name: "TBD", VolumeNameRef: "-ABC-DEF"},
 			nil,
 			[]string{},
 			codes.Unknown,

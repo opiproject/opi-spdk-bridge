@@ -40,6 +40,11 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.EncryptedVolume.VolumeNameRef); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.EncryptedVolumeId != "" {
@@ -168,6 +173,11 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.EncryptedVolume.VolumeNameRef); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
