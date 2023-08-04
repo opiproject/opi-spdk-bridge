@@ -146,13 +146,53 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			"",
 			true,
 		},
-		"no required field": {
-			testControllerID,
+		"malformed subsystem name": {
+			testNamespaceID,
+			&pb.NvmeNamespace{
+				Spec: &pb.NvmeNamespaceSpec{
+					SubsystemNameRef: "-ABC-DEF",
+					VolumeNameRef:    "TBD",
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required ns field": {
+			testNamespaceID,
 			nil,
 			nil,
 			[]string{},
 			codes.Unknown,
 			"missing required field: nvme_namespace",
+			false,
+		},
+		"no required subsystem field": {
+			testNamespaceID,
+			&pb.NvmeNamespace{
+				Spec: &pb.NvmeNamespaceSpec{
+					VolumeNameRef: "TBD",
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: nvme_namespace.spec.subsystem_name_ref",
+			false,
+		},
+		"no required volume field": {
+			testNamespaceID,
+			&pb.NvmeNamespace{
+				Spec: &pb.NvmeNamespaceSpec{
+					SubsystemNameRef: "TBD",
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: nvme_namespace.spec.volume_name_ref",
 			false,
 		},
 	}

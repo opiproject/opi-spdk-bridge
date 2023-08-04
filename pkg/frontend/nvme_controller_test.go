@@ -162,13 +162,41 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"",
 			true,
 		},
-		"no required field": {
+		"malformed subsystem name": {
+			testControllerID,
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					SubsystemNameRef: "-ABC-DEF",
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
+					NvmeControllerId: 1,
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"no required ctrl field": {
 			testControllerID,
 			nil,
 			nil,
 			[]string{},
 			codes.Unknown,
 			"missing required field: nvme_controller",
+			false,
+		},
+		"no required subsystem field": {
+			testControllerID,
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					NvmeControllerId: 1,
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: nvme_controller.spec.subsystem_name_ref",
 			false,
 		},
 	}
