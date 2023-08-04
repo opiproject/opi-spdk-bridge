@@ -160,6 +160,20 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
 		},
+		"malformed volume name": {
+			testNamespaceID,
+			&pb.NvmeNamespace{
+				Spec: &pb.NvmeNamespaceSpec{
+					SubsystemNameRef: "TBD",
+					VolumeNameRef:    "-ABC-DEF",
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
 		"no required ns field": {
 			testNamespaceID,
 			nil,
@@ -422,6 +436,21 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		"malformed name": {
 			nil,
 			&pb.NvmeNamespace{Name: "-ABC-DEF"},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"malformed volume name": {
+			nil,
+			&pb.NvmeNamespace{
+				Name: testNamespaceName,
+				Spec: &pb.NvmeNamespaceSpec{
+					SubsystemNameRef: "TBD",
+					VolumeNameRef:    "-ABC-DEF",
+				},
+			},
 			nil,
 			[]string{},
 			codes.Unknown,

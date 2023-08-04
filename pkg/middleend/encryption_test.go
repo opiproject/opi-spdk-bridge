@@ -245,6 +245,24 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			"missing required field: encrypted_volume",
 			false,
 		},
+		"no required volume field": {
+			encryptedVolumeID,
+			&pb.EncryptedVolume{},
+			nil,
+			[]string{},
+			codes.Unknown,
+			"missing required field: encrypted_volume.volume_name_ref",
+			false,
+		},
+		"malformed volume name": {
+			encryptedVolumeID,
+			&pb.EncryptedVolume{VolumeNameRef: "-ABC-DEF"},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
 	}
 
 	// run tests
@@ -573,6 +591,15 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		"malformed name": {
 			nil,
 			&pb.EncryptedVolume{Name: "-ABC-DEF", VolumeNameRef: encryptedVolume.VolumeNameRef},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			false,
+		},
+		"malformed volume name": {
+			nil,
+			&pb.EncryptedVolume{Name: encryptedVolumeID, VolumeNameRef: "-ABC-DEF"},
 			nil,
 			[]string{},
 			codes.Unknown,

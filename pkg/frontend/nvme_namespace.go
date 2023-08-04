@@ -50,6 +50,11 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.NvmeNamespace.Spec.VolumeNameRef); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeNamespaceId != "" {
@@ -164,6 +169,11 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
 	if err := resourcename.Validate(in.NvmeNamespace.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.NvmeNamespace.Spec.VolumeNameRef); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}

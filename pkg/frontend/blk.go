@@ -40,6 +40,11 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.VirtioBlk.VolumeNameRef); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.VirtioBlkId != "" {
@@ -135,6 +140,11 @@ func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkReques
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
 	if err := resourcename.Validate(in.VirtioBlk.Name); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.VirtioBlk.VolumeNameRef); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
