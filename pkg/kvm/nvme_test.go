@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
@@ -35,8 +36,12 @@ var (
 	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{NvmeControllerId: testNvmeControllerID, NvmeController: &pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			SubsystemNameRef: testSubsystem.Name,
-			PcieId:           &pb.PciEndpoint{PhysicalFunction: 43, VirtualFunction: 0},
-			NvmeControllerId: 43,
+			PcieId: &pb.PciEndpoint{
+				PhysicalFunction: wrapperspb.Int32(43),
+				VirtualFunction:  wrapperspb.Int32(0),
+				PortId:           wrapperspb.Int32(0),
+			},
+			NvmeControllerId: proto.Int32(43),
 		},
 		Status: &pb.NvmeControllerStatus{
 			Active: true,
@@ -115,7 +120,7 @@ func dirExists(dirname string) bool {
 
 func TestCreateNvmeController(t *testing.T) {
 	expectNotNilOut := server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
-	expectNotNilOut.Spec.NvmeControllerId = -1
+	expectNotNilOut.Spec.NvmeControllerId = proto.Int32(-1)
 	expectNotNilOut.Name = testNvmeControllerName
 
 	tests := map[string]struct {
@@ -183,8 +188,11 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: "",
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
-					NvmeControllerId: 43,
+					PcieId: &pb.PciEndpoint{
+						PhysicalFunction: wrapperspb.Int32(1),
+						VirtualFunction:  wrapperspb.Int32(0),
+						PortId:           wrapperspb.Int32(0)},
+					NvmeControllerId: proto.Int32(43),
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -200,8 +208,11 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
-					NvmeControllerId: 43,
+					PcieId: &pb.PciEndpoint{
+						PhysicalFunction: wrapperspb.Int32(1),
+						VirtualFunction:  wrapperspb.Int32(0),
+						PortId:           wrapperspb.Int32(0)},
+					NvmeControllerId: proto.Int32(43),
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -211,8 +222,11 @@ func TestCreateNvmeController(t *testing.T) {
 				Name: testNvmeControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
-					NvmeControllerId: -1,
+					PcieId: &pb.PciEndpoint{
+						PhysicalFunction: wrapperspb.Int32(1),
+						VirtualFunction:  wrapperspb.Int32(0),
+						PortId:           wrapperspb.Int32(0)},
+					NvmeControllerId: proto.Int32(-1),
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -251,9 +265,10 @@ func TestCreateNvmeController(t *testing.T) {
 					Spec: &pb.NvmeControllerSpec{
 						SubsystemNameRef: testSubsystemName,
 						PcieId: &pb.PciEndpoint{
-							PhysicalFunction: -1,
-						},
-						NvmeControllerId: 43,
+							PhysicalFunction: wrapperspb.Int32(-1),
+							VirtualFunction:  wrapperspb.Int32(0),
+							PortId:           wrapperspb.Int32(0)},
+						NvmeControllerId: proto.Int32(43),
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -271,7 +286,7 @@ func TestCreateNvmeController(t *testing.T) {
 					Spec: &pb.NvmeControllerSpec{
 						SubsystemNameRef: testSubsystemName,
 						PcieId:           nil,
-						NvmeControllerId: 43,
+						NvmeControllerId: proto.Int32(43),
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,

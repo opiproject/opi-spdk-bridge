@@ -15,14 +15,18 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
 	testVirtioBlkID            = "virtio-blk-42"
 	testVirtioBlkName          = server.ResourceIDToVolumeName(testVirtioBlkID)
 	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlkId: testVirtioBlkID, VirtioBlk: &pb.VirtioBlk{
-		Name:          "",
-		PcieId:        &pb.PciEndpoint{PhysicalFunction: 42},
+		PcieId: &pb.PciEndpoint{
+			PhysicalFunction: wrapperspb.Int32(42),
+			VirtualFunction:  wrapperspb.Int32(0),
+			PortId:           wrapperspb.Int32(0),
+		},
 		VolumeNameRef: "Malloc42",
 		MaxIoQps:      1,
 	}}
@@ -87,13 +91,19 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 		"valid virtio-blk creation with on first bus location": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+				PcieId: &pb.PciEndpoint{
+					PhysicalFunction: wrapperspb.Int32(1),
+					VirtualFunction:  wrapperspb.Int32(0),
+					PortId:           wrapperspb.Int32(0)},
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
 			}, VirtioBlkId: testVirtioBlkID},
 			out: &pb.VirtioBlk{
-				Name:          testVirtioBlkName,
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+				Name: testVirtioBlkName,
+				PcieId: &pb.PciEndpoint{
+					PhysicalFunction: wrapperspb.Int32(1),
+					VirtualFunction:  wrapperspb.Int32(0),
+					PortId:           wrapperspb.Int32(0)},
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
 			},
@@ -124,7 +134,10 @@ func TestCreateVirtioBlk(t *testing.T) {
 		},
 		"negative physical function": {
 			in: &pb.CreateVirtioBlkRequest{VirtioBlk: &pb.VirtioBlk{
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: -1},
+				PcieId: &pb.PciEndpoint{
+					PhysicalFunction: wrapperspb.Int32(-1),
+					VirtualFunction:  wrapperspb.Int32(0),
+					PortId:           wrapperspb.Int32(0)},
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
 			}, VirtioBlkId: testVirtioBlkID},
