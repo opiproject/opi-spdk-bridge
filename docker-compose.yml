@@ -68,13 +68,13 @@ services:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 
   opi-spdk-client:
-    image: ghcr.io/opiproject/godpu:main@sha256:532b641df768a345b12d6e5fae481ab90394fd40cb3a21aa77791418b13e29a1
+    image: ghcr.io/opiproject/godpu:main@sha256:63232ee6361a7038fb0c02da62d1d42023135f535e97c1d303fc20c453b2fbf0
     networks:
       - opi
     depends_on:
       opi-spdk-server:
         condition: service_healthy
-    command: storagetest --addr=opi-spdk-server:50051
+    command: storage test --addr=opi-spdk-server:50051
 
 networks:
   opi:
