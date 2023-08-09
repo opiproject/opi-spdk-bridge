@@ -56,7 +56,7 @@ func (l busDeviceLocator) Calculate(endpoint *pb.PciEndpoint) (deviceLocation, e
 	if endpoint == nil {
 		return deviceLocation{}, fmt.Errorf("pci endpoint is required to calculate device location")
 	}
-	bus, addr, err := l.calculateBusAddr(endpoint.PhysicalFunction)
+	bus, addr, err := l.calculateBusAddr(endpoint.PhysicalFunction.GetValue())
 	if err != nil {
 		return deviceLocation{}, err
 	}

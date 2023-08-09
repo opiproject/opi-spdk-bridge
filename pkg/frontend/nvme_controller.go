@@ -143,7 +143,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := server.ProtoClone(in.NvmeController)
-	response.Spec.NvmeControllerId = -1
+	response.Spec.NvmeControllerId = in.NvmeController.Spec.NvmeControllerId
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Nvme.Controllers[in.NvmeController.Name] = response
 

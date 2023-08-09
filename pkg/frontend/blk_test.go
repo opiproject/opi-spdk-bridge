@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -24,7 +25,7 @@ var (
 	testVirtioCtrlID   = "virtio-blk-42"
 	testVirtioCtrlName = server.ResourceIDToVolumeName(testVirtioCtrlID)
 	testVirtioCtrl     = pb.VirtioBlk{
-		PcieId:        &pb.PciEndpoint{PhysicalFunction: 42},
+		PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42)},
 		VolumeNameRef: "Malloc42",
 		MaxIoQps:      1,
 	}
@@ -165,7 +166,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			nil,
 			&pb.VirtioBlk{
 				Name:          server.ResourceIDToVolumeName("unknown-id"),
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: 42},
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42)},
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
 			},
@@ -179,7 +180,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			nil,
 			&pb.VirtioBlk{
 				Name:          server.ResourceIDToVolumeName("unknown-id"),
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: 42},
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42)},
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
 			},
@@ -289,17 +290,17 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]*pb.VirtioBlk{
 				{
 					Name:          server.ResourceIDToVolumeName("VblkEmu0pf0"),
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 				{
 					Name:          server.ResourceIDToVolumeName("VblkEmu0pf2"),
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 				{
 					Name:          server.ResourceIDToVolumeName(testVirtioCtrlID),
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 			},
@@ -318,17 +319,17 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]*pb.VirtioBlk{
 				{
 					Name:          server.ResourceIDToVolumeName("VblkEmu0pf0"),
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 				{
 					Name:          server.ResourceIDToVolumeName("VblkEmu0pf2"),
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 				{
 					Name:          testVirtioCtrlName,
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 			},
@@ -361,7 +362,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]*pb.VirtioBlk{
 				{
 					Name:          server.ResourceIDToVolumeName("VblkEmu0pf0"),
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 			},
@@ -376,7 +377,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			[]*pb.VirtioBlk{
 				{
 					Name:          testVirtioCtrlName,
-					PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					VolumeNameRef: "TBD",
 				},
 			},
@@ -471,7 +472,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			testVirtioCtrlName,
 			&pb.VirtioBlk{
 				Name:          testVirtioCtrlName,
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: int32(1)},
+				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 				VolumeNameRef: "TBD",
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"ctrlr":"virtio-blk-42","iops_threshold":60000,"cpumask":"0x2","delay_base_us":100}],"error":{"code":0,"message":""}}`},

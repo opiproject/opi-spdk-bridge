@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func sortVirtioBlks(virtioBlks []*pb.VirtioBlk) {
@@ -201,7 +202,7 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioBlk{
 			Name:          server.ResourceIDToVolumeName(r.Ctrlr),
-			PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+			PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 			VolumeNameRef: "TBD"}
 	}
 	sortVirtioBlks(Blobarray)
@@ -247,7 +248,7 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 	}
 	return &pb.VirtioBlk{
 		Name:          in.Name,
-		PcieId:        &pb.PciEndpoint{PhysicalFunction: 1},
+		PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 		VolumeNameRef: "TBD"}, nil
 }
 

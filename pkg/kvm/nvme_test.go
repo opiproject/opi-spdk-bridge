@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
@@ -35,7 +36,7 @@ var (
 	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{NvmeControllerId: testNvmeControllerID, NvmeController: &pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			SubsystemNameRef: testSubsystem.Name,
-			PcieId:           &pb.PciEndpoint{PhysicalFunction: 43, VirtualFunction: 0},
+			PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(43), VirtualFunction: wrapperspb.Int32(0)},
 			NvmeControllerId: 43,
 		},
 		Status: &pb.NvmeControllerStatus{
@@ -183,7 +184,7 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: "",
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					NvmeControllerId: 43,
 				},
 				Status: &pb.NvmeControllerStatus{
@@ -200,7 +201,7 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					NvmeControllerId: 43,
 				},
 				Status: &pb.NvmeControllerStatus{
@@ -211,7 +212,7 @@ func TestCreateNvmeController(t *testing.T) {
 				Name: testNvmeControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1},
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1)},
 					NvmeControllerId: -1,
 				},
 				Status: &pb.NvmeControllerStatus{
@@ -251,7 +252,7 @@ func TestCreateNvmeController(t *testing.T) {
 					Spec: &pb.NvmeControllerSpec{
 						SubsystemNameRef: testSubsystemName,
 						PcieId: &pb.PciEndpoint{
-							PhysicalFunction: -1,
+							PhysicalFunction: wrapperspb.Int32(-1),
 						},
 						NvmeControllerId: 43,
 					},
