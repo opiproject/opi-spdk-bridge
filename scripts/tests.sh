@@ -62,7 +62,7 @@ grep "Total" log.txt
 
 # test nvme
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem1',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller1', nvme_controller : {spec : {subsystem_name_ref : '//storage.opiproject.org/volumes/subsystem1', nvme_controller_id: 2, pcie_id : {physical_function : 0}, max_nsq:5, max_ncq:5 } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller1', nvme_controller : {spec : {subsystem_name_ref : '//storage.opiproject.org/volumes/subsystem1', nvme_controller_id: 2, pcie_id : {physical_function : 0, virtual_function : 0, port_id: 0}, max_nsq:5, max_ncq:5 } } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeNamespace  "{nvme_namespace_id:  'namespace1',  nvme_namespace  : {spec : {subsystem_name_ref : '//storage.opiproject.org/volumes/subsystem1', volume_name_ref : 'Malloc1', host_nsid : 1 } } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeSubsystem "{name : '//storage.opiproject.org/volumes/subsystem1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeController "{name : '//storage.opiproject.org/volumes/controller1'}"
