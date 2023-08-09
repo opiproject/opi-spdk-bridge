@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
@@ -28,8 +29,11 @@ var (
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			SubsystemNameRef: testSubsystemName,
-			PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-			NvmeControllerId: 17,
+			PcieId: &pb.PciEndpoint{
+				PhysicalFunction: wrapperspb.Int32(1),
+				VirtualFunction:  wrapperspb.Int32(2),
+				PortId:           wrapperspb.Int32(0)},
+			NvmeControllerId: proto.Int32(17),
 		},
 		Status: &pb.NvmeControllerStatus{
 			Active: true,
@@ -52,8 +56,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -67,8 +71,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -82,8 +86,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -97,8 +101,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -112,8 +116,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -127,16 +131,16 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 17,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(17),
 				},
 			},
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: -1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(-1),
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -152,8 +156,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: testSubsystemName,
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 17,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(17),
 				},
 			},
 			&testController,
@@ -167,8 +171,8 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: "-ABC-DEF",
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-					NvmeControllerId: 1,
+					PcieId:           testController.Spec.PcieId,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -190,7 +194,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					NvmeControllerId: 1,
+					NvmeControllerId: proto.Int32(1),
 				},
 			},
 			nil,
@@ -352,8 +356,8 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
 		SubsystemNameRef: testSubsystemName,
-		PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-		NvmeControllerId: 17,
+		PcieId:           testController.Spec.PcieId,
+		NvmeControllerId: proto.Int32(17),
 	}
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
@@ -420,7 +424,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NvmeController{Name: "-ABC-DEF"},
+			&pb.NvmeController{Name: "-ABC-DEF", Spec: spec},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -476,8 +480,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 					Name: testControllerName,
 					Spec: &pb.NvmeControllerSpec{
 						SubsystemNameRef: testSubsystemName,
-						PcieId:           &pb.PciEndpoint{PhysicalFunction: 1, VirtualFunction: 2},
-						NvmeControllerId: 17,
+						PcieId:           testController.Spec.PcieId,
+						NvmeControllerId: proto.Int32(17),
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -487,8 +491,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 					Name: secondSubsystemName,
 					Spec: &pb.NvmeControllerSpec{
 						SubsystemNameRef: server.ResourceIDToVolumeName("subsystem-test1"),
-						PcieId:           &pb.PciEndpoint{PhysicalFunction: 2, VirtualFunction: 2},
-						NvmeControllerId: 17,
+						PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(2), VirtualFunction: wrapperspb.Int32(2), PortId: wrapperspb.Int32(0)},
+						NvmeControllerId: proto.Int32(17),
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -523,8 +527,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 				Name: secondSubsystemName,
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: server.ResourceIDToVolumeName("subsystem-test1"),
-					PcieId:           &pb.PciEndpoint{PhysicalFunction: 2, VirtualFunction: 2},
-					NvmeControllerId: 17,
+					PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(2), VirtualFunction: wrapperspb.Int32(2), PortId: wrapperspb.Int32(0)},
+					NvmeControllerId: proto.Int32(17),
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -571,7 +575,7 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					NvmeControllerId: 17,
+					NvmeControllerId: proto.Int32(17),
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,

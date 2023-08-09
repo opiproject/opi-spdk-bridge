@@ -435,7 +435,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NvmeNamespace{Name: "-ABC-DEF"},
+			&pb.NvmeNamespace{Name: "-ABC-DEF", Spec: spec},
 			nil,
 			[]string{},
 			codes.Unknown,
