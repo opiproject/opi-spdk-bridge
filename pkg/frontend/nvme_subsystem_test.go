@@ -311,6 +311,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
 			&pb.NvmeSubsystem{
 				Name: testSubsystemName,
+				Spec: testSubsystem.Spec,
 			},
 			nil,
 			[]string{},
@@ -322,6 +323,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			nil,
 			&pb.NvmeSubsystem{
 				Name: testSubsystemName,
+				Spec: testSubsystem.Spec,
 			},
 			nil,
 			[]string{},
@@ -359,7 +361,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NvmeSubsystem{Name: "-ABC-DEF"},
+			&pb.NvmeSubsystem{Name: "-ABC-DEF", Spec: testSubsystem.Spec},
 			nil,
 			[]string{},
 			codes.Unknown,
