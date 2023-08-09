@@ -24,6 +24,7 @@ import (
 	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -143,7 +144,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := server.ProtoClone(in.NvmeController)
-	response.Spec.NvmeControllerId = -1
+	response.Spec.NvmeControllerId = proto.Int32(-1)
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Nvme.Controllers[in.NvmeController.Name] = response
 
@@ -189,7 +190,8 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete NQN:ID %s:%d", subsys.Spec.Nqn, controller.Spec.NvmeControllerId)
+		msg := fmt.Sprintf("Could not delete NQN:ID %s:%d",
+			subsys.GetSpec().GetNqn(), controller.GetSpec().GetNvmeControllerId())
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
