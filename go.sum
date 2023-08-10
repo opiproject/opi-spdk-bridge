@@ -11,12 +11,10 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/opiproject/gospdk v0.0.0-20230724125810-f9b59208a93e h1:y27NgCS0+ESFLR40iwWm7OM0qi++zTjRDuQt09+iie8=
-github.com/opiproject/gospdk v0.0.0-20230724125810-f9b59208a93e/go.mod h1:RqA5Ix7+x0Is8UckJE+6Ji5kCfk6yujWWaTMoRlZv3w=
 github.com/opiproject/gospdk v0.0.0-20230731070525-a0690f165942 h1:+9S6U136A+EpnJnYYJT/VkbFb8BKe26uuwQJdOzxAMA=
 github.com/opiproject/gospdk v0.0.0-20230731070525-a0690f165942/go.mod h1:1ZsRuKwCpQWpS7V+f6F6f1LmSWmVhj2GZMvDKYHeZhc=
-github.com/opiproject/opi-api v0.0.0-20230803153709-1e58d25ae2be h1:YwIWGD+r0FHjuAjLq+ISExvm39bBpipZdAYe0cM5D9I=
-github.com/opiproject/opi-api v0.0.0-20230803153709-1e58d25ae2be/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20230809161856-96752bda2dcb h1:gXBjSsO0uUpg1JwRoCpZWg6WMrKa+NWBgUO8VMyZN6M=
+github.com/opiproject/opi-api v0.0.0-20230809161856-96752bda2dcb/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
