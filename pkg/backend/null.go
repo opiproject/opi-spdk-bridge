@@ -60,10 +60,14 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 		return volume, nil
 	}
 	// not found, so create a new one
-	params := spdk.BdevNullCreateParams{
+	params := struct {
+		Name string     `json:"name"`
+		BlockSize int64 `json:"block_size"`
+		TotalSize int64 `json:"total_size"`
+	}{
 		Name:      resourceID,
-		BlockSize: 512,
-		NumBlocks: 64,
+		BlockSize: in.NullVolume.BlockSize,
+		TotalSize: in.NullVolume.BlockSize * in.NullVolume.BlocksCount,
 	}
 	var result spdk.BdevNullCreateResult
 	err := s.rpc.Call("bdev_null_create", &params, &result)
@@ -144,10 +148,14 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
-			params := spdk.BdevNullCreateParams{
+			params := struct {
+				Name string     `json:"name"`
+				BlockSize int64 `json:"block_size"`
+				TotalSize int64 `json:"total_size"`
+			}{
 				Name:      path.Base(in.NullVolume.Name),
-				BlockSize: 512,
-				NumBlocks: 64,
+				BlockSize: in.NullVolume.BlockSize,
+				TotalSize: in.NullVolume.BlockSize * in.NullVolume.BlocksCount,
 			}
 			var result spdk.BdevNullCreateResult
 			err := s.rpc.Call("bdev_null_create", &params, &result)
@@ -191,10 +199,14 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	params2 := spdk.BdevNullCreateParams{
+	params2 := struct {
+		Name string     `json:"name"`
+		BlockSize int64 `json:"block_size"`
+		TotalSize int64 `json:"total_size"`
+	}{
 		Name:      resourceID,
-		BlockSize: 512,
-		NumBlocks: 64,
+		BlockSize: in.NullVolume.BlockSize,
+		TotalSize: in.NullVolume.BlockSize * in.NullVolume.BlocksCount,
 	}
 	var result2 spdk.BdevNullCreateResult
 	err2 := s.rpc.Call("bdev_null_create", &params2, &result2)
