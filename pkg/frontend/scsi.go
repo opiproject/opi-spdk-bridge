@@ -13,7 +13,6 @@ import (
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 
@@ -263,6 +262,11 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
+	if err := resourcename.Validate(in.VirtioScsiLun.VolumeNameRef); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.VirtioScsiLunId != "" {
@@ -290,7 +294,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 	}{
 		Name: resourceID,
 		Num:  5,
-		Bdev: in.VirtioScsiLun.VolumeId.Value,
+		Bdev: in.VirtioScsiLun.VolumeNameRef,
 	}
 	var result int
 	err := s.rpc.Call("vhost_scsi_controller_add_target", &params, &result)
@@ -415,7 +419,8 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiLun{
-			VolumeId: &pc.ObjectKey{Value: server.ResourceIDToVolumeName(r.Ctrlr)}}
+			VolumeNameRef: server.ResourceIDToVolumeName(r.Ctrlr),
+		}
 	}
 	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray, NextPageToken: token}, nil
 }
@@ -456,7 +461,7 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiLun{VolumeId: &pc.ObjectKey{Value: server.ResourceIDToVolumeName(result[0].Ctrlr)}}, nil
+	return &pb.VirtioScsiLun{VolumeNameRef: server.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
 }
 
 // StatsVirtioScsiLun gets a Virtio SCSI LUN stats
