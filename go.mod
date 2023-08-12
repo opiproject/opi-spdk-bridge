@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/opiproject/gospdk v0.0.0-20230807070523-d5a06d9dc980
 	github.com/opiproject/opi-api v0.0.0-20230811153555-425899c0550b
-	go.einride.tech/aip v0.61.0
+	go.einride.tech/aip v0.62.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
