@@ -2,7 +2,8 @@
 # Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
 
 FROM docker.io/library/golang:1.21.0-alpine as builder
-
+ARG OPI_API_VERSION
+LABEL opi-api-version=${OPI_API_VERSION}
 WORKDIR /app
 
 # Download necessary Go modules

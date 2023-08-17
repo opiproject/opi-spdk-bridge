@@ -52,6 +52,9 @@ jobs:
           ${{ github.repository }}
           ghcr.io/${{ github.repository }}
 
+    - name: Get opi-api Version
+      run: echo "OPI_API_VERSION=$(go list -m -f '{{.Version}}' github.com/opiproject/opi-api)" >> $GITHUB_ENV
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v4.1.1
       with:
@@ -62,6 +65,8 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          OPI_API_VERSION=$OPI_API_VERSION
 
   storage-ci:
     runs-on: ubuntu-latest
