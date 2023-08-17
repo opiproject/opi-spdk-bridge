@@ -156,12 +156,14 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
 			if tt.exist {
-				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
+				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName].Name = testSubsystemName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testSubsystemName
 			}
 
@@ -274,7 +276,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 
 			request := &pb.DeleteNvmeSubsystemRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeSubsystem(testEnv.ctx, request)
@@ -376,7 +378,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 
 			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
@@ -660,7 +662,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 
 			request := &pb.GetNvmeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeSubsystem(testEnv.ctx, request)
@@ -743,7 +745,7 @@ func TestFrontEnd_StatsNvmeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 
 			request := &pb.StatsNvmeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeSubsystem(testEnv.ctx, request)
