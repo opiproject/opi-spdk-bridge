@@ -125,11 +125,13 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(&testNvmeCtrl)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
+				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
+				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testNvmePathName
 			}
 
@@ -251,8 +253,8 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(&testNvmeCtrl)
 
 			request := &pb.DeleteNvmePathRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmePath(testEnv.ctx, request)
@@ -276,6 +278,8 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNvmePath(t *testing.T) {
+	testNvmePathWithName := server.ProtoClone(&testNvmePath)
+	testNvmePathWithName.Name = testNvmePathName
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmePath
@@ -287,7 +291,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
-			&testNvmePath,
+			testNvmePathWithName,
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -424,8 +428,8 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testNvmePath.Name = testNvmePathName
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = &testNvmePath
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
 
 			request := &pb.UpdateNvmePathRequest{NvmePath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmePath(testEnv.ctx, request)
@@ -736,7 +740,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = &testNvmePath
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = server.ProtoClone(&testNvmePath)
 
 			request := &pb.GetNvmePathRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmePath(testEnv.ctx, request)
@@ -838,7 +842,8 @@ func TestBackEnd_StatsNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = &testNvmePath
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = server.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID].Name = testNvmePathName
 
 			request := &pb.StatsNvmePathRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmePath(testEnv.ctx, request)

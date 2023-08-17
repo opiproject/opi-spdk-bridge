@@ -122,9 +122,11 @@ func TestBackEnd_CreateAioVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
+				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = server.ProtoClone(&testAioVolume)
+				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName].Name = testAioVolumeName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testAioVolumeName
 			}
 
@@ -150,6 +152,8 @@ func TestBackEnd_CreateAioVolume(t *testing.T) {
 }
 
 func TestBackEnd_UpdateAioVolume(t *testing.T) {
+	testAioVolumeWithName := server.ProtoClone(&testAioVolume)
+	testAioVolumeWithName.Name = testAioVolumeName
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.AioVolume
@@ -161,7 +165,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -170,7 +174,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete fails": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -179,7 +183,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete empty": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -188,7 +192,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete ID mismatch": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -197,7 +201,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete exception": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -206,7 +210,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete ok create fails": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
@@ -215,7 +219,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete ok create empty": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			codes.Unknown,
@@ -224,7 +228,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete ok create ID mismatch": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
@@ -233,7 +237,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"delete ok create exception": {
 			nil,
-			&testAioVolume,
+			testAioVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
@@ -242,8 +246,8 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			nil,
-			&testAioVolume,
-			&testAioVolume,
+			testAioVolumeWithName,
+			testAioVolumeWithName,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
 			"",
@@ -299,8 +303,8 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testAioVolume.Name = testAioVolumeName
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = server.ProtoClone(&testAioVolume)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName].Name = testAioVolumeName
 
 			request := &pb.UpdateAioVolumeRequest{AioVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateAioVolume(testEnv.ctx, request)
@@ -593,7 +597,7 @@ func TestBackEnd_GetAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = server.ProtoClone(&testAioVolume)
 
 			request := &pb.GetAioVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetAioVolume(testEnv.ctx, request)
@@ -695,7 +699,7 @@ func TestBackEnd_StatsAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = server.ProtoClone(&testAioVolume)
 
 			request := &pb.StatsAioVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsAioVolume(testEnv.ctx, request)
@@ -807,7 +811,8 @@ func TestBackEnd_DeleteAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = &testAioVolume
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = server.ProtoClone(&testAioVolume)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName].Name = testAioVolumeName
 
 			request := &pb.DeleteAioVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteAioVolume(testEnv.ctx, request)

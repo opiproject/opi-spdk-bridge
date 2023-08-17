@@ -81,9 +81,11 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
+				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(&testNvmeCtrl)
+				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName].Name = testNvmeCtrlName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testNvmeCtrlName
 			}
 
@@ -274,7 +276,9 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
-			testEnv.opiSpdkServer.Volumes.NvmeControllers = tt.existingControllers
+			for k, v := range tt.existingControllers {
+				testEnv.opiSpdkServer.Volumes.NvmeControllers[k] = server.ProtoClone(v)
+			}
 
 			request := &pb.ListNvmeRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeRemoteControllers(testEnv.ctx, request)
@@ -344,7 +348,8 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = server.ProtoClone(&testNvmeCtrl)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID].Name = testNvmeCtrlName
 
 			request := &pb.GetNvmeRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeRemoteController(testEnv.ctx, request)
@@ -407,7 +412,7 @@ func TestBackEnd_StatsNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = &testNvmeCtrl
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = server.ProtoClone(&testNvmeCtrl)
 
 			request := &pb.StatsNvmeRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeRemoteController(testEnv.ctx, request)
@@ -481,7 +486,8 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = &testNvmeCtrl
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(&testNvmeCtrl)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName].Name = testNvmeCtrlName
 
 			request := &pb.DeleteNvmeRemoteControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeRemoteController(testEnv.ctx, request)
