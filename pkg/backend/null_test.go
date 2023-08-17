@@ -122,9 +122,11 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
+				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = server.ProtoClone(&testNullVolume)
+				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testNullVolumeName
 			}
 
@@ -150,6 +152,8 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNullVolume(t *testing.T) {
+	testNullVolumeWithName := server.ProtoClone(&testNullVolume)
+	testNullVolumeWithName.Name = testNullVolumeName
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NullVolume
@@ -161,7 +165,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 	}{
 		"invalid fieldmask": {
 			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -170,7 +174,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete fails": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -179,7 +183,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete empty": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -188,7 +192,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ID mismatch": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -197,7 +201,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete exception": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -206,7 +210,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create fails": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
@@ -215,7 +219,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create empty": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			codes.Unknown,
@@ -224,7 +228,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create ID mismatch": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
@@ -233,7 +237,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create exception": {
 			nil,
-			&testNullVolume,
+			testNullVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
@@ -242,8 +246,8 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			nil,
-			&testNullVolume,
-			&testNullVolume,
+			testNullVolumeWithName,
+			testNullVolumeWithName,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
 			"",
@@ -296,8 +300,8 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testNullVolume.Name = testNullVolumeName
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = server.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
 
 			request := &pb.UpdateNullVolumeRequest{NullVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNullVolume(testEnv.ctx, request)
@@ -600,7 +604,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = server.ProtoClone(&testNullVolume)
 
 			request := &pb.GetNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullVolume(testEnv.ctx, request)
@@ -702,7 +706,7 @@ func TestBackEnd_StatsNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = server.ProtoClone(&testNullVolume)
 
 			request := &pb.StatsNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNullVolume(testEnv.ctx, request)
@@ -814,7 +818,8 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = &testNullVolume
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = server.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
 
 			request := &pb.DeleteNullVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullVolume(testEnv.ctx, request)
