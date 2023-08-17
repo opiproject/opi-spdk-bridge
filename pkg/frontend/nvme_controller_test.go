@@ -211,12 +211,14 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = &testNamespace
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
 			if tt.exist {
-				testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
+				testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+				testEnv.opiSpdkServer.Nvme.Controllers[testControllerName].Name = testControllerName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testControllerName
 			}
 
@@ -329,8 +331,8 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
 
 			request := &pb.DeleteNvmeControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeController(testEnv.ctx, request)
@@ -439,7 +441,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
 
 			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeController(testEnv.ctx, request)
@@ -521,9 +523,13 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
-			testEnv.opiSpdkServer.Nvme.Controllers[secondSubsystemName] = &pb.NvmeController{
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&pb.NvmeController{
+				Name:   testControllerName,
+				Spec:   testController.Spec,
+				Status: testController.Status,
+			})
+			testEnv.opiSpdkServer.Nvme.Controllers[secondSubsystemName] = server.ProtoClone(&pb.NvmeController{
 				Name: secondSubsystemName,
 				Spec: &pb.NvmeControllerSpec{
 					SubsystemNameRef: server.ResourceIDToVolumeName("subsystem-test1"),
@@ -533,7 +539,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
 				},
-			}
+			})
 
 			request := &pb.ListNvmeControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeControllers(testEnv.ctx, request)
@@ -613,8 +619,8 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
 
 			request := &pb.GetNvmeControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeController(testEnv.ctx, request)
@@ -677,7 +683,7 @@ func TestFrontEnd_StatsNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = &testController
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
 
 			request := &pb.StatsNvmeControllerRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeController(testEnv.ctx, request)

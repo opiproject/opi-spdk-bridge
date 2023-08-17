@@ -131,6 +131,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testVirtioCtrlName
 			}
 
@@ -245,7 +246,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = server.ProtoClone(&testVirtioCtrl)
 
 			request := &pb.UpdateVirtioBlkRequest{VirtioBlk: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateVirtioBlk(testEnv.ctx, request)
@@ -537,7 +538,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = server.ProtoClone(&testVirtioCtrl)
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName].Name = testVirtioCtrlName
 
 			request := &pb.GetVirtioBlkRequest{Name: tt.in}
@@ -598,7 +599,7 @@ func TestFrontEnd_StatsVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = &testVirtioCtrl
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = server.ProtoClone(&testVirtioCtrl)
 
 			request := &pb.StatsVirtioBlkRequest{Name: tt.in}
 			response, err := testEnv.client.StatsVirtioBlk(testEnv.ctx, request)
@@ -735,6 +736,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = server.ProtoClone(&testVirtioCtrl)
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID].PcieId.VirtualFunction =
 				wrapperspb.Int32(int32(tt.pfVf))
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID].Name = testVirtioCtrlID
 
 			request := &pb.DeleteVirtioBlkRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteVirtioBlk(testEnv.ctx, request)
