@@ -261,9 +261,11 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = tt.in
+				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = server.ProtoClone(tt.out)
+				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName].Name = testQosVolumeName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = testQosVolumeName
 			}
 
@@ -610,8 +612,12 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"qos volume does not exist": {
-			mask:        nil,
-			in:          testQosVolume,
+			mask: nil,
+			in: &pb.QosVolume{
+				Name:          testQosVolumeName,
+				VolumeNameRef: testQosVolume.VolumeNameRef,
+				MaxLimit:      testQosVolume.MaxLimit,
+			},
 			out:         nil,
 			spdk:        []string{},
 			errCode:     codes.NotFound,
@@ -635,8 +641,12 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"SPDK call failed": {
-			mask:        nil,
-			in:          testQosVolume,
+			mask: nil,
+			in: &pb.QosVolume{
+				Name:          testQosVolumeName,
+				VolumeNameRef: testQosVolume.VolumeNameRef,
+				MaxLimit:      testQosVolume.MaxLimit,
+			},
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
 			errCode:     status.Convert(spdk.ErrFailedSpdkCall).Code(),
@@ -645,8 +655,12 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"SPDK call result false": {
-			mask:        nil,
-			in:          testQosVolume,
+			mask: nil,
+			in: &pb.QosVolume{
+				Name:          testQosVolumeName,
+				VolumeNameRef: testQosVolume.VolumeNameRef,
+				MaxLimit:      testQosVolume.MaxLimit,
+			},
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode:     status.Convert(spdk.ErrUnexpectedSpdkCallResult).Code(),
@@ -655,9 +669,17 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"successful update": {
-			mask:        nil,
-			in:          testQosVolume,
-			out:         testQosVolume,
+			mask: nil,
+			in: &pb.QosVolume{
+				Name:          testQosVolumeName,
+				VolumeNameRef: testQosVolume.VolumeNameRef,
+				MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 2},
+			},
+			out: &pb.QosVolume{
+				Name:          testQosVolumeName,
+				VolumeNameRef: testQosVolume.VolumeNameRef,
+				MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 2},
+			},
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
 			errMsg:      "",
@@ -692,7 +714,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = originalQosVolume
+				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = server.ProtoClone(originalQosVolume)
 			}
 
 			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
@@ -833,7 +855,9 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.volumes.qosVolumes = tt.existingVolumes
+			for k, v := range tt.existingVolumes {
+				testEnv.opiSpdkServer.volumes.qosVolumes[k] = server.ProtoClone(v)
+			}
 			request := &pb.ListQosVolumesRequest{}
 			request.Parent = tt.in
 			request.PageSize = tt.size
@@ -896,7 +920,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = server.ProtoClone(testQosVolume)
 
 			request := &pb.GetQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetQosVolume(testEnv.ctx, request)
@@ -982,7 +1006,7 @@ func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = testQosVolume
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = server.ProtoClone(testQosVolume)
 
 			request := &pb.StatsQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsQosVolume(testEnv.ctx, request)

@@ -272,9 +272,11 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
+				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
+				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName].Name = encryptedVolumeName
 			}
 			if tt.out != nil {
+				tt.out = server.ProtoClone(tt.out)
 				tt.out.Name = encryptedVolumeName
 			}
 
@@ -300,6 +302,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
+	encryptedVolumeWithName := server.ProtoClone(&encryptedVolume)
+	encryptedVolumeWithName.Name = encryptedVolumeName
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.EncryptedVolume
@@ -320,7 +324,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		// },
 		"bdev delete fails": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -329,7 +333,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete empty": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -338,7 +342,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ID mismatch": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -347,7 +351,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete exception": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -356,7 +360,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete fails": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -365,7 +369,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete empty": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			codes.Unknown,
@@ -374,7 +378,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ID mismatch": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -383,7 +387,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete exception": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -392,7 +396,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create fails": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -401,7 +405,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create empty": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			codes.Unknown,
@@ -410,7 +414,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create ID mismatch": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -419,7 +423,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create exception": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -428,7 +432,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create fails": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			codes.InvalidArgument,
@@ -437,7 +441,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create empty": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			codes.Unknown,
@@ -446,7 +450,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create ID mismatch": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			codes.Unknown,
@@ -455,7 +459,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create exception": {
 			nil,
-			&encryptedVolume,
+			encryptedVolumeWithName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			codes.Unknown,
@@ -464,8 +468,8 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"use AES_XTS_128 cipher ; bdev delete ok ; key delete ok ; key create ok ; bdev create ok": {
 			nil,
-			&encryptedVolume,
-			&encryptedVolume,
+			encryptedVolumeWithName,
+			encryptedVolumeWithName,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			codes.OK,
 			"",
@@ -894,7 +898,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
 
 			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
@@ -997,7 +1001,7 @@ func TestMiddleEnd_StatsEncryptedVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			fname1 := server.ResourceIDToVolumeName(tt.in)
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
 
 			request := &pb.StatsEncryptedVolumeRequest{Name: fname1}
 			response, err := testEnv.client.StatsEncryptedVolume(testEnv.ctx, request)
@@ -1133,7 +1137,8 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = &encryptedVolume
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName].Name = encryptedVolumeName
 
 			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteEncryptedVolume(testEnv.ctx, request)
