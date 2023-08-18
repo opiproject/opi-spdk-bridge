@@ -32,6 +32,7 @@ var (
 )
 
 func TestBackEnd_CreateNullVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNullVolume))
 	tests := map[string]struct {
 		id      string
 		in      *pb.NullVolume
@@ -154,6 +155,7 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 func TestBackEnd_UpdateNullVolume(t *testing.T) {
 	testNullVolumeWithName := server.ProtoClone(&testNullVolume)
 	testNullVolumeWithName.Name = testNullVolumeName
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNullVolume, testNullVolumeWithName))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NullVolume
@@ -325,6 +327,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 }
 
 func TestBackEnd_ListNullVolumes(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNullVolume))
 	tests := map[string]struct {
 		in      string
 		out     []*pb.NullVolume
@@ -521,6 +524,7 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 }
 
 func TestBackEnd_GetNullVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNullVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NullVolume
@@ -628,6 +632,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 }
 
 func TestBackEnd_StatsNullVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNullVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -730,6 +735,7 @@ func TestBackEnd_StatsNullVolume(t *testing.T) {
 }
 
 func TestBackEnd_DeleteNullVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNullVolume))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
