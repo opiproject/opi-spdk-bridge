@@ -35,6 +35,7 @@ var (
 )
 
 func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testVirtioCtrl))
 	tests := map[string]struct {
 		id      string
 		in      *pb.VirtioBlk
@@ -157,6 +158,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testVirtioCtrl))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.VirtioBlk
@@ -463,6 +465,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 }
 
 func TestFrontEnd_GetVirtioBlk(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testVirtioCtrl))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VirtioBlk
@@ -563,6 +566,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 }
 
 func TestFrontEnd_StatsVirtioBlk(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testVirtioCtrl))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -625,7 +629,7 @@ func TestFrontEnd_StatsVirtioBlk(t *testing.T) {
 func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 	pfIndex := 0
 	// vfIndex := 1
-
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testVirtioCtrl))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty

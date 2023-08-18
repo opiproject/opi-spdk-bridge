@@ -38,6 +38,7 @@ var (
 )
 
 func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	spec := &pb.NvmeNamespaceSpec{
 		SubsystemNameRef: testSubsystemName,
 		HostNsid:         0,
@@ -250,6 +251,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 }
 
 func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -371,6 +373,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:            1967554867335598546,
 	}
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace, spec))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeNamespace
@@ -508,6 +511,9 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			},
 		},
 	}
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(),
+		&testController, &testSubsystem, &testNamespace,
+		&testNamespaces[0], &testNamespaces[1], &testNamespaces[2]))
 	tests := map[string]struct {
 		in      string
 		out     []*pb.NvmeNamespace
@@ -693,6 +699,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 }
 
 func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NvmeNamespace
@@ -806,6 +813,7 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 }
 
 func TestFrontEnd_StatsNvmeNamespace(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
