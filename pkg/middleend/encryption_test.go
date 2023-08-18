@@ -20,6 +20,7 @@ import (
 )
 
 func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &encryptedVolume))
 	tests := map[string]struct {
 		id      string
 		in      *pb.EncryptedVolume
@@ -304,6 +305,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 	encryptedVolumeWithName := server.ProtoClone(&encryptedVolume)
 	encryptedVolumeWithName.Name = encryptedVolumeName
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &encryptedVolume, encryptedVolumeWithName))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.EncryptedVolume
@@ -640,6 +642,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &encryptedVolume))
 	tests := map[string]struct {
 		in      string
 		out     []*pb.EncryptedVolume
@@ -818,6 +821,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 }
 
 func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &encryptedVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.EncryptedVolume
@@ -922,6 +926,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_StatsEncryptedVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &encryptedVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -1025,6 +1030,7 @@ func TestMiddleEnd_StatsEncryptedVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &encryptedVolume))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty

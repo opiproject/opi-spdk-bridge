@@ -49,6 +49,7 @@ func (s *stubJSONRRPC) Call(_ string, param interface{}, _ interface{}) error {
 }
 
 func TestMiddleEnd_CreateQosVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testQosVolume))
 	tests := map[string]struct {
 		id          string
 		in          *pb.QosVolume
@@ -333,6 +334,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testQosVolume))
 	tests := map[string]struct {
 		in          string
 		spdk        []string
@@ -431,6 +433,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 		VolumeNameRef: testQosVolume.VolumeNameRef,
 		MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 1221},
 	}
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testQosVolume, originalQosVolume))
 	tests := map[string]struct {
 		mask        *fieldmaskpb.FieldMask
 		in          *pb.QosVolume
@@ -762,6 +765,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 	}
 	existingToken := "existing-pagination-token"
 	testParent := "todo"
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testQosVolume, qosVolume0, qosVolume1))
 
 	tests := map[string]struct {
 		out             []*pb.QosVolume
@@ -890,6 +894,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_GetQosVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testQosVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.QosVolume
@@ -944,6 +949,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_StatsQosVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testQosVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.StatsQosVolumeResponse
