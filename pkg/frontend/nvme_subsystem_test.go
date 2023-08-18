@@ -32,6 +32,7 @@ var (
 )
 
 func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	spec := &pb.NvmeSubsystemSpec{
 		Nqn:          "nqn.2022-09.io.spdk:opi3",
 		SerialNumber: "OpiSerialNumber",
@@ -189,6 +190,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -300,6 +302,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeSubsystem
@@ -402,6 +405,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	testParent := "todo"
 	tests := map[string]struct {
 		in      string
@@ -582,6 +586,7 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NvmeSubsystem
@@ -686,6 +691,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_StatsNvmeSubsystem(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats

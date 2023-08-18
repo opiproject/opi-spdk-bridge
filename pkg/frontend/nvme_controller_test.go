@@ -42,6 +42,7 @@ var (
 )
 
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		id      string
 		in      *pb.NvmeController
@@ -244,6 +245,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 }
 
 func TestFrontEnd_DeleteNvmeController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -356,6 +358,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	spec := &pb.NvmeControllerSpec{
 		SubsystemNameRef: testSubsystemName,
 		PcieId:           testController.Spec.PcieId,
@@ -465,6 +468,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 }
 
 func TestFrontEnd_ListNvmeControllers(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	secondSubsystemName := server.ResourceIDToVolumeName("controller-test1")
 	tests := map[string]struct {
 		in      string
@@ -569,6 +573,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 }
 
 func TestFrontEnd_GetNvmeController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NvmeController
@@ -644,6 +649,7 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 }
 
 func TestFrontEnd_StatsNvmeController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
