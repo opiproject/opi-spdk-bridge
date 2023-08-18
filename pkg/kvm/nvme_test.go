@@ -122,6 +122,8 @@ func TestCreateNvmeController(t *testing.T) {
 	expectNotNilOut := server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
 	expectNotNilOut.Spec.NvmeControllerId = proto.Int32(-1)
 	expectNotNilOut.Name = testNvmeControllerName
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(),
+		testCreateNvmeControllerRequest, &testSubsystem, expectNotNilOut))
 
 	tests := map[string]struct {
 		jsonRPC                       spdk.JSONRPC
@@ -347,6 +349,7 @@ func TestCreateNvmeController(t *testing.T) {
 }
 
 func TestDeleteNvmeController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testDeleteNvmeControllerRequest, &testSubsystem))
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
 		nonDefaultQmpAddress string
