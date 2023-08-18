@@ -36,7 +36,7 @@ var (
 func TestCreateVirtioBlk(t *testing.T) {
 	expectNotNilOut := server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 	expectNotNilOut.Name = testVirtioBlkName
-
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testCreateVirtioBlkRequest, expectNotNilOut))
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
 		errCode              codes.Code
@@ -198,6 +198,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 }
 
 func TestDeleteVirtioBlk(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), testDeleteVirtioBlkRequest))
 	tests := map[string]struct {
 		jsonRPC              spdk.JSONRPC
 		errCode              codes.Code
