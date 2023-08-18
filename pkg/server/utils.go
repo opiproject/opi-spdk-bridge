@@ -166,3 +166,30 @@ func EqualProtoSlices[T proto.Message](x, y []T) bool {
 func ResourceIDToVolumeName(resourceID string) string {
 	return fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
 }
+
+// ProtoObjChangedReporter used by CheckTestProtoObjectsNotChanged
+// to report errors if a global test object changed
+type ProtoObjChangedReporter interface {
+	Fatalf(format string, args ...any)
+}
+
+// CheckTestProtoObjectsNotChanged can be used to check if global test objects
+// describing a resource used in multiple cases changed by a test or not.
+// Returned function should be passed into Clenaup method of test
+func CheckTestProtoObjectsNotChanged(
+	r ProtoObjChangedReporter, testName string, msgs ...proto.Message,
+) func() {
+	origMsgs := []proto.Message{}
+	for _, m := range msgs {
+		origMsgs = append(origMsgs, ProtoClone(m))
+	}
+
+	return func() {
+		for i, current := range msgs {
+			if !proto.Equal(current, origMsgs[i]) {
+				r.Fatalf("Global test object %v was changed to %v by test in %s",
+					origMsgs[i], current, testName)
+			}
+		}
+	}
+}
