@@ -32,6 +32,7 @@ var (
 )
 
 func TestBackEnd_CreateAioVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testAioVolume))
 	tests := map[string]struct {
 		id      string
 		in      *pb.AioVolume
@@ -154,6 +155,7 @@ func TestBackEnd_CreateAioVolume(t *testing.T) {
 func TestBackEnd_UpdateAioVolume(t *testing.T) {
 	testAioVolumeWithName := server.ProtoClone(&testAioVolume)
 	testAioVolumeWithName.Name = testAioVolumeName
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testAioVolume, testAioVolumeWithName))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.AioVolume
@@ -328,6 +330,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 }
 
 func TestBackEnd_ListAioVolumes(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testAioVolume))
 	tests := map[string]struct {
 		in      string
 		out     []*pb.AioVolume
@@ -519,6 +522,7 @@ func TestBackEnd_ListAioVolumes(t *testing.T) {
 }
 
 func TestBackEnd_GetAioVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testAioVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.AioVolume
@@ -621,6 +625,7 @@ func TestBackEnd_GetAioVolume(t *testing.T) {
 }
 
 func TestBackEnd_StatsAioVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testAioVolume))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
@@ -723,6 +728,7 @@ func TestBackEnd_StatsAioVolume(t *testing.T) {
 }
 
 func TestBackEnd_DeleteAioVolume(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testAioVolume))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty

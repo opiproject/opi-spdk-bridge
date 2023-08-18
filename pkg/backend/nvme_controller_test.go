@@ -31,6 +31,7 @@ var (
 )
 
 func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl))
 	tests := map[string]struct {
 		id      string
 		in      *pb.NvmeRemoteController
@@ -111,6 +112,7 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 }
 
 func TestBackEnd_ResetNvmeRemoteController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -155,6 +157,7 @@ func TestBackEnd_ResetNvmeRemoteController(t *testing.T) {
 }
 
 func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl))
 	tests := map[string]struct {
 		in                  string
 		out                 []*pb.NvmeRemoteController
@@ -307,6 +310,7 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 }
 
 func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NvmeRemoteController
