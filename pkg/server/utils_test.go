@@ -85,3 +85,60 @@ func TestEqualProtoSlices(t *testing.T) {
 		})
 	}
 }
+
+type testChangeProtoObjReporter struct {
+	reported bool
+}
+
+func (r *testChangeProtoObjReporter) Fatalf(string, ...any) {
+	r.reported = true
+}
+
+func TestCheckTestProtoObjectsNotChanged(t *testing.T) {
+	tests := map[string]struct {
+		msgs   []proto.Message
+		change bool
+	}{
+		"no change for single object arg": {
+			msgs: []proto.Message{
+				&pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{HostNsid: 5}},
+			},
+			change: false,
+		},
+		"change for single object arg": {
+			msgs: []proto.Message{
+				&pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{HostNsid: 5}},
+			},
+			change: true,
+		},
+		"no change for multiple object args": {
+			msgs: []proto.Message{
+				&pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{HostNsid: 5}},
+				&pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{HostNsid: 7}},
+			},
+			change: false,
+		},
+		"change for multiple object args": {
+			msgs: []proto.Message{
+				&pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{HostNsid: 5}},
+				&pb.NvmeNamespace{Spec: &pb.NvmeNamespaceSpec{HostNsid: 7}},
+			},
+			change: true,
+		},
+	}
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			r := &testChangeProtoObjReporter{}
+
+			testCleanup := CheckTestProtoObjectsNotChanged(r, "test", tt.msgs...)
+			if tt.change {
+				tt.msgs[len(tt.msgs)-1].(*pb.NvmeNamespace).Spec.SubsystemNameRef = "somevolume"
+			}
+			testCleanup()
+
+			if tt.change != r.reported {
+				t.Errorf("Expect error is reported: %v, received: %v", tt.change, r.reported)
+			}
+		})
+	}
+}
