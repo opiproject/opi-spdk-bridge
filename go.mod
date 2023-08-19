@@ -6,7 +6,7 @@ require (
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
 	github.com/google/uuid v1.3.0
 	github.com/opiproject/gospdk v0.0.0-20230812114418-14a6e1aa7495
-	github.com/opiproject/opi-api v0.0.0-20230812010918-f241fade9773
+	github.com/opiproject/opi-api v0.0.0-20230814154012-8e3a291121b9
 	go.einride.tech/aip v0.62.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
