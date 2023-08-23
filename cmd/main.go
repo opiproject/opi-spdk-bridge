@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -71,29 +72,33 @@ func main() {
 
 	flag.Parse()
 
+	sh := utils.NewShutdownHandler(2 * time.Second)
+
 	// Create KV store for persistence
 	options := gomap.DefaultOptions
 	options.Codec = utils.ProtoCodec{}
 	// TODO: we can change to redis or badger at any given time
 	store := gomap.NewStore(options)
-	defer func(store gokv.Store) {
-		err := store.Close()
-		if err != nil {
-			log.Panic(err)
-		}
-	}(store)
+	sh.AddGokvStore(store)
 
-	go runGatewayServer(grpcPort, httpPort)
-	runGrpcServer(grpcPort, useKvm, store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tlsFiles)
+	runGrpcServer(grpcPort, useKvm, store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tlsFiles, sh)
+	runGatewayServer(grpcPort, httpPort, sh)
+
+	if err := sh.RunAndWait(); err != nil {
+		log.Printf("Bridge error: %v", err)
+		os.Exit(-1)
+	}
+	log.Print("Bridge successfully stopped")
 }
 
-func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tlsFiles string) {
+func runGrpcServer(
+	grpcPort int,
+	useKvm bool,
+	store gokv.Store,
+	spdkAddress, qmpAddress, ctrlrDir, busesStr, tlsFiles string,
+	sh *utils.ShutdownHandler) {
 	tp := utils.InitTracerProvider("opi-spdk-bridge")
-	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
-			log.Panicf("Tracer Provider Shutdown: %v", err)
-		}
-	}()
+	sh.AddTraceProvider(tp)
 
 	buses := splitBusesBySeparator(busesStr)
 
@@ -171,16 +176,17 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 
 	reflection.Register(s)
 
-	log.Printf("gRPC server listening at %v", lis.Addr())
-	if err := s.Serve(lis); err != nil {
-		log.Panicf("failed to serve: %v", err)
-	}
+	sh.AddGrpcServer(s, lis)
 }
 
-func runGatewayServer(grpcPort int, httpPort int) {
+func runGatewayServer(grpcPort int, httpPort int, sh *utils.ShutdownHandler) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	sh.AddShutdown(func(_ context.Context) error {
+		log.Println("Canceling context to close HTTP gateway endpoint to gRPC server")
+		cancel()
+		return nil
+	})
 
 	// Register gRPC server endpoint
 	// Note: Make sure the gRPC server is running properly and accessible
@@ -192,15 +198,11 @@ func runGatewayServer(grpcPort int, httpPort int) {
 	}
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	log.Printf("HTTP Server listening at %v", httpPort)
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", httpPort),
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	err = server.ListenAndServe()
-	if err != nil {
-		log.Panic("cannot start HTTP gateway server")
-	}
+	sh.AddHTTPServer(server)
 }
