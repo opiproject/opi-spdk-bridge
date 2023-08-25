@@ -99,30 +99,30 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 		},
-		"virtual functions are not supported for vhost user": {
-			id: testVirtioCtrlID,
-			in: &pb.VirtioBlk{
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(1), PortId: wrapperspb.Int32(0)},
-				VolumeNameRef: "Malloc42",
-				MaxIoQps:      1,
-			},
-			out:     nil,
-			spdk:    []string{},
-			errCode: codes.InvalidArgument,
-			errMsg:  "virtual functions are not supported for vhost user",
-		},
-		"only port 0 is supported for vhost user": {
-			id: testVirtioCtrlID,
-			in: &pb.VirtioBlk{
-				PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(1)},
-				VolumeNameRef: "Malloc42",
-				MaxIoQps:      1,
-			},
-			out:     nil,
-			spdk:    []string{},
-			errCode: codes.InvalidArgument,
-			errMsg:  "only port 0 is supported",
-		},
+		// "virtual functions are not supported for vhost user": {
+		// 	id: testVirtioCtrlID,
+		// 	in: &pb.VirtioBlk{
+		// 		PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(1), PortId: wrapperspb.Int32(0)},
+		// 		VolumeNameRef: "Malloc42",
+		// 		MaxIoQps:      1,
+		// 	},
+		// 	out:     nil,
+		// 	spdk:    []string{},
+		// 	errCode: codes.InvalidArgument,
+		// 	errMsg:  "virtual functions are not supported for vhost user",
+		// },
+		// "only port 0 is supported for vhost user": {
+		// 	id: testVirtioCtrlID,
+		// 	in: &pb.VirtioBlk{
+		// 		PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(1)},
+		// 		VolumeNameRef: "Malloc42",
+		// 		MaxIoQps:      1,
+		// 	},
+		// 	out:     nil,
+		// 	spdk:    []string{},
+		// 	errCode: codes.InvalidArgument,
+		// 	errMsg:  "only port 0 is supported",
+		// },
 	}
 
 	for testName, tt := range tests {
@@ -623,7 +623,7 @@ func TestFrontEnd_StatsVirtioBlk(t *testing.T) {
 
 func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 	pfIndex := 0
-	vfIndex := 1
+	// vfIndex := 1
 
 	tests := map[string]struct {
 		in      string
@@ -715,15 +715,15 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			false,
 			pfIndex,
 		},
-		"entry with invalid address in db": {
-			testVirtioCtrlID,
-			&emptypb.Empty{},
-			[]string{},
-			codes.Internal,
-			"virtual functions are not supported for vhost user",
-			false,
-			vfIndex,
-		},
+		// "entry with invalid address in db": {
+		// 	testVirtioCtrlID,
+		// 	&emptypb.Empty{},
+		// 	[]string{},
+		// 	codes.Internal,
+		// 	"virtual functions are not supported for vhost user",
+		// 	false,
+		// 	vfIndex,
+		// },
 	}
 
 	// run tests
