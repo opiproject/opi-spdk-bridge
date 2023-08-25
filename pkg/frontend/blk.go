@@ -42,9 +42,7 @@ func NewVhostUserBlkTransport() VirtioBlkTransport {
 }
 
 func (v vhostUserBlkTransport) CreateParams(virtioBlk *pb.VirtioBlk) (any, error) {
-	if err := v.verifyTransportSpecificParams(virtioBlk); err != nil {
-		return nil, err
-	}
+	v.verifyTransportSpecificParams(virtioBlk)
 
 	resourceID := path.Base(virtioBlk.Name)
 	return spdk.VhostCreateBlkControllerParams{
@@ -54,9 +52,7 @@ func (v vhostUserBlkTransport) CreateParams(virtioBlk *pb.VirtioBlk) (any, error
 }
 
 func (v vhostUserBlkTransport) DeleteParams(virtioBlk *pb.VirtioBlk) (any, error) {
-	if err := v.verifyTransportSpecificParams(virtioBlk); err != nil {
-		return nil, err
-	}
+	v.verifyTransportSpecificParams(virtioBlk)
 
 	resourceID := path.Base(virtioBlk.Name)
 	return spdk.VhostDeleteControllerParams{
@@ -64,17 +60,15 @@ func (v vhostUserBlkTransport) DeleteParams(virtioBlk *pb.VirtioBlk) (any, error
 	}, nil
 }
 
-func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.VirtioBlk) error {
+func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.VirtioBlk) {
 	pcieID := virtioBlk.PcieId
 	if pcieID.PortId.Value != 0 {
-		return fmt.Errorf("only port 0 is supported")
+		log.Printf("WARNING: only port 0 is supported for vhost user. Will be replaced with an error")
 	}
 
 	if pcieID.VirtualFunction.Value != 0 {
-		return fmt.Errorf("virtual functions are not supported for vhost user")
+		log.Println("WARNING: virtual functions are not supported for vhost user. Will be replaced with an error")
 	}
-
-	return nil
 }
 
 // CreateVirtioBlk creates a Virtio block device
