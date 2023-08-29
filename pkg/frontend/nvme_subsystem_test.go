@@ -32,12 +32,14 @@ var (
 )
 
 func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
 	spec := &pb.NvmeSubsystemSpec{
 		Nqn:          "nqn.2022-09.io.spdk:opi3",
 		SerialNumber: "OpiSerialNumber",
 		ModelNumber:  "OpiModelNumber",
 	}
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
+
 	tests := map[string]struct {
 		id      string
 		in      *pb.NvmeSubsystem
@@ -190,7 +192,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -302,7 +304,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeSubsystem
@@ -405,7 +407,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	testParent := "todo"
 	tests := map[string]struct {
 		in      string
@@ -586,7 +588,7 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NvmeSubsystem
@@ -691,7 +693,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 }
 
 func TestFrontEnd_StatsNvmeSubsystem(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testController, &testSubsystem, &testNamespace))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats

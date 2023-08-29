@@ -36,7 +36,7 @@ var (
 )
 
 func TestBackEnd_CreateNvmePath(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl, &testNvmePath))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		id      string
 		in      *pb.NvmePath
@@ -158,7 +158,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 }
 
 func TestBackEnd_DeleteNvmePath(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl, &testNvmePath))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     *emptypb.Empty
@@ -282,7 +282,9 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 func TestBackEnd_UpdateNvmePath(t *testing.T) {
 	testNvmePathWithName := server.ProtoClone(&testNvmePath)
 	testNvmePathWithName.Name = testNvmePathName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl, &testNvmePath, testNvmePathWithName))
+	t.Cleanup(server.CheckTestProtoObjectsNotChanged(testNvmePathWithName)(t, t.Name()))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
+
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmePath
@@ -456,7 +458,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 }
 
 func TestBackEnd_ListNvmePaths(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl, &testNvmePath))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     []*pb.NvmePath
@@ -660,7 +662,7 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 }
 
 func TestBackEnd_GetNvmePath(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl, &testNvmePath))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     *pb.NvmePath
@@ -769,7 +771,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 }
 
 func TestBackEnd_StatsNvmePath(t *testing.T) {
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(t, t.Name(), &testNvmeCtrl, &testNvmePath))
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
 		in      string
 		out     *pb.VolumeStats
