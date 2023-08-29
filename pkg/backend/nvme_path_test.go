@@ -418,7 +418,12 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NvmePath{Name: "-ABC-DEF", ControllerNameRef: "TBD"},
+			&pb.NvmePath{
+				Name:              "-ABC-DEF",
+				ControllerNameRef: "TBD",
+				Trtype:            testNvmePath.Trtype,
+				Traddr:            testNvmePath.Traddr,
+			},
 			nil,
 			[]string{},
 			codes.Unknown,

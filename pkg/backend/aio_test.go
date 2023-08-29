@@ -292,7 +292,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.AioVolume{Name: "-ABC-DEF"},
+			&pb.AioVolume{Name: "-ABC-DEF", Filename: testAioVolume.Filename},
 			nil,
 			[]string{},
 			codes.Unknown,

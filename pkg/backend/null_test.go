@@ -289,7 +289,11 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.NullVolume{Name: "-ABC-DEF"},
+			&pb.NullVolume{
+				Name:        "-ABC-DEF",
+				BlockSize:   testNullVolume.BlockSize,
+				BlocksCount: testAioVolume.BlocksCount,
+			},
 			nil,
 			[]string{},
 			codes.Unknown,
