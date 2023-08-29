@@ -20,6 +20,13 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
 
+var checkGlobalTestProtoObjectsNotChanged = server.CheckTestProtoObjectsNotChanged(
+	&testAioVolume,
+	&testNullVolume,
+	&testNvmeCtrl,
+	&testNvmePath,
+)
+
 // TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
 
 type backendClient struct {

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -33,6 +34,14 @@ var (
 	qmplibTimeout             = 250 * time.Millisecond
 
 	pathRegexpStr = `\/[a-zA-Z\/\-\_0-9]*\/`
+
+	checkGlobalTestProtoObjectsNotChanged = server.CheckTestProtoObjectsNotChanged(
+		testCreateNvmeControllerRequest,
+		testDeleteNvmeControllerRequest,
+		&testSubsystem,
+		testCreateVirtioBlkRequest,
+		testDeleteVirtioBlkRequest,
+	)
 )
 
 type stubJSONRRPC struct {
