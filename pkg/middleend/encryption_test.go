@@ -198,8 +198,8 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			},
 			nil,
 			[]string{},
-			codes.InvalidArgument,
-			"only AES_XTS_256 and AES_XTS_128 are supported",
+			codes.Unknown,
+			"missing required field: encrypted_volume.cipher",
 			false,
 		},
 		"invalid request with invalid key size for AES_XTS_128": {
@@ -257,7 +257,11 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 		},
 		"malformed volume name": {
 			encryptedVolumeID,
-			&pb.EncryptedVolume{VolumeNameRef: "-ABC-DEF"},
+			&pb.EncryptedVolume{
+				VolumeNameRef: "-ABC-DEF",
+				Key:           encryptedVolume.Key,
+				Cipher:        encryptedVolume.Cipher,
+			},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -564,8 +568,8 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			},
 			nil,
 			[]string{},
-			codes.InvalidArgument,
-			"only AES_XTS_256 and AES_XTS_128 are supported",
+			codes.Unknown,
+			"missing required field: encrypted_volume.cipher",
 			false,
 		},
 		"invalid key size for AES_XTS_128": {
@@ -598,7 +602,12 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"malformed name": {
 			nil,
-			&pb.EncryptedVolume{Name: "-ABC-DEF", VolumeNameRef: encryptedVolume.VolumeNameRef},
+			&pb.EncryptedVolume{
+				Name:          "-ABC-DEF",
+				VolumeNameRef: encryptedVolume.VolumeNameRef,
+				Key:           encryptedVolume.Key,
+				Cipher:        encryptedVolume.Cipher,
+			},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -607,7 +616,12 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 		},
 		"malformed volume name": {
 			nil,
-			&pb.EncryptedVolume{Name: encryptedVolumeID, VolumeNameRef: "-ABC-DEF"},
+			&pb.EncryptedVolume{
+				Name:          encryptedVolumeID,
+				VolumeNameRef: "-ABC-DEF",
+				Key:           encryptedVolume.Key,
+				Cipher:        encryptedVolume.Cipher,
+			},
 			nil,
 			[]string{},
 			codes.Unknown,

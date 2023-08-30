@@ -23,7 +23,9 @@ var (
 	testQosVolumeName = server.ResourceIDToVolumeName(testQosVolumeID)
 	testQosVolume     = &pb.QosVolume{
 		VolumeNameRef: "volume-42",
-		MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 1},
+		Limits: &pb.Limits{
+			Max: &pb.QosLimit{RwBandwidthMbs: 1},
+		},
 	}
 )
 
@@ -64,8 +66,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MinLimit: &pb.QosLimit{
-					RdIopsKiops: 100000,
+				Limits: &pb.Limits{
+					Min: &pb.QosLimit{
+						RdIopsKiops: 100000,
+					},
 				},
 			},
 			out:         nil,
@@ -79,8 +83,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RdIopsKiops: 100000,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RdIopsKiops: 100000,
+					},
 				},
 			},
 			out:         nil,
@@ -94,8 +100,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					WrIopsKiops: 100000,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						WrIopsKiops: 100000,
+					},
 				},
 			},
 			out:         nil,
@@ -109,8 +117,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RwIopsKiops: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RwIopsKiops: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -124,8 +134,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RdBandwidthMbs: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RdBandwidthMbs: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -139,8 +151,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					WrBandwidthMbs: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						WrBandwidthMbs: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -154,8 +168,10 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RwBandwidthMbs: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RwBandwidthMbs: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -169,7 +185,9 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit:      &pb.QosLimit{},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{},
+				},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -183,7 +201,9 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          server.ResourceIDToVolumeName("ignored-id"),
 				VolumeNameRef: "volume-42",
-				MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 1},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RwBandwidthMbs: 1},
+				},
 			},
 			out:         testQosVolume,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
@@ -196,7 +216,9 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
 				VolumeNameRef: "",
-				MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 1},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RwBandwidthMbs: 1},
+				},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -308,11 +330,13 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			QosVolumeId: testQosVolumeID,
 			QosVolume: &pb.QosVolume{
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RwIopsKiops:    1,
-					RdBandwidthMbs: 2,
-					WrBandwidthMbs: 3,
-					RwBandwidthMbs: 4,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RwIopsKiops:    1,
+						RdBandwidthMbs: 2,
+						WrBandwidthMbs: 3,
+						RwBandwidthMbs: 4,
+					},
 				},
 			},
 		})
@@ -431,7 +455,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 	originalQosVolume := &pb.QosVolume{
 		Name:          testQosVolumeName,
 		VolumeNameRef: testQosVolume.VolumeNameRef,
-		MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 1221},
+		Limits: &pb.Limits{
+			Max: &pb.QosLimit{RdBandwidthMbs: 1221},
+		},
 	}
 	t.Cleanup(server.CheckTestProtoObjectsNotChanged(originalQosVolume)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
@@ -467,8 +493,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MinLimit: &pb.QosLimit{
-					RdIopsKiops: 100000,
+				Limits: &pb.Limits{
+					Min: &pb.QosLimit{
+						RdIopsKiops: 100000,
+					},
 				},
 			},
 			out:         nil,
@@ -483,8 +511,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RdIopsKiops: 100000,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RdIopsKiops: 100000,
+					},
 				},
 			},
 			out:         nil,
@@ -499,8 +529,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					WrIopsKiops: 100000,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						WrIopsKiops: 100000,
+					},
 				},
 			},
 			out:         nil,
@@ -515,8 +547,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RwIopsKiops: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RwIopsKiops: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -531,8 +565,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RdBandwidthMbs: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RdBandwidthMbs: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -547,8 +583,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					WrBandwidthMbs: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						WrBandwidthMbs: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -563,8 +601,10 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit: &pb.QosLimit{
-					RwBandwidthMbs: -1,
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{
+						RwBandwidthMbs: -1,
+					},
 				},
 			},
 			out:         nil,
@@ -579,7 +619,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "volume-42",
-				MaxLimit:      &pb.QosLimit{},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{},
+				},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -593,7 +635,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          "",
 				VolumeNameRef: "volume-42",
-				MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 1},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RwBandwidthMbs: 1},
+				},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -607,7 +651,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "",
-				MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 1},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RwBandwidthMbs: 1},
+				},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -621,7 +667,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: testQosVolume.VolumeNameRef,
-				MaxLimit:      testQosVolume.MaxLimit,
+				Limits: &pb.Limits{
+					Max: testQosVolume.Limits.Max,
+				},
 			},
 			out:         nil,
 			spdk:        []string{},
@@ -635,7 +683,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: "new-underlying-volume-id",
-				MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 1},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RdBandwidthMbs: 1},
+				},
 			},
 			out:     nil,
 			spdk:    []string{},
@@ -650,7 +700,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: testQosVolume.VolumeNameRef,
-				MaxLimit:      testQosVolume.MaxLimit,
+				Limits: &pb.Limits{
+					Max: testQosVolume.Limits.Max,
+				},
 			},
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":1,"message":"some internal error"},"result":true}`},
@@ -664,7 +716,9 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: testQosVolume.VolumeNameRef,
-				MaxLimit:      testQosVolume.MaxLimit,
+				Limits: &pb.Limits{
+					Max: testQosVolume.Limits.Max,
+				},
 			},
 			out:         nil,
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
@@ -678,12 +732,16 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			in: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: testQosVolume.VolumeNameRef,
-				MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 2},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RdBandwidthMbs: 2},
+				},
 			},
 			out: &pb.QosVolume{
 				Name:          testQosVolumeName,
 				VolumeNameRef: testQosVolume.VolumeNameRef,
-				MaxLimit:      &pb.QosLimit{RdBandwidthMbs: 2},
+				Limits: &pb.Limits{
+					Max: &pb.QosLimit{RdBandwidthMbs: 2},
+				},
 			},
 			spdk:        []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
 			errCode:     codes.OK,
@@ -702,8 +760,12 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			missing:     false,
 		},
 		"malformed name": {
-			mask:        nil,
-			in:          &pb.QosVolume{Name: "-ABC-DEF", VolumeNameRef: "TBD"},
+			mask: nil,
+			in: &pb.QosVolume{
+				Name:          "-ABC-DEF",
+				VolumeNameRef: "TBD",
+				Limits:        testQosVolume.Limits,
+			},
 			out:         nil,
 			spdk:        []string{},
 			errCode:     codes.InvalidArgument,
@@ -758,12 +820,16 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 	qosVolume0 := &pb.QosVolume{
 		Name:          "qos-volume-41",
 		VolumeNameRef: "volume-41",
-		MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 1},
+		Limits: &pb.Limits{
+			Max: &pb.QosLimit{RwBandwidthMbs: 1},
+		},
 	}
 	qosVolume1 := &pb.QosVolume{
 		Name:          "qos-volume-45",
 		VolumeNameRef: "volume-45",
-		MaxLimit:      &pb.QosLimit{RwBandwidthMbs: 5},
+		Limits: &pb.Limits{
+			Max: &pb.QosLimit{RwBandwidthMbs: 5},
+		},
 	}
 	existingToken := "existing-pagination-token"
 	testParent := "todo"
