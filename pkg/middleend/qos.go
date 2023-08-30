@@ -59,7 +59,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return volume, nil
 	}
 
-	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.MaxLimit); err != nil {
+	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.Limits.Max); err != nil {
 		return nil, err
 	}
 
@@ -129,7 +129,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	log.Println("Set new max limit values")
-	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.MaxLimit); err != nil {
+	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.Limits.Max); err != nil {
 		return nil, err
 	}
 
@@ -250,35 +250,35 @@ func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
 		return err
 	}
 
-	if volume.MinLimit != nil {
+	if volume.Limits.Min != nil {
 		return fmt.Errorf("QoS volume min_limit is not supported")
 	}
-	if volume.MaxLimit.RdIopsKiops != 0 {
+	if volume.Limits.Max.RdIopsKiops != 0 {
 		return fmt.Errorf("QoS volume max_limit rd_iops_kiops is not supported")
 	}
-	if volume.MaxLimit.WrIopsKiops != 0 {
+	if volume.Limits.Max.WrIopsKiops != 0 {
 		return fmt.Errorf("QoS volume max_limit wr_iops_kiops is not supported")
 	}
 
-	if volume.MaxLimit.RdBandwidthMbs == 0 &&
-		volume.MaxLimit.WrBandwidthMbs == 0 &&
-		volume.MaxLimit.RwBandwidthMbs == 0 &&
-		volume.MaxLimit.RdIopsKiops == 0 &&
-		volume.MaxLimit.WrIopsKiops == 0 &&
-		volume.MaxLimit.RwIopsKiops == 0 {
+	if volume.Limits.Max.RdBandwidthMbs == 0 &&
+		volume.Limits.Max.WrBandwidthMbs == 0 &&
+		volume.Limits.Max.RwBandwidthMbs == 0 &&
+		volume.Limits.Max.RdIopsKiops == 0 &&
+		volume.Limits.Max.WrIopsKiops == 0 &&
+		volume.Limits.Max.RwIopsKiops == 0 {
 		return fmt.Errorf("QoS volume max_limit should set limit")
 	}
 
-	if volume.MaxLimit.RwIopsKiops < 0 {
+	if volume.Limits.Max.RwIopsKiops < 0 {
 		return fmt.Errorf("QoS volume max_limit rw_iops_kiops cannot be negative")
 	}
-	if volume.MaxLimit.RdBandwidthMbs < 0 {
+	if volume.Limits.Max.RdBandwidthMbs < 0 {
 		return fmt.Errorf("QoS volume max_limit rd_bandwidth_mbs cannot be negative")
 	}
-	if volume.MaxLimit.WrBandwidthMbs < 0 {
+	if volume.Limits.Max.WrBandwidthMbs < 0 {
 		return fmt.Errorf("QoS volume max_limit wr_bandwidth_mbs cannot be negative")
 	}
-	if volume.MaxLimit.RwBandwidthMbs < 0 {
+	if volume.Limits.Max.RwBandwidthMbs < 0 {
 		return fmt.Errorf("QoS volume max_limit rw_bandwidth_mbs cannot be negative")
 	}
 
