@@ -28,7 +28,6 @@ var (
 	testControllerName = server.ResourceIDToVolumeName(testControllerID)
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
-			SubsystemNameRef: testSubsystemName,
 			PcieId: &pb.PciEndpoint{
 				PhysicalFunction: wrapperspb.Int32(1),
 				VirtualFunction:  wrapperspb.Int32(2),
@@ -44,6 +43,7 @@ var (
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
+		subsys  string
 		id      string
 		in      *pb.NvmeController
 		out     *pb.NvmeController
@@ -53,10 +53,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		exist   bool
 	}{
 		"illegal resource_id": {
+			testSubsystemID,
 			"CapitalLettersNotAllowed",
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(1),
 				},
@@ -68,10 +68,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with invalid SPDK response": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(1),
 				},
@@ -83,10 +83,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(1),
 				},
@@ -98,10 +98,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(1),
 				},
@@ -113,10 +113,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(1),
 				},
@@ -128,10 +128,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(17),
 				},
@@ -139,7 +139,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Name: testControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(-1),
 				},
@@ -153,10 +152,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"already exists": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(17),
 				},
@@ -168,10 +167,10 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			true,
 		},
 		"malformed subsystem name": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: "-ABC-DEF",
 					PcieId:           testController.Spec.PcieId,
 					NvmeControllerId: proto.Int32(1),
 				},
@@ -183,6 +182,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"no required ctrl field": {
+			testSubsystemID,
 			testControllerID,
 			nil,
 			nil,
@@ -192,6 +192,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 		},
 		"no required subsystem field": {
+			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -223,7 +224,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				tt.out.Name = testControllerName
 			}
 
-			request := &pb.CreateNvmeControllerRequest{NvmeController: tt.in, NvmeControllerId: tt.id}
+			request := &pb.CreateNvmeControllerRequest{Parent: tt.subsys, NvmeController: tt.in, NvmeControllerId: tt.id}
 			response, err := testEnv.client.CreateNvmeController(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
@@ -255,7 +256,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			testControllerName,
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -263,7 +264,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
-			testControllerName,
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -271,7 +272,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testControllerName,
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -279,7 +280,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			testControllerName,
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -287,7 +288,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			testControllerName,
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
@@ -295,7 +296,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			server.ResourceIDToVolumeName("unknown-controller-id"),
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, "unknown-controller-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
@@ -303,7 +304,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"unknown key with missing allowed": {
-			server.ResourceIDToVolumeName("unknown-id"),
+			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, "unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,
@@ -359,7 +360,6 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
-		SubsystemNameRef: testSubsystemName,
 		PcieId:           testController.Spec.PcieId,
 		NvmeControllerId: proto.Int32(17),
 	}
@@ -487,7 +487,6 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 				{
 					Name: testControllerName,
 					Spec: &pb.NvmeControllerSpec{
-						SubsystemNameRef: testSubsystemName,
 						PcieId:           testController.Spec.PcieId,
 						NvmeControllerId: proto.Int32(17),
 					},
@@ -498,7 +497,6 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 				{
 					Name: secondSubsystemName,
 					Spec: &pb.NvmeControllerSpec{
-						SubsystemNameRef: server.ResourceIDToVolumeName("subsystem-test1"),
 						PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(2), VirtualFunction: wrapperspb.Int32(2), PortId: wrapperspb.Int32(0)},
 						NvmeControllerId: proto.Int32(17),
 					},
@@ -538,7 +536,6 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			testEnv.opiSpdkServer.Nvme.Controllers[secondSubsystemName] = server.ProtoClone(&pb.NvmeController{
 				Name: secondSubsystemName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: server.ResourceIDToVolumeName("subsystem-test1"),
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(2), VirtualFunction: wrapperspb.Int32(2), PortId: wrapperspb.Int32(0)},
 					NvmeControllerId: proto.Int32(17),
 				},

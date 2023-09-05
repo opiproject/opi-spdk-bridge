@@ -27,8 +27,7 @@ var (
 	testNamespaceName = server.ResourceIDToVolumeName(testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
-			HostNsid:         22,
-			SubsystemNameRef: testSubsystemName,
+			HostNsid: 22,
 		},
 		Status: &pb.NvmeNamespaceStatus{
 			PciState:     2,
@@ -39,20 +38,18 @@ var (
 
 func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
-		SubsystemNameRef: testSubsystemName,
-		HostNsid:         0,
-		VolumeNameRef:    "Malloc1",
-		Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-		Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-		Eui64:            1967554867335598546,
+		HostNsid:      0,
+		VolumeNameRef: "Malloc1",
+		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:         1967554867335598546,
 	}
 	namespaceSpec := &pb.NvmeNamespaceSpec{
-		SubsystemNameRef: testSubsystemName,
-		HostNsid:         22,
-		VolumeNameRef:    "Malloc1",
-		Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-		Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-		Eui64:            1967554867335598546,
+		HostNsid:      22,
+		VolumeNameRef: "Malloc1",
+		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:         1967554867335598546,
 	}
 	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec, namespaceSpec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
@@ -153,8 +150,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			testNamespaceID,
 			&pb.NvmeNamespace{
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: "-ABC-DEF",
-					VolumeNameRef:    "TBD",
+					VolumeNameRef: "TBD",
 				},
 			},
 			nil,
@@ -167,8 +163,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			testNamespaceID,
 			&pb.NvmeNamespace{
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: "TBD",
-					VolumeNameRef:    "-ABC-DEF",
+					VolumeNameRef: "-ABC-DEF",
 				},
 			},
 			nil,
@@ -201,11 +196,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		},
 		"no required volume field": {
 			testNamespaceID,
-			&pb.NvmeNamespace{
-				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: "TBD",
-				},
-			},
+			&pb.NvmeNamespace{},
 			nil,
 			[]string{},
 			codes.Unknown,
@@ -368,12 +359,11 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 
 func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
-		SubsystemNameRef: testSubsystemName,
-		HostNsid:         22,
-		VolumeNameRef:    "Malloc1",
-		Uuid:             &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
-		Nguid:            "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
-		Eui64:            1967554867335598546,
+		HostNsid:      22,
+		VolumeNameRef: "Malloc1",
+		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
+		Eui64:         1967554867335598546,
 	}
 	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
@@ -456,8 +446,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 			&pb.NvmeNamespace{
 				Name: testNamespaceName,
 				Spec: &pb.NvmeNamespaceSpec{
-					SubsystemNameRef: "TBD",
-					VolumeNameRef:    "-ABC-DEF",
+					VolumeNameRef: "-ABC-DEF",
 				},
 			},
 			nil,

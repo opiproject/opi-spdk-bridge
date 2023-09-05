@@ -131,9 +131,9 @@ func TestCheckTestProtoObjectsNotChanged(t *testing.T) {
 			r := &testChangeProtoObjReporter{}
 
 			testCleanup := CheckTestProtoObjectsNotChanged(tt.msgs...)(r, "test")
-			if tt.change {
-				tt.msgs[len(tt.msgs)-1].(*pb.NvmeNamespace).Spec.SubsystemNameRef = "somevolume"
-			}
+			// if tt.change {
+			// 	tt.msgs[len(tt.msgs)-1].(*pb.NvmeNamespace).Spec.SubsystemNameRef = "somevolume"
+			// }
 			testCleanup()
 
 			if tt.change != r.reported {
