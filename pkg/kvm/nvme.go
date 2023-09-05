@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -43,7 +44,7 @@ func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
 
 func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
-	ctrlrDirPath := controllerDirPath(c.ctrlrDir, filepath.Base(ctrlr.Spec.SubsystemNameRef))
+	ctrlrDirPath := controllerDirPath(c.ctrlrDir, filepath.Base(fmt.Sprintf("%d", ctrlr.GetSpec().GetNvmeControllerId())))
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath
@@ -53,7 +54,13 @@ func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NvmeController, nqn string)
 
 // CreateNvmeController creates an Nvme controller device and attaches it to QEMU instance
 func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
-	if in.NvmeController.Spec.SubsystemNameRef == "" {
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
+
+	matches := re.FindStringSubmatch(in.GetParent())
+	var subsys string
+	if len(matches) >= 2 {
+		subsys = matches[1]
+	} else {
 		return nil, errInvalidSubsystem
 	}
 	if in.NvmeController.Spec.PcieId == nil {
@@ -68,7 +75,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 
 	// Create request can miss Name field which is generated in spdk bridge.
 	// Use subsystem instead, since it is required to exist
-	dirName := filepath.Base(in.NvmeController.Spec.SubsystemNameRef)
+	dirName := filepath.Base(subsys)
 	err = createControllerDir(s.ctrlrDir, dirName)
 	if err != nil {
 		log.Print(err)
@@ -111,11 +118,20 @@ func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeCont
 	}
 	defer mon.Disconnect()
 
-	dirName, findDirNameErr := s.findDirName(in.Name)
-	if findDirNameErr != nil {
-		log.Println("Failed to detect controller directory name:", findDirNameErr)
-		return nil, findDirNameErr
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)/nvmeControllers/(.+)`)
+
+	matches := re.FindStringSubmatch(in.GetName())
+	var dirName string
+	if len(matches) >= 3 {
+		dirName = matches[1]
+	} else {
+		return nil, fmt.Errorf("invalid resource name: %s", in.Name)
 	}
+	// dirName, findDirNameErr := s.findDirName(in.Name)
+	// if findDirNameErr != nil {
+	// 	log.Println("Failed to detect controller directory name:", findDirNameErr)
+	// 	return nil, findDirNameErr
+	// }
 
 	qemuDeviceID := toQemuID(in.Name)
 	delNvmeErr := mon.DeleteNvmeControllerDevice(qemuDeviceID)
@@ -142,13 +158,13 @@ func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeCont
 	return response, err
 }
 
-func (s *Server) findDirName(name string) (string, error) {
-	ctrlr, ok := s.Server.Nvme.Controllers[name]
-	if !ok {
-		return "", errNoController
-	}
-	return filepath.Base(ctrlr.Spec.SubsystemNameRef), nil
-}
+// func (s *Server) findDirName(subsys, name string) (string, error) {
+// 	ctrlr, ok := s.Server.Nvme.Controllers[name]
+// 	if !ok {
+// 		return "", errNoController
+// 	}
+// 	return filepath.Base(ctrlr.Spec.SubsystemNameRef), nil
+// }
 
 func createControllerDir(ctrlrDir string, dirName string) error {
 	ctrlrDirPath := controllerDirPath(ctrlrDir, dirName)
