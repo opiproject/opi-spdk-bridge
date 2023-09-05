@@ -17,6 +17,8 @@ require (
 	google.golang.org/protobuf v1.31.0
 )
 
+replace github.com/opiproject/opi-api v0.0.0-20230831141553-56e46f754823 => github.com/chujieyang/opi-api v0.0.0-20230901082319-956dd5e81034
+
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
 	4d63.com/gochecknoglobals v0.2.1 // indirect

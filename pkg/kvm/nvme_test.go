@@ -35,7 +35,6 @@ var (
 	}
 	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{NvmeControllerId: testNvmeControllerID, NvmeController: &pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
-			SubsystemNameRef: testSubsystem.Name,
 			PcieId: &pb.PciEndpoint{
 				PhysicalFunction: wrapperspb.Int32(43),
 				VirtualFunction:  wrapperspb.Int32(0),
@@ -103,9 +102,7 @@ func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
 
 	vfiouserSubsysListener := NewVfiouserSubsystemListener(tmpDir)
 	gotParams := vfiouserSubsysListener.Params(&pb.NvmeController{
-		Spec: &pb.NvmeControllerSpec{
-			SubsystemNameRef: "nvme-1",
-		},
+		Spec: &pb.NvmeControllerSpec{},
 	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
 
 	if !reflect.DeepEqual(wantParams, gotParams) {
@@ -189,7 +186,6 @@ func TestCreateNvmeController(t *testing.T) {
 		"empty subsystem in request": {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: "",
 					PcieId: &pb.PciEndpoint{
 						PhysicalFunction: wrapperspb.Int32(1),
 						VirtualFunction:  wrapperspb.Int32(0),
@@ -209,7 +205,6 @@ func TestCreateNvmeController(t *testing.T) {
 		"valid Nvme creation with on first bus location": {
 			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId: &pb.PciEndpoint{
 						PhysicalFunction: wrapperspb.Int32(1),
 						VirtualFunction:  wrapperspb.Int32(0),
@@ -223,7 +218,6 @@ func TestCreateNvmeController(t *testing.T) {
 			out: &pb.NvmeController{
 				Name: testNvmeControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					SubsystemNameRef: testSubsystemName,
 					PcieId: &pb.PciEndpoint{
 						PhysicalFunction: wrapperspb.Int32(1),
 						VirtualFunction:  wrapperspb.Int32(0),
@@ -265,7 +259,6 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						SubsystemNameRef: testSubsystemName,
 						PcieId: &pb.PciEndpoint{
 							PhysicalFunction: wrapperspb.Int32(-1),
 							VirtualFunction:  wrapperspb.Int32(0),
@@ -286,7 +279,6 @@ func TestCreateNvmeController(t *testing.T) {
 			in: &pb.CreateNvmeControllerRequest{
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						SubsystemNameRef: testSubsystemName,
 						PcieId:           nil,
 						NvmeControllerId: proto.Int32(43),
 					},

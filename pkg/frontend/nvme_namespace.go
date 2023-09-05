@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"path"
+	"regexp"
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -40,13 +41,9 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// fetch object from the database
 	// check input parameters validity
-	if in.NvmeNamespace.Spec == nil || in.NvmeNamespace.Spec.SubsystemNameRef == "" {
-		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
-	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmeNamespace.Spec.SubsystemNameRef); err != nil {
+	if err := resourcename.Validate(in.GetParent()); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -55,6 +52,16 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
+	matches := re.FindStringSubmatch(in.GetParent())
+	var subsys string
+	if len(matches) >= 2 {
+		subsys = matches[1]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
+	}
+
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeNamespaceId != "" {
@@ -68,21 +75,23 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	}
 	in.NvmeNamespace.Name = server.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
+	// fetch object from the database
 	namespace, ok := s.Nvme.Namespaces[in.NvmeNamespace.Name]
 	if ok {
 		log.Printf("Already existing NvmeNamespace with id %v", in.NvmeNamespace.Name)
 		return namespace, nil
 	}
 	// not found, so create a new one
-	subsys, ok := s.Nvme.Subsystems[in.NvmeNamespace.Spec.SubsystemNameRef]
+	subsysName := server.ResourceIDToVolumeName(subsys)
+	subsystem, ok := s.Nvme.Subsystems[subsysName]
 	if !ok {
-		err := fmt.Errorf("unable to find subsystem %s", in.NvmeNamespace.Spec.SubsystemNameRef)
+		err := fmt.Errorf("unable to find subsystem %s", subsysName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	params := spdk.NvmfSubsystemAddNsParams{
-		Nqn: subsys.Spec.Nqn,
+		Nqn: subsystem.Spec.Nqn,
 	}
 
 	// TODO: using bdev for volume id as a middle end handle for now
@@ -118,29 +127,42 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	if err := resourcename.Validate(in.GetName()); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)/nvmeNamespaces/(.+)`)
+	matches := re.FindStringSubmatch(in.GetName())
+	var subsys, ns string
+	if len(matches) >= 3 {
+		subsys = matches[1]
+		ns = matches[2]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "invalid input parameters")
+	}
+
 	// fetch object from the database
-	namespace, ok := s.Nvme.Namespaces[in.Name]
+	nsName := server.ResourceIDToVolumeName(ns)
+	namespace, ok := s.Nvme.Namespaces[nsName]
 	if !ok {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", nsName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	subsys, ok := s.Nvme.Subsystems[namespace.Spec.SubsystemNameRef]
+	subsysName := server.ResourceIDToVolumeName(subsys)
+	subsystem, ok := s.Nvme.Subsystems[subsysName]
 	if !ok {
-		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemNameRef)
+		err := fmt.Errorf("unable to find subsystem %s", subsysName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	params := spdk.NvmfSubsystemRemoveNsParams{
-		Nqn:  subsys.Spec.Nqn,
+		Nqn:  subsystem.Spec.Nqn,
 		Nsid: int(namespace.Spec.HostNsid),
 	}
 	var result spdk.NvmfSubsystemRemoveNsResult
@@ -162,13 +184,22 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 // UpdateNvmeNamespace updates an Nvme namespace
 func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("UpdateNvmeNamespace: Received from client: %v", in)
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)/nvmeNamespaces/(.+)`)
+
+	matches := re.FindStringSubmatch(in.GetNvmeNamespace().GetName())
+	var ns string
+	if len(matches) >= 3 {
+		ns = matches[2]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "invalid input parameters")
+	}
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmeNamespace.Name); err != nil {
+	if err := resourcename.Validate(in.GetNvmeNamespace().GetName()); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -178,7 +209,8 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Nvme.Namespaces[in.NvmeNamespace.Name]
+	in.NvmeNamespace.Name = server.ResourceIDToVolumeName(ns)
+	namespace, ok := s.Nvme.Namespaces[in.NvmeNamespace.Name]
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
@@ -187,7 +219,7 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	resourceID := path.Base(volume.Name)
+	resourceID := path.Base(namespace.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeNamespace); err != nil {
 		log.Printf("error: %v", err)
@@ -209,6 +241,16 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
+	matches := re.FindStringSubmatch(in.GetParent())
+	var subsys string
+	if len(matches) >= 2 {
+		subsys = matches[1]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "invalid input subsystem parameters")
+	}
+
 	// fetch object from the database
 	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
@@ -216,14 +258,15 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 		return nil, perr
 	}
 	nqn := ""
-	if in.Parent != "" {
-		subsys, ok := s.Nvme.Subsystems[in.Parent]
+	if in.GetParent() != "" {
+		subsysName := server.ResourceIDToVolumeName(subsys)
+		subsystem, ok := s.Nvme.Subsystems[subsysName]
 		if !ok {
-			err := fmt.Errorf("unable to find subsystem %s", in.Parent)
+			err := fmt.Errorf("unable to find subsystem %s", subsysName)
 			log.Printf("error: %v", err)
 			return nil, err
 		}
-		nqn = subsys.Spec.Nqn
+		nqn = subsystem.Spec.Nqn
 	}
 	var result []spdk.NvmfGetSubsystemsResult
 	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
@@ -269,12 +312,24 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	if err := resourcename.Validate(in.GetName()); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
+
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)/nvmeNamespaces/(.+)`)
+	matches := re.FindStringSubmatch(in.GetName())
+	var subsys, ns string
+	if len(matches) >= 3 {
+		subsys = matches[1]
+		ns = matches[2]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "invalid input parameters")
+	}
+
 	// fetch object from the database
-	namespace, ok := s.Nvme.Namespaces[in.Name]
+	nsName := server.ResourceIDToVolumeName(ns)
+	namespace, ok := s.Nvme.Namespaces[nsName]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
@@ -284,9 +339,10 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 	// return namespace, nil
 
 	// fetch subsystems -> namespaces from Server, match the nsid to find the corresponding namespace
-	subsys, ok := s.Nvme.Subsystems[namespace.Spec.SubsystemNameRef]
+	subsysName := server.ResourceIDToVolumeName(subsys)
+	subsystem, ok := s.Nvme.Subsystems[subsysName]
 	if !ok {
-		err := fmt.Errorf("unable to find subsystem %s", namespace.Spec.SubsystemNameRef)
+		err := fmt.Errorf("unable to find subsystem %s", subsys)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -300,7 +356,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 	log.Printf("Received from SPDK: %v", result)
 	for i := range result {
 		rr := &result[i]
-		if rr.Nqn == subsys.Spec.Nqn {
+		if rr.Nqn == subsystem.Spec.Nqn {
 			for j := range rr.Namespaces {
 				r := &rr.Namespaces[j]
 				if int32(r.Nsid) == namespace.Spec.HostNsid {
@@ -316,7 +372,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 			return nil, status.Errorf(codes.InvalidArgument, msg)
 		}
 	}
-	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Spec.Nqn)
+	msg := fmt.Sprintf("Could not find NQN: %s", subsystem.Spec.Nqn)
 	log.Print(msg)
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
@@ -324,24 +380,34 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 // StatsNvmeNamespace gets an Nvme namespace stats
 func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
 	log.Printf("StatsNvmeNamespace: Received from client: %v", in)
+	re := regexp.MustCompile(`nvmeSubsystems/(.+)/nvmeNamespaces/(.+)`)
+
+	matches := re.FindStringSubmatch(in.GetName())
+	var ns string
+	if len(matches) >= 3 {
+		ns = matches[2]
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "invalid input parameters")
+	}
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	if err := resourcename.Validate(in.GetName()); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Nvme.Namespaces[in.Name]
+	nsName := server.ResourceIDToVolumeName(ns)
+	namespace, ok := s.Nvme.Namespaces[nsName]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", nsName)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	resourceID := path.Base(volume.Name)
+	resourceID := path.Base(namespace.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return &pb.StatsNvmeNamespaceResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
 }

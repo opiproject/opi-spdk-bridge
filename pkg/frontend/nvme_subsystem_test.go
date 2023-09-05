@@ -561,7 +561,7 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListNvmeSubsystemsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			request := &pb.ListNvmeSubsystemsRequest{PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeSubsystems(testEnv.ctx, request)
 
 			if !server.EqualProtoSlices(response.GetNvmeSubsystems(), tt.out) {
