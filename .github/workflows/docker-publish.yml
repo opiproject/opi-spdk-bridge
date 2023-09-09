@@ -56,7 +56,7 @@ jobs:
       run: echo "OPI_API_VERSION=$(go list -m -f '{{.Version}}' github.com/opiproject/opi-api)" >> $GITHUB_ENV
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v4.1.1
+      uses: docker/build-push-action@v4.2.1
       with:
         context: .
         platforms: linux/amd64,linux/arm64
