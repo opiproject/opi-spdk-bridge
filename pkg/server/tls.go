@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 Intel Corporation
 
-// Package utils contains utility functions
-package utils
+// Package server implements the server
+package server
 
 import (
 	"crypto/tls"
