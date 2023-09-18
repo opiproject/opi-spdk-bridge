@@ -66,8 +66,10 @@ It is just an example and implies SPDK just as example, not mandated by OPI.
 on DPU/IPU (i.e. with IP=10.10.10.10) run
 
 ```bash
-$ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 ghcr.io/opiproject/opi-spdk-bridge:main
-2022/09/21 21:39:49 server listening at [::]:50051
+$ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 -p 8082:8082 ghcr.io/opiproject/opi-spdk-bridge:main
+2023/09/12 20:29:05 Connection to SPDK will be via: unix detected from /var/tmp/spdk.sock
+2023/09/12 20:29:05 gRPC server listening at [::]:50051
+2023/09/12 20:29:05 HTTP Server listening at 8082
 ```
 
 on X86 management VM run
@@ -206,6 +208,12 @@ opi-spdk-server_1  | 2022/08/05 14:39:40 Received from SPDK: {1 {-19 No such dev
 opi-spdk-server_1  | 2022/08/05 14:39:40 error: bdev_malloc_delete: json response error: No such device
 opi-spdk-server_1  | 2022/08/05 14:39:40 Received from SPDK: false
 opi-spdk-server_1  | 2022/08/05 14:39:40 Could not delete: id:8
+```
+
+In addition HTTP is supported via grpc gateway, for example:
+
+```bash
+curl -kL http://10.10.10.10:8082/v1/inventory/1/inventory/2
 ```
 
 Another remote call example
