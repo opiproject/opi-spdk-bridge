@@ -63,9 +63,18 @@ services:
     depends_on:
       spdk:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     command: sh -c "/opi-spdk-bridge -port=50051 -spdk_addr=/var/tmp/spdk.sock -tcp_trid=$$(getent hosts spdk | awk '{ print $$1 }'):7777"
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
+
+  redis:
+    image: redis:7.2.1-alpine3.18
+    networks:
+      - opi
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   opi-spdk-client:
     image: ghcr.io/opiproject/godpu:main@sha256:59d56d2f2bfe500b102ca197d0a87c897f05a565bed9de0f827f4f1ff71999f7
