@@ -41,37 +41,37 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 		exist   bool
 	}{
 		"illegal resource_id": {
-			"CapitalLettersNotAllowed",
-			&testNvmeCtrl,
-			nil,
-			codes.Unknown,
-			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
-			false,
+			id:      "CapitalLettersNotAllowed",
+			in:      &testNvmeCtrl,
+			out:     nil,
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
+			exist:   false,
 		},
 
 		"valid request": {
-			testNvmeCtrlID,
-			&testNvmeCtrl,
-			&testNvmeCtrl,
-			codes.OK,
-			"",
-			false,
+			id:      testNvmeCtrlID,
+			in:      &testNvmeCtrl,
+			out:     &testNvmeCtrl,
+			errCode: codes.OK,
+			errMsg:  "",
+			exist:   false,
 		},
 		"already exists": {
-			testNvmeCtrlID,
-			&testNvmeCtrl,
-			&testNvmeCtrl,
-			codes.OK,
-			"",
-			true,
+			id:      testNvmeCtrlID,
+			in:      &testNvmeCtrl,
+			out:     &testNvmeCtrl,
+			errCode: codes.OK,
+			errMsg:  "",
+			exist:   true,
 		},
 		"no required field": {
-			testAioVolumeID,
-			nil,
-			nil,
-			codes.Unknown,
-			"missing required field: nvme_remote_controller",
-			false,
+			id:      testAioVolumeID,
+			in:      nil,
+			out:     nil,
+			errCode: codes.Unknown,
+			errMsg:  "missing required field: nvme_remote_controller",
+			exist:   false,
 		},
 	}
 
@@ -121,11 +121,11 @@ func TestBackEnd_ResetNvmeRemoteController(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request without SPDK": {
-			testNvmeCtrlID,
-			&emptypb.Empty{},
-			[]string{},
-			codes.OK,
-			"",
+			in:      testNvmeCtrlID,
+			out:     &emptypb.Empty{},
+			spdk:    []string{},
+			errCode: codes.OK,
+			errMsg:  "",
 		},
 	}
 
@@ -168,8 +168,8 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 		existingControllers map[string]*pb.NvmeRemoteController
 	}{
 		"valid request with valid SPDK response": {
-			testNvmeCtrlID,
-			[]*pb.NvmeRemoteController{
+			in: testNvmeCtrlID,
+			out: []*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
@@ -177,18 +177,18 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
 			},
-			codes.OK,
-			"",
-			0,
-			"",
-			map[string]*pb.NvmeRemoteController{
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    0,
+			token:   "",
+			existingControllers: map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination overflow": {
-			testNvmeCtrlID,
-			[]*pb.NvmeRemoteController{
+			in: testNvmeCtrlID,
+			out: []*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
@@ -196,79 +196,79 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
 			},
-			codes.OK,
-			"",
-			1000,
-			"",
-			map[string]*pb.NvmeRemoteController{
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    1000,
+			token:   "",
+			existingControllers: map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination negative": {
-			testNvmeCtrlID,
-			nil,
-			codes.InvalidArgument,
-			"negative PageSize is not allowed",
-			-10,
-			"",
-			map[string]*pb.NvmeRemoteController{
+			in:      testNvmeCtrlID,
+			out:     nil,
+			errCode: codes.InvalidArgument,
+			errMsg:  "negative PageSize is not allowed",
+			size:    -10,
+			token:   "",
+			existingControllers: map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination error": {
-			testNvmeCtrlID,
-			nil,
-			codes.NotFound,
-			fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
-			0,
-			"unknown-pagination-token",
-			map[string]*pb.NvmeRemoteController{
+			in:      testNvmeCtrlID,
+			out:     nil,
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find pagination token %s", "unknown-pagination-token"),
+			size:    0,
+			token:   "unknown-pagination-token",
+			existingControllers: map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination": {
-			testNvmeCtrlID,
-			[]*pb.NvmeRemoteController{
+			in: testNvmeCtrlID,
+			out: []*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme12"),
 				},
 			},
-			codes.OK,
-			"",
-			1,
-			"",
-			map[string]*pb.NvmeRemoteController{
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    1,
+			token:   "",
+			existingControllers: map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"pagination offset": {
-			testNvmeCtrlID,
-			[]*pb.NvmeRemoteController{
+			in: testNvmeCtrlID,
+			out: []*pb.NvmeRemoteController{
 				{
 					Name: server.ResourceIDToVolumeName("OpiNvme13"),
 				},
 			},
-			codes.OK,
-			"",
-			1,
-			"existing-pagination-token",
-			map[string]*pb.NvmeRemoteController{
+			errCode: codes.OK,
+			errMsg:  "",
+			size:    1,
+			token:   "existing-pagination-token",
+			existingControllers: map[string]*pb.NvmeRemoteController{
 				server.ResourceIDToVolumeName("OpiNvme12"): {Name: server.ResourceIDToVolumeName("OpiNvme12")},
 				server.ResourceIDToVolumeName("OpiNvme13"): {Name: server.ResourceIDToVolumeName("OpiNvme13")},
 			},
 		},
 		"no required field": {
-			"",
-			[]*pb.NvmeRemoteController{},
-			codes.Unknown,
-			"missing required field: parent",
-			0,
-			"",
-			map[string]*pb.NvmeRemoteController{},
+			in:                  "",
+			out:                 []*pb.NvmeRemoteController{},
+			errCode:             codes.Unknown,
+			errMsg:              "missing required field: parent",
+			size:                0,
+			token:               "",
+			existingControllers: map[string]*pb.NvmeRemoteController{},
 		},
 	}
 
@@ -318,31 +318,31 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request": {
-			testNvmeCtrlID,
-			&pb.NvmeRemoteController{
+			in: testNvmeCtrlID,
+			out: &pb.NvmeRemoteController{
 				Name:      testNvmeCtrlName,
 				Multipath: testNvmeCtrl.Multipath,
 			},
-			codes.OK,
-			"",
+			errCode: codes.OK,
+			errMsg:  "",
 		},
 		"valid request with unknown key": {
-			"unknown-id",
-			nil,
-			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			in:      "unknown-id",
+			out:     nil,
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %v", "unknown-id"),
 		},
 		"malformed name": {
-			"-ABC-DEF",
-			nil,
-			codes.Unknown,
-			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			in:      "-ABC-DEF",
+			out:     nil,
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 		},
 		"no required field": {
-			"",
-			nil,
-			codes.Unknown,
-			"missing required field: name",
+			in:      "",
+			out:     nil,
+			errCode: codes.Unknown,
+			errMsg:  "missing required field: name",
 		},
 	}
 
@@ -386,28 +386,28 @@ func TestBackEnd_StatsNvmeRemoteController(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request with valid SPDK response": {
-			testNvmeCtrlID,
-			&pb.VolumeStats{
+			in: testNvmeCtrlID,
+			out: &pb.VolumeStats{
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
 			},
-			[]string{},
-			codes.OK,
-			"",
+			spdk:    []string{},
+			errCode: codes.OK,
+			errMsg:  "",
 		},
 		"valid request with unknown key": {
-			"unknown-id",
-			nil,
-			[]string{},
-			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", "unknown-id"),
+			in:      "unknown-id",
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %v", "unknown-id"),
 		},
 		"malformed name": {
-			"-ABC-DEF",
-			nil,
-			[]string{},
-			codes.Unknown,
-			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			in:      "-ABC-DEF",
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 		},
 	}
 
@@ -450,39 +450,39 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 		missing bool
 	}{
 		"valid request": {
-			testNvmeCtrlName,
-			&emptypb.Empty{},
-			codes.OK,
-			"",
-			false,
+			in:      testNvmeCtrlName,
+			out:     &emptypb.Empty{},
+			errCode: codes.OK,
+			errMsg:  "",
+			missing: false,
 		},
 		"valid request with unknown key": {
-			server.ResourceIDToVolumeName("unknown-id"),
-			nil,
-			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
-			false,
+			in:      server.ResourceIDToVolumeName("unknown-id"),
+			out:     nil,
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			missing: false,
 		},
 		"unknown key with missing allowed": {
-			server.ResourceIDToVolumeName("unknown-id"),
-			&emptypb.Empty{},
-			codes.OK,
-			"",
-			true,
+			in:      server.ResourceIDToVolumeName("unknown-id"),
+			out:     &emptypb.Empty{},
+			errCode: codes.OK,
+			errMsg:  "",
+			missing: true,
 		},
 		"malformed name": {
-			server.ResourceIDToVolumeName("-ABC-DEF"),
-			&emptypb.Empty{},
-			codes.Unknown,
-			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
+			in:      server.ResourceIDToVolumeName("-ABC-DEF"),
+			out:     &emptypb.Empty{},
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			missing: false,
 		},
 		"no required field": {
-			"",
-			&emptypb.Empty{},
-			codes.Unknown,
-			"missing required field: name",
-			false,
+			in:      "",
+			out:     &emptypb.Empty{},
+			errCode: codes.Unknown,
+			errMsg:  "missing required field: name",
+			missing: false,
 		},
 	}
 
