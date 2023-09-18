@@ -77,7 +77,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   opi-spdk-client:
-    image: ghcr.io/opiproject/godpu:main@sha256:59d56d2f2bfe500b102ca197d0a87c897f05a565bed9de0f827f4f1ff71999f7
+    image: ghcr.io/opiproject/godpu:main@sha256:a6fd61121fc87d887bd58264606a55c36ae0dcea0da9e76856499e2f84a961b0
     networks:
       - opi
     depends_on:
