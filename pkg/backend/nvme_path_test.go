@@ -29,12 +29,14 @@ var (
 	testNvmePathName = server.ResourceIDToVolumeName(testNvmePathID)
 	testNvmePath     = pb.NvmePath{
 		Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		Adrfam:            pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		Traddr:            "127.0.0.1",
-		Trsvcid:           4444,
-		Subnqn:            "nqn.2016-06.io.spdk:cnode1",
-		Hostnqn:           "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 		ControllerNameRef: testNvmeCtrlName,
+		Fabrics: &pb.FabricsPath{
+			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+			Subnqn:  "nqn.2016-06.io.spdk:cnode1",
+			Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
+			Trsvcid: 4444,
+		},
 	}
 )
 
@@ -196,8 +198,12 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			const expectedKey = "NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] =
 				&pb.NvmeRemoteController{
-					Hdgst: false, Ddgst: false, Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
-					Psk: []byte(expectedKey),
+					Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
+					Tcp: &pb.TcpController{
+						Hdgst: false,
+						Ddgst: false,
+						Psk:   []byte(expectedKey),
+					},
 				}
 
 			createdKeyFile := ""
@@ -481,10 +487,13 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			in: &pb.NvmePath{
 				Name:              server.ResourceIDToVolumeName("unknown-id"),
 				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:            pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 				Traddr:            "127.0.0.1",
-				Trsvcid:           4444,
 				ControllerNameRef: "TBD",
+				Fabrics: &pb.FabricsPath{
+					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+					Trsvcid: 4444,
+					Subnqn:  testNvmePath.Fabrics.Subnqn,
+				},
 			},
 			out:     nil,
 			spdk:    []string{},
@@ -497,10 +506,13 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			in: &pb.NvmePath{
 				Name:              server.ResourceIDToVolumeName("unknown-id"),
 				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Adrfam:            pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 				Traddr:            "127.0.0.1",
-				Trsvcid:           4444,
 				ControllerNameRef: "TBD",
+				Fabrics: &pb.FabricsPath{
+					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+					Trsvcid: 4444,
+					Subnqn:  testNvmePath.Fabrics.Subnqn,
+				},
 			},
 			out:     nil,
 			spdk:    []string{},
