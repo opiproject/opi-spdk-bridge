@@ -30,7 +30,7 @@ import (
 
 func sortNvmePaths(paths []*pb.NvmePath) {
 	sort.Slice(paths, func(i int, j int) bool {
-		return paths[i].Subnqn < paths[j].Subnqn
+		return paths[i].Name < paths[j].Name
 	})
 }
 
@@ -73,9 +73,9 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		multipath = s.opiMultipathToSpdk(controller.Multipath)
 	}
 	psk := ""
-	if len(controller.Psk) > 0 {
+	if len(controller.GetTcp().GetPsk()) > 0 {
 		log.Printf("Notice, TLS is used to establish connection: to %v", in.NvmePath)
-		keyFile, err := s.keyToTemporaryFile(controller.Psk)
+		keyFile, err := s.keyToTemporaryFile(controller.Tcp.Psk)
 		if err != nil {
 			return nil, err
 		}
@@ -88,15 +88,15 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	}
 	params := spdk.BdevNvmeAttachControllerParams{
 		Name:      path.Base(controller.Name),
-		Trtype:    s.opiTransportToSpdk(in.NvmePath.Trtype),
-		Traddr:    in.NvmePath.Traddr,
-		Adrfam:    s.opiAdressFamilyToSpdk(in.NvmePath.Adrfam),
-		Trsvcid:   fmt.Sprint(in.NvmePath.Trsvcid),
-		Subnqn:    in.NvmePath.Subnqn,
-		Hostnqn:   in.NvmePath.Hostnqn,
+		Trtype:    s.opiTransportToSpdk(in.NvmePath.GetTrtype()),
+		Traddr:    in.NvmePath.GetTraddr(),
+		Adrfam:    s.opiAdressFamilyToSpdk(in.NvmePath.GetFabrics().GetAdrfam()),
+		Trsvcid:   fmt.Sprint(in.NvmePath.GetFabrics().GetTrsvcid()),
+		Subnqn:    in.NvmePath.GetFabrics().GetSubnqn(),
+		Hostnqn:   in.NvmePath.GetFabrics().GetHostnqn(),
 		Multipath: multipath,
-		Hdgst:     controller.Hdgst,
-		Ddgst:     controller.Ddgst,
+		Hdgst:     controller.GetTcp().GetHdgst(),
+		Ddgst:     controller.GetTcp().GetDdgst(),
 		Psk:       psk,
 	}
 	var result []spdk.BdevNvmeAttachControllerResult
@@ -147,11 +147,11 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 
 	params := spdk.BdevNvmeDetachControllerParams{
 		Name:    path.Base(controller.Name),
-		Trtype:  s.opiTransportToSpdk(nvmePath.Trtype),
-		Traddr:  nvmePath.Traddr,
-		Adrfam:  s.opiAdressFamilyToSpdk(nvmePath.Adrfam),
-		Trsvcid: fmt.Sprint(nvmePath.Trsvcid),
-		Subnqn:  nvmePath.Subnqn,
+		Trtype:  s.opiTransportToSpdk(nvmePath.GetTrtype()),
+		Traddr:  nvmePath.GetTraddr(),
+		Adrfam:  s.opiAdressFamilyToSpdk(nvmePath.GetFabrics().GetAdrfam()),
+		Trsvcid: fmt.Sprint(nvmePath.GetFabrics().GetTrsvcid()),
+		Subnqn:  nvmePath.GetFabrics().GetSubnqn(),
 	}
 
 	var result spdk.BdevNvmeDetachControllerResult
@@ -279,7 +279,7 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 			return &pb.NvmePath{ /* TODO: fill this */ }, nil
 		}
 	}
-	msg := fmt.Sprintf("Could not find NQN: %s", path.Subnqn)
+	msg := fmt.Sprintf("Could not find NQN: %s", path.Fabrics.Subnqn)
 	log.Print(msg)
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
