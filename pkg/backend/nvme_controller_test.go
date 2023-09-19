@@ -24,8 +24,10 @@ var (
 	testNvmeCtrlID   = "opi-nvme8"
 	testNvmeCtrlName = server.ResourceIDToVolumeName(testNvmeCtrlID)
 	testNvmeCtrl     = pb.NvmeRemoteController{
-		Hdgst:     false,
-		Ddgst:     false,
+		Tcp: &pb.TcpController{
+			Hdgst: false,
+			Ddgst: false,
+		},
 		Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
 	}
 )
@@ -322,6 +324,7 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 			out: &pb.NvmeRemoteController{
 				Name:      testNvmeCtrlName,
 				Multipath: testNvmeCtrl.Multipath,
+				Tcp:       testNvmeCtrl.Tcp,
 			},
 			errCode: codes.OK,
 			errMsg:  "",
