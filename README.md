@@ -90,7 +90,12 @@ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_outp
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeRemoteControllers "{parent : 'todo'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmetcp12'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmePath "{nvme_path : {controller_name_ref: '//storage.opiproject.org/volumes/nvmetcp12', traddr:'11.11.11.2', trtype:'NVME_TRANSPORT_TCP', fabrics:{subnqn:'nqn.2016-06.com.opi.spdk.target0', trsvcid:'4444', adrfam:'NVME_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}, nvme_path_id: 'nvmetcp12path0'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_DISABLE'}, nvme_remote_controller_id: 'nvmepcie13'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmePath "{nvme_path : {controller_name_ref: '//storage.opiproject.org/volumes/nvmepcie13', traddr:'0000:01:00.0', trtype:'NVME_TRANSPORT_PCIE'}, nvme_path_id: 'nvmepcie13path0'}"
+
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmePaths "{parent : 'todo'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmePath "{name: '//storage.opiproject.org/volumes/nvmepcie13path0'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmepcie13'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmePath "{name: '//storage.opiproject.org/volumes/nvmetcp12path0'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmePath "{name: '//storage.opiproject.org/volumes/nvmetcp12path0'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmetcp12'}"
