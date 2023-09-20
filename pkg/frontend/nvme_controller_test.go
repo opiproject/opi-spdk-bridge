@@ -25,7 +25,7 @@ import (
 
 var (
 	testControllerID   = "controller-test"
-	testControllerName = server.ResourceIDToVolumeName(testControllerID)
+	testControllerName = ResourceIDToControllerName(testSubsystemID, testControllerID)
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			PcieId: &pb.PciEndpoint{
@@ -43,7 +43,6 @@ var (
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		subsys  string
 		id      string
 		in      *pb.NvmeController
 		out     *pb.NvmeController
@@ -51,9 +50,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		exist   bool
+		subsys  string
 	}{
 		"illegal resource_id": {
-			testSubsystemID,
 			"CapitalLettersNotAllowed",
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -66,9 +65,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with invalid SPDK response": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -81,9 +80,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create CTRL: %v", testControllerName),
 			false,
+			testSubsystemName,
 		},
 		"valid request with empty SPDK response": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -96,9 +95,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "EOF"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with ID mismatch SPDK response": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -111,9 +110,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "json response ID mismatch"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with error code from SPDK response": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -126,9 +125,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "json response error: Invalid parameters"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with valid SPDK response": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -150,9 +149,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			testSubsystemName,
 		},
 		"already exists": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -165,9 +164,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			testSubsystemName,
 		},
 		"malformed subsystem name": {
-			testSubsystemID,
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -180,9 +179,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
+			"-ABC-DEF",
 		},
 		"no required ctrl field": {
-			testSubsystemID,
 			testControllerID,
 			nil,
 			nil,
@@ -190,9 +189,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			codes.Unknown,
 			"missing required field: nvme_controller",
 			false,
+			testSubsystemName,
 		},
-		"no required subsystem field": {
-			testSubsystemID,
+		"no required parent field": {
 			testControllerID,
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
@@ -202,8 +201,9 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			nil,
 			[]string{},
 			codes.Unknown,
-			"missing required field: nvme_controller.spec.subsystem_name_ref",
+			"missing required field: parent",
 			false,
+			"",
 		},
 	}
 
@@ -256,7 +256,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		missing bool
 	}{
 		"valid request with invalid SPDK response": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
@@ -264,7 +264,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with empty SPDK response": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
+			testControllerName,
 			nil,
 			[]string{""},
 			codes.Unknown,
@@ -272,7 +272,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with ID mismatch SPDK response": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
+			testControllerName,
 			nil,
 			[]string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			codes.Unknown,
@@ -280,7 +280,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with error code from SPDK response": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
+			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			codes.Unknown,
@@ -288,7 +288,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with valid SPDK response": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, testControllerID),
+			testControllerName,
 			&emptypb.Empty{},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
@@ -296,15 +296,15 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, "unknown-controller-id"),
+			ResourceIDToControllerName(testSubsystemID, "unknown-controller-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-controller-id")),
+			fmt.Sprintf("unable to find key %v", ResourceIDToControllerName(testSubsystemID, "unknown-controller-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
-			fmt.Sprintf("nvmeSubsystems/%s/nvmeControllers/%s", testSubsystemID, "unknown-id"),
+			ResourceIDToControllerName(testSubsystemID, "unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,
