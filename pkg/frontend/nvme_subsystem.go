@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"path"
-	"regexp"
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -52,7 +51,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeSubsystemId, in.NvmeSubsystem.Name)
 		resourceID = in.NvmeSubsystemId
 	}
-	in.NvmeSubsystem.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NvmeSubsystem.Name = ResourceIDToSubsystemName(resourceID)
 	// idempotent API when called with same key, should return same object
 	subsys, ok := s.Nvme.Subsystems[in.NvmeSubsystem.Name]
 	if ok {
@@ -109,33 +108,22 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.GetName()); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
-	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
-	matches := re.FindStringSubmatch(in.GetName())
-	var subsys string
-	if len(matches) >= 2 {
-		subsys = matches[1]
-	} else {
-		return nil, fmt.Errorf("invalid resource name: %s", in.GetName())
-	}
-
 	// fetch object from the database
-	subsysName := server.ResourceIDToVolumeName(subsys)
-	subsystem, ok := s.Nvme.Subsystems[subsysName]
+	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", subsys)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	params := spdk.NvmfDeleteSubsystemParams{
-		Nqn: subsystem.Spec.Nqn,
+		Nqn: subsys.Spec.Nqn,
 	}
 	var result spdk.NvmfDeleteSubsystemResult
 	err := s.rpc.Call("nvmf_delete_subsystem", &params, &result)
@@ -145,26 +133,17 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete NQN: %s", subsystem.Spec.Nqn)
+		msg := fmt.Sprintf("Could not delete NQN: %s", subsys.Spec.Nqn)
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Nvme.Subsystems, subsystem.Name)
+	delete(s.Nvme.Subsystems, subsys.Name)
 	return &emptypb.Empty{}, nil
 }
 
 // UpdateNvmeSubsystem updates an Nvme Subsystem
 func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	log.Printf("UpdateNvmeSubsystem: Received from client: %v", in)
-	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
-
-	matches := re.FindStringSubmatch(in.NvmeSubsystem.GetName())
-	var subsys string
-	if len(matches) >= 2 {
-		subsys = matches[1]
-	} else {
-		return nil, fmt.Errorf("invalid resource name: %s", in.NvmeSubsystem.GetName())
-	}
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		log.Printf("error: %v", err)
@@ -176,17 +155,16 @@ func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsyst
 		return nil, err
 	}
 	// fetch object from the database
-	subsysName := server.ResourceIDToVolumeName(subsys)
-	subsystem, ok := s.Nvme.Subsystems[subsysName]
+	subsys, ok := s.Nvme.Subsystems[in.NvmeSubsystem.Name]
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeSubsystem.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	resourceID := path.Base(subsystem.Name)
+	resourceID := path.Base(subsys.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeSubsystem); err != nil {
 		log.Printf("error: %v", err)
@@ -242,25 +220,14 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.GetName()); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
-	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
-	matches := re.FindStringSubmatch(in.GetName())
-	var subsys string
-	if len(matches) >= 2 {
-		subsys = matches[1]
-	} else {
-		return nil, fmt.Errorf("invalid resource name: %s", in.Name)
-	}
-
 	// fetch object from the database
-	subsysName := server.ResourceIDToVolumeName(subsys)
-	subsystem, ok := s.Nvme.Subsystems[subsysName]
+	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -275,11 +242,11 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 
 	for i := range result {
 		r := &result[i]
-		if r.Nqn == subsystem.Spec.Nqn {
+		if r.Nqn == subsys.Spec.Nqn {
 			return &pb.NvmeSubsystem{Spec: &pb.NvmeSubsystemSpec{Nqn: r.Nqn, SerialNumber: r.SerialNumber, ModelNumber: r.ModelNumber}, Status: &pb.NvmeSubsystemStatus{FirmwareRevision: "TBD"}}, nil
 		}
 	}
-	msg := fmt.Sprintf("Could not find NQN: %s", subsystem.Spec.Nqn)
+	msg := fmt.Sprintf("Could not find NQN: %s", subsys.Spec.Nqn)
 	log.Print(msg)
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
@@ -293,29 +260,18 @@ func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystem
 		return nil, err
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.GetName()); err != nil {
+	if err := resourcename.Validate(in.Name); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
-	re := regexp.MustCompile(`nvmeSubsystems/(.+)`)
-	matches := re.FindStringSubmatch(in.GetName())
-	var subsys string
-	if len(matches) >= 2 {
-		subsys = matches[1]
-	} else {
-		return nil, fmt.Errorf("invalid resource name: %s", in.Name)
-	}
-
 	// fetch object from the database
-	subsysName := server.ResourceIDToVolumeName(subsys)
-	subsystem, ok := s.Nvme.Subsystems[subsysName]
+	subsys, ok := s.Nvme.Subsystems[in.Name]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find key %s", subsysName)
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	resourceID := path.Base(subsystem.Name)
+	resourceID := path.Base(subsys.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	var result spdk.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
@@ -325,4 +281,9 @@ func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystem
 	}
 	log.Printf("Received from SPDK: %v", result)
 	return &pb.StatsNvmeSubsystemResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
+}
+
+// ResourceIDToSubsystemName transforms subsystem resource ID to subsystem name
+func ResourceIDToSubsystemName(resourceID string) string {
+	return fmt.Sprintf("//storage.opiproject.org/subsystems/%s", resourceID)
 }

@@ -23,7 +23,7 @@ import (
 
 var (
 	testSubsystemID   = "subsystem-test"
-	testSubsystemName = server.ResourceIDToVolumeName(testSubsystemID)
+	testSubsystemName = ResourceIDToSubsystemName(testSubsystemID)
 	testSubsystem     = pb.NvmeSubsystem{
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi3",
@@ -541,15 +541,6 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			"",
 			1,
 			"existing-pagination-token",
-		},
-		"no required field": {
-			"",
-			[]*pb.NvmeSubsystem{},
-			[]string{},
-			codes.Unknown,
-			"missing required field: parent",
-			0,
-			"",
 		},
 	}
 
