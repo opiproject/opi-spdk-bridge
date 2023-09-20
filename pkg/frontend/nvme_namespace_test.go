@@ -24,7 +24,7 @@ import (
 
 var (
 	testNamespaceID   = "namespace-test"
-	testNamespaceName = server.ResourceIDToVolumeName(testNamespaceID)
+	testNamespaceName = ResourceIDToNamespaceName(testSubsystemID, testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid: 22,
@@ -62,6 +62,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		exist   bool
+		subsys  string
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
@@ -73,6 +74,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with invalid SPDK response": {
 			testNamespaceID,
@@ -84,6 +86,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NS: %v", testNamespaceName),
 			false,
+			testSubsystemName,
 		},
 		"valid request with empty SPDK response": {
 			testNamespaceID,
@@ -95,6 +98,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_ns: %v", "EOF"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testNamespaceID,
@@ -106,6 +110,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_ns: %v", "json response ID mismatch"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with error code from SPDK response": {
 			testNamespaceID,
@@ -117,6 +122,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_add_ns: %v", "json response error: myopierr"),
 			false,
+			testSubsystemName,
 		},
 		"valid request with valid SPDK response": {
 			testNamespaceID,
@@ -134,6 +140,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			testSubsystemName,
 		},
 		"already exists": {
 			testNamespaceID,
@@ -145,6 +152,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			testSubsystemName,
 		},
 		"malformed subsystem name": {
 			testNamespaceID,
@@ -158,6 +166,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
+			"-ABC-DEF",
 		},
 		"malformed volume name": {
 			testNamespaceID,
@@ -171,6 +180,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
+			testSubsystemName,
 		},
 		"no required ns field": {
 			testNamespaceID,
@@ -180,6 +190,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			codes.Unknown,
 			"missing required field: nvme_namespace",
 			false,
+			testSubsystemName,
 		},
 		"no required subsystem field": {
 			testNamespaceID,
@@ -191,17 +202,21 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			nil,
 			[]string{},
 			codes.Unknown,
-			"missing required field: nvme_namespace.spec.subsystem_name_ref",
+			"missing required field: parent",
 			false,
+			"",
 		},
 		"no required volume field": {
 			testNamespaceID,
-			&pb.NvmeNamespace{},
+			&pb.NvmeNamespace{
+				Spec: &pb.NvmeNamespaceSpec{},
+			},
 			nil,
 			[]string{},
 			codes.Unknown,
 			"missing required field: nvme_namespace.spec.volume_name_ref",
 			false,
+			testSubsystemName,
 		},
 	}
 
@@ -222,7 +237,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 				tt.out.Name = testNamespaceName
 			}
 
-			request := &pb.CreateNvmeNamespaceRequest{NvmeNamespace: tt.in, NvmeNamespaceId: tt.id}
+			request := &pb.CreateNvmeNamespaceRequest{Parent: tt.subsys, NvmeNamespace: tt.in, NvmeNamespaceId: tt.id}
 			response, err := testEnv.client.CreateNvmeNamespace(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
