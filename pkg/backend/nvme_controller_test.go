@@ -30,6 +30,12 @@ var (
 		},
 		Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
 	}
+
+	testNvmeCtrlWithName = pb.NvmeRemoteController{
+		Name:      testNvmeCtrlName,
+		Tcp:       testNvmeCtrl.Tcp,
+		Multipath: testNvmeCtrl.Multipath,
+	}
 )
 
 func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {

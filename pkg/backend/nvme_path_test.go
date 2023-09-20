@@ -43,85 +43,176 @@ var (
 func TestBackEnd_CreateNvmePath(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		id      string
-		in      *pb.NvmePath
-		out     *pb.NvmePath
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		exist   bool
+		id         string
+		in         *pb.NvmePath
+		out        *pb.NvmePath
+		spdk       []string
+		errCode    codes.Code
+		errMsg     string
+		exist      bool
+		controller *pb.NvmeRemoteController
 	}{
 		"illegal resource_id": {
-			id:      "CapitalLettersNotAllowed",
-			in:      &testNvmePath,
-			out:     nil,
-			spdk:    []string{},
-			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
-			exist:   false,
+			id:         "CapitalLettersNotAllowed",
+			in:         &testNvmePath,
+			out:        nil,
+			spdk:       []string{},
+			errCode:    codes.Unknown,
+			errMsg:     fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
 		},
 		"valid request with invalid marshal SPDK response": {
-			id:      testNvmePathID,
-			in:      &testNvmePath,
-			out:     nil,
-			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
-			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevNvmeAttachControllerResult"),
-			exist:   false,
+			id:         testNvmePathID,
+			in:         &testNvmePath,
+			out:        nil,
+			spdk:       []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			errCode:    codes.Unknown,
+			errMsg:     fmt.Sprintf("bdev_nvme_attach_controller: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevNvmeAttachControllerResult"),
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
 		},
 		"valid request with empty SPDK response": {
-			id:      testNvmePathID,
-			in:      &testNvmePath,
-			out:     nil,
-			spdk:    []string{""},
-			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("bdev_nvme_attach_controller: %v", "EOF"),
-			exist:   false,
+			id:         testNvmePathID,
+			in:         &testNvmePath,
+			out:        nil,
+			spdk:       []string{""},
+			errCode:    codes.Unknown,
+			errMsg:     fmt.Sprintf("bdev_nvme_attach_controller: %v", "EOF"),
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
 		},
 		"valid request with ID mismatch SPDK response": {
-			id:      testNvmePathID,
-			in:      &testNvmePath,
-			out:     nil,
-			spdk:    []string{`{"id":0,"error":{"code":0,"message":""},"result":[""]}`},
-			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response ID mismatch"),
-			exist:   false,
+			id:         testNvmePathID,
+			in:         &testNvmePath,
+			out:        nil,
+			spdk:       []string{`{"id":0,"error":{"code":0,"message":""},"result":[""]}`},
+			errCode:    codes.Unknown,
+			errMsg:     fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response ID mismatch"),
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
 		},
 		"valid request with error code from SPDK response": {
-			id:      testNvmePathID,
-			in:      &testNvmePath,
-			out:     nil,
-			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[""]}`},
-			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response error: myopierr"),
-			exist:   false,
+			id:         testNvmePathID,
+			in:         &testNvmePath,
+			out:        nil,
+			spdk:       []string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":[""]}`},
+			errCode:    codes.Unknown,
+			errMsg:     fmt.Sprintf("bdev_nvme_attach_controller: %v", "json response error: myopierr"),
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
 		},
-		"valid request with valid SPDK response": {
-			id:      testNvmePathID,
-			in:      &testNvmePath,
-			out:     &testNvmePath,
+		"valid request with valid SPDK response for tcp": {
+			id:         testNvmePathID,
+			in:         &testNvmePath,
+			out:        &testNvmePath,
+			spdk:       []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
+			errCode:    codes.OK,
+			errMsg:     "",
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
+		},
+		"valid request with valid SPDK response for pcie": {
+			id: testNvmePathID,
+			in: &pb.NvmePath{
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				ControllerNameRef: testNvmePath.ControllerNameRef,
+				Traddr:            "0000:af:00.0",
+			},
+			out: &pb.NvmePath{
+				Name:              testNvmePathName,
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				ControllerNameRef: testNvmePath.ControllerNameRef,
+				Traddr:            "0000:af:00.0",
+			},
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
 			errCode: codes.OK,
 			errMsg:  "",
 			exist:   false,
+			controller: &pb.NvmeRemoteController{
+				Name:      testNvmeCtrlName,
+				Multipath: pb.NvmeMultipath_NVME_MULTIPATH_DISABLE,
+				Tcp:       nil,
+			},
 		},
 		"already exists": {
-			id:      testNvmePathID,
-			in:      &testNvmePath,
-			out:     &testNvmePath,
-			spdk:    []string{},
-			errCode: codes.OK,
-			errMsg:  "",
-			exist:   true,
+			id:         testNvmePathID,
+			in:         &testNvmePath,
+			out:        &testNvmePath,
+			spdk:       []string{},
+			errCode:    codes.OK,
+			errMsg:     "",
+			exist:      true,
+			controller: &testNvmeCtrlWithName,
 		},
 		"no required field": {
-			id:      testAioVolumeID,
-			in:      nil,
-			out:     nil,
-			spdk:    []string{},
-			errCode: codes.Unknown,
-			errMsg:  "missing required field: nvme_path",
-			exist:   false,
+			id:         testAioVolumeID,
+			in:         nil,
+			out:        nil,
+			spdk:       []string{},
+			errCode:    codes.Unknown,
+			errMsg:     "missing required field: nvme_path",
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
+		},
+		"tcp transport type missing fabrics": {
+			id: testAioVolumeID,
+			in: &pb.NvmePath{
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Traddr:            "127.0.0.1",
+				ControllerNameRef: testNvmePath.ControllerNameRef,
+				Fabrics:           nil,
+			},
+			out:        nil,
+			spdk:       []string{},
+			errCode:    codes.InvalidArgument,
+			errMsg:     "missing required field for fabrics transports: fabrics",
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
+		},
+		"pcie transport type with specified fabrics message": {
+			id: testAioVolumeID,
+			in: &pb.NvmePath{
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Traddr:            "0000:af:00.0",
+				ControllerNameRef: testNvmePath.ControllerNameRef,
+				Fabrics:           testNvmePath.Fabrics,
+			},
+			out:        nil,
+			spdk:       []string{},
+			errCode:    codes.InvalidArgument,
+			errMsg:     "fabrics field is not allowed for pcie transport",
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
+		},
+		"pcie transport type with specified tcp controller": {
+			id: testAioVolumeID,
+			in: &pb.NvmePath{
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Traddr:            "0000:af:00.0",
+				ControllerNameRef: testNvmePath.ControllerNameRef,
+				Fabrics:           nil,
+			},
+			out:        nil,
+			spdk:       []string{},
+			errCode:    codes.FailedPrecondition,
+			errMsg:     "pcie transport on tcp controller is not allowed",
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
+		},
+		"not supported transport type": {
+			id: testNvmePathID,
+			in: &pb.NvmePath{
+				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM,
+				ControllerNameRef: testNvmePath.ControllerNameRef,
+				Traddr:            testNvmePath.Traddr,
+			},
+			out:        nil,
+			spdk:       []string{},
+			errCode:    codes.InvalidArgument,
+			errMsg:     fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM),
+			exist:      false,
+			controller: &testNvmeCtrlWithName,
 		},
 	}
 
@@ -131,7 +222,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(&testNvmeCtrl)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(tt.controller)
 			if tt.exist {
 				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
 				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
