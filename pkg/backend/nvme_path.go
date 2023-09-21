@@ -321,6 +321,10 @@ func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
 }
 
 func (s *Server) opiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
+	if adrfam == pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_UNSPECIFIED {
+		return ""
+	}
+
 	return strings.ReplaceAll(adrfam.String(), "NVME_ADRFAM_", "")
 }
 
