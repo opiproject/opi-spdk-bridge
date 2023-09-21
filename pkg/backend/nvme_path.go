@@ -67,6 +67,33 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		return nil, err
 	}
 
+	switch in.NvmePath.Trtype {
+	case pb.NvmeTransportType_NVME_TRANSPORT_PCIE:
+		if in.NvmePath.Fabrics != nil {
+			err := status.Errorf(codes.InvalidArgument, "fabrics field is not allowed for pcie transport")
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+
+		if controller.Tcp != nil {
+			err := status.Errorf(codes.FailedPrecondition, "pcie transport on tcp controller is not allowed")
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+	case pb.NvmeTransportType_NVME_TRANSPORT_TCP:
+		fallthrough
+	case pb.NvmeTransportType_NVME_TRANSPORT_RDMA:
+		if in.NvmePath.Fabrics == nil {
+			err := status.Errorf(codes.InvalidArgument, "missing required field for fabrics transports: fabrics")
+			log.Printf("error: %v", err)
+			return nil, err
+		}
+	default:
+		err := status.Errorf(codes.InvalidArgument, "not supported transport type: %v", in.NvmePath.Trtype)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+
 	multipath := ""
 	if numberOfPaths := s.numberOfPathsForController(controller.Name); numberOfPaths > 0 {
 		// set multipath parameter only when at least one path already exists
