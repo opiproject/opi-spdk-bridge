@@ -24,28 +24,31 @@ import (
 
 var (
 	testNvmeControllerID   = "nvme-43"
-	testNvmeControllerName = server.ResourceIDToVolumeName("nvme-43")
+	testNvmeControllerName = frontend.ResourceIDToControllerName(testSubsystemID, "nvme-43")
 	testSubsystemID        = "subsystem0"
-	testSubsystemName      = server.ResourceIDToVolumeName("subsystem0")
+	testSubsystemName      = frontend.ResourceIDToSubsystemName("subsystem0")
 	testSubsystem          = pb.NvmeSubsystem{
 		Name: testSubsystemName,
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi2",
 		},
 	}
-	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{NvmeControllerId: testNvmeControllerID, NvmeController: &pb.NvmeController{
-		Spec: &pb.NvmeControllerSpec{
-			PcieId: &pb.PciEndpoint{
-				PhysicalFunction: wrapperspb.Int32(43),
-				VirtualFunction:  wrapperspb.Int32(0),
-				PortId:           wrapperspb.Int32(0),
+	testCreateNvmeControllerRequest = &pb.CreateNvmeControllerRequest{
+		Parent:           testSubsystemName,
+		NvmeControllerId: testNvmeControllerID,
+		NvmeController: &pb.NvmeController{
+			Spec: &pb.NvmeControllerSpec{
+				PcieId: &pb.PciEndpoint{
+					PhysicalFunction: wrapperspb.Int32(43),
+					VirtualFunction:  wrapperspb.Int32(0),
+					PortId:           wrapperspb.Int32(0),
+				},
+				NvmeControllerId: proto.Int32(43),
 			},
-			NvmeControllerId: proto.Int32(43),
-		},
-		Status: &pb.NvmeControllerStatus{
-			Active: true,
-		},
-	}}
+			Status: &pb.NvmeControllerStatus{
+				Active: true,
+			},
+		}}
 	testDeleteNvmeControllerRequest = &pb.DeleteNvmeControllerRequest{Name: testNvmeControllerName}
 )
 
@@ -98,10 +101,11 @@ func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
 	wantParams := spdk.NvmfSubsystemAddListenerParams{}
 	wantParams.Nqn = "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a"
 	wantParams.ListenAddress.Trtype = "vfiouser"
-	wantParams.ListenAddress.Traddr = filepath.Join(tmpDir, "nvme-1")
+	wantParams.ListenAddress.Traddr = filepath.Join(tmpDir, testSubsystemID)
 
 	vfiouserSubsysListener := NewVfiouserSubsystemListener(tmpDir)
 	gotParams := vfiouserSubsysListener.Params(&pb.NvmeController{
+		Name: testNvmeControllerName,
 		Spec: &pb.NvmeControllerSpec{},
 	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
 
@@ -184,18 +188,20 @@ func TestCreateNvmeController(t *testing.T) {
 			errMsg:                        status.Convert(errFailedToCreateNvmeDir).Message(),
 		},
 		"empty subsystem in request": {
-			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
-				Spec: &pb.NvmeControllerSpec{
-					PcieId: &pb.PciEndpoint{
-						PhysicalFunction: wrapperspb.Int32(1),
-						VirtualFunction:  wrapperspb.Int32(0),
-						PortId:           wrapperspb.Int32(0)},
-					NvmeControllerId: proto.Int32(43),
-				},
-				Status: &pb.NvmeControllerStatus{
-					Active: true,
-				},
-			}, NvmeControllerId: testNvmeControllerID},
+			in: &pb.CreateNvmeControllerRequest{
+				Parent: "",
+				NvmeController: &pb.NvmeController{
+					Spec: &pb.NvmeControllerSpec{
+						PcieId: &pb.PciEndpoint{
+							PhysicalFunction: wrapperspb.Int32(1),
+							VirtualFunction:  wrapperspb.Int32(0),
+							PortId:           wrapperspb.Int32(0)},
+						NvmeControllerId: proto.Int32(43),
+					},
+					Status: &pb.NvmeControllerStatus{
+						Active: true,
+					},
+				}, NvmeControllerId: testNvmeControllerID},
 			jsonRPC:                       alwaysSuccessfulJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
@@ -203,18 +209,20 @@ func TestCreateNvmeController(t *testing.T) {
 			errMsg:                        status.Convert(errInvalidSubsystem).Message(),
 		},
 		"valid Nvme creation with on first bus location": {
-			in: &pb.CreateNvmeControllerRequest{NvmeController: &pb.NvmeController{
-				Spec: &pb.NvmeControllerSpec{
-					PcieId: &pb.PciEndpoint{
-						PhysicalFunction: wrapperspb.Int32(1),
-						VirtualFunction:  wrapperspb.Int32(0),
-						PortId:           wrapperspb.Int32(0)},
-					NvmeControllerId: proto.Int32(43),
-				},
-				Status: &pb.NvmeControllerStatus{
-					Active: true,
-				},
-			}, NvmeControllerId: testNvmeControllerID},
+			in: &pb.CreateNvmeControllerRequest{
+				Parent: testSubsystemName,
+				NvmeController: &pb.NvmeController{
+					Spec: &pb.NvmeControllerSpec{
+						PcieId: &pb.PciEndpoint{
+							PhysicalFunction: wrapperspb.Int32(1),
+							VirtualFunction:  wrapperspb.Int32(0),
+							PortId:           wrapperspb.Int32(0)},
+						NvmeControllerId: proto.Int32(43),
+					},
+					Status: &pb.NvmeControllerStatus{
+						Active: true,
+					},
+				}, NvmeControllerId: testNvmeControllerID},
 			out: &pb.NvmeController{
 				Name: testNvmeControllerName,
 				Spec: &pb.NvmeControllerSpec{
@@ -257,6 +265,7 @@ func TestCreateNvmeController(t *testing.T) {
 		},
 		"negative physical function": {
 			in: &pb.CreateNvmeControllerRequest{
+				Parent: testSubsystemName,
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
 						PcieId: &pb.PciEndpoint{
@@ -277,6 +286,7 @@ func TestCreateNvmeController(t *testing.T) {
 		},
 		"nil pcie endpoint": {
 			in: &pb.CreateNvmeControllerRequest{
+				Parent: testSubsystemName,
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
 						PcieId:           nil,
@@ -446,7 +456,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			if !tt.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
 					server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
-				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerID
+				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerName
 			}
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
