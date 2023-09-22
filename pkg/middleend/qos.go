@@ -17,7 +17,6 @@ import (
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -32,19 +31,14 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("CreateQosVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateCreateQosVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.QosVolumeId != "" {
-		err := resourceid.ValidateUserSettable(in.QosVolumeId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
 		resourceID = in.QosVolumeId
 	}
@@ -72,13 +66,8 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 // DeleteQosVolume deletes a QoS volume
 func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteQosVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteQosVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -104,12 +93,11 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 // UpdateQosVolume updates a QoS volume
 func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("UpdateQosVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateUpdateQosVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
 	// fetch object from the database
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
@@ -172,13 +160,8 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 // GetQosVolume gets a QoS volume
 func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
 	log.Printf("GetQosVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetQosVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -195,13 +178,8 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 // StatsQosVolume gets a QoS volume stats
 func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest) (*pb.StatsQosVolumeResponse, error) {
 	log.Printf("StatsQosVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsQosVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -239,50 +217,6 @@ func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest)
 			WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
 			UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
 		}}, nil
-}
-
-func (s *Server) verifyQosVolume(volume *pb.QosVolume) error {
-	if volume.Name == "" {
-		return fmt.Errorf("QoS volume name cannot be empty")
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(volume.Name); err != nil {
-		return err
-	}
-
-	if volume.Limits.Min != nil {
-		return fmt.Errorf("QoS volume min_limit is not supported")
-	}
-	if volume.Limits.Max.RdIopsKiops != 0 {
-		return fmt.Errorf("QoS volume max_limit rd_iops_kiops is not supported")
-	}
-	if volume.Limits.Max.WrIopsKiops != 0 {
-		return fmt.Errorf("QoS volume max_limit wr_iops_kiops is not supported")
-	}
-
-	if volume.Limits.Max.RdBandwidthMbs == 0 &&
-		volume.Limits.Max.WrBandwidthMbs == 0 &&
-		volume.Limits.Max.RwBandwidthMbs == 0 &&
-		volume.Limits.Max.RdIopsKiops == 0 &&
-		volume.Limits.Max.WrIopsKiops == 0 &&
-		volume.Limits.Max.RwIopsKiops == 0 {
-		return fmt.Errorf("QoS volume max_limit should set limit")
-	}
-
-	if volume.Limits.Max.RwIopsKiops < 0 {
-		return fmt.Errorf("QoS volume max_limit rw_iops_kiops cannot be negative")
-	}
-	if volume.Limits.Max.RdBandwidthMbs < 0 {
-		return fmt.Errorf("QoS volume max_limit rd_bandwidth_mbs cannot be negative")
-	}
-	if volume.Limits.Max.WrBandwidthMbs < 0 {
-		return fmt.Errorf("QoS volume max_limit wr_bandwidth_mbs cannot be negative")
-	}
-	if volume.Limits.Max.RwBandwidthMbs < 0 {
-		return fmt.Errorf("QoS volume max_limit rw_bandwidth_mbs cannot be negative")
-	}
-
-	return nil
 }
 
 func (s *Server) setMaxLimit(underlyingVolume string, limit *pb.QosLimit) error {
