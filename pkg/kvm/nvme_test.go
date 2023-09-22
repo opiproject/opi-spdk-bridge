@@ -97,20 +97,71 @@ func TestNewNvmeVfiouserTransport(t *testing.T) {
 }
 
 func TestNewNvmeVfiouserTransportParams(t *testing.T) {
-	tmpDir := os.TempDir()
-	wantParams := spdk.NvmfSubsystemAddListenerParams{}
-	wantParams.Nqn = "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a"
-	wantParams.ListenAddress.Trtype = "vfiouser"
-	wantParams.ListenAddress.Traddr = filepath.Join(tmpDir, testSubsystemID)
+	tmpDir := t.TempDir()
+	tests := map[string]struct {
+		pf         int32
+		vf         int32
+		port       int32
+		wantErr    bool
+		wantParams spdk.NvmfSubsystemAddListenerParams
+	}{
+		"not allowed vf": {
+			pf:         0,
+			vf:         1,
+			port:       0,
+			wantErr:    true,
+			wantParams: spdk.NvmfSubsystemAddListenerParams{},
+		},
+		"not allowed port": {
+			pf:         0,
+			vf:         0,
+			port:       2,
+			wantErr:    true,
+			wantParams: spdk.NvmfSubsystemAddListenerParams{},
+		},
+		"successful params": {
+			pf:      3,
+			vf:      0,
+			port:    0,
+			wantErr: false,
+			wantParams: spdk.NvmfSubsystemAddListenerParams{
+				Nqn: "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
+				ListenAddress: struct {
+					Trtype  string "json:\"trtype\""
+					Traddr  string "json:\"traddr\""
+					Trsvcid string "json:\"trsvcid,omitempty\""
+					Adrfam  string "json:\"adrfam,omitempty\""
+				}{
+					Trtype:  "vfiouser",
+					Traddr:  filepath.Join(tmpDir, "subsys0"),
+					Trsvcid: "",
+					Adrfam:  "",
+				},
+			},
+		},
+	}
 
-	vfiouserNvmeTransport := NewNvmeVfiouserTransport(tmpDir)
-	gotParams := vfiouserNvmeTransport.Params(&pb.NvmeController{
-		Name: testNvmeControllerName,
-		Spec: &pb.NvmeControllerSpec{},
-	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			vfiouserTransport := NewNvmeVfiouserTransport(tmpDir)
+			gotParams, err := vfiouserTransport.Params(&pb.NvmeController{
+				Name: frontend.ResourceIDToControllerName("subsys0", "nvme-1"),
+				Spec: &pb.NvmeControllerSpec{
+					PcieId: &pb.PciEndpoint{
+						PortId:           wrapperspb.Int32(tt.port),
+						PhysicalFunction: wrapperspb.Int32(tt.pf),
+						VirtualFunction:  wrapperspb.Int32(tt.vf),
+					},
+				},
+			}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
 
-	if !reflect.DeepEqual(wantParams, gotParams) {
-		t.Errorf("Expect %v, received %v", wantParams, gotParams)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Expect error: %v, received: %v", nil, err)
+			}
+			if !reflect.DeepEqual(tt.wantParams, gotParams) {
+				t.Errorf("Expect %v, received %v", tt.wantParams, gotParams)
+			}
+		})
 	}
 }
 

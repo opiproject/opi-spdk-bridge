@@ -6,6 +6,7 @@
 package frontend
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/server"
 )
@@ -40,17 +42,31 @@ var (
 	}
 )
 
+type stubNvmeTransport struct {
+	err error
+}
+
+func (t *stubNvmeTransport) Params(_ *pb.NvmeController, _ string) (spdk.NvmfSubsystemAddListenerParams, error) {
+	return spdk.NvmfSubsystemAddListenerParams{}, t.err
+}
+
+var (
+	alwaysValidNvmeTransport  = &stubNvmeTransport{}
+	alwaysFailedNvmeTransport = &stubNvmeTransport{errors.New("some transport error")}
+)
+
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		id      string
-		in      *pb.NvmeController
-		out     *pb.NvmeController
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		exist   bool
-		subsys  string
+		id        string
+		in        *pb.NvmeController
+		out       *pb.NvmeController
+		spdk      []string
+		errCode   codes.Code
+		errMsg    string
+		exist     bool
+		subsys    string
+		transport NvmeTransport
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
@@ -66,6 +82,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with invalid SPDK response": {
 			testControllerID,
@@ -81,6 +98,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("Could not create CTRL: %v", testControllerName),
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with empty SPDK response": {
 			testControllerID,
@@ -96,6 +114,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "EOF"),
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testControllerID,
@@ -111,6 +130,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "json response ID mismatch"),
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with error code from SPDK response": {
 			testControllerID,
@@ -126,6 +146,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "json response error: Invalid parameters"),
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with valid SPDK response": {
 			testControllerID,
@@ -150,6 +171,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"",
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"already exists": {
 			testControllerID,
@@ -165,6 +187,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"",
 			true,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"malformed subsystem name": {
 			testControllerID,
@@ -180,6 +203,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
 			"-ABC-DEF",
+			alwaysValidNvmeTransport,
 		},
 		"no required ctrl field": {
 			testControllerID,
@@ -190,6 +214,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"missing required field: nvme_controller",
 			false,
 			testSubsystemName,
+			alwaysValidNvmeTransport,
 		},
 		"no required parent field": {
 			testControllerID,
@@ -204,6 +229,18 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"missing required field: parent",
 			false,
 			"",
+			alwaysValidNvmeTransport,
+		},
+		"failing transport": {
+			testControllerID,
+			&testController,
+			nil,
+			[]string{},
+			codes.InvalidArgument,
+			alwaysFailedNvmeTransport.err.Error(),
+			false,
+			testSubsystemName,
+			alwaysFailedNvmeTransport,
 		},
 	}
 
@@ -213,6 +250,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
+			testEnv.opiSpdkServer.Nvme.transport = tt.transport
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
 			if tt.exist {
@@ -248,12 +286,13 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		in      string
-		out     *emptypb.Empty
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		missing bool
+		in        string
+		out       *emptypb.Empty
+		spdk      []string
+		errCode   codes.Code
+		errMsg    string
+		missing   bool
+		transport NvmeTransport
 	}{
 		"valid request with invalid SPDK response": {
 			testControllerName,
@@ -262,6 +301,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with empty SPDK response": {
 			testControllerName,
@@ -270,6 +310,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_listener: %v", "EOF"),
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testControllerName,
@@ -278,6 +319,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_listener: %v", "json response ID mismatch"),
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with error code from SPDK response": {
 			testControllerName,
@@ -286,6 +328,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_listener: %v", "json response error: myopierr"),
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with valid SPDK response": {
 			testControllerName,
@@ -294,6 +337,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"valid request with unknown key": {
 			ResourceIDToControllerName(testSubsystemID, "unknown-controller-id"),
@@ -302,6 +346,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", ResourceIDToControllerName(testSubsystemID, "unknown-controller-id")),
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"unknown key with missing allowed": {
 			ResourceIDToControllerName(testSubsystemID, "unknown-id"),
@@ -310,6 +355,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			alwaysValidNvmeTransport,
 		},
 		"malformed name": {
 			"-ABC-DEF",
@@ -318,6 +364,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
+			alwaysValidNvmeTransport,
 		},
 		"no required field": {
 			"",
@@ -326,6 +373,16 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			"missing required field: name",
 			false,
+			alwaysValidNvmeTransport,
+		},
+		"failing transport": {
+			testControllerName,
+			&emptypb.Empty{},
+			[]string{},
+			codes.InvalidArgument,
+			alwaysFailedNvmeTransport.err.Error(),
+			false,
+			alwaysFailedNvmeTransport,
 		},
 	}
 
@@ -334,6 +391,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
+			testEnv.opiSpdkServer.Nvme.transport = tt.transport
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
 
