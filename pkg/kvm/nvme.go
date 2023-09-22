@@ -6,6 +6,7 @@ package kvm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -41,14 +42,25 @@ func NewNvmeVfiouserTransport(ctrlrDir string) frontend.NvmeTransport {
 	}
 }
 
-func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
+func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
+	pcieID := ctrlr.Spec.PcieId
+	if pcieID.PortId.Value != 0 {
+		return spdk.NvmfSubsystemAddListenerParams{},
+			errors.New("only port 0 is supported for vfiouser")
+	}
+
+	if pcieID.VirtualFunction.Value != 0 {
+		return spdk.NvmfSubsystemAddListenerParams{},
+			errors.New("virtual functions are not supported for vfiouser")
+	}
+
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	ctrlrDirPath := controllerDirPath(c.ctrlrDir, frontend.GetSubsystemIDFromNvmeName(ctrlr.Name))
 	result.Nqn = nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath
 
-	return result
+	return result, nil
 }
 
 // CreateNvmeController creates an Nvme controller device and attaches it to QEMU instance

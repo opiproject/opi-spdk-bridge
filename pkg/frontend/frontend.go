@@ -15,7 +15,7 @@ import (
 // NvmeTransport interface is used to provide SPDK call params to create/delete
 // Nvme controllers depending on used transport type.
 type NvmeTransport interface {
-	Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams
+	Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error)
 }
 
 // NvmeParameters contains all Nvme related structures

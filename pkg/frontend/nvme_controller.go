@@ -76,7 +76,7 @@ func NewNvmeTCPTransport(listenAddr string) NvmeTransport {
 	}
 }
 
-func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
+func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = nqn
 	result.SecureChannel = false
@@ -85,7 +85,7 @@ func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) spdk.NvmfSub
 	result.ListenAddress.Trsvcid = c.listenPort
 	result.ListenAddress.Adrfam = c.protocol
 
-	return result
+	return result, nil
 }
 
 // CreateNvmeController creates an Nvme controller
@@ -127,9 +127,14 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, err
 	}
 
-	params := s.Nvme.transport.Params(in.NvmeController, subsys.Spec.Nqn)
+	params, err := s.Nvme.transport.Params(in.NvmeController, subsys.Spec.Nqn)
+	if err != nil {
+		log.Printf("error: failed to create params for spdk call: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	var result spdk.NvmfSubsystemAddListenerResult
-	err := s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
+	err = s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -179,9 +184,14 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		return nil, err
 	}
 
-	params := s.Nvme.transport.Params(controller, subsys.Spec.Nqn)
+	params, err := s.Nvme.transport.Params(controller, subsys.Spec.Nqn)
+	if err != nil {
+		log.Printf("error: failed to create params for spdk call: %v", err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	var result spdk.NvmfSubsystemAddListenerResult
-	err := s.rpc.Call("nvmf_subsystem_remove_listener", &params, &result)
+	err = s.rpc.Call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
