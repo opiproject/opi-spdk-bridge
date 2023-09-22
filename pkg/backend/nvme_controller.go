@@ -16,6 +16,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
+	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -90,6 +91,36 @@ func (s *Server) ResetNvmeRemoteController(_ context.Context, in *pb.ResetNvmeRe
 		return nil, err
 	}
 	return &emptypb.Empty{}, nil
+}
+
+// UpdateNvmeRemoteController resets an Nvme remote controller
+func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
+	log.Printf("UpdateNvmeRemoteController: Received from client: %v", in)
+	// check input correctness
+	if err := s.validateUpdateNvmeRemoteControllerRequest(in); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	// fetch object from the database
+	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
+	if !ok {
+		if in.AllowMissing {
+			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		}
+		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeRemoteController.Name)
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	resourceID := path.Base(volume.Name)
+	// update_mask = 2
+	if err := fieldmask.Validate(in.UpdateMask, in.NvmeRemoteController); err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	log.Printf("TODO: use resourceID=%v", resourceID)
+	response := server.ProtoClone(in.NvmeRemoteController)
+	// s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
+	return response, nil
 }
 
 // ListNvmeRemoteControllers lists an Nvme remote controllers
