@@ -20,7 +20,6 @@ import (
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -35,24 +34,14 @@ func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.EncryptedVolume.VolumeNameRef); err != nil {
+	// check input correctness
+	if err := s.validateCreateEncryptedVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.EncryptedVolumeId != "" {
-		err := resourceid.ValidateUserSettable(in.EncryptedVolumeId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
 		resourceID = in.EncryptedVolumeId
 	}
@@ -111,13 +100,8 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 // DeleteEncryptedVolume deletes an encrypted volume
 func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteEncryptedVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -171,18 +155,8 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 // UpdateEncryptedVolume updates an encrypted volume
 func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.EncryptedVolume.VolumeNameRef); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.EncryptedVolume.Name); err != nil {
+	// check input correctness
+	if err := s.validateUpdateEncryptedVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -301,13 +275,8 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 // GetEncryptedVolume gets an encrypted volume
 func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	log.Printf("GetEncryptedVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetEncryptedVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -340,13 +309,8 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 // StatsEncryptedVolume gets an encrypted volume stats
 func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVolumeRequest) (*pb.StatsEncryptedVolumeResponse, error) {
 	log.Printf("StatsEncryptedVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsEncryptedVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -385,26 +349,6 @@ func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVo
 		WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
 		UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
 	}}, nil
-}
-
-func (s *Server) verifyEncryptedVolume(volume *pb.EncryptedVolume) error {
-	keyLengthInBits := len(volume.Key) * 8
-	expectedKeyLengthInBits := 0
-	switch {
-	case volume.Cipher == pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_256:
-		expectedKeyLengthInBits = 512
-	case volume.Cipher == pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128:
-		expectedKeyLengthInBits = 256
-	default:
-		return fmt.Errorf("only AES_XTS_256 and AES_XTS_128 are supported")
-	}
-
-	if keyLengthInBits != expectedKeyLengthInBits {
-		return fmt.Errorf("expected key size %vb, provided size %vb",
-			expectedKeyLengthInBits, keyLengthInBits)
-	}
-
-	return nil
 }
 
 func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) spdk.AccelCryptoKeyCreateParams {
