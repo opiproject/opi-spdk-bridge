@@ -22,7 +22,6 @@ import (
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -37,18 +36,14 @@ func sortNvmePaths(paths []*pb.NvmePath) {
 // CreateNvmePath creates a new Nvme path
 func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest) (*pb.NvmePath, error) {
 	log.Printf("CreateNvmePath: Received from client: %v", in)
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateCreateNvmePathRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmePathId != "" {
-		err := resourceid.ValidateUserSettable(in.NvmePathId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmePathId, in.NvmePath.Name)
 		resourceID = in.NvmePathId
 	}
@@ -67,29 +62,9 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		return nil, err
 	}
 
-	switch in.NvmePath.Trtype {
-	case pb.NvmeTransportType_NVME_TRANSPORT_PCIE:
-		if in.NvmePath.Fabrics != nil {
-			err := status.Errorf(codes.InvalidArgument, "fabrics field is not allowed for pcie transport")
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-
-		if controller.Tcp != nil {
-			err := status.Errorf(codes.FailedPrecondition, "pcie transport on tcp controller is not allowed")
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-	case pb.NvmeTransportType_NVME_TRANSPORT_TCP:
-		fallthrough
-	case pb.NvmeTransportType_NVME_TRANSPORT_RDMA:
-		if in.NvmePath.Fabrics == nil {
-			err := status.Errorf(codes.InvalidArgument, "missing required field for fabrics transports: fabrics")
-			log.Printf("error: %v", err)
-			return nil, err
-		}
-	default:
-		err := status.Errorf(codes.InvalidArgument, "not supported transport type: %v", in.NvmePath.Trtype)
+	// TODO: consider moving to _validate.go
+	if in.NvmePath.Trtype == pb.NvmeTransportType_NVME_TRANSPORT_PCIE && controller.Tcp != nil {
+		err := status.Errorf(codes.FailedPrecondition, "pcie transport on tcp controller is not allowed")
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -143,19 +118,11 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 // DeleteNvmePath deletes a Nvme path
 func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNvmePath: Received from client: %v", in)
-
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateDeleteNvmePathRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-
 	nvmePath, ok := s.Volumes.NvmePaths[in.Name]
 	if !ok {
 		if in.AllowMissing {
@@ -202,13 +169,8 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 // UpdateNvmePath updates an Nvme path
 func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
 	log.Printf("UpdateNvmePath: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmePath.Name); err != nil {
+	// check input correctness
+	if err := s.validateUpdateNvmePathRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -274,13 +236,8 @@ func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (
 // GetNvmePath gets Nvme path
 func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.NvmePath, error) {
 	log.Printf("GetNvmePath: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetNvmePathRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -314,13 +271,8 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 // StatsNvmePath gets Nvme path stats
 func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (*pb.StatsNvmePathResponse, error) {
 	log.Printf("StatsNvmePath: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsNvmePathRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}

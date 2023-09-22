@@ -21,7 +21,6 @@ import (
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -36,19 +35,14 @@ func sortNullVolumes(volumes []*pb.NullVolume) {
 // CreateNullVolume creates a Null volume instance
 func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequest) (*pb.NullVolume, error) {
 	log.Printf("CreateNullVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateCreateNullVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NullVolumeId != "" {
-		err := resourceid.ValidateUserSettable(in.NullVolumeId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullVolumeId, in.NullVolume.Name)
 		resourceID = in.NullVolumeId
 	}
@@ -86,13 +80,8 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 // DeleteNullVolume deletes a Null volume instance
 func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNullVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteNullVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -129,13 +118,8 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 // UpdateNullVolume updates a Null volume instance
 func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequest) (*pb.NullVolume, error) {
 	log.Printf("UpdateNullVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NullVolume.Name); err != nil {
+	// check input correctness
+	if err := s.validateUpdateNullVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -253,13 +237,8 @@ func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesReques
 // GetNullVolume gets a a Null volume instance
 func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (*pb.NullVolume, error) {
 	log.Printf("GetNullVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetNullVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -292,13 +271,8 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 // StatsNullVolume gets a Null volume instance stats
 func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeRequest) (*pb.StatsNullVolumeResponse, error) {
 	log.Printf("StatsNullVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsNullVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
