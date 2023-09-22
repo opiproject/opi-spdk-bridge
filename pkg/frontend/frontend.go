@@ -12,18 +12,18 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
-// SubsystemListener interface is used to provide SPDK call params to create/delete
+// NvmeTransport interface is used to provide SPDK call params to create/delete
 // Nvme controllers depending on used transport type.
-type SubsystemListener interface {
+type NvmeTransport interface {
 	Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams
 }
 
 // NvmeParameters contains all Nvme related structures
 type NvmeParameters struct {
-	Subsystems     map[string]*pb.NvmeSubsystem
-	Controllers    map[string]*pb.NvmeController
-	Namespaces     map[string]*pb.NvmeNamespace
-	subsysListener SubsystemListener
+	Subsystems  map[string]*pb.NvmeSubsystem
+	Controllers map[string]*pb.NvmeController
+	Namespaces  map[string]*pb.NvmeNamespace
+	transport   NvmeTransport
 }
 
 // VirtioBlkTransport interface is used to provide SPDK call params to create/delete
@@ -62,10 +62,10 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 	return &Server{
 		rpc: jsonRPC,
 		Nvme: NvmeParameters{
-			Subsystems:     make(map[string]*pb.NvmeSubsystem),
-			Controllers:    make(map[string]*pb.NvmeController),
-			Namespaces:     make(map[string]*pb.NvmeNamespace),
-			subsysListener: NewTCPSubsystemListener("127.0.0.1:4420"),
+			Subsystems:  make(map[string]*pb.NvmeSubsystem),
+			Controllers: make(map[string]*pb.NvmeController),
+			Namespaces:  make(map[string]*pb.NvmeNamespace),
+			transport:   NewNvmeTCPTransport("127.0.0.1:4420"),
 		},
 		Virt: VirtioParameters{
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),
@@ -78,14 +78,14 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 }
 
 // NewCustomizedServer creates initialized instance of FrontEnd server communicating
-// with provided jsonRPC and externally created SubsystemListener and VirtioBlkTransport
+// with provided jsonRPC and externally created NvmeTransport and VirtioBlkTransport
 func NewCustomizedServer(
 	jsonRPC spdk.JSONRPC,
-	sysListener SubsystemListener,
+	nvmeTransport NvmeTransport,
 	virtioBlkTransport VirtioBlkTransport,
 ) *Server {
-	if sysListener == nil {
-		log.Panic("nil for SubsystemListener is not allowed")
+	if nvmeTransport == nil {
+		log.Panic("nil for NvmeTransport is not allowed")
 	}
 
 	if virtioBlkTransport == nil {
@@ -93,7 +93,7 @@ func NewCustomizedServer(
 	}
 
 	server := NewServer(jsonRPC)
-	server.Nvme.subsysListener = sysListener
+	server.Nvme.transport = nvmeTransport
 	server.Virt.transport = virtioBlkTransport
 	return server
 }

@@ -711,7 +711,7 @@ func TestFrontEnd_StatsNvmeController(t *testing.T) {
 	}
 }
 
-func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
+func TestFrontEnd_NewNvmeTCPTransport(t *testing.T) {
 	tests := map[string]struct {
 		listenAddress string
 		wantPanic     bool
@@ -754,20 +754,20 @@ func TestFrontEnd_NewTcpSubsystemListener(t *testing.T) {
 			defer func() {
 				r := recover()
 				if (r != nil) != tt.wantPanic {
-					t.Errorf("NewTCPSubsystemListener() recover = %v, wantPanic = %v", r, tt.wantPanic)
+					t.Errorf("NewNvmeTCPTransport() recover = %v, wantPanic = %v", r, tt.wantPanic)
 				}
 			}()
 
-			gotSubsysListener := NewTCPSubsystemListener(tt.listenAddress)
+			gotTransport := NewNvmeTCPTransport(tt.listenAddress)
 			host, port, _ := net.SplitHostPort(tt.listenAddress)
-			wantSubsysListener := &tcpSubsystemListener{
+			wantTransport := &nvmeTCPTransport{
 				listenAddr: net.ParseIP(host),
 				listenPort: port,
 				protocol:   tt.protocol,
 			}
 
-			if !reflect.DeepEqual(gotSubsysListener, wantSubsysListener) {
-				t.Errorf("Expect %v subsystem listener, received %v", wantSubsysListener, gotSubsysListener)
+			if !reflect.DeepEqual(gotTransport, wantTransport) {
+				t.Errorf("Expect %v transport, received %v", wantTransport, gotTransport)
 			}
 		})
 	}

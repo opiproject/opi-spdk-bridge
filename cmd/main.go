@@ -104,7 +104,7 @@ func runGrpcServer(grpcPort int, useKvm bool, spdkAddress, qmpAddress, ctrlrDir,
 	if useKvm {
 		log.Println("Creating KVM server.")
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
-			kvm.NewVfiouserSubsystemListener(ctrlrDir),
+			kvm.NewNvmeVfiouserTransport(ctrlrDir),
 			frontend.NewVhostUserBlkTransport(),
 		)
 		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir, buses)
@@ -114,7 +114,7 @@ func runGrpcServer(grpcPort int, useKvm bool, spdkAddress, qmpAddress, ctrlrDir,
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
-			frontend.NewTCPSubsystemListener(tcpTransportListenAddr),
+			frontend.NewNvmeTCPTransport(tcpTransportListenAddr),
 			frontend.NewVhostUserBlkTransport(),
 		)
 		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)

@@ -35,7 +35,7 @@ const (
 )
 
 // TODO: consider using https://pkg.go.dev/net#TCPAddr
-type tcpSubsystemListener struct {
+type nvmeTCPTransport struct {
 	listenAddr net.IP
 	listenPort string
 	protocol   string
@@ -47,8 +47,8 @@ func sortNvmeControllers(controllers []*pb.NvmeController) {
 	})
 }
 
-// NewTCPSubsystemListener creates a new instance of tcpSubsystemListener
-func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
+// NewNvmeTCPTransport creates a new instance of nvmeTcpTransport
+func NewNvmeTCPTransport(listenAddr string) NvmeTransport {
 	host, port, err := net.SplitHostPort(listenAddr)
 	if err != nil {
 		log.Panicf("Invalid ip:port tuple: %v", listenAddr)
@@ -69,14 +69,14 @@ func NewTCPSubsystemListener(listenAddr string) SubsystemListener {
 		log.Panicf("Not supported protocol for: %v", listenAddr)
 	}
 
-	return &tcpSubsystemListener{
+	return &nvmeTCPTransport{
 		listenAddr: parsedAddr,
 		listenPort: port,
 		protocol:   protocol,
 	}
 }
 
-func (c *tcpSubsystemListener) Params(_ *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
+func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = nqn
 	result.SecureChannel = false
@@ -127,7 +127,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, err
 	}
 
-	params := s.Nvme.subsysListener.Params(in.NvmeController, subsys.Spec.Nqn)
+	params := s.Nvme.transport.Params(in.NvmeController, subsys.Spec.Nqn)
 	var result spdk.NvmfSubsystemAddListenerResult
 	err := s.rpc.Call("nvmf_subsystem_add_listener", &params, &result)
 	if err != nil {
@@ -179,7 +179,7 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		return nil, err
 	}
 
-	params := s.Nvme.subsysListener.Params(controller, subsys.Spec.Nqn)
+	params := s.Nvme.transport.Params(controller, subsys.Spec.Nqn)
 	var result spdk.NvmfSubsystemAddListenerResult
 	err := s.rpc.Call("nvmf_subsystem_remove_listener", &params, &result)
 	if err != nil {

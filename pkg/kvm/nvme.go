@@ -18,12 +18,12 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 )
 
-type vfiouserSubsystemListener struct {
+type nvmeVfiouserTransport struct {
 	ctrlrDir string
 }
 
-// NewVfiouserSubsystemListener creates a new instance of vfiouserSubsystemListener
-func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
+// NewNvmeVfiouserTransport creates a new instance of nvmeVfiouserTransport
+func NewNvmeVfiouserTransport(ctrlrDir string) frontend.NvmeTransport {
 	if ctrlrDir == "" {
 		log.Panicf("ctrlrDir cannot be empty")
 	}
@@ -36,12 +36,12 @@ func NewVfiouserSubsystemListener(ctrlrDir string) frontend.SubsystemListener {
 		log.Panicf("%v is not a directory", ctrlrDir)
 	}
 
-	return &vfiouserSubsystemListener{
+	return &nvmeVfiouserTransport{
 		ctrlrDir: ctrlrDir,
 	}
 }
 
-func (c *vfiouserSubsystemListener) Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
+func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, nqn string) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	ctrlrDirPath := controllerDirPath(c.ctrlrDir, frontend.GetSubsystemIDFromNvmeName(ctrlr.Name))
 	result.Nqn = nqn

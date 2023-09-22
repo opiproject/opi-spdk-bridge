@@ -100,36 +100,36 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 
 func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 	validJSONRPC := spdk.NewSpdkJSONRPC("/some/path")
-	validSubsyListener := NewTCPSubsystemListener("10.10.10.10:1234")
+	validNvmeTransport := NewNvmeTCPTransport("10.10.10.10:1234")
 	validVirtioBLkTransport := NewVhostUserBlkTransport()
 
 	tests := map[string]struct {
 		jsonRPC            spdk.JSONRPC
-		subsysListener     SubsystemListener
+		nvmeTransport      NvmeTransport
 		virtioBlkTransport VirtioBlkTransport
 		wantPanic          bool
 	}{
 		"nil json rpc": {
 			jsonRPC:            nil,
-			subsysListener:     validSubsyListener,
+			nvmeTransport:      validNvmeTransport,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
-		"nil subsystem listener": {
+		"nil nvme transport": {
 			jsonRPC:            validJSONRPC,
-			subsysListener:     nil,
+			nvmeTransport:      nil,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
 		"nil virtio blk transport": {
 			jsonRPC:            validJSONRPC,
-			subsysListener:     validSubsyListener,
+			nvmeTransport:      validNvmeTransport,
 			virtioBlkTransport: nil,
 			wantPanic:          true,
 		},
 		"all valid arguments": {
 			jsonRPC:            validJSONRPC,
-			subsysListener:     validSubsyListener,
+			nvmeTransport:      validNvmeTransport,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          false,
 		},
@@ -144,7 +144,7 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 				}
 			}()
 
-			server := NewCustomizedServer(tt.jsonRPC, tt.subsysListener, tt.virtioBlkTransport)
+			server := NewCustomizedServer(tt.jsonRPC, tt.nvmeTransport, tt.virtioBlkTransport)
 			if server == nil && !tt.wantPanic {
 				t.Error("expected non nil server or panic")
 			}
