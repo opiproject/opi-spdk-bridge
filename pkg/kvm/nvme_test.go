@@ -52,7 +52,7 @@ var (
 	testDeleteNvmeControllerRequest = &pb.DeleteNvmeControllerRequest{Name: testNvmeControllerName}
 )
 
-func TestNewVfiouserSubsystemListener(t *testing.T) {
+func TestNewNvmeVfiouserTransport(t *testing.T) {
 	tests := map[string]struct {
 		ctrlrDir  string
 		wantPanic bool
@@ -80,31 +80,31 @@ func TestNewVfiouserSubsystemListener(t *testing.T) {
 			defer func() {
 				r := recover()
 				if (r != nil) != tt.wantPanic {
-					t.Errorf("NewVfiouserSubsystemListener() recover = %v, wantPanic = %v", r, tt.wantPanic)
+					t.Errorf("NewNvmeVfiouserTransport() recover = %v, wantPanic = %v", r, tt.wantPanic)
 				}
 			}()
 
-			gotSubsysListener := NewVfiouserSubsystemListener(tt.ctrlrDir)
-			wantSubsysListener := &vfiouserSubsystemListener{
+			gotTransport := NewNvmeVfiouserTransport(tt.ctrlrDir)
+			wantTransport := &nvmeVfiouserTransport{
 				ctrlrDir: tt.ctrlrDir,
 			}
 
-			if !reflect.DeepEqual(gotSubsysListener, wantSubsysListener) {
-				t.Errorf("Received subsystem listern %v not equal to expected one %v", gotSubsysListener, wantSubsysListener)
+			if !reflect.DeepEqual(gotTransport, wantTransport) {
+				t.Errorf("Received transport %v not equal to expected one %v", gotTransport, wantTransport)
 			}
 		})
 	}
 }
 
-func TestNewVfiouserSubsystemListenerParams(t *testing.T) {
+func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 	tmpDir := os.TempDir()
 	wantParams := spdk.NvmfSubsystemAddListenerParams{}
 	wantParams.Nqn = "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a"
 	wantParams.ListenAddress.Trtype = "vfiouser"
 	wantParams.ListenAddress.Traddr = filepath.Join(tmpDir, testSubsystemID)
 
-	vfiouserSubsysListener := NewVfiouserSubsystemListener(tmpDir)
-	gotParams := vfiouserSubsysListener.Params(&pb.NvmeController{
+	vfiouserNvmeTransport := NewNvmeVfiouserTransport(tmpDir)
+	gotParams := vfiouserNvmeTransport.Params(&pb.NvmeController{
 		Name: testNvmeControllerName,
 		Spec: &pb.NvmeControllerSpec{},
 	}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
