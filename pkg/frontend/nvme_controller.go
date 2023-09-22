@@ -22,7 +22,6 @@ import (
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -91,24 +90,14 @@ func (c *tcpSubsystemListener) Params(_ *pb.NvmeController, nqn string) spdk.Nvm
 // CreateNvmeController creates an Nvme controller
 func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("Received from client: %v", in.NvmeController)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.GetParent()); err != nil {
+	// check input correctness
+	if err := s.validateCreateNvmeControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeControllerId != "" {
-		err := resourceid.ValidateUserSettable(in.NvmeControllerId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		resourceID = in.NvmeControllerId
 	}
@@ -151,13 +140,8 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 // DeleteNvmeController deletes an Nvme controller
 func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received from client: %v", in.Name)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteNvmeControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -200,13 +184,8 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 // UpdateNvmeController updates an Nvme controller
 func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("UpdateNvmeController: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmeController.Name); err != nil {
+	// check input correctness
+	if err := s.validateUpdateNvmeControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -255,13 +234,8 @@ func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControlle
 // GetNvmeController gets an Nvme controller
 func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
 	log.Printf("Received from client: %v", in.Name)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetNvmeControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -278,17 +252,11 @@ func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRe
 // StatsNvmeController gets an Nvme controller stats
 func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
 	log.Printf("StatsNvmeController: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateStatsNvmeControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-
 	// fetch object from the database
 	ctrlr, ok := s.Nvme.Controllers[in.Name]
 	if !ok {

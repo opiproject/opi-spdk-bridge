@@ -20,7 +20,6 @@ import (
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -35,30 +34,14 @@ func sortNvmeNamespaces(namespaces []*pb.NvmeNamespace) {
 // CreateNvmeNamespace creates an Nvme namespace
 func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("CreateNvmeNamespace: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// check input parameters validity
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Parent); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmeNamespace.Spec.VolumeNameRef); err != nil {
+	// check input correctness
+	if err := s.validateCreateNvmeNamespaceRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeNamespaceId != "" {
-		err := resourceid.ValidateUserSettable(in.NvmeNamespaceId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Name)
 		resourceID = in.NvmeNamespaceId
 	}
@@ -109,13 +92,8 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 // DeleteNvmeNamespace deletes an Nvme namespace
 func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespaceRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNvmeNamespace: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteNvmeNamespaceRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -160,18 +138,8 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 // UpdateNvmeNamespace updates an Nvme namespace
 func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("UpdateNvmeNamespace: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmeNamespace.Name); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmeNamespace.Spec.VolumeNameRef); err != nil {
+	// check input correctness
+	if err := s.validateUpdateNvmeNamespaceRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -260,13 +228,8 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 // GetNvmeNamespace gets an Nvme namespace
 func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	log.Printf("GetNvmeNamespace: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetNvmeNamespaceRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -322,13 +285,8 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 // StatsNvmeNamespace gets an Nvme namespace stats
 func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
 	log.Printf("StatsNvmeNamespace: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsNvmeNamespaceRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
