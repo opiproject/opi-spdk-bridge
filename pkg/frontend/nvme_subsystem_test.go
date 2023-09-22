@@ -8,6 +8,7 @@ package frontend
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -150,6 +151,54 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			"missing required field: nvme_subsystem",
 			false,
+		},
+		"too long nqn field": {
+			id: testControllerID,
+			in: &pb.NvmeSubsystem{
+				Name: testSubsystemName,
+				Spec: &pb.NvmeSubsystemSpec{
+					Nqn:          strings.Repeat("a", 224),
+					SerialNumber: strings.Repeat("b", 20),
+					ModelNumber:  strings.Repeat("c", 40),
+				},
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  fmt.Sprintf("Nqn value (%s) is too long, have to be between 1 and %d", strings.Repeat("a", 224), 223),
+			exist:   false,
+		},
+		"too long model field": {
+			id: testControllerID,
+			in: &pb.NvmeSubsystem{
+				Name: testSubsystemName,
+				Spec: &pb.NvmeSubsystemSpec{
+					Nqn:          strings.Repeat("a", 223),
+					SerialNumber: strings.Repeat("b", 20),
+					ModelNumber:  strings.Repeat("c", 41),
+				},
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  fmt.Sprintf("ModelNumber value (%s) is too long, have to be between 1 and %d", strings.Repeat("c", 41), 40),
+			exist:   false,
+		},
+		"too long serial field": {
+			id: testControllerID,
+			in: &pb.NvmeSubsystem{
+				Name: testSubsystemName,
+				Spec: &pb.NvmeSubsystemSpec{
+					Nqn:          strings.Repeat("a", 223),
+					SerialNumber: strings.Repeat("b", 21),
+					ModelNumber:  strings.Repeat("c", 40),
+				},
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  fmt.Sprintf("SerialNumber value (%s) is too long, have to be between 1 and %d", strings.Repeat("b", 21), 20),
+			exist:   false,
 		},
 	}
 
