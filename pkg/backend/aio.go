@@ -20,7 +20,6 @@ import (
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/fieldmask"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -35,19 +34,14 @@ func sortAioVolumes(volumes []*pb.AioVolume) {
 // CreateAioVolume creates an Aio volume
 func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeRequest) (*pb.AioVolume, error) {
 	log.Printf("CreateAioVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateCreateAioVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.AioVolumeId != "" {
-		err := resourceid.ValidateUserSettable(in.AioVolumeId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioVolumeId, in.AioVolume.Name)
 		resourceID = in.AioVolumeId
 	}
@@ -85,13 +79,8 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 // DeleteAioVolume deletes an Aio volume
 func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteAioVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteAioVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -128,13 +117,8 @@ func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeReques
 // UpdateAioVolume updates an Aio volume
 func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeRequest) (*pb.AioVolume, error) {
 	log.Printf("UpdateAioVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.AioVolume.Name); err != nil {
+	// check input correctness
+	if err := s.validateUpdateAioVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -252,13 +236,8 @@ func (s *Server) ListAioVolumes(_ context.Context, in *pb.ListAioVolumesRequest)
 // GetAioVolume gets an Aio volume
 func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*pb.AioVolume, error) {
 	log.Printf("GetAioVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetAioVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -291,13 +270,8 @@ func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*p
 // StatsAioVolume gets an Aio volume stats
 func (s *Server) StatsAioVolume(_ context.Context, in *pb.StatsAioVolumeRequest) (*pb.StatsAioVolumeResponse, error) {
 	log.Printf("StatsAioVolume: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsAioVolumeRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}

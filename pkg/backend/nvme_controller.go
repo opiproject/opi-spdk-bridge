@@ -17,7 +17,6 @@ import (
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
-	"go.einride.tech/aip/resourcename"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -32,19 +31,14 @@ func sortNvmeRemoteControllers(controllers []*pb.NvmeRemoteController) {
 // CreateNvmeRemoteController creates an Nvme remote controller
 func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
 	log.Printf("CreateNvmeRemoteController: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
+	// check input correctness
+	if err := s.validateCreateNvmeRemoteControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
 	resourceID := resourceid.NewSystemGenerated()
 	if in.NvmeRemoteControllerId != "" {
-		err := resourceid.ValidateUserSettable(in.NvmeRemoteControllerId)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return nil, err
-		}
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeRemoteControllerId, in.NvmeRemoteController.Name)
 		resourceID = in.NvmeRemoteControllerId
 	}
@@ -65,13 +59,8 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 // DeleteNvmeRemoteController deletes an Nvme remote controller
 func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvmeRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("DeleteNvmeRemoteController: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateDeleteNvmeRemoteControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -95,13 +84,8 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 // ResetNvmeRemoteController resets an Nvme remote controller
 func (s *Server) ResetNvmeRemoteController(_ context.Context, in *pb.ResetNvmeRemoteControllerRequest) (*emptypb.Empty, error) {
 	log.Printf("Received: %v", in.GetName())
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateResetNvmeRemoteControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -142,13 +126,8 @@ func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRem
 // GetNvmeRemoteController gets an Nvme remote controller
 func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
 	log.Printf("GetNvmeRemoteController: Received from client: %v", in)
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateGetNvmeRemoteControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
@@ -167,13 +146,8 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 // StatsNvmeRemoteController gets Nvme remote controller stats
 func (s *Server) StatsNvmeRemoteController(_ context.Context, in *pb.StatsNvmeRemoteControllerRequest) (*pb.StatsNvmeRemoteControllerResponse, error) {
 	log.Printf("Received: %v", in.GetName())
-	// check required fields
-	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
-		return nil, err
-	}
-	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.Name); err != nil {
+	// check input correctness
+	if err := s.validateStatsNvmeRemoteControllerRequest(in); err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
 	}
