@@ -12,7 +12,7 @@ require (
 	github.com/opiproject/opi-api v0.0.0-20230921193204-fe751a63af0b
 	github.com/vektra/mockery/v2 v2.33.3
 	go.einride.tech/aip v0.62.0
-	golang.org/x/tools v0.12.0
+	golang.org/x/tools v0.13.0
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 )
