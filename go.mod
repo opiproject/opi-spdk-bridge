@@ -13,7 +13,7 @@ require (
 	github.com/vektra/mockery/v2 v2.33.3
 	go.einride.tech/aip v0.62.0
 	golang.org/x/tools v0.12.0
-	google.golang.org/grpc v1.58.1
+	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 )
 
