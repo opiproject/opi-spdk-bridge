@@ -78,7 +78,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   opi-gw-test:
-    image: curlimages/curl:8.2.1
+    image: curlimages/curl:8.3.0
     networks:
       - opi
     depends_on:
