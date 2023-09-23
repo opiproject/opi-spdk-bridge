@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/onsi/ginkgo/v2 v2.12.1
-	github.com/opiproject/gospdk v0.0.0-20230920195522-1f551a02e9b0
+	github.com/opiproject/gospdk v0.0.0-20230923230104-05d047c78f5a
 	github.com/opiproject/opi-api v0.0.0-20230921193204-fe751a63af0b
 	github.com/vektra/mockery/v2 v2.33.3
 	go.einride.tech/aip v0.62.0
