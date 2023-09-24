@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/opiproject/gospdk v0.0.0-20230924031820-4b65d0851cb9
-	github.com/opiproject/opi-api v0.0.0-20230923233644-30a342bf09da
+	github.com/opiproject/opi-api v0.0.0-20230924031502-67b3821b62cf
 	github.com/vektra/mockery/v2 v2.33.3
 	go.einride.tech/aip v0.62.0
 	golang.org/x/tools v0.13.0
