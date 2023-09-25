@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
