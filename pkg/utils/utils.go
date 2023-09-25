@@ -2,8 +2,8 @@
 // Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
-// Package server implements the server
-package server
+// Package utils contails useful helper functions
+package utils
 
 import (
 	"crypto/rand"
