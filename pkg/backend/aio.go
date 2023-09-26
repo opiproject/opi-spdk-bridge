@@ -45,8 +45,12 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 	}
 	in.AioVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.AioVolumes[in.AioVolume.Name]
-	if ok {
+	volume := new(pb.AioVolume)
+	found, err := s.store.Get(in.AioVolume.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if found {
 		log.Printf("Already existing AioVolume with id %v", in.AioVolume.Name)
 		return volume, nil
 	}
@@ -57,7 +61,7 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 		Filename:  in.AioVolume.Filename,
 	}
 	var result spdk.BdevAioCreateResult
-	err := s.rpc.Call("bdev_aio_create", &params, &result)
+	err = s.rpc.Call("bdev_aio_create", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +71,10 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.AioVolume)
-	s.Volumes.AioVolumes[in.AioVolume.Name] = response
+	err = s.store.Set(in.AioVolume.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -78,8 +85,12 @@ func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeReques
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.AioVolumes[in.Name]
-	if !ok {
+	volume := new(pb.AioVolume)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
@@ -91,7 +102,7 @@ func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeReques
 		Name: resourceID,
 	}
 	var result spdk.BdevAioDeleteResult
-	err := s.rpc.Call("bdev_aio_delete", &params, &result)
+	err = s.rpc.Call("bdev_aio_delete", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +111,10 @@ func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeReques
 		msg := fmt.Sprintf("Could not delete Aio Dev: %s", params.Name)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Volumes.AioVolumes, volume.Name)
+	err = s.store.Delete(volume.Name)
+	if err != nil {
+		return nil, err
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -111,8 +125,12 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.AioVolumes[in.AioVolume.Name]
-	if !ok {
+	volume := new(pb.AioVolume)
+	found, err := s.store.Get(in.AioVolume.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
 			params := spdk.BdevAioCreateParams{
@@ -131,7 +149,10 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 				return nil, status.Errorf(codes.InvalidArgument, msg)
 			}
 			response := utils.ProtoClone(in.AioVolume)
-			s.Volumes.AioVolumes[in.AioVolume.Name] = response
+			err = s.store.Set(in.AioVolume.Name, response)
+			if err != nil {
+				return nil, err
+			}
 			return response, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.AioVolume.Name)
@@ -171,7 +192,10 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.AioVolume)
-	s.Volumes.AioVolumes[in.AioVolume.Name] = response
+	err = s.store.Set(in.AioVolume.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -215,8 +239,12 @@ func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*p
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.AioVolumes[in.Name]
-	if !ok {
+	volume := new(pb.AioVolume)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
@@ -225,7 +253,7 @@ func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*p
 		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
+	err = s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -244,8 +272,12 @@ func (s *Server) StatsAioVolume(_ context.Context, in *pb.StatsAioVolumeRequest)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.AioVolumes[in.Name]
-	if !ok {
+	volume := new(pb.AioVolume)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
@@ -255,7 +287,7 @@ func (s *Server) StatsAioVolume(_ context.Context, in *pb.StatsAioVolumeRequest)
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult
-	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	err = s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, err
 	}
