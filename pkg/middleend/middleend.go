@@ -6,6 +6,10 @@
 package middleend
 
 import (
+	"log"
+
+	"github.com/philippgille/gokv"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
@@ -22,15 +26,23 @@ type Server struct {
 	pb.UnimplementedMiddleendQosVolumeServiceServer
 
 	rpc        spdk.JSONRPC
+	store      gokv.Store
 	volumes    VolumeParameters
 	Pagination map[string]int
 }
 
 // NewServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
+	if jsonRPC == nil {
+		log.Panic("nil for JSONRPC is not allowed")
+	}
+	if store == nil {
+		log.Panic("nil for Store is not allowed")
+	}
 	return &Server{
-		rpc: jsonRPC,
+		rpc:   jsonRPC,
+		store: store,
 		volumes: VolumeParameters{
 			qosVolumes: make(map[string]*pb.QosVolume),
 			encVolumes: make(map[string]*pb.EncryptedVolume),

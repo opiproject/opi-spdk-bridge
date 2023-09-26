@@ -6,7 +6,10 @@
 package backend
 
 import (
+	"log"
 	"os"
+
+	"github.com/philippgille/gokv"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -31,6 +34,7 @@ type Server struct {
 	pb.UnimplementedAioVolumeServiceServer
 
 	rpc        spdk.JSONRPC
+	store      gokv.Store
 	Volumes    VolumeParameters
 	Pagination map[string]int
 	psk        psk
@@ -43,9 +47,16 @@ type psk struct {
 
 // NewServer creates initialized instance of BackEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
+	if jsonRPC == nil {
+		log.Panic("nil for JSONRPC is not allowed")
+	}
+	if store == nil {
+		log.Panic("nil for Store is not allowed")
+	}
 	return &Server{
-		rpc: jsonRPC,
+		rpc:   jsonRPC,
+		store: store,
 		Volumes: VolumeParameters{
 			AioVolumes:      make(map[string]*pb.AioVolume),
 			NullVolumes:     make(map[string]*pb.NullVolume),

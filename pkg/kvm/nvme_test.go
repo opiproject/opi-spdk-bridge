@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/philippgille/gokv/gomap"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
@@ -356,7 +358,8 @@ func TestCreateNvmeController(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
+			store := gomap.NewStore(gomap.DefaultOptions)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
@@ -502,7 +505,8 @@ func TestDeleteNvmeController(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
+			store := gomap.NewStore(gomap.DefaultOptions)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			if !tt.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
