@@ -28,6 +28,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/philippgille/gokv"
+	"github.com/philippgille/gokv/gomap"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )
 
@@ -67,11 +70,22 @@ func main() {
 	var tlsFiles string
 	flag.StringVar(&tlsFiles, "tls", "", "TLS files in server_cert:server_key:ca_cert format.")
 
+	// Create KV store for persistence
+	options := gomap.DefaultOptions
+	// TODO: we can change to redis or badger at any given time
+	store := gomap.NewStore(options)
+	defer func(store gokv.Store) {
+		err := store.Close()
+		if err != nil {
+			log.Panic(err)
+		}
+	}(store)
+
 	go runGatewayServer(grpcPort, httpPort)
-	runGrpcServer(grpcPort, useKvm, spdkAddress, qmpAddress, ctrlrDir, busesStr, tcpTransportListenAddr, tlsFiles)
+	runGrpcServer(grpcPort, useKvm, store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tcpTransportListenAddr, tlsFiles)
 }
 
-func runGrpcServer(grpcPort int, useKvm bool, spdkAddress, qmpAddress, ctrlrDir, busesStr, tcpTransportListenAddr, tlsFiles string) {
+func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tcpTransportListenAddr, tlsFiles string) {
 	buses := splitBusesBySeparator(busesStr)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
@@ -98,12 +112,13 @@ func runGrpcServer(grpcPort int, useKvm bool, spdkAddress, qmpAddress, ctrlrDir,
 	s := grpc.NewServer(serverOptions...)
 
 	jsonRPC := spdk.NewSpdkJSONRPC(spdkAddress)
-	backendServer := backend.NewServer(jsonRPC)
-	middleendServer := middleend.NewServer(jsonRPC)
+	backendServer := backend.NewServer(jsonRPC, store)
+	middleendServer := middleend.NewServer(jsonRPC, store)
 
 	if useKvm {
 		log.Println("Creating KVM server.")
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
+			store,
 			kvm.NewNvmeVfiouserTransport(ctrlrDir),
 			frontend.NewVhostUserBlkTransport(),
 		)
@@ -114,6 +129,7 @@ func runGrpcServer(grpcPort int, useKvm bool, spdkAddress, qmpAddress, ctrlrDir,
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
+			store,
 			frontend.NewNvmeTCPTransport(tcpTransportListenAddr),
 			frontend.NewVhostUserBlkTransport(),
 		)

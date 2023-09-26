@@ -8,6 +8,8 @@ package frontend
 import (
 	"log"
 
+	"github.com/philippgille/gokv"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
@@ -48,6 +50,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
 	rpc        spdk.JSONRPC
+	store      gokv.Store
 	Nvme       NvmeParameters
 	Virt       VirtioParameters
 	Pagination map[string]int
@@ -55,12 +58,16 @@ type Server struct {
 
 // NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC) *Server {
+func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 	if jsonRPC == nil {
 		log.Panic("nil for JSONRPC is not allowed")
 	}
+	if store == nil {
+		log.Panic("nil for Store is not allowed")
+	}
 	return &Server{
-		rpc: jsonRPC,
+		rpc:   jsonRPC,
+		store: store,
 		Nvme: NvmeParameters{
 			Subsystems:  make(map[string]*pb.NvmeSubsystem),
 			Controllers: make(map[string]*pb.NvmeController),
@@ -81,6 +88,7 @@ func NewServer(jsonRPC spdk.JSONRPC) *Server {
 // with provided jsonRPC and externally created NvmeTransport and VirtioBlkTransport
 func NewCustomizedServer(
 	jsonRPC spdk.JSONRPC,
+	store gokv.Store,
 	nvmeTransport NvmeTransport,
 	virtioBlkTransport VirtioBlkTransport,
 ) *Server {
@@ -92,7 +100,14 @@ func NewCustomizedServer(
 		log.Panic("nil for VirtioBlkTransport is not allowed")
 	}
 
-	server := NewServer(jsonRPC)
+	if jsonRPC == nil {
+		log.Panic("nil for JSONRPC is not allowed")
+	}
+	if store == nil {
+		log.Panic("nil for Store is not allowed")
+	}
+
+	server := NewServer(jsonRPC, store)
 	server.Nvme.transport = nvmeTransport
 	server.Virt.transport = virtioBlkTransport
 	return server

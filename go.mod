@@ -10,6 +10,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/opiproject/gospdk v0.0.0-20230924031820-4b65d0851cb9
 	github.com/opiproject/opi-api v0.0.0-20230924031502-67b3821b62cf
+	github.com/philippgille/gokv v0.6.0
+	github.com/philippgille/gokv/gomap v0.6.0
 	github.com/vektra/mockery/v2 v2.34.0
 	go.einride.tech/aip v0.62.0
 	golang.org/x/tools v0.13.0
@@ -129,6 +131,8 @@ require (
 	github.com/nunnatsa/ginkgolinter v0.13.5 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
+	github.com/philippgille/gokv/encoding v0.0.0-20191011213304-eb77f15b9c61 // indirect
+	github.com/philippgille/gokv/util v0.0.0-20191011213304-eb77f15b9c61 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v1.4.4 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect

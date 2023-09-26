@@ -8,6 +8,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/philippgille/gokv/gomap"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
@@ -164,7 +166,8 @@ func TestCreateVirtioBlk(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
+			store := gomap.NewStore(gomap.DefaultOptions)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
@@ -265,7 +268,8 @@ func TestDeleteVirtioBlk(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			opiSpdkServer := frontend.NewServer(tt.jsonRPC)
+			store := gomap.NewStore(gomap.DefaultOptions)
+			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName] =
 				server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName].Name = testVirtioBlkName

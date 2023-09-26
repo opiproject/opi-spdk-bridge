@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
+	"github.com/philippgille/gokv/gomap"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
@@ -57,7 +59,8 @@ func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("backend")
 	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
-	env.opiSpdkServer = NewServer(env.jsonRPC)
+	store := gomap.NewStore(gomap.DefaultOptions)
+	env.opiSpdkServer = NewServer(env.jsonRPC, store)
 
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx,

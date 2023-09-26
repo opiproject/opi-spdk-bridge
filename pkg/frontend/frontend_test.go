@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
+	"github.com/philippgille/gokv/gomap"
+
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
@@ -58,7 +60,8 @@ func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("frontend")
 	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
-	env.opiSpdkServer = NewServer(env.jsonRPC)
+	store := gomap.NewStore(gomap.DefaultOptions)
+	env.opiSpdkServer = NewServer(env.jsonRPC, store)
 
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx,
@@ -102,33 +105,39 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 	validJSONRPC := spdk.NewSpdkJSONRPC("/some/path")
 	validNvmeTransport := NewNvmeTCPTransport("10.10.10.10:1234")
 	validVirtioBLkTransport := NewVhostUserBlkTransport()
+	validStore := gomap.NewStore(gomap.DefaultOptions)
 
 	tests := map[string]struct {
 		jsonRPC            spdk.JSONRPC
+		store              gomap.Store
 		nvmeTransport      NvmeTransport
 		virtioBlkTransport VirtioBlkTransport
 		wantPanic          bool
 	}{
 		"nil json rpc": {
 			jsonRPC:            nil,
+			store:              validStore,
 			nvmeTransport:      validNvmeTransport,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
 		"nil nvme transport": {
 			jsonRPC:            validJSONRPC,
+			store:              validStore,
 			nvmeTransport:      nil,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
 		"nil virtio blk transport": {
 			jsonRPC:            validJSONRPC,
+			store:              validStore,
 			nvmeTransport:      validNvmeTransport,
 			virtioBlkTransport: nil,
 			wantPanic:          true,
 		},
 		"all valid arguments": {
 			jsonRPC:            validJSONRPC,
+			store:              validStore,
 			nvmeTransport:      validNvmeTransport,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          false,
@@ -144,7 +153,7 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 				}
 			}()
 
-			server := NewCustomizedServer(tt.jsonRPC, tt.nvmeTransport, tt.virtioBlkTransport)
+			server := NewCustomizedServer(tt.jsonRPC, tt.store, tt.nvmeTransport, tt.virtioBlkTransport)
 			if server == nil && !tt.wantPanic {
 				t.Error("expected non nil server or panic")
 			}
