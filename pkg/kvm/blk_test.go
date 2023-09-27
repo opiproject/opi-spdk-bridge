@@ -166,7 +166,9 @@ func TestCreateVirtioBlk(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			store := gomap.NewStore(gomap.DefaultOptions)
+			options := gomap.DefaultOptions
+			options.Codec = server.ProtoCodec{}
+			store := gomap.NewStore(options)
 			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
@@ -268,7 +270,9 @@ func TestDeleteVirtioBlk(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			store := gomap.NewStore(gomap.DefaultOptions)
+			options := gomap.DefaultOptions
+			options.Codec = server.ProtoCodec{}
+			store := gomap.NewStore(options)
 			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName] =
 				server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
