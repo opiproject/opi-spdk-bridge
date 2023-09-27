@@ -72,6 +72,7 @@ func main() {
 
 	// Create KV store for persistence
 	options := gomap.DefaultOptions
+	options.Codec = server.ProtoCodec{}
 	// TODO: we can change to redis or badger at any given time
 	store := gomap.NewStore(options)
 	defer func(store gokv.Store) {

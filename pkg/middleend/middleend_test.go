@@ -56,7 +56,9 @@ func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = server.GenerateSocketName("middleend")
 	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
-	store := gomap.NewStore(gomap.DefaultOptions)
+	options := gomap.DefaultOptions
+	options.Codec = server.ProtoCodec{}
+	store := gomap.NewStore(options)
 	env.opiSpdkServer = NewServer(env.jsonRPC, store)
 
 	ctx := context.Background()
