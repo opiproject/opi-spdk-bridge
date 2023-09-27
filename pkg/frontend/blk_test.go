@@ -18,12 +18,12 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
 	testVirtioCtrlID   = "virtio-blk-42"
-	testVirtioCtrlName = server.ResourceIDToVolumeName(testVirtioCtrlID)
+	testVirtioCtrlName = utils.ResourceIDToVolumeName(testVirtioCtrlID)
 	testVirtioCtrl     = pb.VirtioBlk{
 		PcieId: &pb.PciEndpoint{
 			PhysicalFunction: wrapperspb.Int32(42),
@@ -132,7 +132,7 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testVirtioCtrlName
 			}
 
@@ -197,7 +197,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 		"valid request with unknown key": {
 			nil,
 			&pb.VirtioBlk{
-				Name:          server.ResourceIDToVolumeName("unknown-id"),
+				Name:          utils.ResourceIDToVolumeName("unknown-id"),
 				PcieId:        testVirtioCtrl.PcieId,
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
@@ -205,13 +205,13 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
 			nil,
 			&pb.VirtioBlk{
-				Name:          server.ResourceIDToVolumeName("unknown-id"),
+				Name:          utils.ResourceIDToVolumeName("unknown-id"),
 				PcieId:        testVirtioCtrl.PcieId,
 				VolumeNameRef: "Malloc42",
 				MaxIoQps:      1,
@@ -219,7 +219,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			true,
 		},
 		"malformed name": {
@@ -248,7 +248,7 @@ func TestFrontEnd_UpdateVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = server.ProtoClone(&testVirtioCtrl)
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = utils.ProtoClone(&testVirtioCtrl)
 
 			request := &pb.UpdateVirtioBlkRequest{VirtioBlk: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateVirtioBlk(testEnv.ctx, request)
@@ -322,17 +322,17 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Name:          server.ResourceIDToVolumeName("VblkEmu0pf0"),
+					Name:          utils.ResourceIDToVolumeName("VblkEmu0pf0"),
 					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(0)},
 					VolumeNameRef: "TBD",
 				},
 				{
-					Name:          server.ResourceIDToVolumeName("VblkEmu0pf2"),
+					Name:          utils.ResourceIDToVolumeName("VblkEmu0pf2"),
 					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(0)},
 					VolumeNameRef: "TBD",
 				},
 				{
-					Name:          server.ResourceIDToVolumeName(testVirtioCtrlID),
+					Name:          utils.ResourceIDToVolumeName(testVirtioCtrlID),
 					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(0)},
 					VolumeNameRef: "TBD",
 				},
@@ -351,12 +351,12 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Name:          server.ResourceIDToVolumeName("VblkEmu0pf0"),
+					Name:          utils.ResourceIDToVolumeName("VblkEmu0pf0"),
 					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(0)},
 					VolumeNameRef: "TBD",
 				},
 				{
-					Name:          server.ResourceIDToVolumeName("VblkEmu0pf2"),
+					Name:          utils.ResourceIDToVolumeName("VblkEmu0pf2"),
 					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(0)},
 					VolumeNameRef: "TBD",
 				},
@@ -394,7 +394,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			"subsystem-test",
 			[]*pb.VirtioBlk{
 				{
-					Name:          server.ResourceIDToVolumeName("VblkEmu0pf0"),
+					Name:          utils.ResourceIDToVolumeName("VblkEmu0pf0"),
 					PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(1), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(0)},
 					VolumeNameRef: "TBD",
 				},
@@ -442,7 +442,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			request := &pb.ListVirtioBlksRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListVirtioBlks(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetVirtioBlks(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetVirtioBlks(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetVirtioBlks())
 			}
 
@@ -542,7 +542,7 @@ func TestFrontEnd_GetVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = server.ProtoClone(&testVirtioCtrl)
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName] = utils.ProtoClone(&testVirtioCtrl)
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlName].Name = testVirtioCtrlName
 
 			request := &pb.GetVirtioBlkRequest{Name: tt.in}
@@ -604,7 +604,7 @@ func TestFrontEnd_StatsVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = server.ProtoClone(&testVirtioCtrl)
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = utils.ProtoClone(&testVirtioCtrl)
 
 			request := &pb.StatsVirtioBlkRequest{Name: tt.in}
 			response, err := testEnv.client.StatsVirtioBlk(testEnv.ctx, request)
@@ -738,7 +738,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = server.ProtoClone(&testVirtioCtrl)
+			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID] = utils.ProtoClone(&testVirtioCtrl)
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID].PcieId.VirtualFunction =
 				wrapperspb.Int32(int32(tt.pfVf))
 			testEnv.opiSpdkServer.Virt.BlkCtrls[testVirtioCtrlID].Name = testVirtioCtrlID

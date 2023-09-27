@@ -22,7 +22,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
@@ -251,14 +251,14 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Nvme.transport = tt.transport
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 			if tt.exist {
-				testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+				testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 				testEnv.opiSpdkServer.Nvme.Controllers[testControllerName].Name = testControllerName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testControllerName
 			}
 
@@ -392,8 +392,8 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 			testEnv.opiSpdkServer.Nvme.transport = tt.transport
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 
 			request := &pb.DeleteNvmeControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeController(testEnv.ctx, request)
@@ -421,7 +421,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		PcieId:           testController.Spec.PcieId,
 		NvmeControllerId: proto.Int32(17),
 	}
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -466,25 +466,25 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		"valid request with unknown key": {
 			nil,
 			&pb.NvmeController{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: utils.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
 			},
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
 			nil,
 			&pb.NvmeController{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: utils.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
 			},
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			true,
 		},
 		"malformed name": {
@@ -504,7 +504,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 
 			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeController(testEnv.ctx, request)
@@ -529,7 +529,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 
 func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
-	secondSubsystemName := server.ResourceIDToVolumeName("controller-test1")
+	secondSubsystemName := utils.ResourceIDToVolumeName("controller-test1")
 	tests := map[string]struct {
 		in      string
 		out     []*pb.NvmeController
@@ -585,13 +585,13 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&pb.NvmeController{
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&pb.NvmeController{
 				Name:   testControllerName,
 				Spec:   testController.Spec,
 				Status: testController.Status,
 			})
-			testEnv.opiSpdkServer.Nvme.Controllers[secondSubsystemName] = server.ProtoClone(&pb.NvmeController{
+			testEnv.opiSpdkServer.Nvme.Controllers[secondSubsystemName] = utils.ProtoClone(&pb.NvmeController{
 				Name: secondSubsystemName,
 				Spec: &pb.NvmeControllerSpec{
 					PcieId:           &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(2), VirtualFunction: wrapperspb.Int32(2), PortId: wrapperspb.Int32(0)},
@@ -605,7 +605,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 			request := &pb.ListNvmeControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeControllers(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetNvmeControllers(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetNvmeControllers(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetNvmeControllers())
 			}
 
@@ -681,8 +681,8 @@ func TestFrontEnd_GetNvmeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 
 			request := &pb.GetNvmeControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeController(testEnv.ctx, request)
@@ -725,11 +725,11 @@ func TestFrontEnd_StatsNvmeController(t *testing.T) {
 			"",
 		},
 		"valid request with unknown key": {
-			server.ResourceIDToVolumeName("unknown-id"),
+			utils.ResourceIDToVolumeName("unknown-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 		},
 		"malformed name": {
 			"-ABC-DEF",
@@ -746,7 +746,7 @@ func TestFrontEnd_StatsNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 
 			request := &pb.StatsNvmeControllerRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeController(testEnv.ctx, request)

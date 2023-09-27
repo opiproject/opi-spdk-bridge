@@ -16,7 +16,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -134,7 +134,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NvmeController)
+	response := utils.ProtoClone(in.NvmeController)
 	response.Spec.NvmeControllerId = proto.Int32(-1)
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Nvme.Controllers[in.NvmeController.Name] = response
@@ -216,7 +216,7 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	response := server.ProtoClone(in.NvmeController)
+	response := utils.ProtoClone(in.NvmeController)
 	response.Status = &pb.NvmeControllerStatus{Active: true}
 	s.Nvme.Controllers[in.NvmeController.Name] = response
 	return response, nil

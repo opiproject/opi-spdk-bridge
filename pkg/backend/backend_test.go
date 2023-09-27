@@ -19,10 +19,10 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
-var checkGlobalTestProtoObjectsNotChanged = server.CheckTestProtoObjectsNotChanged(
+var checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChanged(
 	&testAioVolume,
 	&testNullVolume,
 	&testNvmeCtrl,
@@ -48,19 +48,19 @@ type testEnv struct {
 }
 
 func (e *testEnv) Close() {
-	server.CloseListener(e.ln)
+	utils.CloseListener(e.ln)
 	if err := os.RemoveAll(e.testSocket); err != nil {
 		log.Fatal(err)
 	}
-	server.CloseGrpcConnection(e.conn)
+	utils.CloseGrpcConnection(e.conn)
 }
 
 func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
-	env.testSocket = server.GenerateSocketName("backend")
-	env.ln, env.jsonRPC = server.CreateTestSpdkServer(env.testSocket, spdkResponses)
+	env.testSocket = utils.GenerateSocketName("backend")
+	env.ln, env.jsonRPC = utils.CreateTestSpdkServer(env.testSocket, spdkResponses)
 	options := gomap.DefaultOptions
-	options.Codec = server.ProtoCodec{}
+	options.Codec = utils.ProtoCodec{}
 	store := gomap.NewStore(options)
 	env.opiSpdkServer = NewServer(env.jsonRPC, store)
 

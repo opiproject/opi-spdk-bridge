@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -277,11 +277,11 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
+				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = utils.ProtoClone(&encryptedVolume)
 				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName].Name = encryptedVolumeName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = encryptedVolumeName
 			}
 
@@ -307,9 +307,9 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 }
 
 func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
-	encryptedVolumeWithName := server.ProtoClone(&encryptedVolume)
+	encryptedVolumeWithName := utils.ProtoClone(&encryptedVolume)
 	encryptedVolumeWithName.Name = encryptedVolumeName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(encryptedVolumeWithName)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(encryptedVolumeWithName)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -813,7 +813,7 @@ func TestMiddleEnd_ListEncryptedVolumes(t *testing.T) {
 			request := &pb.ListEncryptedVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListEncryptedVolumes(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetEncryptedVolumes(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetEncryptedVolumes(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetEncryptedVolumes())
 			}
 
@@ -890,14 +890,14 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			errMsg:  "",
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 		},
 		"malformed name": {
-			in:      server.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -918,7 +918,7 @@ func TestMiddleEnd_GetEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = utils.ProtoClone(&encryptedVolume)
 
 			request := &pb.GetEncryptedVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetEncryptedVolume(testEnv.ctx, request)
@@ -1004,7 +1004,7 @@ func TestMiddleEnd_StatsEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 		},
 		"malformed name": {
 			in:      "-ABC-DEF",
@@ -1021,8 +1021,8 @@ func TestMiddleEnd_StatsEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
+			fname1 := utils.ResourceIDToVolumeName(tt.in)
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = utils.ProtoClone(&encryptedVolume)
 
 			request := &pb.StatsEncryptedVolumeRequest{Name: fname1}
 			response, err := testEnv.client.StatsEncryptedVolume(testEnv.ctx, request)
@@ -1120,15 +1120,15 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.OK,
@@ -1136,7 +1136,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			missing: true,
 		},
 		"malformed name": {
-			in:      server.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -1159,7 +1159,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = server.ProtoClone(&encryptedVolume)
+			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = utils.ProtoClone(&encryptedVolume)
 			testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName].Name = encryptedVolumeName
 
 			request := &pb.DeleteEncryptedVolumeRequest{Name: tt.in, AllowMissing: tt.missing}

@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
@@ -45,7 +45,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.EncryptedVolumeId, in.EncryptedVolume.Name)
 		resourceID = in.EncryptedVolumeId
 	}
-	in.EncryptedVolume.Name = server.ResourceIDToVolumeName(resourceID)
+	in.EncryptedVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
 		log.Printf("error: %v", err)
@@ -91,7 +91,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.EncryptedVolume)
+	response := utils.ProtoClone(in.EncryptedVolume)
 	s.volumes.encVolumes[in.EncryptedVolume.Name] = response
 	log.Printf("CreateEncryptedVolume: Sending to client: %v", response)
 	return response, nil
@@ -230,7 +230,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// return result
-	response := server.ProtoClone(in.EncryptedVolume)
+	response := utils.ProtoClone(in.EncryptedVolume)
 	return response, nil
 }
 
@@ -243,7 +243,7 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -257,7 +257,7 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size

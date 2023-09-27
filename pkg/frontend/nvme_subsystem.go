@@ -14,7 +14,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -87,7 +87,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", ver)
-	response := server.ProtoClone(in.NvmeSubsystem)
+	response := utils.ProtoClone(in.NvmeSubsystem)
 	response.Status = &pb.NvmeSubsystemStatus{FirmwareRevision: ver.Version}
 	s.Nvme.Subsystems[in.NvmeSubsystem.Name] = response
 	return response, nil
@@ -167,7 +167,7 @@ func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystems
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -181,7 +181,7 @@ func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystems
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size

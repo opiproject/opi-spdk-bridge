@@ -14,7 +14,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -82,7 +82,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
-	response := server.ProtoClone(in.NvmeNamespace)
+	response := utils.ProtoClone(in.NvmeNamespace)
 	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
 	response.Spec.HostNsid = int32(result)
 	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
@@ -160,7 +160,7 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	response := server.ProtoClone(in.NvmeNamespace)
+	response := utils.ProtoClone(in.NvmeNamespace)
 	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
 	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
 
@@ -176,7 +176,7 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -204,7 +204,7 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 		if rr.Nqn == nqn || nqn == "" {
 			log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
 			hasMoreElements := false
-			rr.Namespaces, hasMoreElements = server.LimitPagination(rr.Namespaces, offset, size)
+			rr.Namespaces, hasMoreElements = utils.LimitPagination(rr.Namespaces, offset, size)
 			if hasMoreElements {
 				token = uuid.New().String()
 				s.Pagination[token] = offset + size

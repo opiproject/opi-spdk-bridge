@@ -19,12 +19,12 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
 	testNullVolumeID   = "mytest"
-	testNullVolumeName = server.ResourceIDToVolumeName(testNullVolumeID)
+	testNullVolumeName = utils.ResourceIDToVolumeName(testNullVolumeID)
 	testNullVolume     = pb.NullVolume{
 		BlockSize:   512,
 		BlocksCount: 64,
@@ -123,11 +123,11 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = server.ProtoClone(&testNullVolume)
+				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolume)
 				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testNullVolumeName
 			}
 
@@ -153,9 +153,9 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNullVolume(t *testing.T) {
-	testNullVolumeWithName := server.ProtoClone(&testNullVolume)
+	testNullVolumeWithName := utils.ProtoClone(&testNullVolume)
 	testNullVolumeWithName.Name = testNullVolumeName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(testNullVolumeWithName)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(testNullVolumeWithName)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -260,25 +260,25 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		"valid request with unknown key": {
 			mask: nil,
 			in: &pb.NullVolume{
-				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				Name:        utils.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
 			},
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
 			mask: nil,
 			in: &pb.NullVolume{
-				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				Name:        utils.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
 			},
 			out: &pb.NullVolume{
-				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				Name:        utils.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 64,
 			},
@@ -308,7 +308,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = server.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolume)
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
 
 			request := &pb.UpdateNullVolumeRequest{NullVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
@@ -507,7 +507,7 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			request := &pb.ListNullVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNullVolumes(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetNullVolumes(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetNullVolumes(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetNullVolumes())
 			}
 
@@ -614,7 +614,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = server.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = utils.ProtoClone(&testNullVolume)
 
 			request := &pb.GetNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullVolume(testEnv.ctx, request)
@@ -717,7 +717,7 @@ func TestBackEnd_StatsNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = server.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = utils.ProtoClone(&testNullVolume)
 
 			request := &pb.StatsNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNullVolume(testEnv.ctx, request)
@@ -791,15 +791,15 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.OK,
@@ -807,7 +807,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			missing: true,
 		},
 		"malformed name": {
-			in:      server.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -830,7 +830,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = server.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolume)
 			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
 
 			request := &pb.DeleteNullVolumeRequest{Name: tt.in, AllowMissing: tt.missing}

@@ -12,7 +12,7 @@ import (
 	"sort"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -43,7 +43,7 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeRemoteControllerId, in.NvmeRemoteController.Name)
 		resourceID = in.NvmeRemoteControllerId
 	}
-	in.NvmeRemoteController.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NvmeRemoteController.Name = utils.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
 	if ok {
@@ -51,7 +51,7 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 		return volume, nil
 	}
 	// not found, so create a new one
-	response := server.ProtoClone(in.NvmeRemoteController)
+	response := utils.ProtoClone(in.NvmeRemoteController)
 	s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
 	log.Printf("CreateNvmeRemoteController: Sending to client: %v", response)
 	return response, nil
@@ -118,7 +118,7 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	response := server.ProtoClone(in.NvmeRemoteController)
+	response := utils.ProtoClone(in.NvmeRemoteController)
 	// s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
 	return response, nil
 }
@@ -132,7 +132,7 @@ func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRem
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -146,7 +146,7 @@ func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRem
 
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(Blobarray), offset, size)
-	Blobarray, hasMoreElements := server.LimitPagination(Blobarray, offset, size)
+	Blobarray, hasMoreElements := utils.LimitPagination(Blobarray, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
@@ -170,7 +170,7 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 		return nil, err
 	}
 
-	response := server.ProtoClone(volume)
+	response := utils.ProtoClone(volume)
 	return response, nil
 }
 

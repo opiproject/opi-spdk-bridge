@@ -21,12 +21,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
 	testNvmePathID   = "mytest"
-	testNvmePathName = server.ResourceIDToVolumeName(testNvmePathID)
+	testNvmePathName = utils.ResourceIDToVolumeName(testNvmePathID)
 	testNvmePath     = pb.NvmePath{
 		Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 		Traddr:            "127.0.0.1",
@@ -222,13 +222,13 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(tt.controller)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(tt.controller)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
+				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePath)
 				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testNvmePathName
 			}
 
@@ -405,15 +405,15 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.OK,
@@ -421,7 +421,7 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			missing: true,
 		},
 		"malformed name": {
-			in:      server.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -444,8 +444,8 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = server.ProtoClone(&testNvmeCtrl)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrl)
 
 			request := &pb.DeleteNvmePathRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmePath(testEnv.ctx, request)
@@ -469,9 +469,9 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNvmePath(t *testing.T) {
-	testNvmePathWithName := server.ProtoClone(&testNvmePath)
+	testNvmePathWithName := utils.ProtoClone(&testNvmePath)
 	testNvmePathWithName.Name = testNvmePathName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(testNvmePathWithName)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(testNvmePathWithName)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -576,7 +576,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 		"valid request with unknown key": {
 			mask: nil,
 			in: &pb.NvmePath{
-				Name:              server.ResourceIDToVolumeName("unknown-id"),
+				Name:              utils.ResourceIDToVolumeName("unknown-id"),
 				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 				Traddr:            "127.0.0.1",
 				ControllerNameRef: "TBD",
@@ -589,13 +589,13 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
 			mask: nil,
 			in: &pb.NvmePath{
-				Name:              server.ResourceIDToVolumeName("unknown-id"),
+				Name:              utils.ResourceIDToVolumeName("unknown-id"),
 				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
 				Traddr:            "127.0.0.1",
 				ControllerNameRef: "TBD",
@@ -608,7 +608,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: true,
 		},
 		"malformed name": {
@@ -633,7 +633,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = server.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePath)
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
 
 			request := &pb.UpdateNvmePathRequest{NvmePath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
@@ -838,7 +838,7 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 			request := &pb.ListNvmePathsRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmePaths(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetNvmePaths(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetNvmePaths(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetNvmePaths())
 			}
 
@@ -947,7 +947,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = server.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = utils.ProtoClone(&testNvmePath)
 
 			request := &pb.GetNvmePathRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmePath(testEnv.ctx, request)
@@ -1050,7 +1050,7 @@ func TestBackEnd_StatsNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = server.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = utils.ProtoClone(&testNvmePath)
 			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID].Name = testNvmePathName
 
 			request := &pb.StatsNvmePathRequest{Name: tt.in}

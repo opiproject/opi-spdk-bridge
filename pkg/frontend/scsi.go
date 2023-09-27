@@ -14,7 +14,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -51,7 +51,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiControllerId, in.VirtioScsiController.Name)
 		resourceID = in.VirtioScsiControllerId
 	}
-	in.VirtioScsiController.Name = server.ResourceIDToVolumeName(resourceID)
+	in.VirtioScsiController.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Virt.ScsiCtrls[in.VirtioScsiController.Name]
@@ -73,7 +73,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 	if !result {
 		log.Printf("Could not create: %v", in)
 	}
-	response := server.ProtoClone(in.VirtioScsiController)
+	response := utils.ProtoClone(in.VirtioScsiController)
 	// response.Status = &pb.VirtioScsiControllerStatus{Active: true}
 	s.Virt.ScsiCtrls[in.VirtioScsiController.Name] = response
 	return response, nil
@@ -162,7 +162,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -176,7 +176,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
@@ -184,7 +184,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 	Blobarray := make([]*pb.VirtioScsiController, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.VirtioScsiController{Name: server.ResourceIDToVolumeName(r.Ctrlr)}
+		Blobarray[i] = &pb.VirtioScsiController{Name: utils.ResourceIDToVolumeName(r.Ctrlr)}
 	}
 	sortScsiControllers(Blobarray)
 	return &pb.ListVirtioScsiControllersResponse{VirtioScsiControllers: Blobarray, NextPageToken: token}, nil
@@ -226,7 +226,7 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiController{Name: server.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
+	return &pb.VirtioScsiController{Name: utils.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
 }
 
 // StatsVirtioScsiController gets a Virtio SCSI controller stats
@@ -278,7 +278,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.VirtioScsiLunId, in.VirtioScsiLun.Name)
 		resourceID = in.VirtioScsiLunId
 	}
-	in.VirtioScsiLun.Name = server.ResourceIDToVolumeName(resourceID)
+	in.VirtioScsiLun.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	// idempotent API when called with same key, should return same object
 	lun, ok := s.Virt.ScsiLuns[in.VirtioScsiLun.Name]
@@ -303,7 +303,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
-	response := server.ProtoClone(in.VirtioScsiLun)
+	response := utils.ProtoClone(in.VirtioScsiLun)
 	// response.Status = &pb.VirtioScsiLunStatus{Active: true}
 	s.Virt.ScsiLuns[in.VirtioScsiLun.Name] = response
 	return response, nil
@@ -396,7 +396,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -410,7 +410,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
@@ -419,7 +419,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 	for i := range result {
 		r := &result[i]
 		Blobarray[i] = &pb.VirtioScsiLun{
-			VolumeNameRef: server.ResourceIDToVolumeName(r.Ctrlr),
+			VolumeNameRef: utils.ResourceIDToVolumeName(r.Ctrlr),
 		}
 	}
 	return &pb.ListVirtioScsiLunsResponse{VirtioScsiLuns: Blobarray, NextPageToken: token}, nil
@@ -461,7 +461,7 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.VirtioScsiLun{VolumeNameRef: server.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
+	return &pb.VirtioScsiLun{VolumeNameRef: utils.ResourceIDToVolumeName(result[0].Ctrlr)}, nil
 }
 
 // StatsVirtioScsiLun gets a Virtio SCSI LUN stats

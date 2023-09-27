@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/opiproject/gospdk/spdk"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -35,7 +35,7 @@ var (
 
 	pathRegexpStr = `\/[a-zA-Z\/\-\_0-9]*\/`
 
-	checkGlobalTestProtoObjectsNotChanged = server.CheckTestProtoObjectsNotChanged(
+	checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChanged(
 		testCreateNvmeControllerRequest,
 		testDeleteNvmeControllerRequest,
 		&testSubsystem,

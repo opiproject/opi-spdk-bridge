@@ -19,7 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
@@ -38,7 +38,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		SerialNumber: "OpiSerialNumber",
 		ModelNumber:  "OpiModelNumber",
 	}
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -208,14 +208,14 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 			if tt.exist {
-				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
 				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName].Name = testSubsystemName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testSubsystemName
 			}
 
@@ -291,15 +291,15 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			server.ResourceIDToVolumeName("unknown-subsystem-id"),
+			utils.ResourceIDToVolumeName("unknown-subsystem-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-subsystem-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-subsystem-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
-			server.ResourceIDToVolumeName("unknown-id"),
+			utils.ResourceIDToVolumeName("unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,
@@ -329,7 +329,7 @@ func TestFrontEnd_DeleteNvmeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
 
 			request := &pb.DeleteNvmeSubsystemRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeSubsystem(testEnv.ctx, request)
@@ -390,7 +390,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 		"valid request with unknown key": {
 			nil,
 			&pb.NvmeSubsystem{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: utils.ResourceIDToVolumeName("unknown-id"),
 				Spec: &pb.NvmeSubsystemSpec{
 					Nqn: "nqn.2022-09.io.spdk:opi3",
 				},
@@ -398,13 +398,13 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
 			nil,
 			&pb.NvmeSubsystem{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: utils.ResourceIDToVolumeName("unknown-id"),
 				Spec: &pb.NvmeSubsystemSpec{
 					Nqn: "nqn.2022-09.io.spdk:opi3",
 				},
@@ -412,7 +412,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			true,
 		},
 		"malformed name": {
@@ -432,7 +432,7 @@ func TestFrontEnd_UpdateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
 
 			request := &pb.UpdateNvmeSubsystemRequest{NvmeSubsystem: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeSubsystem(testEnv.ctx, request)
@@ -604,7 +604,7 @@ func TestFrontEnd_ListNvmeSubsystem(t *testing.T) {
 			request := &pb.ListNvmeSubsystemsRequest{PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeSubsystems(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetNvmeSubsystems(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetNvmeSubsystems(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetNvmeSubsystems())
 			}
 
@@ -709,7 +709,7 @@ func TestFrontEnd_GetNvmeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
 
 			request := &pb.GetNvmeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeSubsystem(testEnv.ctx, request)
@@ -793,7 +793,7 @@ func TestFrontEnd_StatsNvmeSubsystem(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
 
 			request := &pb.StatsNvmeSubsystemRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeSubsystem(testEnv.ctx, request)

@@ -19,7 +19,7 @@ import (
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
@@ -51,7 +51,7 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:         1967554867335598546,
 	}
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec, namespaceSpec)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec, namespaceSpec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -226,14 +226,14 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 			if tt.exist {
-				testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+				testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 				testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName].Name = testNamespaceName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testNamespaceName
 			}
 
@@ -309,15 +309,15 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 			false,
 		},
 		"valid request with unknown key": {
-			server.ResourceIDToVolumeName("unknown-namespace-id"),
+			utils.ResourceIDToVolumeName("unknown-namespace-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-namespace-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-namespace-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
-			server.ResourceIDToVolumeName("unknown-id"),
+			utils.ResourceIDToVolumeName("unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,
@@ -347,9 +347,9 @@ func TestFrontEnd_DeleteNvmeNamespace(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 
 			request := &pb.DeleteNvmeNamespaceRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeNamespace(testEnv.ctx, request)
@@ -380,7 +380,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:         1967554867335598546,
 	}
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -426,25 +426,25 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 		"valid request with unknown key": {
 			nil,
 			&pb.NvmeNamespace{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: utils.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
 			},
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			false,
 		},
 		"unknown key with missing allowed": {
 			nil,
 			&pb.NvmeNamespace{
-				Name: server.ResourceIDToVolumeName("unknown-id"),
+				Name: utils.ResourceIDToVolumeName("unknown-id"),
 				Spec: spec,
 			},
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			true,
 		},
 		"malformed name": {
@@ -478,7 +478,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 
 			request := &pb.UpdateNvmeNamespaceRequest{NvmeNamespace: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeNamespace(testEnv.ctx, request)
@@ -519,7 +519,7 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 			},
 		},
 	}
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(
 		&testNamespaces[0], &testNamespaces[1], &testNamespaces[2])(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
@@ -674,17 +674,17 @@ func TestFrontEnd_ListNvmeNamespaces(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
-			testEnv.opiSpdkServer.Nvme.Namespaces[server.ResourceIDToVolumeName("ns0")] = server.ProtoClone(&testNamespaces[0])
-			testEnv.opiSpdkServer.Nvme.Namespaces[server.ResourceIDToVolumeName("ns1")] = server.ProtoClone(&testNamespaces[1])
-			testEnv.opiSpdkServer.Nvme.Namespaces[server.ResourceIDToVolumeName("ns2")] = server.ProtoClone(&testNamespaces[2])
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Namespaces[utils.ResourceIDToVolumeName("ns0")] = utils.ProtoClone(&testNamespaces[0])
+			testEnv.opiSpdkServer.Nvme.Namespaces[utils.ResourceIDToVolumeName("ns1")] = utils.ProtoClone(&testNamespaces[1])
+			testEnv.opiSpdkServer.Nvme.Namespaces[utils.ResourceIDToVolumeName("ns2")] = utils.ProtoClone(&testNamespaces[2])
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
 			request := &pb.ListNvmeNamespacesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeNamespaces(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetNvmeNamespaces(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetNvmeNamespaces(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetNvmeNamespaces())
 			}
 
@@ -795,9 +795,9 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = server.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = server.ProtoClone(&testController)
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName].Name = testNamespaceName
 
 			request := &pb.GetNvmeNamespaceRequest{Name: tt.in}
@@ -841,11 +841,11 @@ func TestFrontEnd_StatsNvmeNamespace(t *testing.T) {
 			"",
 		},
 		"valid request with unknown key": {
-			server.ResourceIDToVolumeName("unknown-id"),
+			utils.ResourceIDToVolumeName("unknown-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 		},
 		"malformed name": {
 			"-ABC-DEF",
@@ -862,7 +862,7 @@ func TestFrontEnd_StatsNvmeNamespace(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = server.ProtoClone(&testNamespace)
+			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 
 			request := &pb.StatsNvmeNamespaceRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeNamespace(testEnv.ctx, request)
