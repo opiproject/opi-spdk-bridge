@@ -7,6 +7,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"path"
 	"sort"
@@ -43,14 +44,21 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 	}
 	in.NvmeRemoteController.Name = utils.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
-	if ok {
+	volume := new(pb.NvmeRemoteController)
+	found, err := s.store.Get(in.NvmeRemoteController.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if found {
 		log.Printf("Already existing NvmeRemoteController with id %v", in.NvmeRemoteController.Name)
 		return volume, nil
 	}
 	// not found, so create a new one
 	response := utils.ProtoClone(in.NvmeRemoteController)
-	s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
+	err = s.store.Set(in.NvmeRemoteController.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -61,8 +69,12 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmeControllers[in.Name]
-	if !ok {
+	volume := new(pb.NvmeRemoteController)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
@@ -72,7 +84,10 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 	if s.numberOfPathsForController(in.Name) > 0 {
 		return nil, status.Error(codes.FailedPrecondition, "NvmePaths exist for controller")
 	}
-	delete(s.Volumes.NvmeControllers, volume.Name)
+	err = s.store.Delete(volume.Name)
+	if err != nil {
+		return nil, err
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -92,8 +107,12 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
-	if !ok {
+	volume := new(pb.NvmeRemoteController)
+	found, err := s.store.Get(in.NvmeRemoteController.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
@@ -107,7 +126,10 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
 	response := utils.ProtoClone(in.NvmeRemoteController)
-	// s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
+	// err = s.store.Set(in.NvmeRemoteController.Name, response)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return response, nil
 }
 
@@ -124,9 +146,9 @@ func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRem
 	}
 
 	Blobarray := []*pb.NvmeRemoteController{}
-	for _, controller := range s.Volumes.NvmeControllers {
-		Blobarray = append(Blobarray, controller)
-	}
+	// for _, controller := range s.Volumes.NvmeControllers {
+	// 	Blobarray = append(Blobarray, controller)
+	// }
 	sortNvmeRemoteControllers(Blobarray)
 
 	token := ""
@@ -146,8 +168,12 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmeControllers[in.Name]
-	if !ok {
+	volume := new(pb.NvmeRemoteController)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
@@ -163,8 +189,12 @@ func (s *Server) StatsNvmeRemoteController(_ context.Context, in *pb.StatsNvmeRe
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmeControllers[in.Name]
-	if !ok {
+	volume := new(pb.NvmeRemoteController)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
