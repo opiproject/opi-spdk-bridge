@@ -19,7 +19,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/kvm"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -72,7 +72,7 @@ func main() {
 
 	// Create KV store for persistence
 	options := gomap.DefaultOptions
-	options.Codec = server.ProtoCodec{}
+	options.Codec = utils.ProtoCodec{}
 	// TODO: we can change to redis or badger at any given time
 	store := gomap.NewStore(options)
 	defer func(store gokv.Store) {
@@ -99,13 +99,13 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 		log.Println("TLS files are not specified. Use insecure connection.")
 	} else {
 		log.Println("Use TLS certificate files:", tlsFiles)
-		config, err := server.ParseTLSFiles(tlsFiles)
+		config, err := utils.ParseTLSFiles(tlsFiles)
 		if err != nil {
 			log.Fatal("Failed to parse string with tls paths:", err)
 		}
 		log.Println("TLS config:", config)
 		var option grpc.ServerOption
-		if option, err = server.SetupTLSCredentials(config); err != nil {
+		if option, err = utils.SetupTLSCredentials(config); err != nil {
 			log.Fatal("Failed to setup TLS:", err)
 		}
 		serverOptions = append(serverOptions, option)

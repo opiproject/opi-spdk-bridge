@@ -14,7 +14,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -45,7 +45,7 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.AioVolumeId, in.AioVolume.Name)
 		resourceID = in.AioVolumeId
 	}
-	in.AioVolume.Name = server.ResourceIDToVolumeName(resourceID)
+	in.AioVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.AioVolumes[in.AioVolume.Name]
 	if ok {
@@ -70,7 +70,7 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.AioVolume)
+	response := utils.ProtoClone(in.AioVolume)
 	s.Volumes.AioVolumes[in.AioVolume.Name] = response
 	log.Printf("CreateAioVolume: Sending to client: %v", response)
 	return response, nil
@@ -144,7 +144,7 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 				log.Print(msg)
 				return nil, status.Errorf(codes.InvalidArgument, msg)
 			}
-			response := server.ProtoClone(in.AioVolume)
+			response := utils.ProtoClone(in.AioVolume)
 			s.Volumes.AioVolumes[in.AioVolume.Name] = response
 			log.Printf("CreateAioVolume: Sending to client: %v", response)
 			return response, nil
@@ -191,7 +191,7 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.AioVolume)
+	response := utils.ProtoClone(in.AioVolume)
 	s.Volumes.AioVolumes[in.AioVolume.Name] = response
 	return response, nil
 }
@@ -205,7 +205,7 @@ func (s *Server) ListAioVolumes(_ context.Context, in *pb.ListAioVolumesRequest)
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -219,7 +219,7 @@ func (s *Server) ListAioVolumes(_ context.Context, in *pb.ListAioVolumesRequest)
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size

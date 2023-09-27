@@ -11,7 +11,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -20,7 +20,7 @@ import (
 
 var (
 	testQosVolumeID   = "qos-volume-42"
-	testQosVolumeName = server.ResourceIDToVolumeName(testQosVolumeID)
+	testQosVolumeName = utils.ResourceIDToVolumeName(testQosVolumeID)
 	testQosVolume     = &pb.QosVolume{
 		VolumeNameRef: "volume-42",
 		Limits: &pb.Limits{
@@ -199,7 +199,7 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 		"qos_volume name is ignored": {
 			id: testQosVolumeID,
 			in: &pb.QosVolume{
-				Name:          server.ResourceIDToVolumeName("ignored-id"),
+				Name:          utils.ResourceIDToVolumeName("ignored-id"),
 				VolumeNameRef: "volume-42",
 				Limits: &pb.Limits{
 					Max: &pb.QosLimit{RwBandwidthMbs: 1},
@@ -284,11 +284,11 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = server.ProtoClone(tt.out)
+				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = utils.ProtoClone(tt.out)
 				testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName].Name = testQosVolumeName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testQosVolumeName
 			}
 
@@ -373,7 +373,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			in:          testQosVolumeID,
 			spdk:        []string{},
 			errCode:     codes.NotFound,
-			errMsg:      fmt.Sprintf("unable to find key %s", server.ResourceIDToVolumeName(testQosVolumeID)),
+			errMsg:      fmt.Sprintf("unable to find key %s", utils.ResourceIDToVolumeName(testQosVolumeID)),
 			existBefore: false,
 			existAfter:  false,
 			missing:     false,
@@ -420,7 +420,7 @@ func TestMiddleEnd_DeleteQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			fname1 := server.ResourceIDToVolumeName(tt.in)
+			fname1 := utils.ResourceIDToVolumeName(tt.in)
 
 			request := &pb.DeleteQosVolumeRequest{Name: fname1}
 			if tt.existBefore {
@@ -459,7 +459,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			Max: &pb.QosLimit{RdBandwidthMbs: 1221},
 		},
 	}
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(originalQosVolume)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(originalQosVolume)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -781,7 +781,7 @@ func TestMiddleEnd_UpdateQosVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.existBefore {
-				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = server.ProtoClone(originalQosVolume)
+				testEnv.opiSpdkServer.volumes.qosVolumes[originalQosVolume.Name] = utils.ProtoClone(originalQosVolume)
 			}
 
 			request := &pb.UpdateQosVolumeRequest{QosVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
@@ -833,7 +833,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 	}
 	existingToken := "existing-pagination-token"
 	testParent := "todo"
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(qosVolume0, qosVolume1)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(qosVolume0, qosVolume1)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -929,7 +929,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 			for k, v := range tt.existingVolumes {
-				testEnv.opiSpdkServer.volumes.qosVolumes[k] = server.ProtoClone(v)
+				testEnv.opiSpdkServer.volumes.qosVolumes[k] = utils.ProtoClone(v)
 			}
 			request := &pb.ListQosVolumesRequest{}
 			request.Parent = tt.in
@@ -939,7 +939,7 @@ func TestMiddleEnd_ListQosVolume(t *testing.T) {
 
 			response, err := testEnv.client.ListQosVolumes(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetQosVolumes(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetQosVolumes(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetQosVolumes())
 			}
 
@@ -971,10 +971,10 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 		errMsg  string
 	}{
 		"unknown QoS volume name": {
-			in:      server.ResourceIDToVolumeName("unknown-qos-volume-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-qos-volume-id"),
 			out:     nil,
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %s", server.ResourceIDToVolumeName("unknown-qos-volume-id")),
+			errMsg:  fmt.Sprintf("unable to find key %s", utils.ResourceIDToVolumeName("unknown-qos-volume-id")),
 		},
 		"existing QoS volume": {
 			in:      testQosVolumeName,
@@ -994,7 +994,7 @@ func TestMiddleEnd_GetQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = server.ProtoClone(testQosVolume)
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = utils.ProtoClone(testQosVolume)
 
 			request := &pb.GetQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetQosVolume(testEnv.ctx, request)
@@ -1081,7 +1081,7 @@ func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = server.ProtoClone(testQosVolume)
+			testEnv.opiSpdkServer.volumes.qosVolumes[testQosVolumeName] = utils.ProtoClone(testQosVolume)
 
 			request := &pb.StatsQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsQosVolume(testEnv.ctx, request)

@@ -15,7 +15,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -46,7 +46,7 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NullVolumeId, in.NullVolume.Name)
 		resourceID = in.NullVolumeId
 	}
-	in.NullVolume.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NullVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NullVolumes[in.NullVolume.Name]
 	if ok {
@@ -71,7 +71,7 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NullVolume)
+	response := utils.ProtoClone(in.NullVolume)
 	s.Volumes.NullVolumes[in.NullVolume.Name] = response
 	log.Printf("CreateNullVolume: Sending to client: %v", response)
 	return response, nil
@@ -145,7 +145,7 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 				log.Print(msg)
 				return nil, status.Errorf(codes.InvalidArgument, msg)
 			}
-			response := server.ProtoClone(in.NullVolume)
+			response := utils.ProtoClone(in.NullVolume)
 			s.Volumes.NullVolumes[in.NullVolume.Name] = response
 			log.Printf("CreateNullVolume: Sending to client: %v", response)
 			return response, nil
@@ -192,7 +192,7 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	response := server.ProtoClone(in.NullVolume)
+	response := utils.ProtoClone(in.NullVolume)
 	s.Volumes.NullVolumes[in.NullVolume.Name] = response
 	return response, nil
 }
@@ -206,7 +206,7 @@ func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesReques
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -220,7 +220,7 @@ func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesReques
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size

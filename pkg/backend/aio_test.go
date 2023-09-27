@@ -18,12 +18,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 var (
 	testAioVolumeID   = "mytest"
-	testAioVolumeName = server.ResourceIDToVolumeName(testAioVolumeID)
+	testAioVolumeName = utils.ResourceIDToVolumeName(testAioVolumeID)
 	testAioVolume     = pb.AioVolume{
 		BlockSize:   512,
 		BlocksCount: 12,
@@ -123,11 +123,11 @@ func TestBackEnd_CreateAioVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = server.ProtoClone(&testAioVolume)
+				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolume)
 				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName].Name = testAioVolumeName
 			}
 			if tt.out != nil {
-				tt.out = server.ProtoClone(tt.out)
+				tt.out = utils.ProtoClone(tt.out)
 				tt.out.Name = testAioVolumeName
 			}
 
@@ -153,9 +153,9 @@ func TestBackEnd_CreateAioVolume(t *testing.T) {
 }
 
 func TestBackEnd_UpdateAioVolume(t *testing.T) {
-	testAioVolumeWithName := server.ProtoClone(&testAioVolume)
+	testAioVolumeWithName := utils.ProtoClone(&testAioVolume)
 	testAioVolumeWithName.Name = testAioVolumeName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(testAioVolumeWithName)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(testAioVolumeWithName)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -260,7 +260,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 		"valid request with unknown key": {
 			mask: nil,
 			in: &pb.AioVolume{
-				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				Name:        utils.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
 				Filename:    "/tmp/aio_bdev_file",
@@ -268,19 +268,19 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
 			mask: nil,
 			in: &pb.AioVolume{
-				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				Name:        utils.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
 				Filename:    "/tmp/aio_bdev_file",
 			},
 			out: &pb.AioVolume{
-				Name:        server.ResourceIDToVolumeName("unknown-id"),
+				Name:        utils.ResourceIDToVolumeName("unknown-id"),
 				BlockSize:   512,
 				BlocksCount: 12,
 				Filename:    "/tmp/aio_bdev_file",
@@ -307,7 +307,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = server.ProtoClone(&testAioVolume)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolume)
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName].Name = testAioVolumeName
 
 			request := &pb.UpdateAioVolumeRequest{AioVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
@@ -500,7 +500,7 @@ func TestBackEnd_ListAioVolumes(t *testing.T) {
 			request := &pb.ListAioVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListAioVolumes(testEnv.ctx, request)
 
-			if !server.EqualProtoSlices(response.GetAioVolumes(), tt.out) {
+			if !utils.EqualProtoSlices(response.GetAioVolumes(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetAioVolumes())
 			}
 
@@ -603,7 +603,7 @@ func TestBackEnd_GetAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = server.ProtoClone(&testAioVolume)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = utils.ProtoClone(&testAioVolume)
 
 			request := &pb.GetAioVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetAioVolume(testEnv.ctx, request)
@@ -706,7 +706,7 @@ func TestBackEnd_StatsAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = server.ProtoClone(&testAioVolume)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeID] = utils.ProtoClone(&testAioVolume)
 
 			request := &pb.StatsAioVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsAioVolume(testEnv.ctx, request)
@@ -780,15 +780,15 @@ func TestBackEnd_DeleteAioVolume(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", server.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
-			in:      server.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToVolumeName("unknown-id"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.OK,
@@ -796,7 +796,7 @@ func TestBackEnd_DeleteAioVolume(t *testing.T) {
 			missing: true,
 		},
 		"malformed name": {
-			in:      server.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -819,7 +819,7 @@ func TestBackEnd_DeleteAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = server.ProtoClone(&testAioVolume)
+			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolume)
 			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName].Name = testAioVolumeName
 
 			request := &pb.DeleteAioVolumeRequest{Name: tt.in, AllowMissing: tt.missing}

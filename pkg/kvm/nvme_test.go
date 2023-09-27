@@ -17,7 +17,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -173,10 +173,10 @@ func dirExists(dirname string) bool {
 }
 
 func TestCreateNvmeController(t *testing.T) {
-	expectNotNilOut := server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
+	expectNotNilOut := utils.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
 	expectNotNilOut.Spec.NvmeControllerId = proto.Int32(-1)
 	expectNotNilOut.Name = testNvmeControllerName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(expectNotNilOut)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(expectNotNilOut)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -359,7 +359,7 @@ func TestCreateNvmeController(t *testing.T) {
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			options := gomap.DefaultOptions
-			options.Codec = server.ProtoCodec{}
+			options.Codec = utils.ProtoCodec{}
 			store := gomap.NewStore(options)
 			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
@@ -376,7 +376,7 @@ func TestCreateNvmeController(t *testing.T) {
 				os.Mkdir(testCtrlrDir, os.ModePerm) != nil {
 				log.Panicf("Couldn't create ctrlr dir for test")
 			}
-			request := server.ProtoClone(tt.in)
+			request := utils.ProtoClone(tt.in)
 
 			out, err := kvmServer.CreateNvmeController(context.Background(), request)
 
@@ -508,13 +508,13 @@ func TestDeleteNvmeController(t *testing.T) {
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			options := gomap.DefaultOptions
-			options.Codec = server.ProtoCodec{}
+			options.Codec = utils.ProtoCodec{}
 			store := gomap.NewStore(options)
 			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			if !tt.noController {
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
-					server.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
+					utils.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
 				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerName
 			}
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
@@ -537,7 +537,7 @@ func TestDeleteNvmeController(t *testing.T) {
 					}
 				}
 			}
-			request := server.ProtoClone(testDeleteNvmeControllerRequest)
+			request := utils.ProtoClone(testDeleteNvmeControllerRequest)
 
 			_, err := kvmServer.DeleteNvmeController(context.Background(), request)
 

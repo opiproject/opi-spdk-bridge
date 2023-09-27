@@ -13,7 +13,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -22,7 +22,7 @@ import (
 
 var (
 	testVirtioBlkID            = "virtio-blk-42"
-	testVirtioBlkName          = server.ResourceIDToVolumeName(testVirtioBlkID)
+	testVirtioBlkName          = utils.ResourceIDToVolumeName(testVirtioBlkID)
 	testCreateVirtioBlkRequest = &pb.CreateVirtioBlkRequest{VirtioBlkId: testVirtioBlkID, VirtioBlk: &pb.VirtioBlk{
 		PcieId: &pb.PciEndpoint{
 			PhysicalFunction: wrapperspb.Int32(42),
@@ -36,9 +36,9 @@ var (
 )
 
 func TestCreateVirtioBlk(t *testing.T) {
-	expectNotNilOut := server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
+	expectNotNilOut := utils.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 	expectNotNilOut.Name = testVirtioBlkName
-	t.Cleanup(server.CheckTestProtoObjectsNotChanged(expectNotNilOut)(t, t.Name()))
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(expectNotNilOut)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -167,7 +167,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			options := gomap.DefaultOptions
-			options.Codec = server.ProtoCodec{}
+			options.Codec = utils.ProtoCodec{}
 			store := gomap.NewStore(options)
 			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
@@ -178,7 +178,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, tt.buses)
 			kvmServer.timeout = qmplibTimeout
-			request := server.ProtoClone(tt.in)
+			request := utils.ProtoClone(tt.in)
 
 			out, err := kvmServer.CreateVirtioBlk(context.Background(), request)
 
@@ -271,11 +271,11 @@ func TestDeleteVirtioBlk(t *testing.T) {
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
 			options := gomap.DefaultOptions
-			options.Codec = server.ProtoCodec{}
+			options.Codec = utils.ProtoCodec{}
 			store := gomap.NewStore(options)
 			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName] =
-				server.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
+				utils.ProtoClone(testCreateVirtioBlkRequest.VirtioBlk)
 			opiSpdkServer.Virt.BlkCtrls[testVirtioBlkName].Name = testVirtioBlkName
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
@@ -285,7 +285,7 @@ func TestDeleteVirtioBlk(t *testing.T) {
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
-			request := server.ProtoClone(testDeleteVirtioBlkRequest)
+			request := utils.ProtoClone(testDeleteVirtioBlkRequest)
 
 			_, err := kvmServer.DeleteVirtioBlk(context.Background(), request)
 

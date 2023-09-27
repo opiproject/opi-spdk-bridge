@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
@@ -42,7 +42,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.QosVolumeId, in.QosVolume.Name)
 		resourceID = in.QosVolumeId
 	}
-	in.QosVolume.Name = server.ResourceIDToVolumeName(resourceID)
+	in.QosVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
 		log.Println("error:", err)
@@ -57,7 +57,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return nil, err
 	}
 
-	response := server.ProtoClone(in.QosVolume)
+	response := utils.ProtoClone(in.QosVolume)
 	s.volumes.qosVolumes[in.QosVolume.Name] = response
 	log.Printf("CreateQosVolume: Sending to client: %v", response)
 	return response, nil
@@ -134,7 +134,7 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, err := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, err := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if err != nil {
 		log.Printf("error: %v", err)
 		return nil, err
@@ -142,13 +142,13 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 
 	volumes := []*pb.QosVolume{}
 	for _, qosVolume := range s.volumes.qosVolumes {
-		volumes = append(volumes, server.ProtoClone(qosVolume))
+		volumes = append(volumes, utils.ProtoClone(qosVolume))
 	}
 	sortQosVolumes(volumes)
 
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(volumes), offset, size)
-	volumes, hasMoreElements := server.LimitPagination(volumes, offset, size)
+	volumes, hasMoreElements := utils.LimitPagination(volumes, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size

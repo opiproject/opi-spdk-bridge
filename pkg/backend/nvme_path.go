@@ -16,7 +16,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	server "github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
 	"go.einride.tech/aip/fieldbehavior"
@@ -47,7 +47,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmePathId, in.NvmePath.Name)
 		resourceID = in.NvmePathId
 	}
-	in.NvmePath.Name = server.ResourceIDToVolumeName(resourceID)
+	in.NvmePath.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	nvmePath, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
 	if ok {
@@ -109,7 +109,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	}
 	log.Printf("Received from SPDK: %v", result)
 
-	response := server.ProtoClone(in.NvmePath)
+	response := utils.ProtoClone(in.NvmePath)
 	s.Volumes.NvmePaths[in.NvmePath.Name] = response
 	log.Printf("CreateNvmePath: Sending to client: %v", response)
 	return response, nil
@@ -191,7 +191,7 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
-	response := server.ProtoClone(in.NvmePath)
+	response := utils.ProtoClone(in.NvmePath)
 	// s.Volumes.NvmePaths[in.NvmePath.Name] = response
 	return response, nil
 }
@@ -205,7 +205,7 @@ func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (
 		return nil, err
 	}
 	// fetch object from the database
-	size, offset, perr := server.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
+	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
 		log.Printf("error: %v", perr)
 		return nil, perr
@@ -219,7 +219,7 @@ func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (
 	log.Printf("Received from SPDK: %v", result)
 	token := ""
 	log.Printf("Limiting result len(%d) to [%d:%d]", len(result), offset, size)
-	result, hasMoreElements := server.LimitPagination(result, offset, size)
+	result, hasMoreElements := utils.LimitPagination(result, offset, size)
 	if hasMoreElements {
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
