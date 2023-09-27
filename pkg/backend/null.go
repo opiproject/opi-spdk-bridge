@@ -46,8 +46,12 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 	}
 	in.NullVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 	// idempotent API when called with same key, should return same object
-	volume, ok := s.Volumes.NullVolumes[in.NullVolume.Name]
-	if ok {
+	volume := new(pb.NullVolume)
+	found, err := s.store.Get(in.NullVolume.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if found {
 		log.Printf("Already existing NullVolume with id %v", in.NullVolume.Name)
 		return volume, nil
 	}
@@ -58,7 +62,7 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 		NumBlocks: 64,
 	}
 	var result spdk.BdevNullCreateResult
-	err := s.rpc.Call("bdev_null_create", &params, &result)
+	err = s.rpc.Call("bdev_null_create", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +72,10 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.NullVolume)
-	s.Volumes.NullVolumes[in.NullVolume.Name] = response
+	err = s.store.Set(in.NullVolume.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -79,8 +86,12 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NullVolumes[in.Name]
-	if !ok {
+	volume := new(pb.NullVolume)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
@@ -92,7 +103,7 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 		Name: resourceID,
 	}
 	var result spdk.BdevNullDeleteResult
-	err := s.rpc.Call("bdev_null_delete", &params, &result)
+	err = s.rpc.Call("bdev_null_delete", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +112,10 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 		msg := fmt.Sprintf("Could not delete Null Dev: %s", params.Name)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	delete(s.Volumes.NullVolumes, volume.Name)
+	err = s.store.Delete(volume.Name)
+	if err != nil {
+		return nil, err
+	}
 	return &emptypb.Empty{}, nil
 }
 
@@ -112,8 +126,12 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NullVolumes[in.NullVolume.Name]
-	if !ok {
+	volume := new(pb.NullVolume)
+	found, err := s.store.Get(in.NullVolume.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
 			params := spdk.BdevNullCreateParams{
@@ -132,7 +150,10 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 				return nil, status.Errorf(codes.InvalidArgument, msg)
 			}
 			response := utils.ProtoClone(in.NullVolume)
-			s.Volumes.NullVolumes[in.NullVolume.Name] = response
+			err = s.store.Set(in.NullVolume.Name, response)
+			if err != nil {
+				return nil, err
+			}
 			return response, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NullVolume.Name)
@@ -172,7 +193,10 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.NullVolume)
-	s.Volumes.NullVolumes[in.NullVolume.Name] = response
+	err = s.store.Set(in.NullVolume.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -216,8 +240,12 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NullVolumes[in.Name]
-	if !ok {
+	volume := new(pb.NullVolume)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
@@ -226,7 +254,7 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
+	err = s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -245,8 +273,12 @@ func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeReques
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NullVolumes[in.Name]
-	if !ok {
+	volume := new(pb.NullVolume)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
@@ -256,7 +288,7 @@ func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeReques
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult
-	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	err = s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, err
 	}

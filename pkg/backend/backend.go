@@ -20,8 +20,6 @@ import (
 
 // VolumeParameters contains all BackEnd volume related structures
 type VolumeParameters struct {
-	NullVolumes map[string]*pb.NullVolume
-
 	NvmeControllers map[string]*pb.NvmeRemoteController
 	NvmePaths       map[string]*pb.NvmePath
 }
@@ -57,7 +55,6 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 		rpc:   jsonRPC,
 		store: store,
 		Volumes: VolumeParameters{
-			NullVolumes:     make(map[string]*pb.NullVolume),
 			NvmeControllers: make(map[string]*pb.NvmeRemoteController),
 			NvmePaths:       make(map[string]*pb.NvmePath),
 		},
