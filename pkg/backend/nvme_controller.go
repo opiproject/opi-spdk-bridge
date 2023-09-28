@@ -31,10 +31,8 @@ func sortNvmeRemoteControllers(controllers []*pb.NvmeRemoteController) {
 
 // CreateNvmeRemoteController creates an Nvme remote controller
 func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
-	log.Printf("CreateNvmeRemoteController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateNvmeRemoteControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -53,16 +51,13 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 	// not found, so create a new one
 	response := utils.ProtoClone(in.NvmeRemoteController)
 	s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
-	log.Printf("CreateNvmeRemoteController: Sending to client: %v", response)
 	return response, nil
 }
 
 // DeleteNvmeRemoteController deletes an Nvme remote controller
 func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvmeRemoteControllerRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNvmeRemoteController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteNvmeRemoteControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -72,7 +67,6 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v -> %v", err, volume)
 		return nil, err
 	}
 	if s.numberOfPathsForController(in.Name) > 0 {
@@ -84,10 +78,8 @@ func (s *Server) DeleteNvmeRemoteController(_ context.Context, in *pb.DeleteNvme
 
 // ResetNvmeRemoteController resets an Nvme remote controller
 func (s *Server) ResetNvmeRemoteController(_ context.Context, in *pb.ResetNvmeRemoteControllerRequest) (*emptypb.Empty, error) {
-	log.Printf("Received: %v", in.GetName())
 	// check input correctness
 	if err := s.validateResetNvmeRemoteControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	return &emptypb.Empty{}, nil
@@ -95,10 +87,8 @@ func (s *Server) ResetNvmeRemoteController(_ context.Context, in *pb.ResetNvmeRe
 
 // UpdateNvmeRemoteController resets an Nvme remote controller
 func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
-	log.Printf("UpdateNvmeRemoteController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateNvmeRemoteControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -108,13 +98,11 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeRemoteController.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeRemoteController); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
@@ -125,16 +113,13 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 
 // ListNvmeRemoteControllers lists an Nvme remote controllers
 func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRemoteControllersRequest) (*pb.ListNvmeRemoteControllersResponse, error) {
-	log.Printf("ListNvmeRemoteControllers: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 
@@ -156,17 +141,14 @@ func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRem
 
 // GetNvmeRemoteController gets an Nvme remote controller
 func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
-	log.Printf("GetNvmeRemoteController: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetNvmeRemoteControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NvmeControllers[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -176,17 +158,14 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 
 // StatsNvmeRemoteController gets Nvme remote controller stats
 func (s *Server) StatsNvmeRemoteController(_ context.Context, in *pb.StatsNvmeRemoteControllerRequest) (*pb.StatsNvmeRemoteControllerResponse, error) {
-	log.Printf("Received: %v", in.GetName())
 	// check input correctness
 	if err := s.validateStatsNvmeRemoteControllerRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NvmeControllers[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	name := path.Base(volume.Name)
