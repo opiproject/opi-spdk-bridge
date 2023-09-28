@@ -72,10 +72,8 @@ func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.Virti
 
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
-	log.Printf("CreateVirtioBlk: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateVirtioBlkRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -95,20 +93,17 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 	// not found, so create a new one
 	params, err := s.Virt.transport.CreateParams(in.VirtioBlk)
 	if err != nil {
-		log.Printf("error: failed to create params for spdk call: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	var result spdk.VhostCreateBlkControllerResult
 	err = s.rpc.Call("vhost_create_blk_controller", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		msg := fmt.Sprintf("Could not create virtio-blk: %s", resourceID)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.VirtioBlk)
@@ -119,10 +114,8 @@ func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkReques
 
 // DeleteVirtioBlk deletes a Virtio block device
 func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteVirtioBlk: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteVirtioBlkRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -132,7 +125,6 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -145,13 +137,11 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 	var result spdk.VhostDeleteControllerResult
 	err = s.rpc.Call("vhost_delete_controller", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		msg := fmt.Sprintf("Could not delete virtio-blk: %s", in.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Virt.BlkCtrls, controller.Name)
@@ -160,10 +150,8 @@ func (s *Server) DeleteVirtioBlk(_ context.Context, in *pb.DeleteVirtioBlkReques
 
 // UpdateVirtioBlk updates a Virtio block device
 func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
-	log.Printf("UpdateVirtioBlk: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateVirtioBlkRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -173,13 +161,11 @@ func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkReques
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.VirtioBlk.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.VirtioBlk); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
@@ -188,22 +174,18 @@ func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkReques
 
 // ListVirtioBlks lists Virtio block devices
 func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest) (*pb.ListVirtioBlksResponse, error) {
-	log.Printf("ListVirtioBlks: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
@@ -233,17 +215,14 @@ func (s *Server) ListVirtioBlks(_ context.Context, in *pb.ListVirtioBlksRequest)
 
 // GetVirtioBlk gets a Virtio block device
 func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*pb.VirtioBlk, error) {
-	log.Printf("GetVirtioBlk: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetVirtioBlkRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -253,13 +232,11 @@ func (s *Server) GetVirtioBlk(_ context.Context, in *pb.GetVirtioBlkRequest) (*p
 	var result []spdk.VhostGetControllersResult
 	err := s.rpc.Call("vhost_get_controllers", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if len(result) != 1 {
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.VirtioBlk{
@@ -277,14 +254,12 @@ func (s *Server) StatsVirtioBlk(_ context.Context, in *pb.StatsVirtioBlkRequest)
 	log.Printf("StatsVirtioBlk: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsVirtioBlkRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Virt.BlkCtrls[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
