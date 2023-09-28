@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2023 Intel Corporation
+
+// Package utils contains useful helper functions
 package utils
 
 import (
