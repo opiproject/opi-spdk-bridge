@@ -70,7 +70,7 @@ grep "Total" log.txt
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777'
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777 subnqn:nqn.2022-09.io.spdk:opitest1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
 grep "Total" log.txt
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_MULTIPATH'}, nvme_remote_controller_id: 'nvmetcp12'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_MULTIPATH', tcp: {hdgst: false, ddgst: false}}, nvme_remote_controller_id: 'nvmetcp12'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmePath "{nvme_path : {controller_name_ref: '//storage.opiproject.org/volumes/nvmetcp12', traddr:\"$SPDK_IP\", trtype:'NVME_TRANSPORT_TCP', fabrics: { subnqn:'nqn.2022-09.io.spdk:opitest1', trsvcid:'7777', adrfam:'NVME_ADRFAM_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}, nvme_path_id: 'nvmetcp12path0'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeRemoteController "{name: '//storage.opiproject.org/volumes/nvmetcp12'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmePath "{name: '//storage.opiproject.org/volumes/nvmetcp12path0'}"
