@@ -25,6 +25,7 @@ import (
 var checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChanged(
 	testQosVolume,
 	&encryptedVolume,
+	&encryptedVolumeWithName,
 )
 
 // TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
@@ -104,5 +105,11 @@ var (
 		VolumeNameRef: "volume-test",
 		Key:           []byte("0123456789abcdef0123456789abcdef"),
 		Cipher:        pb.EncryptionType_ENCRYPTION_TYPE_AES_XTS_128,
+	}
+	encryptedVolumeWithName = pb.EncryptedVolume{
+		Name:          encryptedVolumeName,
+		VolumeNameRef: encryptedVolume.VolumeNameRef,
+		Key:           encryptedVolume.Key,
+		Cipher:        encryptedVolume.Cipher,
 	}
 )

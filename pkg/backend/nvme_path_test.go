@@ -38,6 +38,13 @@ var (
 			Trsvcid: 4444,
 		},
 	}
+	testNvmePathWithName = pb.NvmePath{
+		Name:              testNvmePathName,
+		Trtype:            testNvmePath.Trtype,
+		Traddr:            testNvmePath.Traddr,
+		ControllerNameRef: testNvmePath.ControllerNameRef,
+		Fabrics:           testNvmePath.Fabrics,
+	}
 )
 
 func TestBackEnd_CreateNvmePath(t *testing.T) {
@@ -224,8 +231,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(tt.controller)
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePath)
-				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
+				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePathWithName)
 			}
 			if tt.out != nil {
 				tt.out = utils.ProtoClone(tt.out)
@@ -444,8 +450,8 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePath)
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrl)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePathWithName)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrlWithName)
 
 			request := &pb.DeleteNvmePathRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmePath(testEnv.ctx, request)
@@ -469,9 +475,6 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNvmePath(t *testing.T) {
-	testNvmePathWithName := utils.ProtoClone(&testNvmePath)
-	testNvmePathWithName.Name = testNvmePathName
-	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(testNvmePathWithName)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -485,7 +488,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 	}{
 		"invalid fieldmask": {
 			mask:    &fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
-			in:      testNvmePathWithName,
+			in:      &testNvmePathWithName,
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -633,8 +636,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePath)
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName].Name = testNvmePathName
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePathWithName)
 
 			request := &pb.UpdateNvmePathRequest{NvmePath: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmePath(testEnv.ctx, request)
@@ -871,42 +873,42 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 		errMsg  string
 	}{
 		// "valid request with invalid SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: nil,
 		// 	spdk: []string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 		// 	errCode: codes.InvalidArgument,
 		// 	errMsg: fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 		// },
 		"valid request with invalid marshal SPDK response": {
-			in:      testNvmePathID,
+			in:      testNvmePathName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_nvme_get_controllers: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevNvmeGetControllerResult"),
 		},
 		"valid request with empty SPDK response": {
-			in:      testNvmePathID,
+			in:      testNvmePathName,
 			out:     nil,
 			spdk:    []string{""},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_nvme_get_controllers: %v", "EOF"),
 		},
 		"valid request with ID mismatch SPDK response": {
-			in:      testNvmePathID,
+			in:      testNvmePathName,
 			out:     nil,
 			spdk:    []string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response ID mismatch"),
 		},
 		"valid request with error code from SPDK response": {
-			in:      testNvmePathID,
+			in:      testNvmePathName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_nvme_get_controllers: %v", "json response error: myopierr"),
 		},
 		// "valid request with valid SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: &pb.NvmePath{
 		// 		Name:    "Malloc1",
 		// 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
@@ -947,7 +949,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = utils.ProtoClone(&testNvmePath)
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePathWithName)
 
 			request := &pb.GetNvmePathRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmePath(testEnv.ctx, request)
@@ -980,42 +982,42 @@ func TestBackEnd_StatsNvmePath(t *testing.T) {
 		errMsg  string
 	}{
 		// "valid request with invalid SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: nil,
 		// 	spdk: []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 		// 	errCode: codes.InvalidArgument,
 		// 	errMsg: fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 		// },
 		// "valid request with invalid marshal SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: nil,
 		// 	spdk: []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 		// 	errCode: codes.Unknown,
 		// 	errMsg: fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevGetIostatResult"),
 		// },
 		// "valid request with empty SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: nil,
 		// 	spdk: []string{""},
 		// 	errCode: codes.Unknown,
 		// 	errMsg: fmt.Sprintf("bdev_get_iostat: %v", "EOF"),
 		// },
 		// "valid request with ID mismatch SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: nil,
 		// 	spdk: []string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 		// 	errCode: codes.Unknown,
 		// 	errMsg: fmt.Sprintf("bdev_get_iostat: %v", "json response ID mismatch"),
 		// },
 		// "valid request with error code from SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: nil,
 		// 	spdk: []string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 		// 	errCode: codes.Unknown,
 		// 	errMsg: fmt.Sprintf("bdev_get_iostat: %v", "json response error: myopierr"),
 		// },
 		// "valid request with valid SPDK response": {
-		// 	in: testNvmePathID,
+		// 	in: testNvmePathName,
 		// 	out: &pb.VolumeStats{
 		// 		ReadBytesCount:    1,
 		// 		ReadOpsCount:      2,
@@ -1050,8 +1052,7 @@ func TestBackEnd_StatsNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID] = utils.ProtoClone(&testNvmePath)
-			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathID].Name = testNvmePathName
+			testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePathWithName)
 
 			request := &pb.StatsNvmePathRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmePath(testEnv.ctx, request)

@@ -90,8 +90,7 @@ func TestBackEnd_CreateNvmeRemoteController(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrl)
-				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName].Name = testNvmeCtrlName
+				testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrlWithName)
 			}
 			if tt.out != nil {
 				tt.out = utils.ProtoClone(tt.out)
@@ -326,7 +325,7 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request": {
-			in: testNvmeCtrlID,
+			in: testNvmeCtrlName,
 			out: &pb.NvmeRemoteController{
 				Name:      testNvmeCtrlName,
 				Multipath: testNvmeCtrl.Multipath,
@@ -361,8 +360,7 @@ func TestBackEnd_GetNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = utils.ProtoClone(&testNvmeCtrl)
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID].Name = testNvmeCtrlName
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrlWithName)
 
 			request := &pb.GetNvmeRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.GetNvmeRemoteController(testEnv.ctx, request)
@@ -395,7 +393,7 @@ func TestBackEnd_StatsNvmeRemoteController(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request with valid SPDK response": {
-			in: testNvmeCtrlID,
+			in: testNvmeCtrlName,
 			out: &pb.VolumeStats{
 				ReadOpsCount:  -1,
 				WriteOpsCount: -1,
@@ -426,7 +424,7 @@ func TestBackEnd_StatsNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlID] = utils.ProtoClone(&testNvmeCtrl)
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrlWithName)
 
 			request := &pb.StatsNvmeRemoteControllerRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNvmeRemoteController(testEnv.ctx, request)
@@ -501,8 +499,7 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 			testEnv := createTestEnvironment([]string{})
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrl)
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName].Name = testNvmeCtrlName
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrlWithName)
 
 			request := &pb.DeleteNvmeRemoteControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeRemoteController(testEnv.ctx, request)
