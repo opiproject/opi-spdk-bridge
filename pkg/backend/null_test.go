@@ -29,6 +29,11 @@ var (
 		BlockSize:   512,
 		BlocksCount: 64,
 	}
+	testNullVolumeWithName = pb.NullVolume{
+		Name:        testNullVolumeName,
+		BlockSize:   testNullVolume.BlockSize,
+		BlocksCount: testNullVolume.BlocksCount,
+	}
 )
 
 func TestBackEnd_CreateNullVolume(t *testing.T) {
@@ -123,8 +128,7 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolume)
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
+				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
 			}
 			if tt.out != nil {
 				tt.out = utils.ProtoClone(tt.out)
@@ -153,9 +157,6 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 }
 
 func TestBackEnd_UpdateNullVolume(t *testing.T) {
-	testNullVolumeWithName := utils.ProtoClone(&testNullVolume)
-	testNullVolumeWithName.Name = testNullVolumeName
-	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(testNullVolumeWithName)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
@@ -169,7 +170,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 	}{
 		"invalid fieldmask": {
 			mask:    &fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -178,7 +179,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete fails": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.InvalidArgument,
@@ -187,7 +188,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete empty": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{""},
 			errCode: codes.Unknown,
@@ -196,7 +197,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ID mismatch": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
@@ -205,7 +206,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete exception": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			errCode: codes.Unknown,
@@ -214,7 +215,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create fails": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			errCode: codes.InvalidArgument,
@@ -223,7 +224,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create empty": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			errCode: codes.Unknown,
@@ -232,7 +233,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create ID mismatch": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":""}`},
 			errCode: codes.Unknown,
@@ -241,7 +242,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"delete ok create exception": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":""}`},
 			errCode: codes.Unknown,
@@ -250,8 +251,8 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 		},
 		"valid request with valid SPDK response": {
 			mask:    nil,
-			in:      testNullVolumeWithName,
-			out:     testNullVolumeWithName,
+			in:      &testNullVolumeWithName,
+			out:     &testNullVolumeWithName,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":"mytest"}`},
 			errCode: codes.OK,
 			errMsg:  "",
@@ -308,8 +309,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolume)
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
 
 			request := &pb.UpdateNullVolumeRequest{NullVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNullVolume(testEnv.ctx, request)
@@ -539,42 +539,42 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request with invalid SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":[]}`},
 			errCode: codes.InvalidArgument,
 			errMsg:  fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 		},
 		"valid request with invalid marshal SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_bdevs: %v", "json: cannot unmarshal bool into Go value of type []spdk.BdevGetBdevsResult"),
 		},
 		"valid request with empty SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{""},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_bdevs: %v", "EOF"),
 		},
 		"valid request with ID mismatch SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":0,"error":{"code":0,"message":""},"result":[]}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_bdevs: %v", "json response ID mismatch"),
 		},
 		"valid request with error code from SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_bdevs: %v", "json response error: myopierr"),
 		},
 		"valid request with valid SPDK response": {
-			in: testNullVolumeID,
+			in: testNullVolumeName,
 			out: &pb.NullVolume{
 				Name:        "Malloc1",
 				Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
@@ -614,7 +614,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = utils.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
 
 			request := &pb.GetNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullVolume(testEnv.ctx, request)
@@ -647,42 +647,42 @@ func TestBackEnd_StatsNullVolume(t *testing.T) {
 		errMsg  string
 	}{
 		"valid request with invalid SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			errCode: codes.InvalidArgument,
 			errMsg:  fmt.Sprintf("expecting exactly 1 result, got %v", "0"),
 		},
 		"valid request with invalid marshal SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevGetIostatResult"),
 		},
 		"valid request with empty SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{""},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_iostat: %v", "EOF"),
 		},
 		"valid request with ID mismatch SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":0,"error":{"code":0,"message":""},"result":{"tick_rate":0,"ticks":0,"bdevs":null}}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_iostat: %v", "json response ID mismatch"),
 		},
 		"valid request with error code from SPDK response": {
-			in:      testNullVolumeID,
+			in:      testNullVolumeName,
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"myopierr"}}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("bdev_get_iostat: %v", "json response error: myopierr"),
 		},
 		"valid request with valid SPDK response": {
-			in: testNullVolumeID,
+			in: testNullVolumeName,
 			out: &pb.VolumeStats{
 				ReadBytesCount:    1,
 				ReadOpsCount:      2,
@@ -717,7 +717,7 @@ func TestBackEnd_StatsNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeID] = utils.ProtoClone(&testNullVolume)
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
 
 			request := &pb.StatsNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNullVolume(testEnv.ctx, request)
@@ -830,8 +830,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolume)
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName].Name = testNullVolumeName
+			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
 
 			request := &pb.DeleteNullVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullVolume(testEnv.ctx, request)

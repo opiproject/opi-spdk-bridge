@@ -24,9 +24,13 @@ import (
 
 var checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChanged(
 	&testAioVolume,
+	&testAioVolumeWithName,
 	&testNullVolume,
+	&testNullVolumeWithName,
 	&testNvmeCtrl,
+	&testNvmeCtrlWithName,
 	&testNvmePath,
+	&testNvmePathWithName,
 )
 
 // TODO: move test infrastructure code to a separate (test/server) package to avoid duplication
