@@ -33,10 +33,8 @@ func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
 
 // CreateEncryptedVolume creates an encrypted volume
 func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
-	log.Printf("CreateEncryptedVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateEncryptedVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -48,7 +46,6 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	in.EncryptedVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
-		log.Printf("error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -64,13 +61,11 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	var result1 spdk.AccelCryptoKeyCreateResult
 	err1 := s.rpc.Call("accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
-		log.Printf("error: %v", err1)
 		return nil, err1
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
 		msg := fmt.Sprintf("Could not create Crypto Key: %s", string(in.EncryptedVolume.Key))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// create bdev now
@@ -82,27 +77,22 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	var result spdk.BdevCryptoCreateResult
 	err := s.rpc.Call("bdev_crypto_create", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result == "" {
 		msg := fmt.Sprintf("Could not create Crypto Dev: %s", params.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.EncryptedVolume)
 	s.volumes.encVolumes[in.EncryptedVolume.Name] = response
-	log.Printf("CreateEncryptedVolume: Sending to client: %v", response)
 	return response, nil
 }
 
 // DeleteEncryptedVolume deletes an encrypted volume
 func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteEncryptedVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteEncryptedVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -112,7 +102,6 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -122,13 +111,11 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 	var bdevCryptoDeleteResult spdk.BdevCryptoDeleteResult
 	err := s.rpc.Call("bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", bdevCryptoDeleteResult)
 	if !bdevCryptoDeleteResult {
 		msg := fmt.Sprintf("Could not delete Crypto: %s", bdevCryptoDeleteParams.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
@@ -138,13 +125,11 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 	var keyDestroyResult spdk.AccelCryptoKeyDestroyResult
 	err = s.rpc.Call("accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", keyDestroyResult)
 	if !keyDestroyResult {
 		msg := fmt.Sprintf("Could not destroy Crypto Key: %v", keyDestroyParams.KeyName)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
@@ -154,15 +139,12 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 
 // UpdateEncryptedVolume updates an encrypted volume
 func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
-	log.Printf("UpdateEncryptedVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateEncryptedVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	if err := s.verifyEncryptedVolume(in.EncryptedVolume); err != nil {
-		log.Printf("error: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	resourceID := path.Base(in.EncryptedVolume.Name)
@@ -173,13 +155,11 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	var result1 spdk.BdevCryptoDeleteResult
 	err1 := s.rpc.Call("bdev_crypto_delete", &params1, &result1)
 	if err1 != nil {
-		log.Printf("error: %v", err1)
 		return nil, err1
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
 		msg := fmt.Sprintf("Could not delete Crypto: %s", params1.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// now delete a key
@@ -189,26 +169,22 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	var result0 spdk.AccelCryptoKeyDestroyResult
 	err0 := s.rpc.Call("accel_crypto_key_destroy", &params0, &result0)
 	if err0 != nil {
-		log.Printf("error: %v", err0)
 		return nil, err0
 	}
 	log.Printf("Received from SPDK: %v", result0)
 	if !result0 {
 		msg := fmt.Sprintf("Could not destroy Crypto Key: %v", params0.KeyName)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result2 spdk.AccelCryptoKeyCreateResult
 	err2 := s.rpc.Call("accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
-		log.Printf("error: %v", err2)
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if !result2 {
 		msg := fmt.Sprintf("Could not create Crypto Key: %s", string(in.EncryptedVolume.Key))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// create bdev now
@@ -220,13 +196,11 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	var result3 spdk.BdevCryptoCreateResult
 	err3 := s.rpc.Call("bdev_crypto_create", &params3, &result3)
 	if err3 != nil {
-		log.Printf("error: %v", err3)
 		return nil, err3
 	}
 	log.Printf("Received from SPDK: %v", result3)
 	if result3 == "" {
 		msg := fmt.Sprintf("Could not create Crypto Dev: %s", params3.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// return result
@@ -236,22 +210,18 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 
 // ListEncryptedVolumes lists encrypted volumes
 func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
-	log.Printf("ListEncryptedVolumes: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
@@ -274,17 +244,14 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 
 // GetEncryptedVolume gets an encrypted volume
 func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
-	log.Printf("GetEncryptedVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetEncryptedVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.volumes.encVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -294,13 +261,11 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if len(result) != 1 {
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.EncryptedVolume{Name: result[0].Name}, nil
@@ -308,17 +273,14 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 
 // StatsEncryptedVolume gets an encrypted volume stats
 func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVolumeRequest) (*pb.StatsEncryptedVolumeResponse, error) {
-	log.Printf("StatsEncryptedVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsEncryptedVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.volumes.encVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -329,13 +291,11 @@ func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVo
 	var result spdk.BdevGetIostatResult
 	err := s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if len(result.Bdevs) != 1 {
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result.Bdevs))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.StatsEncryptedVolumeResponse{Stats: &pb.VolumeStats{
