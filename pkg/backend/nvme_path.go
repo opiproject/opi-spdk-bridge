@@ -35,10 +35,8 @@ func sortNvmePaths(paths []*pb.NvmePath) {
 
 // CreateNvmePath creates a new Nvme path
 func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest) (*pb.NvmePath, error) {
-	log.Printf("CreateNvmePath: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateNvmePathRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -58,14 +56,12 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	controller, ok := s.Volumes.NvmeControllers[in.NvmePath.ControllerNameRef]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.NvmePath.ControllerNameRef)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	// TODO: consider moving to _validate.go
 	if in.NvmePath.Trtype == pb.NvmeTransportType_NVME_TRANSPORT_PCIE && controller.Tcp != nil {
 		err := status.Errorf(codes.FailedPrecondition, "pcie transport on tcp controller is not allowed")
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -104,23 +100,19 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	var result []spdk.BdevNvmeAttachControllerResult
 	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 
 	response := utils.ProtoClone(in.NvmePath)
 	s.Volumes.NvmePaths[in.NvmePath.Name] = response
-	log.Printf("CreateNvmePath: Sending to client: %v", response)
 	return response, nil
 }
 
 // DeleteNvmePath deletes a Nvme path
 func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNvmePath: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteNvmePathRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	nvmePath, ok := s.Volumes.NvmePaths[in.Name]
@@ -129,13 +121,11 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	controller, ok := s.Volumes.NvmeControllers[nvmePath.ControllerNameRef]
 	if !ok {
 		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", nvmePath.ControllerNameRef)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -151,13 +141,11 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 	var result spdk.BdevNvmeDetachControllerResult
 	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		msg := fmt.Sprintf("Could not delete Nvme Path: %s", path.Base(in.Name))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
@@ -168,10 +156,8 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 
 // UpdateNvmePath updates an Nvme path
 func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
-	log.Printf("UpdateNvmePath: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateNvmePathRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -181,13 +167,11 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmePath.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmePath); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
@@ -198,22 +182,18 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 
 // ListNvmePaths lists Nvme path
 func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (*pb.ListNvmePathsResponse, error) {
-	log.Printf("ListNvmePaths: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 	var result []spdk.BdevNvmeGetControllerResult
 	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
@@ -235,24 +215,20 @@ func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (
 
 // GetNvmePath gets Nvme path
 func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.NvmePath, error) {
-	log.Printf("GetNvmePath: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetNvmePathRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	path, ok := s.Volumes.NvmePaths[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
 	var result []spdk.BdevNvmeGetControllerResult
 	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
@@ -264,23 +240,19 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", path.Fabrics.Subnqn)
-	log.Print(msg)
 	return nil, status.Errorf(codes.InvalidArgument, msg)
 }
 
 // StatsNvmePath gets Nvme path stats
 func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (*pb.StatsNvmePathResponse, error) {
-	log.Printf("StatsNvmePath: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsNvmePathRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NvmePaths[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -288,7 +260,6 @@ func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (
 	var result spdk.NvmfGetSubsystemStatsResult
 	err := s.rpc.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)

@@ -34,10 +34,8 @@ func sortNullVolumes(volumes []*pb.NullVolume) {
 
 // CreateNullVolume creates a Null volume instance
 func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequest) (*pb.NullVolume, error) {
-	log.Printf("CreateNullVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateNullVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -62,27 +60,22 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 	var result spdk.BdevNullCreateResult
 	err := s.rpc.Call("bdev_null_create", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if result == "" {
 		msg := fmt.Sprintf("Could not create Null Dev: %s", params.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.NullVolume)
 	s.Volumes.NullVolumes[in.NullVolume.Name] = response
-	log.Printf("CreateNullVolume: Sending to client: %v", response)
 	return response, nil
 }
 
 // DeleteNullVolume deletes a Null volume instance
 func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteNullVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteNullVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -92,7 +85,6 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -102,13 +94,11 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 	var result spdk.BdevNullDeleteResult
 	err := s.rpc.Call("bdev_null_delete", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		msg := fmt.Sprintf("Could not delete Null Dev: %s", params.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	delete(s.Volumes.NullVolumes, volume.Name)
@@ -117,10 +107,8 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 
 // UpdateNullVolume updates a Null volume instance
 func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequest) (*pb.NullVolume, error) {
-	log.Printf("UpdateNullVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateNullVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -136,28 +124,23 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 			var result spdk.BdevNullCreateResult
 			err := s.rpc.Call("bdev_null_create", &params, &result)
 			if err != nil {
-				log.Printf("error: %v", err)
 				return nil, err
 			}
 			log.Printf("Received from SPDK: %v", result)
 			if result == "" {
 				msg := fmt.Sprintf("Could not create Null Dev: %s", params.Name)
-				log.Print(msg)
 				return nil, status.Errorf(codes.InvalidArgument, msg)
 			}
 			response := utils.ProtoClone(in.NullVolume)
 			s.Volumes.NullVolumes[in.NullVolume.Name] = response
-			log.Printf("CreateNullVolume: Sending to client: %v", response)
 			return response, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NullVolume.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NullVolume); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	params1 := spdk.BdevNullDeleteParams{
@@ -166,13 +149,11 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 	var result1 spdk.BdevNullDeleteResult
 	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
 	if err1 != nil {
-		log.Printf("error: %v", err1)
 		return nil, err1
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
 		msg := fmt.Sprintf("Could not delete Null Dev: %s", params1.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	params2 := spdk.BdevNullCreateParams{
@@ -183,13 +164,11 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 	var result2 spdk.BdevNullCreateResult
 	err2 := s.rpc.Call("bdev_null_create", &params2, &result2)
 	if err2 != nil {
-		log.Printf("error: %v", err2)
 		return nil, err2
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if result2 == "" {
 		msg := fmt.Sprintf("Could not create Null Dev: %s", params2.Name)
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	response := utils.ProtoClone(in.NullVolume)
@@ -199,22 +178,18 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 
 // ListNullVolumes lists Null volume instances
 func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesRequest) (*pb.ListNullVolumesResponse, error) {
-	log.Printf("ListNullVolumes: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, perr := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if perr != nil {
-		log.Printf("error: %v", perr)
 		return nil, perr
 	}
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
@@ -236,17 +211,14 @@ func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesReques
 
 // GetNullVolume gets a a Null volume instance
 func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (*pb.NullVolume, error) {
-	log.Printf("GetNullVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetNullVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NullVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -256,13 +228,11 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 	var result []spdk.BdevGetBdevsResult
 	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if len(result) != 1 {
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.NullVolume{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
@@ -270,17 +240,14 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 
 // StatsNullVolume gets a Null volume instance stats
 func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeRequest) (*pb.StatsNullVolumeResponse, error) {
-	log.Printf("StatsNullVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsNullVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.Volumes.NullVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
@@ -291,13 +258,11 @@ func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeReques
 	var result spdk.BdevGetIostatResult
 	err := s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if len(result.Bdevs) != 1 {
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result.Bdevs))
-		log.Print(msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	return &pb.StatsNullVolumeResponse{Stats: &pb.VolumeStats{
