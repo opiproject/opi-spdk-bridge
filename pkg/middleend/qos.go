@@ -30,10 +30,8 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 
 // CreateQosVolume creates a QoS volume
 func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
-	log.Printf("CreateQosVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateCreateQosVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// see https://google.aip.dev/133#user-specified-ids
@@ -45,7 +43,6 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 	in.QosVolume.Name = utils.ResourceIDToVolumeName(resourceID)
 
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
-		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if volume, ok := s.volumes.qosVolumes[in.QosVolume.Name]; ok {
@@ -65,10 +62,8 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 
 // DeleteQosVolume deletes a QoS volume
 func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
-	log.Printf("DeleteQosVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateDeleteQosVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
@@ -78,7 +73,6 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -92,15 +86,12 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 
 // UpdateQosVolume updates a QoS volume
 func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeRequest) (*pb.QosVolume, error) {
-	log.Printf("UpdateQosVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateUpdateQosVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	if err := s.verifyQosVolume(in.QosVolume); err != nil {
-		log.Println("error:", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	name := in.QosVolume.Name
@@ -113,7 +104,6 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 	if volume.VolumeNameRef != in.QosVolume.VolumeNameRef {
 		msg := fmt.Sprintf("Change of underlying volume %v to a new one %v is forbidden",
 			volume.VolumeNameRef, in.QosVolume.VolumeNameRef)
-		log.Println("error:", msg)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	log.Println("Set new max limit values")
@@ -127,16 +117,13 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 
 // ListQosVolumes lists QoS volumes
 func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
-	log.Printf("ListQosVolume: Received from client: %v", in)
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	size, offset, err := utils.ExtractPagination(in.PageSize, in.PageToken, s.Pagination)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 
@@ -159,17 +146,14 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 
 // GetQosVolume gets a QoS volume
 func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
-	log.Printf("GetQosVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateGetQosVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	return volume, nil
@@ -177,17 +161,14 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 
 // StatsQosVolume gets a QoS volume stats
 func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest) (*pb.StatsQosVolumeResponse, error) {
-	log.Printf("StatsQosVolume: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsQosVolumeRequest(in); err != nil {
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	// fetch object from the database
 	volume, ok := s.volumes.qosVolumes[in.Name]
 	if !ok {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
-		log.Printf("error: %v", err)
 		return nil, err
 	}
 	params := spdk.BdevGetIostatParams{
@@ -196,7 +177,6 @@ func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest)
 	var result spdk.BdevGetIostatResult
 	err := s.rpc.Call("bdev_get_iostat", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return nil, spdk.ErrFailedSpdkCall
 	}
 	log.Printf("Received from SPDK: %v", result)
@@ -230,13 +210,12 @@ func (s *Server) setMaxLimit(underlyingVolume string, limit *pb.QosLimit) error 
 	var result spdk.BdevQoSResult
 	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
 	if err != nil {
-		log.Printf("error: %v", err)
 		return spdk.ErrFailedSpdkCall
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
 		msg := fmt.Sprintf("Could not set max QoS limit: %s on %v", limit, underlyingVolume)
-		log.Print(msg)
+		log.Println(msg)
 		return spdk.ErrUnexpectedSpdkCallResult
 	}
 
