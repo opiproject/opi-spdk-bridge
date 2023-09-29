@@ -56,6 +56,8 @@ services:
       context: .
     volumes_from:
       - spdk
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     ports:
       - "8082:8082"
       - "50051:50051"
@@ -76,6 +78,17 @@ services:
       - opi
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.49.0
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - opi
 
   opi-gw-test:
     image: curlimages/curl:8.3.0

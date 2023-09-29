@@ -34,6 +34,9 @@ fi
 docker run --network=host --rm docker.io/namely/grpc-cli ls 127.0.0.1:50051
 docker run --network=host --rm docker.io/curlimages/curl:8.3.0 curl -qkL http://127.0.0.1:8082/v1/inventory/1/inventory/2
 
+# Check Jaeger tracing works
+curl -s "http://127.0.0.1:16686/api/traces?service=opi-spdk-bridge&lookback=20m&prettyPrint=true&limit=10" | jq .data[].spans[].operationName
+
 # check reflection
 grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cli)
 "${grpc_cli[@]}" ls opi-spdk-server:50051
