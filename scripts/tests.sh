@@ -21,6 +21,7 @@ do
 done
 curl --fail --insecure --user spdkuser:spdkpass -X POST -H 'Content-Type: application/json' -d '{"id": 1, "method": "bdev_get_bdevs"}' http://127.0.0.1:9009
 
+# wait for client completes and return exit code
 STORAGE_CLIENT_NAME=$(docker-compose ps | grep opi-spdk-client | awk '{print $1}')
 STORAGE_CLIENT_RC=$(docker wait "${STORAGE_CLIENT_NAME}")
 if [ "${STORAGE_CLIENT_RC}" != "0" ]; then
@@ -31,6 +32,7 @@ fi
 
 # Check exported port also works (host network)
 docker run --network=host --rm docker.io/namely/grpc-cli ls 127.0.0.1:50051
+docker run --network=host --rm docker.io/curlimages/curl:8.3.0 curl -qkL http://127.0.0.1:8082/v1/inventory/1/inventory/2
 
 # check reflection
 grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cli)
@@ -67,7 +69,7 @@ grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeSubsystem "{name : '//storage.opiproject.org/subsystems/subsystem1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeController "{name : '//storage.opiproject.org/subsystems/subsystem1/controllers/controller1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeNamespace "{name :  '//storage.opiproject.org/subsystems/subsystem1/namespaces/namespace1'}"
-docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777'
+docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_identify -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:7777 subnqn:nqn.2022-09.io.spdk:opitest1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
 grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_MULTIPATH', tcp: {hdgst: false, ddgst: false}}, nvme_remote_controller_id: 'nvmetcp12'}"
