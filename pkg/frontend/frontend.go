@@ -14,25 +14,12 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
-// NvmeTransport interface is used to provide SPDK call params to create/delete
-// Nvme controllers depending on used transport type.
-type NvmeTransport interface {
-	Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error)
-}
-
 // NvmeParameters contains all Nvme related structures
 type NvmeParameters struct {
 	Subsystems  map[string]*pb.NvmeSubsystem
 	Controllers map[string]*pb.NvmeController
 	Namespaces  map[string]*pb.NvmeNamespace
 	transport   NvmeTransport
-}
-
-// VirtioBlkTransport interface is used to provide SPDK call params to create/delete
-// virtio-blk controllers depending on used transport type.
-type VirtioBlkTransport interface {
-	CreateParams(virtioBlk *pb.VirtioBlk) (any, error)
-	DeleteParams(virtioBlk *pb.VirtioBlk) (any, error)
 }
 
 // VirtioParameters contains all VirtIO related structures

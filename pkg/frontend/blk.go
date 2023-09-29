@@ -32,44 +32,6 @@ func sortVirtioBlks(virtioBlks []*pb.VirtioBlk) {
 	})
 }
 
-type vhostUserBlkTransport struct{}
-
-// NewVhostUserBlkTransport creates objects to handle vhost user blk transport
-// specifics
-func NewVhostUserBlkTransport() VirtioBlkTransport {
-	return &vhostUserBlkTransport{}
-}
-
-func (v vhostUserBlkTransport) CreateParams(virtioBlk *pb.VirtioBlk) (any, error) {
-	v.verifyTransportSpecificParams(virtioBlk)
-
-	resourceID := path.Base(virtioBlk.Name)
-	return spdk.VhostCreateBlkControllerParams{
-		Ctrlr:   resourceID,
-		DevName: virtioBlk.VolumeNameRef,
-	}, nil
-}
-
-func (v vhostUserBlkTransport) DeleteParams(virtioBlk *pb.VirtioBlk) (any, error) {
-	v.verifyTransportSpecificParams(virtioBlk)
-
-	resourceID := path.Base(virtioBlk.Name)
-	return spdk.VhostDeleteControllerParams{
-		Ctrlr: resourceID,
-	}, nil
-}
-
-func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.VirtioBlk) {
-	pcieID := virtioBlk.PcieId
-	if pcieID.PortId.Value != 0 {
-		log.Printf("WARNING: only port 0 is supported for vhost user. Will be replaced with an error")
-	}
-
-	if pcieID.VirtualFunction.Value != 0 {
-		log.Println("WARNING: virtual functions are not supported for vhost user. Will be replaced with an error")
-	}
-}
-
 // CreateVirtioBlk creates a Virtio block device
 func (s *Server) CreateVirtioBlk(_ context.Context, in *pb.CreateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	// check input correctness
