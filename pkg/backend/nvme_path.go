@@ -295,7 +295,7 @@ func (s *Server) numberOfPathsForController(controllerName string) int {
 }
 
 func (s *Server) keyToTemporaryFile(pskKey []byte) (string, error) {
-	keyFile, err := s.psk.createTempFile("", "opikey")
+	keyFile, err := s.psk.createTempFile("/var/tmp", "opikey")
 	if err != nil {
 		log.Printf("error: failed to create file for key: %v", err)
 		return "", status.Error(codes.Internal, "failed to handle key")
