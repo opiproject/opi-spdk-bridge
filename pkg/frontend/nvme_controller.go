@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"path"
 	"sort"
 	"strings"
@@ -28,63 +27,10 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-const (
-	ipv4NvmeTCPProtocol = "ipv4"
-	ipv6NvmeTCPProtocol = "ipv6"
-)
-
-// TODO: consider using https://pkg.go.dev/net#TCPAddr
-type nvmeTCPTransport struct {
-	listenAddr net.IP
-	listenPort string
-	protocol   string
-}
-
 func sortNvmeControllers(controllers []*pb.NvmeController) {
 	sort.Slice(controllers, func(i int, j int) bool {
 		return controllers[i].Name < controllers[j].Name
 	})
-}
-
-// NewNvmeTCPTransport creates a new instance of nvmeTcpTransport
-func NewNvmeTCPTransport(listenAddr string) NvmeTransport {
-	host, port, err := net.SplitHostPort(listenAddr)
-	if err != nil {
-		log.Panicf("Invalid ip:port tuple: %v", listenAddr)
-	}
-
-	parsedAddr := net.ParseIP(host)
-	if parsedAddr == nil {
-		log.Panicf("Invalid ip address: %v", host)
-	}
-
-	var protocol string
-	switch {
-	case parsedAddr.To4() != nil:
-		protocol = ipv4NvmeTCPProtocol
-	case parsedAddr.To16() != nil:
-		protocol = ipv6NvmeTCPProtocol
-	default:
-		log.Panicf("Not supported protocol for: %v", listenAddr)
-	}
-
-	return &nvmeTCPTransport{
-		listenAddr: parsedAddr,
-		listenPort: port,
-		protocol:   protocol,
-	}
-}
-
-func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
-	result := spdk.NvmfSubsystemAddListenerParams{}
-	result.Nqn = nqn
-	result.SecureChannel = false
-	result.ListenAddress.Trtype = "tcp"
-	result.ListenAddress.Traddr = c.listenAddr.String()
-	result.ListenAddress.Trsvcid = c.listenPort
-	result.ListenAddress.Adrfam = c.protocol
-
-	return result, nil
 }
 
 // CreateNvmeController creates an Nvme controller
