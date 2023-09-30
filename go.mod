@@ -6,13 +6,14 @@ require (
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
 	github.com/golangci/golangci-lint v1.54.2
 	github.com/google/uuid v1.3.1
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/opiproject/gospdk v0.0.0-20230924031820-4b65d0851cb9
 	github.com/opiproject/opi-api v0.0.0-20230924031502-67b3821b62cf
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/gomap v0.6.0
-	github.com/vektra/mockery/v2 v2.34.0
+	github.com/vektra/mockery/v2 v2.34.2
 	go.einride.tech/aip v0.62.0
 	golang.org/x/tools v0.13.0
 	google.golang.org/grpc v1.58.2
@@ -90,7 +91,6 @@ require (
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
 	github.com/gostaticanalysis/forcetypeassert v0.1.0 // indirect
 	github.com/gostaticanalysis/nilerr v0.1.1 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
