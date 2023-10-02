@@ -110,11 +110,14 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 			gotParams, err := vfiouserTransport.Params(&pb.NvmeController{
 				Name: frontend.ResourceIDToControllerName("subsys0", "nvme-1"),
 				Spec: &pb.NvmeControllerSpec{
-					PcieId: &pb.PciEndpoint{
-						PortId:           wrapperspb.Int32(tt.port),
-						PhysicalFunction: wrapperspb.Int32(tt.pf),
-						VirtualFunction:  wrapperspb.Int32(tt.vf),
+					Endpoint: &pb.NvmeControllerSpec_PcieId{
+						PcieId: &pb.PciEndpoint{
+							PortId:           wrapperspb.Int32(tt.port),
+							PhysicalFunction: wrapperspb.Int32(tt.pf),
+							VirtualFunction:  wrapperspb.Int32(tt.vf),
+						},
 					},
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 				},
 			}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
 

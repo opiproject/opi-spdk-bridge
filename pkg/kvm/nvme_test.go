@@ -6,6 +6,7 @@ package kvm
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -39,11 +40,14 @@ var (
 		NvmeControllerId: testNvmeControllerID,
 		NvmeController: &pb.NvmeController{
 			Spec: &pb.NvmeControllerSpec{
-				PcieId: &pb.PciEndpoint{
-					PhysicalFunction: wrapperspb.Int32(43),
-					VirtualFunction:  wrapperspb.Int32(0),
-					PortId:           wrapperspb.Int32(0),
+				Endpoint: &pb.NvmeControllerSpec_PcieId{
+					PcieId: &pb.PciEndpoint{
+						PhysicalFunction: wrapperspb.Int32(43),
+						VirtualFunction:  wrapperspb.Int32(0),
+						PortId:           wrapperspb.Int32(0),
+					},
 				},
+				Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 				NvmeControllerId: proto.Int32(43),
 			},
 			Status: &pb.NvmeControllerStatus{
@@ -131,11 +135,15 @@ func TestCreateNvmeController(t *testing.T) {
 				Parent: "",
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						PcieId: &pb.PciEndpoint{
-							PhysicalFunction: wrapperspb.Int32(1),
-							VirtualFunction:  wrapperspb.Int32(0),
-							PortId:           wrapperspb.Int32(0)},
+						Endpoint: &pb.NvmeControllerSpec_PcieId{
+							PcieId: &pb.PciEndpoint{
+								PhysicalFunction: wrapperspb.Int32(1),
+								VirtualFunction:  wrapperspb.Int32(0),
+								PortId:           wrapperspb.Int32(0),
+							},
+						},
 						NvmeControllerId: proto.Int32(43),
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -152,11 +160,13 @@ func TestCreateNvmeController(t *testing.T) {
 				Parent: testSubsystemName,
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						PcieId: &pb.PciEndpoint{
-							PhysicalFunction: wrapperspb.Int32(1),
-							VirtualFunction:  wrapperspb.Int32(0),
-							PortId:           wrapperspb.Int32(0)},
+						Endpoint: &pb.NvmeControllerSpec_PcieId{
+							PcieId: &pb.PciEndpoint{
+								PhysicalFunction: wrapperspb.Int32(1),
+								VirtualFunction:  wrapperspb.Int32(0),
+								PortId:           wrapperspb.Int32(0)}},
 						NvmeControllerId: proto.Int32(43),
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -165,11 +175,13 @@ func TestCreateNvmeController(t *testing.T) {
 			out: &pb.NvmeController{
 				Name: testNvmeControllerName,
 				Spec: &pb.NvmeControllerSpec{
-					PcieId: &pb.PciEndpoint{
-						PhysicalFunction: wrapperspb.Int32(1),
-						VirtualFunction:  wrapperspb.Int32(0),
-						PortId:           wrapperspb.Int32(0)},
+					Endpoint: &pb.NvmeControllerSpec_PcieId{
+						PcieId: &pb.PciEndpoint{
+							PhysicalFunction: wrapperspb.Int32(1),
+							VirtualFunction:  wrapperspb.Int32(0),
+							PortId:           wrapperspb.Int32(0)}},
 					NvmeControllerId: proto.Int32(-1),
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -207,11 +219,15 @@ func TestCreateNvmeController(t *testing.T) {
 				Parent: testSubsystemName,
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						PcieId: &pb.PciEndpoint{
-							PhysicalFunction: wrapperspb.Int32(-1),
-							VirtualFunction:  wrapperspb.Int32(0),
-							PortId:           wrapperspb.Int32(0)},
+						Endpoint: &pb.NvmeControllerSpec_PcieId{
+							PcieId: &pb.PciEndpoint{
+								PhysicalFunction: wrapperspb.Int32(-1),
+								VirtualFunction:  wrapperspb.Int32(0),
+								PortId:           wrapperspb.Int32(0),
+							},
+						},
 						NvmeControllerId: proto.Int32(43),
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -223,13 +239,14 @@ func TestCreateNvmeController(t *testing.T) {
 			jsonRPC: alwaysSuccessfulJSONRPC,
 			buses:   []string{"pci.opi.0"},
 		},
-		"nil pcie endpoint": {
+		"nil path": {
 			in: &pb.CreateNvmeControllerRequest{
 				Parent: testSubsystemName,
 				NvmeController: &pb.NvmeController{
 					Spec: &pb.NvmeControllerSpec{
-						PcieId:           nil,
+						Endpoint:         nil,
 						NvmeControllerId: proto.Int32(43),
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -247,14 +264,17 @@ func TestCreateNvmeController(t *testing.T) {
 			options := gomap.DefaultOptions
 			options.Codec = utils.ProtoCodec{}
 			store := gomap.NewStore(options)
-			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
-			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
 			if tt.nonDefaultQmpAddress != "" {
 				qmpAddress = tt.nonDefaultQmpAddress
 			}
+			opiSpdkServer := frontend.NewCustomizedServer(tt.jsonRPC, store,
+				map[pb.NvmeTransportType]frontend.NvmeTransport{
+					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir),
+				}, frontend.NewVhostUserBlkTransport())
+			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, tt.buses)
 			kvmServer.timeout = qmplibTimeout
 			testCtrlrDir := controllerDirPath(qmpServer.testDir, testSubsystemID)
@@ -386,8 +406,8 @@ func TestDeleteNvmeController(t *testing.T) {
 			ctrlrDirExistsAfterOperation:  true,
 			nonEmptyCtrlrDirAfterSpdkCall: false,
 			noController:                  true,
-			errCode:                       status.Convert(errNoController).Code(),
-			errMsg:                        status.Convert(errNoController).Message(),
+			errCode:                       codes.NotFound,
+			errMsg:                        fmt.Sprintf("unable to find key %s", testNvmeControllerName),
 		},
 	}
 
@@ -396,18 +416,21 @@ func TestDeleteNvmeController(t *testing.T) {
 			options := gomap.DefaultOptions
 			options.Codec = utils.ProtoCodec{}
 			store := gomap.NewStore(options)
-			opiSpdkServer := frontend.NewServer(tt.jsonRPC, store)
-			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
-			if !tt.noController {
-				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
-					utils.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
-				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerName
-			}
 			qmpServer := startMockQmpServer(t, tt.mockQmpCalls)
 			defer qmpServer.Stop()
 			qmpAddress := qmpServer.socketPath
 			if tt.nonDefaultQmpAddress != "" {
 				qmpAddress = tt.nonDefaultQmpAddress
+			}
+			opiSpdkServer := frontend.NewCustomizedServer(tt.jsonRPC, store,
+				map[pb.NvmeTransportType]frontend.NvmeTransport{
+					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir),
+				}, frontend.NewVhostUserBlkTransport())
+			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
+			if !tt.noController {
+				opiSpdkServer.Nvme.Controllers[testNvmeControllerName] =
+					utils.ProtoClone(testCreateNvmeControllerRequest.NvmeController)
+				opiSpdkServer.Nvme.Controllers[testNvmeControllerName].Name = testNvmeControllerName
 			}
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, nil)
 			kvmServer.timeout = qmplibTimeout
