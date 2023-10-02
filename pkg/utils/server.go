@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/opiproject/gospdk/spdk"
+	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
 // ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
@@ -144,4 +145,13 @@ func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string
 // ResourceIDToVolumeName creates name of volume resource based on ID
 func ResourceIDToVolumeName(resourceID string) string {
 	return fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
+}
+
+// OpiAdressFamilyToSpdk converts opi address family to the one used in spdk
+func OpiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
+	if adrfam == pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_UNSPECIFIED {
+		return ""
+	}
+
+	return strings.ReplaceAll(adrfam.String(), "NVME_ADRFAM_", "")
 }
