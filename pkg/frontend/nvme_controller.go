@@ -59,7 +59,13 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		return nil, err
 	}
 
-	params, err := s.Nvme.transport.Params(in.NvmeController, subsys.Spec.Nqn)
+	transport, ok := s.Nvme.transports[in.NvmeController.Spec.Trtype]
+	if !ok {
+		return nil, status.Errorf(codes.NotFound,
+			"handler for transport type %v is not registered", in.NvmeController.Spec.Trtype)
+	}
+
+	params, err := transport.Params(in.NvmeController, subsys.Spec.Nqn)
 	if err != nil {
 		log.Printf("error: failed to create params for spdk call: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -105,7 +111,13 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		return nil, err
 	}
 
-	params, err := s.Nvme.transport.Params(controller, subsys.Spec.Nqn)
+	transport, ok := s.Nvme.transports[controller.Spec.Trtype]
+	if !ok {
+		return nil, status.Errorf(codes.NotFound,
+			"handler for transport type %v is not registered", controller.Spec.Trtype)
+	}
+
+	params, err := transport.Params(controller, subsys.Spec.Nqn)
 	if err != nil {
 		log.Printf("error: failed to create params for spdk call: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
