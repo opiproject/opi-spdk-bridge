@@ -59,7 +59,7 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 			Subsystems:  make(map[string]*pb.NvmeSubsystem),
 			Controllers: make(map[string]*pb.NvmeController),
 			Namespaces:  make(map[string]*pb.NvmeNamespace),
-			transport:   NewNvmeTCPTransport("127.0.0.1:4420"),
+			transport:   NewNvmeTCPTransport(),
 		},
 		Virt: VirtioParameters{
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),

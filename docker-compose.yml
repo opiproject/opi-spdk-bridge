@@ -66,7 +66,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: sh -c "/opi-spdk-bridge -grpc_port=50051 -http_port=8082 -spdk_addr=/var/tmp/spdk.sock -tcp_trid=$$(getent hosts spdk | awk '{ print $$1 }'):7777"
+    command: sh -c "/opi-spdk-bridge -grpc_port=50051 -http_port=8082 -spdk_addr=/var/tmp/spdk.sock"
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 

@@ -7,7 +7,6 @@ package frontend
 
 import (
 	"log"
-	"net"
 	"path"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -27,45 +26,11 @@ type VirtioBlkTransport interface {
 	DeleteParams(virtioBlk *pb.VirtioBlk) (any, error)
 }
 
-const (
-	ipv4NvmeTCPProtocol = "ipv4"
-	ipv6NvmeTCPProtocol = "ipv6"
-)
-
-// TODO: consider using https://pkg.go.dev/net#TCPAddr
-type nvmeTCPTransport struct {
-	listenAddr net.IP
-	listenPort string
-	protocol   string
-}
+type nvmeTCPTransport struct{}
 
 // NewNvmeTCPTransport creates a new instance of nvmeTcpTransport
-func NewNvmeTCPTransport(listenAddr string) NvmeTransport {
-	host, port, err := net.SplitHostPort(listenAddr)
-	if err != nil {
-		log.Panicf("Invalid ip:port tuple: %v", listenAddr)
-	}
-
-	parsedAddr := net.ParseIP(host)
-	if parsedAddr == nil {
-		log.Panicf("Invalid ip address: %v", host)
-	}
-
-	var protocol string
-	switch {
-	case parsedAddr.To4() != nil:
-		protocol = ipv4NvmeTCPProtocol
-	case parsedAddr.To16() != nil:
-		protocol = ipv6NvmeTCPProtocol
-	default:
-		log.Panicf("Not supported protocol for: %v", listenAddr)
-	}
-
-	return &nvmeTCPTransport{
-		listenAddr: parsedAddr,
-		listenPort: port,
-		protocol:   protocol,
-	}
+func NewNvmeTCPTransport() NvmeTransport {
+	return &nvmeTCPTransport{}
 }
 
 func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
@@ -73,9 +38,9 @@ func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) (spdk.NvmfSu
 	result.Nqn = nqn
 	result.SecureChannel = false
 	result.ListenAddress.Trtype = "tcp"
-	result.ListenAddress.Traddr = c.listenAddr.String()
-	result.ListenAddress.Trsvcid = c.listenPort
-	result.ListenAddress.Adrfam = c.protocol
+	result.ListenAddress.Traddr = ""
+	result.ListenAddress.Trsvcid = ""
+	result.ListenAddress.Adrfam = ""
 
 	return result, nil
 }
