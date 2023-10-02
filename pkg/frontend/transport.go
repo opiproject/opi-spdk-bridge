@@ -11,6 +11,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 // NvmeTransport interface is used to provide SPDK call params to create/delete
@@ -33,14 +34,16 @@ func NewNvmeTCPTransport() NvmeTransport {
 	return &nvmeTCPTransport{}
 }
 
-func (c *nvmeTCPTransport) Params(_ *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
+func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = nqn
 	result.SecureChannel = false
 	result.ListenAddress.Trtype = "tcp"
-	result.ListenAddress.Traddr = ""
-	result.ListenAddress.Trsvcid = ""
-	result.ListenAddress.Adrfam = ""
+	result.ListenAddress.Traddr = ctrlr.GetSpec().GetFabricsId().GetTraddr()
+	result.ListenAddress.Trsvcid = ctrlr.GetSpec().GetFabricsId().GetTrsvcid()
+	result.ListenAddress.Adrfam = utils.OpiAdressFamilyToSpdk(
+		ctrlr.GetSpec().GetFabricsId().GetAdrfam(),
+	)
 
 	return result, nil
 }
