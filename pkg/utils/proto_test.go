@@ -18,7 +18,7 @@ func TestProtoClone(t *testing.T) {
 		"proto structure": {
 			in: &pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
-					PcieId: &pb.PciEndpoint{},
+					MaxNsq: 0,
 				},
 			},
 		},
@@ -33,7 +33,7 @@ func TestProtoClone(t *testing.T) {
 			if !proto.Equal(tt.in, copiedIn) {
 				t.Errorf("Expect proto structure copy %v, received: %v", tt.in, copiedIn)
 			}
-			if tt.in != nil && tt.in.Spec.PcieId == copiedIn.Spec.PcieId {
+			if tt.in != nil && tt.in.Spec == copiedIn.Spec {
 				t.Errorf("Expect deep copy, not pointer copy")
 			}
 		})
