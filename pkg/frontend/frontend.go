@@ -85,6 +85,12 @@ func NewCustomizedServer(
 		log.Panic("empty NvmeTransports are not allowed")
 	}
 
+	for k, v := range nvmeTransports {
+		if v == nil {
+			log.Panicf("nil transport is not allowed for %v", k)
+		}
+	}
+
 	if virtioBlkTransport == nil {
 		log.Panic("nil for VirtioBlkTransport is not allowed")
 	}

@@ -132,6 +132,15 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
+		"nil one of nvme transports": {
+			jsonRPC: validJSONRPC,
+			store:   validStore,
+			nvmeTransports: map[pb.NvmeTransportType]NvmeTransport{
+				pb.NvmeTransportType_NVME_TRANSPORT_TCP: nil,
+			},
+			virtioBlkTransport: validVirtioBLkTransport,
+			wantPanic:          true,
+		},
 		"nil virtio blk transport": {
 			jsonRPC:            validJSONRPC,
 			store:              validStore,
