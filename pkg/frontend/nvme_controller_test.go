@@ -306,6 +306,17 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			testSubsystemName,
 			alwaysValidNvmeTransports,
 		},
+		"no transport registered": {
+			testControllerID,
+			&testController,
+			nil,
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_TCP),
+			false,
+			testSubsystemName,
+			map[pb.NvmeTransportType]NvmeTransport{},
+		},
 	}
 
 	// run tests
@@ -447,6 +458,15 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			alwaysFailedNvmeTransport.err.Error(),
 			false,
 			alwaysFailedNvmeTransports,
+		},
+		"no transport registered": {
+			testControllerName,
+			&emptypb.Empty{},
+			[]string{},
+			codes.NotFound,
+			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_TCP),
+			false,
+			map[pb.NvmeTransportType]NvmeTransport{},
 		},
 	}
 
