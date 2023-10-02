@@ -38,7 +38,7 @@ func NewNvmeVfiouserTransport(ctrlrDir string) frontend.NvmeTransport {
 }
 
 func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
-	pcieID := ctrlr.Spec.GetPcieId()
+	pcieID := ctrlr.GetSpec().GetPcieId()
 	if pcieID.PortId.Value != 0 {
 		return spdk.NvmfSubsystemAddListenerParams{},
 			errors.New("only port 0 is supported for vfiouser")
