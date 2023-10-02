@@ -88,7 +88,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		Name:      path.Base(controller.Name),
 		Trtype:    s.opiTransportToSpdk(in.NvmePath.GetTrtype()),
 		Traddr:    in.NvmePath.GetTraddr(),
-		Adrfam:    s.opiAdressFamilyToSpdk(in.NvmePath.GetFabrics().GetAdrfam()),
+		Adrfam:    utils.OpiAdressFamilyToSpdk(in.NvmePath.GetFabrics().GetAdrfam()),
 		Trsvcid:   fmt.Sprint(in.NvmePath.GetFabrics().GetTrsvcid()),
 		Subnqn:    in.NvmePath.GetFabrics().GetSubnqn(),
 		Hostnqn:   in.NvmePath.GetFabrics().GetHostnqn(),
@@ -133,7 +133,7 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 		Name:    path.Base(controller.Name),
 		Trtype:  s.opiTransportToSpdk(nvmePath.GetTrtype()),
 		Traddr:  nvmePath.GetTraddr(),
-		Adrfam:  s.opiAdressFamilyToSpdk(nvmePath.GetFabrics().GetAdrfam()),
+		Adrfam:  utils.OpiAdressFamilyToSpdk(nvmePath.GetFabrics().GetAdrfam()),
 		Trsvcid: fmt.Sprint(nvmePath.GetFabrics().GetTrsvcid()),
 		Subnqn:  nvmePath.GetFabrics().GetSubnqn(),
 	}
@@ -268,14 +268,6 @@ func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (
 
 func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
 	return strings.ReplaceAll(transport.String(), "NVME_TRANSPORT_", "")
-}
-
-func (s *Server) opiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
-	if adrfam == pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_UNSPECIFIED {
-		return ""
-	}
-
-	return strings.ReplaceAll(adrfam.String(), "NVME_ADRFAM_", "")
 }
 
 func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {
