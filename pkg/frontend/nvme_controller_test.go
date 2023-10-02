@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
@@ -238,6 +239,72 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			false,
 			testSubsystemName,
 			alwaysFailedNvmeTransports,
+		},
+		"not corresponding endpoint for pcie transport type": {
+			testControllerID,
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					Endpoint: &pb.NvmeControllerSpec_FabricsId{
+						FabricsId: &pb.FabricsEndpoint{
+							Traddr:  "127.0.0.1",
+							Trsvcid: "4420",
+							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+						},
+					},
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			"invalid endpoint type passed for transport",
+			false,
+			testSubsystemName,
+			alwaysValidNvmeTransports,
+		},
+		"not corresponding endpoint for tcp transport type": {
+			testControllerID,
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					Endpoint: &pb.NvmeControllerSpec_PcieId{
+						PcieId: &pb.PciEndpoint{
+							PortId:           wrapperspb.Int32(0),
+							PhysicalFunction: wrapperspb.Int32(0),
+							VirtualFunction:  wrapperspb.Int32(0),
+						},
+					},
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			"invalid endpoint type passed for transport",
+			false,
+			testSubsystemName,
+			alwaysValidNvmeTransports,
+		},
+		"not supported transport type": {
+			testControllerID,
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					Endpoint: &pb.NvmeControllerSpec_PcieId{
+						PcieId: &pb.PciEndpoint{
+							PortId:           wrapperspb.Int32(0),
+							PhysicalFunction: wrapperspb.Int32(0),
+							VirtualFunction:  wrapperspb.Int32(0),
+						},
+					},
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM,
+				},
+			},
+			nil,
+			[]string{},
+			codes.Unknown,
+			fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM),
+			false,
+			testSubsystemName,
+			alwaysValidNvmeTransports,
 		},
 	}
 
