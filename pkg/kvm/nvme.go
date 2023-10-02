@@ -19,14 +19,18 @@ import (
 
 // CreateNvmeController creates an Nvme controller device and attaches it to QEMU instance
 func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
+	if in.GetNvmeController().GetSpec().GetTrtype() != pb.NvmeTransportType_NVME_TRANSPORT_PCIE {
+		return s.Server.CreateNvmeController(ctx, in)
+	}
+
 	if in.Parent == "" {
 		return nil, errInvalidSubsystem
 	}
-	if in.NvmeController.Spec.PcieId == nil {
+	if in.GetNvmeController().GetSpec().GetPcieId() == nil {
 		log.Println("Pci endpoint should be specified")
 		return nil, errNoPcieEndpoint
 	}
-	location, err := s.locator.Calculate(in.NvmeController.Spec.PcieId)
+	location, err := s.locator.Calculate(in.GetNvmeController().GetSpec().GetPcieId())
 	if err != nil {
 		log.Println("Failed to calculate device location: ", err)
 		return nil, errDeviceEndpoint
@@ -75,6 +79,11 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 
 // DeleteNvmeController deletes an Nvme controller device and detaches it from QEMU instance
 func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
+	controller, ok := s.Nvme.Controllers[in.GetName()]
+	if !ok || controller.GetSpec().GetTrtype() != pb.NvmeTransportType_NVME_TRANSPORT_PCIE {
+		return s.Server.DeleteNvmeController(ctx, in)
+	}
+
 	mon, monErr := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)
 	if monErr != nil {
 		log.Println("Couldn't create QEMU monitor")
