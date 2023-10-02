@@ -64,12 +64,10 @@ func main() {
 	var busesStr string
 	flag.StringVar(&busesStr, "buses", "", "QEMU PCI buses IDs separated by `:` to attach Nvme/virtio-blk devices on. e.g. \"pci.opi.0:pci.opi.1\". Valid only with -kvm option")
 
-	var tcpTransportListenAddr string
-	flag.StringVar(&tcpTransportListenAddr, "tcp_trid", "127.0.0.1:4420", "ipv4 address:port (aka traddr:trsvcid) or ipv6 [address]:port tuple (aka [traddr]:trsvcid) to listen on for Nvme/TCP transport")
-	flag.Parse()
-
 	var tlsFiles string
 	flag.StringVar(&tlsFiles, "tls", "", "TLS files in server_cert:server_key:ca_cert format.")
+
+	flag.Parse()
 
 	// Create KV store for persistence
 	options := gomap.DefaultOptions
@@ -84,10 +82,10 @@ func main() {
 	}(store)
 
 	go runGatewayServer(grpcPort, httpPort)
-	runGrpcServer(grpcPort, useKvm, store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tcpTransportListenAddr, tlsFiles)
+	runGrpcServer(grpcPort, useKvm, store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tlsFiles)
 }
 
-func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tcpTransportListenAddr, tlsFiles string) {
+func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmpAddress, ctrlrDir, busesStr, tlsFiles string) {
 	buses := splitBusesBySeparator(busesStr)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
@@ -142,7 +140,7 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	} else {
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
 			store,
-			frontend.NewNvmeTCPTransport(tcpTransportListenAddr),
+			frontend.NewNvmeTCPTransport(),
 			frontend.NewVhostUserBlkTransport(),
 		)
 		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
