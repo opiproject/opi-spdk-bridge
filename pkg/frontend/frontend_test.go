@@ -105,42 +105,44 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 
 func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 	validJSONRPC := spdk.NewSpdkJSONRPC("/some/path")
-	validNvmeTransport := NewNvmeTCPTransport("10.10.10.10:1234")
+	validNvmeTransports := map[pb.NvmeTransportType]NvmeTransport{
+		pb.NvmeTransportType_NVME_TRANSPORT_TCP: NewNvmeTCPTransport(),
+	}
 	validVirtioBLkTransport := NewVhostUserBlkTransport()
 	validStore := gomap.NewStore(gomap.DefaultOptions)
 
 	tests := map[string]struct {
 		jsonRPC            spdk.JSONRPC
 		store              gomap.Store
-		nvmeTransport      NvmeTransport
+		nvmeTransports     map[pb.NvmeTransportType]NvmeTransport
 		virtioBlkTransport VirtioBlkTransport
 		wantPanic          bool
 	}{
 		"nil json rpc": {
 			jsonRPC:            nil,
 			store:              validStore,
-			nvmeTransport:      validNvmeTransport,
+			nvmeTransports:     validNvmeTransports,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
-		"nil nvme transport": {
+		"nil nvme transports": {
 			jsonRPC:            validJSONRPC,
 			store:              validStore,
-			nvmeTransport:      nil,
+			nvmeTransports:     nil,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
 		"nil virtio blk transport": {
 			jsonRPC:            validJSONRPC,
 			store:              validStore,
-			nvmeTransport:      validNvmeTransport,
+			nvmeTransports:     validNvmeTransports,
 			virtioBlkTransport: nil,
 			wantPanic:          true,
 		},
 		"all valid arguments": {
 			jsonRPC:            validJSONRPC,
 			store:              validStore,
-			nvmeTransport:      validNvmeTransport,
+			nvmeTransports:     validNvmeTransports,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          false,
 		},
@@ -155,7 +157,7 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 				}
 			}()
 
-			server := NewCustomizedServer(tt.jsonRPC, tt.store, tt.nvmeTransport, tt.virtioBlkTransport)
+			server := NewCustomizedServer(tt.jsonRPC, tt.store, tt.nvmeTransports, tt.virtioBlkTransport)
 			if server == nil && !tt.wantPanic {
 				t.Error("expected non nil server or panic")
 			}
