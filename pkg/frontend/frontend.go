@@ -19,7 +19,7 @@ type NvmeParameters struct {
 	Subsystems  map[string]*pb.NvmeSubsystem
 	Controllers map[string]*pb.NvmeController
 	Namespaces  map[string]*pb.NvmeNamespace
-	transport   NvmeTransport
+	transports  map[pb.NvmeTransportType]NvmeTransport
 }
 
 // VirtioParameters contains all VirtIO related structures
@@ -59,7 +59,9 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 			Subsystems:  make(map[string]*pb.NvmeSubsystem),
 			Controllers: make(map[string]*pb.NvmeController),
 			Namespaces:  make(map[string]*pb.NvmeNamespace),
-			transport:   NewNvmeTCPTransport(),
+			transports: map[pb.NvmeTransportType]NvmeTransport{
+				pb.NvmeTransportType_NVME_TRANSPORT_TCP: NewNvmeTCPTransport(),
+			},
 		},
 		Virt: VirtioParameters{
 			BlkCtrls:  make(map[string]*pb.VirtioBlk),
@@ -76,11 +78,11 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 func NewCustomizedServer(
 	jsonRPC spdk.JSONRPC,
 	store gokv.Store,
-	nvmeTransport NvmeTransport,
+	nvmeTransports map[pb.NvmeTransportType]NvmeTransport,
 	virtioBlkTransport VirtioBlkTransport,
 ) *Server {
-	if nvmeTransport == nil {
-		log.Panic("nil for NvmeTransport is not allowed")
+	if len(nvmeTransports) == 0 {
+		log.Panic("empty NvmeTransports are not allowed")
 	}
 
 	if virtioBlkTransport == nil {
@@ -95,7 +97,7 @@ func NewCustomizedServer(
 	}
 
 	server := NewServer(jsonRPC, store)
-	server.Nvme.transport = nvmeTransport
+	server.Nvme.transports = nvmeTransports
 	server.Virt.transport = virtioBlkTransport
 	return server
 }

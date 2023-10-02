@@ -129,7 +129,10 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 		log.Println("Creating KVM server.")
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
 			store,
-			kvm.NewNvmeVfiouserTransport(ctrlrDir),
+			map[pb.NvmeTransportType]frontend.NvmeTransport{
+				pb.NvmeTransportType_NVME_TRANSPORT_TCP:  frontend.NewNvmeTCPTransport(),
+				pb.NvmeTransportType_NVME_TRANSPORT_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir),
+			},
 			frontend.NewVhostUserBlkTransport(),
 		)
 		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir, buses)
@@ -140,7 +143,9 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	} else {
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
 			store,
-			frontend.NewNvmeTCPTransport(),
+			map[pb.NvmeTransportType]frontend.NvmeTransport{
+				pb.NvmeTransportType_NVME_TRANSPORT_TCP: frontend.NewNvmeTCPTransport(),
+			},
 			frontend.NewVhostUserBlkTransport(),
 		)
 		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
