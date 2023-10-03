@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"fmt"
+	"regexp"
 
 	"go.einride.tech/aip/fieldbehavior"
 	"go.einride.tech/aip/resourceid"
@@ -43,7 +44,12 @@ func (s *Server) validateCreateNvmeSubsystemRequest(in *pb.CreateNvmeSubsystemRe
 		msg := fmt.Sprintf("ModelNumber value (%s) is too long, have to be between 1 and 40", in.NvmeSubsystem.Spec.ModelNumber)
 		return status.Errorf(codes.InvalidArgument, msg)
 	}
-	// TODO: check in.NvmeSubsystem.Spec.Nqn validity with regexp
+	// check if the NQN matches the pattern
+	regex := regexp.MustCompile(`^nqn\.[0-9]{4}-[0-9]{2}(\.[a-zA-Z0-9]+)+(:[a-zA-Z0-9-.]+)+$`)
+	if !regex.MatchString(in.NvmeSubsystem.Spec.Nqn) {
+		msg := fmt.Sprintf("NQN value (%s) does not match pattern", in.NvmeSubsystem.Spec.Nqn)
+		return status.Errorf(codes.InvalidArgument, msg)
+	}
 	return nil
 }
 
