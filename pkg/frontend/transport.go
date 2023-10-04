@@ -17,7 +17,7 @@ import (
 // NvmeTransport interface is used to provide SPDK call params to create/delete
 // Nvme controllers depending on used transport type.
 type NvmeTransport interface {
-	Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error)
+	Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error)
 }
 
 // VirtioBlkTransport interface is used to provide SPDK call params to create/delete
@@ -34,9 +34,9 @@ func NewNvmeTCPTransport() NvmeTransport {
 	return &nvmeTCPTransport{}
 }
 
-func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
+func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
 	result := spdk.NvmfSubsystemAddListenerParams{}
-	result.Nqn = nqn
+	result.Nqn = subsys.Spec.Nqn
 	result.SecureChannel = false
 	result.ListenAddress.Trtype = "tcp"
 	result.ListenAddress.Traddr = ctrlr.GetSpec().GetFabricsId().GetTraddr()

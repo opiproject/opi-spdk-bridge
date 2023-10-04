@@ -16,7 +16,7 @@ type stubNvmeTransport struct {
 	err error
 }
 
-func (t *stubNvmeTransport) Params(_ *pb.NvmeController, _ string) (spdk.NvmfSubsystemAddListenerParams, error) {
+func (t *stubNvmeTransport) Params(_ *pb.NvmeController, _ *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
 	return spdk.NvmfSubsystemAddListenerParams{}, t.err
 }
 

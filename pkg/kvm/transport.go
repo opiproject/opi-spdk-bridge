@@ -37,7 +37,7 @@ func NewNvmeVfiouserTransport(ctrlrDir string) frontend.NvmeTransport {
 	}
 }
 
-func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, nqn string) (spdk.NvmfSubsystemAddListenerParams, error) {
+func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
 	pcieID := ctrlr.GetSpec().GetPcieId()
 	if pcieID.PortId.Value != 0 {
 		return spdk.NvmfSubsystemAddListenerParams{},
@@ -51,7 +51,7 @@ func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, nqn string) (sp
 
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	ctrlrDirPath := controllerDirPath(c.ctrlrDir, frontend.GetSubsystemIDFromNvmeName(ctrlr.Name))
-	result.Nqn = nqn
+	result.Nqn = subsys.Spec.Nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath
 

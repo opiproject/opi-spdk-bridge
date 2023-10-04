@@ -119,7 +119,11 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 					},
 					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 				},
-			}, "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a")
+			}, &pb.NvmeSubsystem{
+				Spec: &pb.NvmeSubsystemSpec{
+					Nqn: "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
+				},
+			})
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Expect error: %v, received: %v", nil, err)
