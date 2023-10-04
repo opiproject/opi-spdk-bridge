@@ -62,7 +62,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		Nqn:           in.NvmeSubsystem.Spec.Nqn,
 		SerialNumber:  in.NvmeSubsystem.Spec.SerialNumber,
 		ModelNumber:   in.NvmeSubsystem.Spec.ModelNumber,
-		AllowAnyHost:  true,
+		AllowAnyHost:  (in.NvmeSubsystem.Spec.Hostnqn == ""),
 		MaxNamespaces: int(in.NvmeSubsystem.Spec.MaxNamespaces),
 	}
 	var result spdk.NvmfCreateSubsystemResult
@@ -75,6 +75,24 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		msg := fmt.Sprintf("Could not create NQN: %s", in.NvmeSubsystem.Spec.Nqn)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
+	// if Hostnqn is not empty, add it to subsystem
+	if in.NvmeSubsystem.Spec.Hostnqn != "" {
+		params := spdk.NvmfSubsystemAddHostParams{
+			Nqn:  in.NvmeSubsystem.Spec.Nqn,
+			Host: in.NvmeSubsystem.Spec.Hostnqn,
+		}
+		var result spdk.NvmfSubsystemAddHostResult
+		err = s.rpc.Call("nvmf_subsystem_add_host", &params, &result)
+		if err != nil {
+			return nil, err
+		}
+		log.Printf("Received from SPDK: %v", result)
+		if !result {
+			msg := fmt.Sprintf("Could not add Hostnqn %s to NQN: %s", in.NvmeSubsystem.Spec.Hostnqn, in.NvmeSubsystem.Spec.Nqn)
+			return nil, status.Errorf(codes.InvalidArgument, msg)
+		}
+	}
+	// get SPDK version
 	var ver spdk.GetVersionResult
 	err = s.rpc.Call("spdk_get_version", nil, &ver)
 	if err != nil {
