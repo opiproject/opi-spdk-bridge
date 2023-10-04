@@ -142,11 +142,6 @@ func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string
 	}
 }
 
-// ResourceIDToVolumeName creates name of volume resource based on ID
-func ResourceIDToVolumeName(resourceID string) string {
-	return fmt.Sprintf("//storage.opiproject.org/volumes/%s", resourceID)
-}
-
 // OpiAdressFamilyToSpdk converts opi address family to the one used in spdk
 func OpiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
 	if adrfam == pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_UNSPECIFIED {

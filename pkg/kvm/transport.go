@@ -12,6 +12,7 @@ import (
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 type nvmeVfiouserTransport struct {
@@ -50,7 +51,7 @@ func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, subsys *pb.Nvme
 	}
 
 	result := spdk.NvmfSubsystemAddListenerParams{}
-	ctrlrDirPath := controllerDirPath(c.ctrlrDir, frontend.GetSubsystemIDFromNvmeName(ctrlr.Name))
+	ctrlrDirPath := controllerDirPath(c.ctrlrDir, utils.GetSubsystemIDFromNvmeName(ctrlr.Name))
 	result.Nqn = subsys.Spec.Nqn
 	result.ListenAddress.Trtype = "vfiouser"
 	result.ListenAddress.Traddr = ctrlrDirPath

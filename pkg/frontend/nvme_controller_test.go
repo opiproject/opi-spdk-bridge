@@ -24,7 +24,7 @@ import (
 
 var (
 	testControllerID   = "controller-test"
-	testControllerName = ResourceIDToControllerName(testSubsystemID, testControllerID)
+	testControllerName = utils.ResourceIDToControllerName(testSubsystemID, testControllerID)
 	testController     = pb.NvmeController{
 		Spec: &pb.NvmeControllerSpec{
 			Endpoint: &pb.NvmeControllerSpec_FabricsId{
@@ -415,16 +415,16 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			alwaysValidNvmeTransports,
 		},
 		"valid request with unknown key": {
-			ResourceIDToControllerName(testSubsystemID, "unknown-controller-id"),
+			utils.ResourceIDToControllerName(testSubsystemID, "unknown-controller-id"),
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", ResourceIDToControllerName(testSubsystemID, "unknown-controller-id")),
+			fmt.Sprintf("unable to find key %v", utils.ResourceIDToControllerName(testSubsystemID, "unknown-controller-id")),
 			false,
 			alwaysValidNvmeTransports,
 		},
 		"unknown key with missing allowed": {
-			ResourceIDToControllerName(testSubsystemID, "unknown-id"),
+			utils.ResourceIDToControllerName(testSubsystemID, "unknown-id"),
 			&emptypb.Empty{},
 			[]string{},
 			codes.OK,

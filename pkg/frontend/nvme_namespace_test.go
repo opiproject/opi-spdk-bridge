@@ -24,7 +24,7 @@ import (
 
 var (
 	testNamespaceID   = "namespace-test"
-	testNamespaceName = ResourceIDToNamespaceName(testSubsystemID, testNamespaceID)
+	testNamespaceName = utils.ResourceIDToNamespaceName(testSubsystemID, testNamespaceID)
 	testNamespace     = pb.NvmeNamespace{
 		Spec: &pb.NvmeNamespaceSpec{
 			HostNsid: 22,

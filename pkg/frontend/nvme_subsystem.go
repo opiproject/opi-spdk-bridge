@@ -43,7 +43,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeSubsystemId, in.NvmeSubsystem.Name)
 		resourceID = in.NvmeSubsystemId
 	}
-	in.NvmeSubsystem.Name = ResourceIDToSubsystemName(resourceID)
+	in.NvmeSubsystem.Name = utils.ResourceIDToSubsystemName(resourceID)
 	// idempotent API when called with same key, should return same object
 	subsys, ok := s.Nvme.Subsystems[in.NvmeSubsystem.Name]
 	if ok {
@@ -245,9 +245,4 @@ func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystem
 	}
 	log.Printf("Received from SPDK: %v", result)
 	return &pb.StatsNvmeSubsystemResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
-}
-
-// ResourceIDToSubsystemName transforms subsystem resource ID to subsystem name
-func ResourceIDToSubsystemName(resourceID string) string {
-	return fmt.Sprintf("//storage.opiproject.org/subsystems/%s", resourceID)
 }
