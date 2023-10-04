@@ -24,7 +24,7 @@ import (
 
 var (
 	testSubsystemID   = "subsystem-test"
-	testSubsystemName = ResourceIDToSubsystemName(testSubsystemID)
+	testSubsystemName = utils.ResourceIDToSubsystemName(testSubsystemID)
 	testSubsystem     = pb.NvmeSubsystem{
 		Spec: &pb.NvmeSubsystemSpec{
 			Nqn: "nqn.2022-09.io.spdk:opi3",

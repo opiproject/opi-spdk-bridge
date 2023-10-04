@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 // CreateNvmeController creates an Nvme controller device and attaches it to QEMU instance
@@ -38,7 +38,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 
 	// Create request can miss Name field which is generated in spdk bridge.
 	// Use subsystem instead, since it is required to exist
-	dirName := frontend.GetSubsystemIDFromNvmeName(in.Parent)
+	dirName := utils.GetSubsystemIDFromNvmeName(in.Parent)
 	if dirName == "" {
 		log.Println("Failed to get subsystem id from:", in.Parent)
 		return nil, errInvalidSubsystem
@@ -128,7 +128,7 @@ func (s *Server) findDirName(name string) (string, error) {
 		return "", errNoController
 	}
 
-	subsystemID := frontend.GetSubsystemIDFromNvmeName(ctrlr.Name)
+	subsystemID := utils.GetSubsystemIDFromNvmeName(ctrlr.Name)
 	if subsystemID == "" {
 		return "", errInvalidSubsystem
 	}

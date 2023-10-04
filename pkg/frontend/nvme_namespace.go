@@ -43,7 +43,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeNamespaceId, in.NvmeNamespace.Name)
 		resourceID = in.NvmeNamespaceId
 	}
-	in.NvmeNamespace.Name = ResourceIDToNamespaceName(GetSubsystemIDFromNvmeName(in.Parent), resourceID)
+	in.NvmeNamespace.Name = utils.ResourceIDToNamespaceName(utils.GetSubsystemIDFromNvmeName(in.Parent), resourceID)
 	// idempotent API when called with same key, should return same object
 	// fetch object from the database
 	namespace, ok := s.Nvme.Namespaces[in.NvmeNamespace.Name]
@@ -99,7 +99,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
-	subsysName := ResourceIDToSubsystemName(GetSubsystemIDFromNvmeName(in.Name))
+	subsysName := utils.ResourceIDToSubsystemName(utils.GetSubsystemIDFromNvmeName(in.Name))
 	subsys, ok := s.Nvme.Subsystems[subsysName]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", subsysName)
@@ -220,7 +220,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 	// return namespace, nil
 
 	// fetch subsystems -> namespaces from Server, match the nsid to find the corresponding namespace
-	subsysName := ResourceIDToSubsystemName(GetSubsystemIDFromNvmeName(in.Name))
+	subsysName := utils.ResourceIDToSubsystemName(utils.GetSubsystemIDFromNvmeName(in.Name))
 	subsys, ok := s.Nvme.Subsystems[subsysName]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", subsysName)
@@ -269,11 +269,4 @@ func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespace
 	resourceID := path.Base(namespace.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return &pb.StatsNvmeNamespaceResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
-}
-
-// ResourceIDToNamespaceName transforms subsystem resource ID and namespace
-// resource ID to namespace name
-func ResourceIDToNamespaceName(subsysResourceID, ctrlrResourceID string) string {
-	return fmt.Sprintf("//storage.opiproject.org/subsystems/%s/namespaces/%s",
-		subsysResourceID, ctrlrResourceID)
 }

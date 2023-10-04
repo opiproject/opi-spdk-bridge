@@ -11,7 +11,6 @@ import (
 	"log"
 	"path"
 	"sort"
-	"strings"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -45,7 +44,7 @@ func (s *Server) CreateNvmeController(_ context.Context, in *pb.CreateNvmeContro
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeControllerId, in.NvmeController.Name)
 		resourceID = in.NvmeControllerId
 	}
-	in.NvmeController.Name = ResourceIDToControllerName(GetSubsystemIDFromNvmeName(in.Parent), resourceID)
+	in.NvmeController.Name = utils.ResourceIDToControllerName(utils.GetSubsystemIDFromNvmeName(in.Parent), resourceID)
 	// idempotent API when called with same key, should return same object
 	controller, ok := s.Nvme.Controllers[in.NvmeController.Name]
 	if ok {
@@ -104,7 +103,7 @@ func (s *Server) DeleteNvmeController(_ context.Context, in *pb.DeleteNvmeContro
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
-	subsysName := ResourceIDToSubsystemName(GetSubsystemIDFromNvmeName(in.Name))
+	subsysName := utils.ResourceIDToSubsystemName(utils.GetSubsystemIDFromNvmeName(in.Name))
 	subsys, ok := s.Nvme.Subsystems[subsysName]
 	if !ok {
 		err := fmt.Errorf("unable to find subsystem %s", subsysName)
@@ -212,27 +211,4 @@ func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControll
 	resourceID := path.Base(ctrlr.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	return &pb.StatsNvmeControllerResponse{Stats: &pb.VolumeStats{ReadOpsCount: -1, WriteOpsCount: -1}}, nil
-}
-
-// ResourceIDToControllerName transforms subsystem resource ID and controller
-// resource ID to controller name
-func ResourceIDToControllerName(subsysResourceID, ctrlrResourceID string) string {
-	return fmt.Sprintf("//storage.opiproject.org/subsystems/%s/controllers/%s",
-		subsysResourceID, ctrlrResourceID)
-}
-
-// GetSubsystemIDFromNvmeName get parent ID (subsystem ID) from nvme related names
-func GetSubsystemIDFromNvmeName(name string) string {
-	segments := strings.Split(name, "/")
-	for i := range segments {
-		if (i + 1) == len(segments) {
-			return ""
-		}
-
-		if segments[i] == "subsystems" {
-			return segments[i+1]
-		}
-	}
-
-	return ""
 }

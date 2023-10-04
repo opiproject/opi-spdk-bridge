@@ -26,9 +26,9 @@ import (
 
 var (
 	testNvmeControllerID   = "nvme-43"
-	testNvmeControllerName = frontend.ResourceIDToControllerName(testSubsystemID, "nvme-43")
+	testNvmeControllerName = utils.ResourceIDToControllerName(testSubsystemID, "nvme-43")
 	testSubsystemID        = "subsystem0"
-	testSubsystemName      = frontend.ResourceIDToSubsystemName("subsystem0")
+	testSubsystemName      = utils.ResourceIDToSubsystemName("subsystem0")
 	testSubsystem          = pb.NvmeSubsystem{
 		Name: testSubsystemName,
 		Spec: &pb.NvmeSubsystemSpec{
