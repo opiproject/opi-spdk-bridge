@@ -38,6 +38,8 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 		SerialNumber: "OpiSerialNumber",
 		ModelNumber:  "OpiModelNumber",
 	}
+	specHostNqn := utils.ProtoClone(spec)
+	specHostNqn.Hostnqn = "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"
 	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
@@ -128,6 +130,22 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 				},
 			},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"jsonrpc":"2.0","id":%d,"result":{"version":"SPDK v20.10","fields":{"major":20,"minor":10,"patch":0,"suffix":""}}}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
+			codes.OK,
+			"",
+			false,
+		},
+		"valid request with valid SPDK response with HostNQN": {
+			testSubsystemID,
+			&pb.NvmeSubsystem{
+				Spec: specHostNqn,
+			},
+			&pb.NvmeSubsystem{
+				Spec: specHostNqn,
+				Status: &pb.NvmeSubsystemStatus{
+					FirmwareRevision: "SPDK v20.10",
+				},
+			},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"jsonrpc":"2.0","id":%d,"result":{"version":"SPDK v20.10","fields":{"major":20,"minor":10,"patch":0,"suffix":""}}}`}, // `{"jsonrpc": "2.0", "id": 1, "result": True}`,
 			codes.OK,
 			"",
 			false,
