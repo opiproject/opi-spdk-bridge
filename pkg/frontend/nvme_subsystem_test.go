@@ -6,7 +6,9 @@
 package frontend
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -40,17 +42,21 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 	}
 	specHostNqn := utils.ProtoClone(spec)
 	specHostNqn.Hostnqn = "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"
-	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
+
+	specHostNqnWithPsk := utils.ProtoClone(specHostNqn)
+	specHostNqnWithPsk.Psk = []byte("NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:")
+	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec, specHostNqn, specHostNqnWithPsk)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
-		id      string
-		in      *pb.NvmeSubsystem
-		out     *pb.NvmeSubsystem
-		spdk    []string
-		errCode codes.Code
-		errMsg  string
-		exist   bool
+		id                     string
+		in                     *pb.NvmeSubsystem
+		out                    *pb.NvmeSubsystem
+		spdk                   []string
+		errCode                codes.Code
+		errMsg                 string
+		exist                  bool
+		stubKeyToTemporaryFile func(tmpDir string, pskKey []byte) (string, error)
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
@@ -62,6 +68,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			false,
+			nil,
 		},
 		"valid request with invalid SPDK response": {
 			testSubsystemID,
@@ -73,6 +80,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.InvalidArgument,
 			fmt.Sprintf("Could not create NQN: %v", "nqn.2022-09.io.spdk:opi3"),
 			false,
+			nil,
 		},
 		"valid request with empty SPDK response": {
 			testSubsystemID,
@@ -84,6 +92,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_create_subsystem: %v", "EOF"),
 			false,
+			nil,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testSubsystemID,
@@ -95,6 +104,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_create_subsystem: %v", "json response ID mismatch"),
 			false,
+			nil,
 		},
 		"valid request with error code from SPDK response": {
 			testSubsystemID,
@@ -106,6 +116,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_create_subsystem: %v", "json response error: myopierr"),
 			false,
+			nil,
 		},
 		"valid request with error code from SPDK version response": {
 			testSubsystemID,
@@ -117,6 +128,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("spdk_get_version: %v", "json response error: myopierr"),
 			false,
+			nil,
 		},
 		"valid request with valid SPDK response": {
 			testSubsystemID,
@@ -133,6 +145,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			nil,
 		},
 		"valid request with valid SPDK response with HostNQN": {
 			testSubsystemID,
@@ -149,6 +162,38 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.OK,
 			"",
 			false,
+			nil,
+		},
+		"valid request with valid SPDK response with HostNQN and PSK": {
+			testSubsystemID,
+			&pb.NvmeSubsystem{
+				Spec: specHostNqnWithPsk,
+			},
+			&pb.NvmeSubsystem{
+				Spec: specHostNqnWithPsk,
+				Status: &pb.NvmeSubsystemStatus{
+					FirmwareRevision: "SPDK v20.10",
+				},
+			},
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"jsonrpc":"2.0","id":%d,"result":{"version":"SPDK v20.10","fields":{"major":20,"minor":10,"patch":0,"suffix":""}}}`},
+			codes.OK,
+			"",
+			false,
+			nil,
+		},
+		"valid request with valid SPDK response with HostNQN and PSK error": {
+			testSubsystemID,
+			&pb.NvmeSubsystem{
+				Spec: specHostNqnWithPsk,
+			},
+			nil,
+			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			codes.Internal,
+			"some psk file error",
+			false,
+			func(_ string, _ []byte) (string, error) {
+				return "", status.Errorf(codes.Internal, "some psk file error")
+			},
 		},
 		"already exists": {
 			testSubsystemID,
@@ -160,6 +205,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.OK,
 			"",
 			true,
+			nil,
 		},
 		"no required field": {
 			testControllerID,
@@ -169,6 +215,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			codes.Unknown,
 			"missing required field: nvme_subsystem",
 			false,
+			nil,
 		},
 		"too long nqn field": {
 			id: testControllerID,
@@ -226,6 +273,16 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
+			writtenPskKey := []byte{}
+			origWriteKey := testEnv.opiSpdkServer.keyToTemporaryFile
+			testEnv.opiSpdkServer.keyToTemporaryFile = func(tmpDir string, pskKey []byte) (string, error) {
+				writtenPskKey = pskKey
+				if tt.stubKeyToTemporaryFile != nil {
+					return tt.stubKeyToTemporaryFile(tmpDir, pskKey)
+				}
+				return origWriteKey(tmpDir, pskKey)
+			}
+
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 			if tt.exist {
@@ -253,6 +310,14 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 				}
 			} else {
 				t.Error("expected grpc error status")
+			}
+
+			if entries, err := os.ReadDir(t.TempDir()); err != nil || len(entries) > 0 {
+				t.Error("expected no tmp files exist")
+			}
+
+			if !bytes.Equal(tt.in.GetSpec().GetPsk(), writtenPskKey) {
+				t.Error("expected psk key", string(tt.in.GetSpec().GetPsk()), "received", string(writtenPskKey))
 			}
 		})
 	}
