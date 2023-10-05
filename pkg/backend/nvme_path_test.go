@@ -6,10 +6,9 @@
 package backend
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -50,14 +49,15 @@ var (
 func TestBackEnd_CreateNvmePath(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		id         string
-		in         *pb.NvmePath
-		out        *pb.NvmePath
-		spdk       []string
-		errCode    codes.Code
-		errMsg     string
-		exist      bool
-		controller *pb.NvmeRemoteController
+		id                     string
+		in                     *pb.NvmePath
+		out                    *pb.NvmePath
+		spdk                   []string
+		errCode                codes.Code
+		errMsg                 string
+		exist                  bool
+		controller             *pb.NvmeRemoteController
+		stubKeyToTemporaryFile func(tmpDir string, pskKey []byte) (string, error)
 	}{
 		"illegal resource_id": {
 			id:         "CapitalLettersNotAllowed",
@@ -118,6 +118,41 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			errMsg:     "",
 			exist:      false,
 			controller: &testNvmeCtrlWithName,
+		},
+		"valid request with PSK and with valid SPDK response for tcp": {
+			id:      testNvmePathID,
+			in:      &testNvmePath,
+			out:     &testNvmePath,
+			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
+			errCode: codes.OK,
+			errMsg:  "",
+			exist:   false,
+			controller: &pb.NvmeRemoteController{
+				Name: testNvmeCtrlName,
+				Tcp: &pb.TcpController{
+					Psk: []byte("NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"),
+				},
+				Multipath: testNvmeCtrl.Multipath,
+			},
+		},
+		"valid request with PSK and with psk file error": {
+			id:      testNvmePathID,
+			in:      &testNvmePath,
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Internal,
+			errMsg:  "some psk file error",
+			exist:   false,
+			controller: &pb.NvmeRemoteController{
+				Name: testNvmeCtrlName,
+				Tcp: &pb.TcpController{
+					Psk: []byte("NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"),
+				},
+				Multipath: testNvmeCtrl.Multipath,
+			},
+			stubKeyToTemporaryFile: func(_ string, _ []byte) (string, error) {
+				return "", status.Errorf(codes.Internal, "some psk file error")
+			},
 		},
 		"valid request with valid SPDK response for pcie": {
 			id: testNvmePathID,
@@ -229,6 +264,17 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
+			testEnv.opiSpdkServer.pskDir = t.TempDir()
+			origWriteKey := testEnv.opiSpdkServer.keyToTemporaryFile
+			writtenPskKey := []byte{}
+			testEnv.opiSpdkServer.keyToTemporaryFile = func(tmpDir string, pskKey []byte) (string, error) {
+				writtenPskKey = pskKey
+				if tt.stubKeyToTemporaryFile != nil {
+					return tt.stubKeyToTemporaryFile(tmpDir, pskKey)
+				}
+				return origWriteKey(tmpDir, pskKey)
+			}
+
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(tt.controller)
 			if tt.exist {
 				testEnv.opiSpdkServer.Volumes.NvmePaths[testNvmePathName] = utils.ProtoClone(&testNvmePathWithName)
@@ -255,98 +301,13 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			} else {
 				t.Error("expected grpc error status")
 			}
-		})
-	}
-	pskTests := map[string]struct {
-		createErr error
-		writeErr  error
-		spdk      []string
-		errCode   codes.Code
-		errMsg    string
-	}{
-		"tmp key file creation failed": {
-			createErr: errors.New("stub error"),
-			writeErr:  nil,
-			spdk:      []string{},
-			errCode:   codes.Internal,
-			errMsg:    "failed to handle key",
-		},
-		"tmp key file write failed": {
-			createErr: nil,
-			writeErr:  errors.New("stub error"),
-			spdk:      []string{},
-			errCode:   codes.Internal,
-			errMsg:    "failed to handle key",
-		},
-		"tmp key file removed after successful call": {
-			createErr: nil,
-			writeErr:  nil,
-			spdk:      []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
-			errCode:   codes.OK,
-			errMsg:    "",
-		},
-	}
 
-	for name, tt := range pskTests {
-		t.Run(name, func(t *testing.T) {
-			testEnv := createTestEnvironment(tt.spdk)
-			defer testEnv.Close()
-
-			const expectedKey = "NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"
-			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] =
-				&pb.NvmeRemoteController{
-					Multipath: pb.NvmeMultipath_NVME_MULTIPATH_MULTIPATH,
-					Tcp: &pb.TcpController{
-						Hdgst: false,
-						Ddgst: false,
-						Psk:   []byte(expectedKey),
-					},
-				}
-
-			createdKeyFile := ""
-			origCreateTempFile := testEnv.opiSpdkServer.psk.createTempFile
-			testEnv.opiSpdkServer.psk.createTempFile =
-				func(dir, pattern string) (*os.File, error) {
-					if tt.createErr == nil {
-						keyFile, _ := origCreateTempFile(t.TempDir(), pattern)
-						createdKeyFile = keyFile.Name()
-						return keyFile, nil
-					}
-					return nil, tt.createErr
-				}
-			origWriteKey := testEnv.opiSpdkServer.psk.writeKey
-			testEnv.opiSpdkServer.psk.writeKey =
-				func(keyFile string, key []byte, perm os.FileMode) error {
-					if createdKeyFile != keyFile {
-						t.Errorf("Expected key is written to: %v, instead: %v", createdKeyFile, keyFile)
-					}
-					if _, err := os.Stat(createdKeyFile); err != nil {
-						t.Errorf("Expected temporary key file %v exists", createdKeyFile)
-					}
-					_ = origWriteKey(keyFile, key, perm)
-					written, _ := os.ReadFile(filepath.Clean(keyFile))
-					if string(written) != expectedKey {
-						t.Errorf("Expected psk key: %v is written, received: %v", expectedKey, key)
-					}
-					return tt.writeErr
-				}
-
-			request := &pb.CreateNvmePathRequest{NvmePath: &testNvmePath, NvmePathId: "nvmetcppath0"}
-			_, err := testEnv.client.CreateNvmePath(testEnv.ctx, request)
-
-			if er, ok := status.FromError(err); ok {
-				if er.Code() != tt.errCode {
-					t.Error("error code: expected", tt.errCode, "received", er.Code())
-				}
-				if er.Message() != tt.errMsg {
-					t.Error("error message: expected", tt.errMsg, "received", er.Message())
-				}
-			} else {
-				t.Error("expected grpc error status")
+			if entries, err := os.ReadDir(t.TempDir()); err != nil || len(entries) > 0 {
+				t.Error("expected no tmp files exist")
 			}
 
-			if _, err := os.Stat(createdKeyFile); err == nil {
-				t.Errorf("Expect temporary key file %v is removed", createdKeyFile)
+			if !bytes.Equal(tt.controller.GetTcp().GetPsk(), writtenPskKey) {
+				t.Error("expected psk key", string(tt.controller.GetTcp().GetPsk()), "received", string(writtenPskKey))
 			}
 		})
 	}
