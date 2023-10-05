@@ -14,17 +14,11 @@ import (
 func TestKeyToTemporaryFile(t *testing.T) {
 	tests := map[string]struct {
 		pskKey    []byte
-		tmpDir    string
 		wantError bool
 	}{
 		"content is written": {
 			pskKey:    []byte("NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"),
 			wantError: false,
-		},
-		"invalid tmp dir": {
-			pskKey:    []byte("NVMeTLSkey-1:01:MDAxMTIyMzM0NDU1NjY3Nzg4OTlhYWJiY2NkZGVlZmZwJEiQ:"),
-			tmpDir:    "/abcdef",
-			wantError: true,
 		},
 		"empty key": {
 			pskKey:    []byte{},
@@ -33,12 +27,7 @@ func TestKeyToTemporaryFile(t *testing.T) {
 	}
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			if tt.tmpDir != "" {
-				tmpDir = tt.tmpDir
-			}
-
-			psk, err := KeyToTemporaryFile(tmpDir, tt.pskKey)
+			psk, err := KeyToTemporaryFile(tt.pskKey)
 
 			if tt.wantError != (err != nil) {
 				t.Errorf("expected error: %v, received: %v", tt.wantError, err)

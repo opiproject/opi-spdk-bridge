@@ -16,12 +16,12 @@ const keyPermissions = 0600
 
 // KeyToTemporaryFile writes pskKey into a tmp file located in tmpDir with
 // required file permissions to be consumed by SPDK
-func KeyToTemporaryFile(tmpDir string, pskKey []byte) (string, error) {
+func KeyToTemporaryFile(pskKey []byte) (string, error) {
 	if len(pskKey) == 0 {
 		return "", status.Error(codes.FailedPrecondition, "empty psk key")
 	}
 
-	keyFile, err := os.CreateTemp(tmpDir, "opikey")
+	keyFile, err := os.CreateTemp("/var/tmp", "opikey")
 	if err != nil {
 		return "", status.Error(codes.Internal, "failed to create tmp file for key")
 	}

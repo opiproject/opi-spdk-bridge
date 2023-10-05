@@ -37,8 +37,7 @@ type Server struct {
 	store              gokv.Store
 	Volumes            VolumeParameters
 	Pagination         map[string]int
-	keyToTemporaryFile func(tmpDir string, pskKey []byte) (string, error)
-	pskDir             string
+	keyToTemporaryFile func(pskKey []byte) (string, error)
 }
 
 // NewServer creates initialized instance of BackEnd server communicating
@@ -61,6 +60,5 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 		},
 		Pagination:         make(map[string]int),
 		keyToTemporaryFile: utils.KeyToTemporaryFile,
-		pskDir:             "/var/tmp",
 	}
 }

@@ -7,6 +7,7 @@ package backend
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -57,7 +58,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		errMsg                 string
 		exist                  bool
 		controller             *pb.NvmeRemoteController
-		stubKeyToTemporaryFile func(tmpDir string, pskKey []byte) (string, error)
+		stubKeyToTemporaryFile func(pskKey []byte) (string, error)
 	}{
 		"illegal resource_id": {
 			id:         "CapitalLettersNotAllowed",
@@ -150,7 +151,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 				},
 				Multipath: testNvmeCtrl.Multipath,
 			},
-			stubKeyToTemporaryFile: func(_ string, _ []byte) (string, error) {
+			stubKeyToTemporaryFile: func(_ []byte) (string, error) {
 				return "", status.Errorf(codes.Internal, "some psk file error")
 			},
 		},
@@ -264,15 +265,17 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.pskDir = t.TempDir()
 			origWriteKey := testEnv.opiSpdkServer.keyToTemporaryFile
 			writtenPskKey := []byte{}
-			testEnv.opiSpdkServer.keyToTemporaryFile = func(tmpDir string, pskKey []byte) (string, error) {
+			pskFile := ""
+			testEnv.opiSpdkServer.keyToTemporaryFile = func(pskKey []byte) (string, error) {
 				writtenPskKey = pskKey
 				if tt.stubKeyToTemporaryFile != nil {
-					return tt.stubKeyToTemporaryFile(tmpDir, pskKey)
+					return tt.stubKeyToTemporaryFile(pskKey)
 				}
-				return origWriteKey(tmpDir, pskKey)
+				file, err := origWriteKey(pskKey)
+				pskFile = file
+				return file, err
 			}
 
 			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(tt.controller)
@@ -302,7 +305,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 				t.Error("expected grpc error status")
 			}
 
-			if entries, err := os.ReadDir(t.TempDir()); err != nil || len(entries) > 0 {
+			if _, err := os.Stat(pskFile); !errors.Is(err, os.ErrNotExist) {
 				t.Error("expected no tmp files exist")
 			}
 
