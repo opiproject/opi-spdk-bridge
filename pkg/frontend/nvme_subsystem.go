@@ -81,7 +81,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		psk := ""
 		if len(in.NvmeSubsystem.Spec.Psk) > 0 {
 			log.Printf("Notice, TLS is used for subsystem %v", in.NvmeSubsystem.Name)
-			keyFile, err := s.keyToTemporaryFile(s.pskDir, in.NvmeSubsystem.Spec.Psk)
+			keyFile, err := s.keyToTemporaryFile(in.NvmeSubsystem.Spec.Psk)
 			if err != nil {
 				return nil, err
 			}

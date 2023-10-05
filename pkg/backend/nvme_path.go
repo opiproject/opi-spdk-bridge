@@ -73,7 +73,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	psk := ""
 	if len(controller.GetTcp().GetPsk()) > 0 {
 		log.Printf("Notice, TLS is used to establish connection: to %v", in.NvmePath)
-		keyFile, err := s.keyToTemporaryFile(s.pskDir, controller.Tcp.Psk)
+		keyFile, err := s.keyToTemporaryFile(controller.Tcp.Psk)
 		if err != nil {
 			return nil, err
 		}
