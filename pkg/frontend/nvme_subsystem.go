@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"sort"
 
@@ -77,10 +78,24 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	}
 	// if Hostnqn is not empty, add it to subsystem
 	if in.NvmeSubsystem.Spec.Hostnqn != "" {
+		psk := ""
+		if len(in.NvmeSubsystem.Spec.Psk) > 0 {
+			log.Printf("Notice, TLS is used for subsystem %v", in.NvmeSubsystem.Name)
+			keyFile, err := s.keyToTemporaryFile(s.pskDir, in.NvmeSubsystem.Spec.Psk)
+			if err != nil {
+				return nil, err
+			}
+			defer func() {
+				err := os.Remove(keyFile)
+				log.Printf("Cleanup key file %v: %v", keyFile, err)
+			}()
+
+			psk = keyFile
+		}
 		params := spdk.NvmfSubsystemAddHostParams{
 			Nqn:  in.NvmeSubsystem.Spec.Nqn,
 			Host: in.NvmeSubsystem.Spec.Hostnqn,
-			Psk:  "/tmp/opikey.txt",
+			Psk:  psk,
 		}
 		var result spdk.NvmfSubsystemAddHostResult
 		err = s.rpc.Call("nvmf_subsystem_add_host", &params, &result)

@@ -12,6 +12,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 // NvmeParameters contains all Nvme related structures
@@ -41,6 +42,9 @@ type Server struct {
 	Nvme       NvmeParameters
 	Virt       VirtioParameters
 	Pagination map[string]int
+
+	keyToTemporaryFile func(tmpDir string, pskKey []byte) (string, error)
+	pskDir             string
 }
 
 // NewServer creates initialized instance of FrontEnd server communicating
@@ -70,6 +74,9 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 			transport: NewVhostUserBlkTransport(),
 		},
 		Pagination: make(map[string]int),
+
+		keyToTemporaryFile: utils.KeyToTemporaryFile,
+		pskDir:             "/var/tmp",
 	}
 }
 
