@@ -7,7 +7,6 @@ package backend
 
 import (
 	"log"
-	"os"
 
 	"github.com/philippgille/gokv"
 
@@ -33,16 +32,12 @@ type Server struct {
 	pb.UnimplementedNullVolumeServiceServer
 	pb.UnimplementedAioVolumeServiceServer
 
-	rpc        spdk.JSONRPC
-	store      gokv.Store
-	Volumes    VolumeParameters
-	Pagination map[string]int
-	psk        psk
-}
-
-type psk struct {
-	createTempFile func(dir, pattern string) (*os.File, error)
-	writeKey       func(keyFile string, key []byte, perm os.FileMode) error
+	rpc                spdk.JSONRPC
+	store              gokv.Store
+	Volumes            VolumeParameters
+	Pagination         map[string]int
+	keyToTemporaryFile func(tmpDir string, pskKey []byte) (string, error)
+	pskDir             string
 }
 
 // NewServer creates initialized instance of BackEnd server communicating
@@ -63,10 +58,8 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 			NvmeControllers: make(map[string]*pb.NvmeRemoteController),
 			NvmePaths:       make(map[string]*pb.NvmePath),
 		},
-		Pagination: make(map[string]int),
-		psk: psk{
-			createTempFile: os.CreateTemp,
-			writeKey:       os.WriteFile,
-		},
+		Pagination:         make(map[string]int),
+		keyToTemporaryFile: keyToTemporaryFile,
+		pskDir:             "/var/tmp",
 	}
 }

@@ -73,7 +73,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	psk := ""
 	if len(controller.GetTcp().GetPsk()) > 0 {
 		log.Printf("Notice, TLS is used to establish connection: to %v", in.NvmePath)
-		keyFile, err := s.keyToTemporaryFile(controller.Tcp.Psk)
+		keyFile, err := s.keyToTemporaryFile(s.pskDir, controller.Tcp.Psk)
 		if err != nil {
 			return nil, err
 		}
@@ -286,15 +286,15 @@ func (s *Server) numberOfPathsForController(controllerName string) int {
 	return numberOfPaths
 }
 
-func (s *Server) keyToTemporaryFile(pskKey []byte) (string, error) {
-	keyFile, err := s.psk.createTempFile("/var/tmp", "opikey")
+func keyToTemporaryFile(tmpDir string, pskKey []byte) (string, error) {
+	keyFile, err := os.CreateTemp(tmpDir, "opikey")
 	if err != nil {
 		log.Printf("error: failed to create file for key: %v", err)
 		return "", status.Error(codes.Internal, "failed to handle key")
 	}
 
 	const keyPermissions = 0600
-	if err := s.psk.writeKey(keyFile.Name(), pskKey, keyPermissions); err != nil {
+	if err := os.WriteFile(keyFile.Name(), pskKey, keyPermissions); err != nil {
 		log.Printf("error: failed to write to key file: %v", err)
 		removeErr := os.Remove(keyFile.Name())
 		log.Printf("Delete key file after key write: %v", removeErr)
