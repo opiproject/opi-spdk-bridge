@@ -30,8 +30,8 @@ var (
 			HostNsid: 22,
 		},
 		Status: &pb.NvmeNamespaceStatus{
-			PciState:     2,
-			PciOperState: 1,
+			State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+			OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 		},
 	}
 )
@@ -132,8 +132,8 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 			&pb.NvmeNamespace{
 				Spec: namespaceSpec,
 				Status: &pb.NvmeNamespaceStatus{
-					PciState:     2,
-					PciOperState: 1,
+					State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+					OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 				},
 			},
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":22}`},
@@ -414,8 +414,8 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 				Name: testNamespaceName,
 				Spec: spec,
 				Status: &pb.NvmeNamespaceStatus{
-					PciState:     2,
-					PciOperState: 1,
+					State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+					OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 				},
 			},
 			[]string{},
@@ -759,8 +759,8 @@ func TestFrontEnd_GetNvmeNamespace(t *testing.T) {
 					HostNsid: 22,
 				},
 				Status: &pb.NvmeNamespaceStatus{
-					PciState:     2,
-					PciOperState: 1,
+					State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+					OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
 				},
 			},
 			[]string{`{"jsonrpc":"2.0","id":%d,"result":[{"nqn":"nqn.2014-08.org.nvmexpress.discovery","subtype":"Discovery","listen_addresses":[],"allow_any_host":true,"hosts":[]},{"nqn":"nqn.2022-09.io.spdk:opi3","subtype":"Nvme","listen_addresses":[{"transport":"TCP","trtype":"TCP","adrfam":"IPv4","traddr":"192.168.80.2","trsvcid":"4444"}],"allow_any_host":false,"hosts":[{"nqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}],"serial_number":"SPDK00000000000001","model_number":"SPDK_Controller1","max_namespaces":32,"min_cntlid":1,"max_cntlid":65519,"namespaces":[{"nsid":22,"bdev_name":"Malloc0","name":"Malloc0","nguid":"611C13802D994E1DAB121F38A9887929","uuid":"611c1380-2d99-4e1d-ab12-1f38a9887929"}]}]}`},

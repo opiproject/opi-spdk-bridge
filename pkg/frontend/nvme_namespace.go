@@ -78,7 +78,10 @@ func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNames
 	}
 
 	response := utils.ProtoClone(in.NvmeNamespace)
-	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	response.Status = &pb.NvmeNamespaceStatus{
+		State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+		OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
+	}
 	response.Spec.HostNsid = int32(result)
 	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
 	return response, nil
@@ -146,7 +149,10 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
 	response := utils.ProtoClone(in.NvmeNamespace)
-	response.Status = &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1}
+	response.Status = &pb.NvmeNamespaceStatus{
+		State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+		OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
+	}
 	s.Nvme.Namespaces[in.NvmeNamespace.Name] = response
 
 	return response, nil
@@ -240,9 +246,12 @@ func (s *Server) GetNvmeNamespace(ctx context.Context, in *pb.GetNvmeNamespaceRe
 				r := &rr.Namespaces[j]
 				if int32(r.Nsid) == namespace.Spec.HostNsid {
 					return &pb.NvmeNamespace{
-						Name:   namespace.Name,
-						Spec:   &pb.NvmeNamespaceSpec{HostNsid: namespace.Spec.HostNsid},
-						Status: &pb.NvmeNamespaceStatus{PciState: 2, PciOperState: 1},
+						Name: namespace.Name,
+						Spec: &pb.NvmeNamespaceSpec{HostNsid: namespace.Spec.HostNsid},
+						Status: &pb.NvmeNamespaceStatus{
+							State:     pb.NvmeNamespaceStatus_STATE_ENABLED,
+							OperState: pb.NvmeNamespaceStatus_OPER_STATE_ONLINE,
+						},
 					}, nil
 				}
 			}
