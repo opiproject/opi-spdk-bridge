@@ -15,18 +15,6 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
-// TODO: can we combine all of volume types into a single list?
-//		 maybe create a volume abstraction like bdev in SPDK?
-
-// VolumeParameters contains all BackEnd volume related structures
-type VolumeParameters struct {
-	AioVolumes  map[string]*pb.AioVolume
-	NullVolumes map[string]*pb.NullVolume
-
-	NvmeControllers map[string]*pb.NvmeRemoteController
-	NvmePaths       map[string]*pb.NvmePath
-}
-
 // Server contains backend related OPI services
 type Server struct {
 	pb.UnimplementedNvmeRemoteControllerServiceServer
@@ -35,7 +23,6 @@ type Server struct {
 
 	rpc        spdk.JSONRPC
 	store      gokv.Store
-	Volumes    VolumeParameters
 	Pagination map[string]int
 	psk        psk
 }
@@ -55,14 +42,8 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 		log.Panic("nil for Store is not allowed")
 	}
 	return &Server{
-		rpc:   jsonRPC,
-		store: store,
-		Volumes: VolumeParameters{
-			AioVolumes:      make(map[string]*pb.AioVolume),
-			NullVolumes:     make(map[string]*pb.NullVolume),
-			NvmeControllers: make(map[string]*pb.NvmeRemoteController),
-			NvmePaths:       make(map[string]*pb.NvmePath),
-		},
+		rpc:        jsonRPC,
+		store:      store,
 		Pagination: make(map[string]int),
 		psk: psk{
 			createTempFile: os.CreateTemp,

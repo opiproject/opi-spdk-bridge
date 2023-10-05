@@ -128,7 +128,7 @@ func TestBackEnd_CreateNullVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
+				testEnv.opiSpdkServer.store.Set(testNullVolumeName, &testNullVolumeWithName)
 			}
 			if tt.out != nil {
 				tt.out = utils.ProtoClone(tt.out)
@@ -309,7 +309,7 @@ func TestBackEnd_UpdateNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testNullVolumeName, &testNullVolumeWithName)
 
 			request := &pb.UpdateNullVolumeRequest{NullVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNullVolume(testEnv.ctx, request)
@@ -614,7 +614,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testNullVolumeName, &testNullVolumeWithName)
 
 			request := &pb.GetNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetNullVolume(testEnv.ctx, request)
@@ -717,7 +717,7 @@ func TestBackEnd_StatsNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testNullVolumeName, &testNullVolumeWithName)
 
 			request := &pb.StatsNullVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsNullVolume(testEnv.ctx, request)
@@ -830,7 +830,7 @@ func TestBackEnd_DeleteNullVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.NullVolumes[testNullVolumeName] = utils.ProtoClone(&testNullVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testNullVolumeName, &testNullVolumeWithName)
 
 			request := &pb.DeleteNullVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNullVolume(testEnv.ctx, request)

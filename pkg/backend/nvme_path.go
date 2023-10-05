@@ -47,14 +47,22 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 	}
 	in.NvmePath.Name = utils.ResourceIDToVolumeName(resourceID)
 
-	nvmePath, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
-	if ok {
+	nvmePath := new(pb.NvmePath)
+	found, err := s.store.Get(in.NvmePath.Name, nvmePath)
+	if err != nil {
+		return nil, err
+	}
+	if found {
 		log.Printf("Already existing NvmePath with id %v", in.NvmePath.Name)
 		return nvmePath, nil
 	}
 
-	controller, ok := s.Volumes.NvmeControllers[in.NvmePath.ControllerNameRef]
-	if !ok {
+	controller := new(pb.NvmeRemoteController)
+	found, err = s.store.Get(in.NvmePath.ControllerNameRef, controller)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.NvmePath.ControllerNameRef)
 		return nil, err
 	}
@@ -98,14 +106,17 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		Psk:       psk,
 	}
 	var result []spdk.BdevNvmeAttachControllerResult
-	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
+	err = s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("Received from SPDK: %v", result)
 
 	response := utils.ProtoClone(in.NvmePath)
-	s.Volumes.NvmePaths[in.NvmePath.Name] = response
+	err = s.store.Set(in.NvmePath.Name, response)
+	if err != nil {
+		return nil, err
+	}
 	return response, nil
 }
 
@@ -115,16 +126,24 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 	if err := s.validateDeleteNvmePathRequest(in); err != nil {
 		return nil, err
 	}
-	nvmePath, ok := s.Volumes.NvmePaths[in.Name]
-	if !ok {
+	nvmePath := new(pb.NvmePath)
+	found, err := s.store.Get(in.Name, nvmePath)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			return &emptypb.Empty{}, nil
 		}
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
-	controller, ok := s.Volumes.NvmeControllers[nvmePath.ControllerNameRef]
-	if !ok {
+	controller := new(pb.NvmeRemoteController)
+	found, err = s.store.Get(nvmePath.ControllerNameRef, controller)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", nvmePath.ControllerNameRef)
 		return nil, err
 	}
@@ -139,7 +158,7 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 	}
 
 	var result spdk.BdevNvmeDetachControllerResult
-	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
+	err = s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +168,10 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
-	delete(s.Volumes.NvmePaths, in.Name)
+	err = s.store.Delete(nvmePath.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	return &emptypb.Empty{}, nil
 }
@@ -161,8 +183,12 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
-	if !ok {
+	volume := new(pb.NvmePath)
+	found, err := s.store.Get(in.NvmePath.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
 		}
@@ -176,7 +202,10 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 	}
 	log.Printf("TODO: use resourceID=%v", resourceID)
 	response := utils.ProtoClone(in.NvmePath)
-	// s.Volumes.NvmePaths[in.NvmePath.Name] = response
+	// err = s.store.Set(in.NvmePath.Name, response)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	return response, nil
 }
 
@@ -220,14 +249,18 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 		return nil, err
 	}
 	// fetch object from the database
-	path, ok := s.Volumes.NvmePaths[in.Name]
-	if !ok {
+	path := new(pb.NvmePath)
+	found, err := s.store.Get(in.Name, path)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
 
 	var result []spdk.BdevNvmeGetControllerResult
-	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
+	err = s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -250,15 +283,19 @@ func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmePaths[in.Name]
-	if !ok {
+	volume := new(pb.NvmePath)
+	found, err := s.store.Get(in.Name, volume)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	var result spdk.NvmfGetSubsystemStatsResult
-	err := s.rpc.Call("nvmf_get_stats", nil, &result)
+	err = s.rpc.Call("nvmf_get_stats", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -278,11 +315,11 @@ func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {
 
 func (s *Server) numberOfPathsForController(controllerName string) int {
 	numberOfPaths := 0
-	for _, path := range s.Volumes.NvmePaths {
-		if path.ControllerNameRef == controllerName {
-			numberOfPaths++
-		}
-	}
+	// for _, path := range s.Volumes.NvmePaths {
+	// 	if path.ControllerNameRef == controllerName {
+	// 		numberOfPaths++
+	// 	}
+	// }
 	return numberOfPaths
 }
 

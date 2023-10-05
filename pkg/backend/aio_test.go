@@ -129,7 +129,7 @@ func TestBackEnd_CreateAioVolume(t *testing.T) {
 			defer testEnv.Close()
 
 			if tt.exist {
-				testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolumeWithName)
+				testEnv.opiSpdkServer.store.Set(testAioVolumeName, &testAioVolumeWithName)
 			}
 			if tt.out != nil {
 				tt.out = utils.ProtoClone(tt.out)
@@ -309,7 +309,7 @@ func TestBackEnd_UpdateAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testAioVolumeName, &testAioVolumeWithName)
 
 			request := &pb.UpdateAioVolumeRequest{AioVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateAioVolume(testEnv.ctx, request)
@@ -604,7 +604,7 @@ func TestBackEnd_GetAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testAioVolumeName, &testAioVolumeWithName)
 
 			request := &pb.GetAioVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.GetAioVolume(testEnv.ctx, request)
@@ -707,7 +707,7 @@ func TestBackEnd_StatsAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testAioVolumeName, &testAioVolumeWithName)
 
 			request := &pb.StatsAioVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsAioVolume(testEnv.ctx, request)
@@ -820,7 +820,7 @@ func TestBackEnd_DeleteAioVolume(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Volumes.AioVolumes[testAioVolumeName] = utils.ProtoClone(&testAioVolumeWithName)
+			testEnv.opiSpdkServer.store.Set(testAioVolumeName, &testAioVolumeWithName)
 
 			request := &pb.DeleteAioVolumeRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteAioVolume(testEnv.ctx, request)
