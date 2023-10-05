@@ -12,6 +12,7 @@ import (
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
 // TODO: can we combine all of volume types into a single list?
@@ -59,7 +60,7 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 			NvmePaths:       make(map[string]*pb.NvmePath),
 		},
 		Pagination:         make(map[string]int),
-		keyToTemporaryFile: keyToTemporaryFile,
+		keyToTemporaryFile: utils.KeyToTemporaryFile,
 		pskDir:             "/var/tmp",
 	}
 }

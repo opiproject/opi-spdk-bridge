@@ -285,21 +285,3 @@ func (s *Server) numberOfPathsForController(controllerName string) int {
 	}
 	return numberOfPaths
 }
-
-func keyToTemporaryFile(tmpDir string, pskKey []byte) (string, error) {
-	keyFile, err := os.CreateTemp(tmpDir, "opikey")
-	if err != nil {
-		log.Printf("error: failed to create file for key: %v", err)
-		return "", status.Error(codes.Internal, "failed to handle key")
-	}
-
-	const keyPermissions = 0600
-	if err := os.WriteFile(keyFile.Name(), pskKey, keyPermissions); err != nil {
-		log.Printf("error: failed to write to key file: %v", err)
-		removeErr := os.Remove(keyFile.Name())
-		log.Printf("Delete key file after key write: %v", removeErr)
-		return "", status.Error(codes.Internal, "failed to handle key")
-	}
-
-	return keyFile.Name(), nil
-}
