@@ -429,6 +429,8 @@ github.com/onsi/ginkgo/v2 v2.12.1/go.mod h1:TE309ZR8s5FsKKpuB1YAQYBzCaAfUgatB/xl
 github.com/onsi/gomega v1.27.10 h1:naR28SdDFlqrG6kScpT8VWpu1xWY5nJRCF3XaYyBjhI=
 github.com/opiproject/gospdk v0.0.0-20230924031820-4b65d0851cb9 h1:DkqXBfcVaJEtsyziW8ZW/Vwge5H3Skk0ZfVm5D/s0LM=
 github.com/opiproject/gospdk v0.0.0-20230924031820-4b65d0851cb9/go.mod h1:rO2nM/OyY69zPLQO2mNX8+ckvyAd2TqV1vLLG7qEB74=
+github.com/opiproject/gospdk v0.0.0-20231003165248-8edbef6eb841 h1:xfR6qBHRRsRunE6+yDX5s1BhFFMElJNGh0MOt0rjLsU=
+github.com/opiproject/gospdk v0.0.0-20231003165248-8edbef6eb841/go.mod h1:mRMIpGIwz5uuUUaDhh6ceIYq20qR5OVtxE0/x5fprEA=
 github.com/opiproject/opi-api v0.0.0-20231004104309-217649f4535f h1:TXLfuUmFwB7Zk8YKIzEfT/LQ2i5d+BW/BzjQgaBBOWM=
 github.com/opiproject/opi-api v0.0.0-20231004104309-217649f4535f/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/otiai10/copy v1.2.0 h1:HvG945u96iNadPoG2/Ja2+AUJeW5YuFQMixq9yirC+k=
