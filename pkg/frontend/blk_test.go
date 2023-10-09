@@ -100,30 +100,36 @@ func TestFrontEnd_CreateVirtioBlk(t *testing.T) {
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 		},
-		// "virtual functions are not supported for vhost user": {
-		// 	id: testVirtioCtrlID,
-		// 	in: &pb.VirtioBlk{
-		// 		PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(1), PortId: wrapperspb.Int32(0)},
-		// 		VolumeNameRef: "Malloc42",
-		// 		MaxIoQps:      1,
-		// 	},
-		// 	out:     nil,
-		// 	spdk:    []string{},
-		// 	errCode: codes.InvalidArgument,
-		// 	errMsg:  "virtual functions are not supported for vhost user",
-		// },
-		// "only port 0 is supported for vhost user": {
-		// 	id: testVirtioCtrlID,
-		// 	in: &pb.VirtioBlk{
-		// 		PcieId:        &pb.PciEndpoint{PhysicalFunction: wrapperspb.Int32(42), VirtualFunction: wrapperspb.Int32(0), PortId: wrapperspb.Int32(1)},
-		// 		VolumeNameRef: "Malloc42",
-		// 		MaxIoQps:      1,
-		// 	},
-		// 	out:     nil,
-		// 	spdk:    []string{},
-		// 	errCode: codes.InvalidArgument,
-		// 	errMsg:  "only port 0 is supported",
-		// },
+		"virtual functions are not supported for vhost user": {
+			id: testVirtioCtrlID,
+			in: &pb.VirtioBlk{
+				PcieId: &pb.PciEndpoint{
+					PhysicalFunction: wrapperspb.Int32(42),
+					VirtualFunction:  wrapperspb.Int32(1),
+					PortId:           wrapperspb.Int32(0)},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  "virtual functions are not supported for vhost-user-blk",
+		},
+		"only port 0 is supported for vhost user": {
+			id: testVirtioCtrlID,
+			in: &pb.VirtioBlk{
+				PcieId: &pb.PciEndpoint{
+					PhysicalFunction: wrapperspb.Int32(42),
+					VirtualFunction:  wrapperspb.Int32(0),
+					PortId:           wrapperspb.Int32(1)},
+				VolumeNameRef: "Malloc42",
+				MaxIoQps:      1,
+			},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.InvalidArgument,
+			errMsg:  "only port 0 is supported for vhost-user-blk",
+		},
 	}
 
 	for testName, tt := range tests {

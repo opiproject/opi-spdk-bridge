@@ -6,7 +6,7 @@
 package frontend
 
 import (
-	"log"
+	"errors"
 	"path"
 
 	"github.com/opiproject/gospdk/spdk"
@@ -57,7 +57,9 @@ func NewVhostUserBlkTransport() VirtioBlkTransport {
 }
 
 func (v vhostUserBlkTransport) CreateParams(virtioBlk *pb.VirtioBlk) (any, error) {
-	v.verifyTransportSpecificParams(virtioBlk)
+	if err := v.verifyTransportSpecificParams(virtioBlk); err != nil {
+		return nil, err
+	}
 
 	resourceID := path.Base(virtioBlk.Name)
 	return spdk.VhostCreateBlkControllerParams{
@@ -67,7 +69,9 @@ func (v vhostUserBlkTransport) CreateParams(virtioBlk *pb.VirtioBlk) (any, error
 }
 
 func (v vhostUserBlkTransport) DeleteParams(virtioBlk *pb.VirtioBlk) (any, error) {
-	v.verifyTransportSpecificParams(virtioBlk)
+	if err := v.verifyTransportSpecificParams(virtioBlk); err != nil {
+		return nil, err
+	}
 
 	resourceID := path.Base(virtioBlk.Name)
 	return spdk.VhostDeleteControllerParams{
@@ -75,13 +79,15 @@ func (v vhostUserBlkTransport) DeleteParams(virtioBlk *pb.VirtioBlk) (any, error
 	}, nil
 }
 
-func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.VirtioBlk) {
+func (v vhostUserBlkTransport) verifyTransportSpecificParams(virtioBlk *pb.VirtioBlk) error {
 	pcieID := virtioBlk.PcieId
 	if pcieID.PortId.Value != 0 {
-		log.Printf("WARNING: only port 0 is supported for vhost user. Will be replaced with an error")
+		return errors.New("only port 0 is supported for vhost-user-blk")
 	}
 
 	if pcieID.VirtualFunction.Value != 0 {
-		log.Println("WARNING: virtual functions are not supported for vhost user. Will be replaced with an error")
+		return errors.New("virtual functions are not supported for vhost-user-blk")
 	}
+
+	return nil
 }
