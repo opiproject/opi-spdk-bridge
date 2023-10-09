@@ -116,7 +116,7 @@ func (s *Server) UpdateQosVolume(ctx context.Context, in *pb.UpdateQosVolumeRequ
 }
 
 // ListQosVolumes lists QoS volumes
-func (s *Server) ListQosVolumes(ctx context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
+func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (s *Server) ListQosVolumes(ctx context.Context, in *pb.ListQosVolumesReques
 }
 
 // GetQosVolume gets a QoS volume
-func (s *Server) GetQosVolume(ctx context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
+func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
 	// check input correctness
 	if err := s.validateGetQosVolumeRequest(in); err != nil {
 		return nil, err

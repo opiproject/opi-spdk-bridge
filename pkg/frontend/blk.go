@@ -111,7 +111,7 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 }
 
 // UpdateVirtioBlk updates a Virtio block device
-func (s *Server) UpdateVirtioBlk(ctx context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
+func (s *Server) UpdateVirtioBlk(_ context.Context, in *pb.UpdateVirtioBlkRequest) (*pb.VirtioBlk, error) {
 	// check input correctness
 	if err := s.validateUpdateVirtioBlkRequest(in); err != nil {
 		return nil, err
@@ -212,7 +212,7 @@ func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (
 }
 
 // StatsVirtioBlk gets a Virtio block device stats
-func (s *Server) StatsVirtioBlk(ctx context.Context, in *pb.StatsVirtioBlkRequest) (*pb.StatsVirtioBlkResponse, error) {
+func (s *Server) StatsVirtioBlk(_ context.Context, in *pb.StatsVirtioBlkRequest) (*pb.StatsVirtioBlkResponse, error) {
 	log.Printf("StatsVirtioBlk: Received from client: %v", in)
 	// check input correctness
 	if err := s.validateStatsVirtioBlkRequest(in); err != nil {

@@ -112,7 +112,7 @@ func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVi
 }
 
 // UpdateVirtioScsiController updates a Virtio SCSI controller
-func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioSc
 }
 
 // StatsVirtioScsiController gets a Virtio SCSI controller stats
-func (s *Server) StatsVirtioScsiController(ctx context.Context, in *pb.StatsVirtioScsiControllerRequest) (*pb.StatsVirtioScsiControllerResponse, error) {
+func (s *Server) StatsVirtioScsiController(_ context.Context, in *pb.StatsVirtioScsiControllerRequest) (*pb.StatsVirtioScsiControllerResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -317,7 +317,7 @@ func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScs
 }
 
 // UpdateVirtioScsiLun updates a Virtio SCSI LUN
-func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -412,7 +412,7 @@ func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRe
 }
 
 // StatsVirtioScsiLun gets a Virtio SCSI LUN stats
-func (s *Server) StatsVirtioScsiLun(ctx context.Context, in *pb.StatsVirtioScsiLunRequest) (*pb.StatsVirtioScsiLunResponse, error) {
+func (s *Server) StatsVirtioScsiLun(_ context.Context, in *pb.StatsVirtioScsiLunRequest) (*pb.StatsVirtioScsiLunResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err

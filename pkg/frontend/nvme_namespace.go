@@ -125,7 +125,7 @@ func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNames
 }
 
 // UpdateNvmeNamespace updates an Nvme namespace
-func (s *Server) UpdateNvmeNamespace(ctx context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
+func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -255,7 +255,7 @@ func (s *Server) GetNvmeNamespace(ctx context.Context, in *pb.GetNvmeNamespaceRe
 }
 
 // StatsNvmeNamespace gets an Nvme namespace stats
-func (s *Server) StatsNvmeNamespace(ctx context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
+func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmeNamespaceRequest(in); err != nil {
 		return nil, err

@@ -138,7 +138,7 @@ func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeCont
 }
 
 // UpdateNvmeController updates an Nvme controller
-func (s *Server) UpdateNvmeController(ctx context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
+func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (s *Server) UpdateNvmeController(ctx context.Context, in *pb.UpdateNvmeCont
 }
 
 // ListNvmeControllers lists Nvme controllers
-func (s *Server) ListNvmeControllers(ctx context.Context, in *pb.ListNvmeControllersRequest) (*pb.ListNvmeControllersResponse, error) {
+func (s *Server) ListNvmeControllers(_ context.Context, in *pb.ListNvmeControllersRequest) (*pb.ListNvmeControllersResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -182,7 +182,7 @@ func (s *Server) ListNvmeControllers(ctx context.Context, in *pb.ListNvmeControl
 }
 
 // GetNvmeController gets an Nvme controller
-func (s *Server) GetNvmeController(ctx context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
+func (s *Server) GetNvmeController(_ context.Context, in *pb.GetNvmeControllerRequest) (*pb.NvmeController, error) {
 	// check input correctness
 	if err := s.validateGetNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -197,7 +197,7 @@ func (s *Server) GetNvmeController(ctx context.Context, in *pb.GetNvmeController
 }
 
 // StatsNvmeController gets an Nvme controller stats
-func (s *Server) StatsNvmeController(ctx context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
+func (s *Server) StatsNvmeController(_ context.Context, in *pb.StatsNvmeControllerRequest) (*pb.StatsNvmeControllerResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmeControllerRequest(in); err != nil {
 		return nil, err

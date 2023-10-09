@@ -154,7 +154,7 @@ func (s *Server) DeleteNvmeSubsystem(ctx context.Context, in *pb.DeleteNvmeSubsy
 }
 
 // UpdateNvmeSubsystem updates an Nvme Subsystem
-func (s *Server) UpdateNvmeSubsystem(ctx context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
+func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeSubsystemRequest(in); err != nil {
 		return nil, err
