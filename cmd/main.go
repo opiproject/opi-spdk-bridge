@@ -131,7 +131,7 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	)
 	s := grpc.NewServer(serverOptions...)
 
-	jsonRPC := spdk.NewSpdkJSONRPC(spdkAddress)
+	jsonRPC := spdk.NewClient(spdkAddress)
 	backendServer := backend.NewServer(jsonRPC, store)
 	middleendServer := middleend.NewServer(jsonRPC, store)
 
