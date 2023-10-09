@@ -65,6 +65,7 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 		pf         int32
 		vf         int32
 		port       int32
+		hostnqn    string
 		wantErr    bool
 		wantParams spdk.NvmfSubsystemAddListenerParams
 	}{
@@ -72,6 +73,7 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 			pf:         0,
 			vf:         1,
 			port:       0,
+			hostnqn:    "",
 			wantErr:    true,
 			wantParams: spdk.NvmfSubsystemAddListenerParams{},
 		},
@@ -79,6 +81,15 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 			pf:         0,
 			vf:         0,
 			port:       2,
+			hostnqn:    "",
+			wantErr:    true,
+			wantParams: spdk.NvmfSubsystemAddListenerParams{},
+		},
+		"not allowed hostnqn in subsystem": {
+			pf:         0,
+			vf:         0,
+			port:       0,
+			hostnqn:    "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 			wantErr:    true,
 			wantParams: spdk.NvmfSubsystemAddListenerParams{},
 		},
@@ -86,6 +97,7 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 			pf:      3,
 			vf:      0,
 			port:    0,
+			hostnqn: "",
 			wantErr: false,
 			wantParams: spdk.NvmfSubsystemAddListenerParams{
 				Nqn: "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
@@ -121,7 +133,8 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 				},
 			}, &pb.NvmeSubsystem{
 				Spec: &pb.NvmeSubsystemSpec{
-					Nqn: "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
+					Nqn:     "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
+					Hostnqn: tt.hostnqn,
 				},
 			})
 

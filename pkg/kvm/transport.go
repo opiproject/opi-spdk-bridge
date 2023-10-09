@@ -50,6 +50,11 @@ func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, subsys *pb.Nvme
 			errors.New("virtual functions are not supported for vfiouser")
 	}
 
+	if subsys.Spec.Hostnqn != "" {
+		return spdk.NvmfSubsystemAddListenerParams{},
+			errors.New("hostnqn for subsystem is not supported for vfiouser")
+	}
+
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	ctrlrDirPath := controllerDirPath(c.ctrlrDir, utils.GetSubsystemIDFromNvmeName(ctrlr.Name))
 	result.Nqn = subsys.Spec.Nqn
