@@ -34,7 +34,7 @@ func sortNvmePaths(paths []*pb.NvmePath) {
 }
 
 // CreateNvmePath creates a new Nvme path
-func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest) (*pb.NvmePath, error) {
+func (s *Server) CreateNvmePath(ctx context.Context, in *pb.CreateNvmePathRequest) (*pb.NvmePath, error) {
 	// check input correctness
 	if err := s.validateCreateNvmePathRequest(in); err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 		Psk:       psk,
 	}
 	var result []spdk.BdevNvmeAttachControllerResult
-	err := s.rpc.Call("bdev_nvme_attach_controller", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_nvme_attach_controller", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s *Server) CreateNvmePath(_ context.Context, in *pb.CreateNvmePathRequest)
 }
 
 // DeleteNvmePath deletes a Nvme path
-func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNvmePath(ctx context.Context, in *pb.DeleteNvmePathRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteNvmePathRequest(in); err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 	}
 
 	var result spdk.BdevNvmeDetachControllerResult
-	err := s.rpc.Call("bdev_nvme_detach_controller", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_nvme_detach_controller", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (s *Server) DeleteNvmePath(_ context.Context, in *pb.DeleteNvmePathRequest)
 }
 
 // UpdateNvmePath updates an Nvme path
-func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
+func (s *Server) UpdateNvmePath(ctx context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmePathRequest(in); err != nil {
 		return nil, err
@@ -181,7 +181,7 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 }
 
 // ListNvmePaths lists Nvme path
-func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (*pb.ListNvmePathsResponse, error) {
+func (s *Server) ListNvmePaths(ctx context.Context, in *pb.ListNvmePathsRequest) (*pb.ListNvmePathsResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (
 		return nil, perr
 	}
 	var result []spdk.BdevNvmeGetControllerResult
-	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
+	err := s.rpc.Call(ctx, "bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (s *Server) ListNvmePaths(_ context.Context, in *pb.ListNvmePathsRequest) (
 }
 
 // GetNvmePath gets Nvme path
-func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.NvmePath, error) {
+func (s *Server) GetNvmePath(ctx context.Context, in *pb.GetNvmePathRequest) (*pb.NvmePath, error) {
 	// check input correctness
 	if err := s.validateGetNvmePathRequest(in); err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 	}
 
 	var result []spdk.BdevNvmeGetControllerResult
-	err := s.rpc.Call("bdev_nvme_get_controllers", nil, &result)
+	err := s.rpc.Call(ctx, "bdev_nvme_get_controllers", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (s *Server) GetNvmePath(_ context.Context, in *pb.GetNvmePathRequest) (*pb.
 }
 
 // StatsNvmePath gets Nvme path stats
-func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (*pb.StatsNvmePathResponse, error) {
+func (s *Server) StatsNvmePath(ctx context.Context, in *pb.StatsNvmePathRequest) (*pb.StatsNvmePathResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmePathRequest(in); err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func (s *Server) StatsNvmePath(_ context.Context, in *pb.StatsNvmePathRequest) (
 	resourceID := path.Base(volume.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	var result spdk.NvmfGetSubsystemStatsResult
-	err := s.rpc.Call("nvmf_get_stats", nil, &result)
+	err := s.rpc.Call(ctx, "nvmf_get_stats", nil, &result)
 	if err != nil {
 		return nil, err
 	}
