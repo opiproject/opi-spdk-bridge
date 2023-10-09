@@ -32,7 +32,7 @@ func sortAioVolumes(volumes []*pb.AioVolume) {
 }
 
 // CreateAioVolume creates an Aio volume
-func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeRequest) (*pb.AioVolume, error) {
+func (s *Server) CreateAioVolume(ctx context.Context, in *pb.CreateAioVolumeRequest) (*pb.AioVolume, error) {
 	// check input correctness
 	if err := s.validateCreateAioVolumeRequest(in); err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 		Filename:  in.AioVolume.Filename,
 	}
 	var result spdk.BdevAioCreateResult
-	err := s.rpc.Call("bdev_aio_create", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_aio_create", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *Server) CreateAioVolume(_ context.Context, in *pb.CreateAioVolumeReques
 }
 
 // DeleteAioVolume deletes an Aio volume
-func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteAioVolume(ctx context.Context, in *pb.DeleteAioVolumeRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteAioVolumeRequest(in); err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeReques
 		Name: resourceID,
 	}
 	var result spdk.BdevAioDeleteResult
-	err := s.rpc.Call("bdev_aio_delete", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_aio_delete", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *Server) DeleteAioVolume(_ context.Context, in *pb.DeleteAioVolumeReques
 }
 
 // UpdateAioVolume updates an Aio volume
-func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeRequest) (*pb.AioVolume, error) {
+func (s *Server) UpdateAioVolume(ctx context.Context, in *pb.UpdateAioVolumeRequest) (*pb.AioVolume, error) {
 	// check input correctness
 	if err := s.validateUpdateAioVolumeRequest(in); err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 				Filename:  in.AioVolume.Filename,
 			}
 			var result spdk.BdevAioCreateResult
-			err := s.rpc.Call("bdev_aio_create", &params, &result)
+			err := s.rpc.Call(ctx, "bdev_aio_create", &params, &result)
 			if err != nil {
 				return nil, err
 			}
@@ -146,7 +146,7 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 		Name: resourceID,
 	}
 	var result1 spdk.BdevAioDeleteResult
-	err1 := s.rpc.Call("bdev_aio_delete", &params1, &result1)
+	err1 := s.rpc.Call(ctx, "bdev_aio_delete", &params1, &result1)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -161,7 +161,7 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 		Filename:  in.AioVolume.Filename,
 	}
 	var result2 spdk.BdevAioCreateResult
-	err2 := s.rpc.Call("bdev_aio_create", &params2, &result2)
+	err2 := s.rpc.Call(ctx, "bdev_aio_create", &params2, &result2)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -176,7 +176,7 @@ func (s *Server) UpdateAioVolume(_ context.Context, in *pb.UpdateAioVolumeReques
 }
 
 // ListAioVolumes lists Aio volumes
-func (s *Server) ListAioVolumes(_ context.Context, in *pb.ListAioVolumesRequest) (*pb.ListAioVolumesResponse, error) {
+func (s *Server) ListAioVolumes(ctx context.Context, in *pb.ListAioVolumesRequest) (*pb.ListAioVolumesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (s *Server) ListAioVolumes(_ context.Context, in *pb.ListAioVolumesRequest)
 		return nil, perr
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
+	err := s.rpc.Call(ctx, "bdev_get_bdevs", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (s *Server) ListAioVolumes(_ context.Context, in *pb.ListAioVolumesRequest)
 }
 
 // GetAioVolume gets an Aio volume
-func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*pb.AioVolume, error) {
+func (s *Server) GetAioVolume(ctx context.Context, in *pb.GetAioVolumeRequest) (*pb.AioVolume, error) {
 	// check input correctness
 	if err := s.validateGetAioVolumeRequest(in); err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*p
 		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_bdevs", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func (s *Server) GetAioVolume(_ context.Context, in *pb.GetAioVolumeRequest) (*p
 }
 
 // StatsAioVolume gets an Aio volume stats
-func (s *Server) StatsAioVolume(_ context.Context, in *pb.StatsAioVolumeRequest) (*pb.StatsAioVolumeResponse, error) {
+func (s *Server) StatsAioVolume(ctx context.Context, in *pb.StatsAioVolumeRequest) (*pb.StatsAioVolumeResponse, error) {
 	// check input correctness
 	if err := s.validateStatsAioVolumeRequest(in); err != nil {
 		return nil, err
@@ -255,7 +255,7 @@ func (s *Server) StatsAioVolume(_ context.Context, in *pb.StatsAioVolumeRequest)
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult
-	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, err
 	}

@@ -32,7 +32,7 @@ func sortNvmeNamespaces(namespaces []*pb.NvmeNamespace) {
 }
 
 // CreateNvmeNamespace creates an Nvme namespace
-func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
+func (s *Server) CreateNvmeNamespace(ctx context.Context, in *pb.CreateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	// check input correctness
 	if err := s.validateCreateNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 	params.Namespace.BdevName = in.NvmeNamespace.Spec.VolumeNameRef
 
 	var result spdk.NvmfSubsystemAddNsResult
-	err := s.rpc.Call("nvmf_subsystem_add_ns", &params, &result)
+	err := s.rpc.Call(ctx, "nvmf_subsystem_add_ns", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (s *Server) CreateNvmeNamespace(_ context.Context, in *pb.CreateNvmeNamespa
 }
 
 // DeleteNvmeNamespace deletes an Nvme namespace
-func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespaceRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNvmeNamespace(ctx context.Context, in *pb.DeleteNvmeNamespaceRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 		Nsid: int(namespace.Spec.HostNsid),
 	}
 	var result spdk.NvmfSubsystemRemoveNsResult
-	err := s.rpc.Call("nvmf_subsystem_remove_ns", &params, &result)
+	err := s.rpc.Call(ctx, "nvmf_subsystem_remove_ns", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *Server) DeleteNvmeNamespace(_ context.Context, in *pb.DeleteNvmeNamespa
 }
 
 // UpdateNvmeNamespace updates an Nvme namespace
-func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
+func (s *Server) UpdateNvmeNamespace(ctx context.Context, in *pb.UpdateNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (s *Server) UpdateNvmeNamespace(_ context.Context, in *pb.UpdateNvmeNamespa
 }
 
 // ListNvmeNamespaces lists Nvme namespaces
-func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespacesRequest) (*pb.ListNvmeNamespacesResponse, error) {
+func (s *Server) ListNvmeNamespaces(ctx context.Context, in *pb.ListNvmeNamespacesRequest) (*pb.ListNvmeNamespacesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -172,7 +172,7 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 	nqn := subsys.Spec.Nqn
 
 	var result []spdk.NvmfGetSubsystemsResult
-	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
+	err := s.rpc.Call(ctx, "nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (s *Server) ListNvmeNamespaces(_ context.Context, in *pb.ListNvmeNamespaces
 }
 
 // GetNvmeNamespace gets an Nvme namespace
-func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
+func (s *Server) GetNvmeNamespace(ctx context.Context, in *pb.GetNvmeNamespaceRequest) (*pb.NvmeNamespace, error) {
 	// check input correctness
 	if err := s.validateGetNvmeNamespaceRequest(in); err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 	}
 
 	var result []spdk.NvmfGetSubsystemsResult
-	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
+	err := s.rpc.Call(ctx, "nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func (s *Server) GetNvmeNamespace(_ context.Context, in *pb.GetNvmeNamespaceRequ
 }
 
 // StatsNvmeNamespace gets an Nvme namespace stats
-func (s *Server) StatsNvmeNamespace(_ context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
+func (s *Server) StatsNvmeNamespace(ctx context.Context, in *pb.StatsNvmeNamespaceRequest) (*pb.StatsNvmeNamespaceResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmeNamespaceRequest(in); err != nil {
 		return nil, err

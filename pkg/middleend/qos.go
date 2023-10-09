@@ -29,7 +29,7 @@ func sortQosVolumes(volumes []*pb.QosVolume) {
 }
 
 // CreateQosVolume creates a QoS volume
-func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
+func (s *Server) CreateQosVolume(ctx context.Context, in *pb.CreateQosVolumeRequest) (*pb.QosVolume, error) {
 	// check input correctness
 	if err := s.validateCreateQosVolumeRequest(in); err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 		return volume, nil
 	}
 
-	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.Limits.Max); err != nil {
+	if err := s.setMaxLimit(ctx, in.QosVolume.VolumeNameRef, in.QosVolume.Limits.Max); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +61,7 @@ func (s *Server) CreateQosVolume(_ context.Context, in *pb.CreateQosVolumeReques
 }
 
 // DeleteQosVolume deletes a QoS volume
-func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteQosVolume(ctx context.Context, in *pb.DeleteQosVolumeRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteQosVolumeRequest(in); err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 		return nil, err
 	}
 
-	if err := s.cleanMaxLimit(qosVolume.VolumeNameRef); err != nil {
+	if err := s.cleanMaxLimit(ctx, qosVolume.VolumeNameRef); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (s *Server) DeleteQosVolume(_ context.Context, in *pb.DeleteQosVolumeReques
 }
 
 // UpdateQosVolume updates a QoS volume
-func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeRequest) (*pb.QosVolume, error) {
+func (s *Server) UpdateQosVolume(ctx context.Context, in *pb.UpdateQosVolumeRequest) (*pb.QosVolume, error) {
 	// check input correctness
 	if err := s.validateUpdateQosVolumeRequest(in); err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	log.Println("Set new max limit values")
-	if err := s.setMaxLimit(in.QosVolume.VolumeNameRef, in.QosVolume.Limits.Max); err != nil {
+	if err := s.setMaxLimit(ctx, in.QosVolume.VolumeNameRef, in.QosVolume.Limits.Max); err != nil {
 		return nil, err
 	}
 
@@ -116,7 +116,7 @@ func (s *Server) UpdateQosVolume(_ context.Context, in *pb.UpdateQosVolumeReques
 }
 
 // ListQosVolumes lists QoS volumes
-func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
+func (s *Server) ListQosVolumes(ctx context.Context, in *pb.ListQosVolumesRequest) (*pb.ListQosVolumesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (s *Server) ListQosVolumes(_ context.Context, in *pb.ListQosVolumesRequest)
 }
 
 // GetQosVolume gets a QoS volume
-func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
+func (s *Server) GetQosVolume(ctx context.Context, in *pb.GetQosVolumeRequest) (*pb.QosVolume, error) {
 	// check input correctness
 	if err := s.validateGetQosVolumeRequest(in); err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (s *Server) GetQosVolume(_ context.Context, in *pb.GetQosVolumeRequest) (*p
 }
 
 // StatsQosVolume gets a QoS volume stats
-func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest) (*pb.StatsQosVolumeResponse, error) {
+func (s *Server) StatsQosVolume(ctx context.Context, in *pb.StatsQosVolumeRequest) (*pb.StatsQosVolumeResponse, error) {
 	// check input correctness
 	if err := s.validateStatsQosVolumeRequest(in); err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest)
 		Name: volume.VolumeNameRef,
 	}
 	var result spdk.BdevGetIostatResult
-	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, spdk.ErrFailedSpdkCall
 	}
@@ -199,7 +199,7 @@ func (s *Server) StatsQosVolume(_ context.Context, in *pb.StatsQosVolumeRequest)
 		}}, nil
 }
 
-func (s *Server) setMaxLimit(underlyingVolume string, limit *pb.QosLimit) error {
+func (s *Server) setMaxLimit(ctx context.Context, underlyingVolume string, limit *pb.QosLimit) error {
 	params := spdk.BdevQoSParams{
 		Name:           underlyingVolume,
 		RwIosPerSec:    int(limit.RwIopsKiops * 1000),
@@ -208,7 +208,7 @@ func (s *Server) setMaxLimit(underlyingVolume string, limit *pb.QosLimit) error 
 		WMbytesPerSec:  int(limit.WrBandwidthMbs),
 	}
 	var result spdk.BdevQoSResult
-	err := s.rpc.Call("bdev_set_qos_limit", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_set_qos_limit", &params, &result)
 	if err != nil {
 		return spdk.ErrFailedSpdkCall
 	}
@@ -222,6 +222,6 @@ func (s *Server) setMaxLimit(underlyingVolume string, limit *pb.QosLimit) error 
 	return nil
 }
 
-func (s *Server) cleanMaxLimit(underlyingVolume string) error {
-	return s.setMaxLimit(underlyingVolume, &pb.QosLimit{})
+func (s *Server) cleanMaxLimit(ctx context.Context, underlyingVolume string) error {
+	return s.setMaxLimit(ctx, underlyingVolume, &pb.QosLimit{})
 }

@@ -33,7 +33,7 @@ func sortNullVolumes(volumes []*pb.NullVolume) {
 }
 
 // CreateNullVolume creates a Null volume instance
-func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequest) (*pb.NullVolume, error) {
+func (s *Server) CreateNullVolume(ctx context.Context, in *pb.CreateNullVolumeRequest) (*pb.NullVolume, error) {
 	// check input correctness
 	if err := s.validateCreateNullVolumeRequest(in); err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 		NumBlocks: 64,
 	}
 	var result spdk.BdevNullCreateResult
-	err := s.rpc.Call("bdev_null_create", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_null_create", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (s *Server) CreateNullVolume(_ context.Context, in *pb.CreateNullVolumeRequ
 }
 
 // DeleteNullVolume deletes a Null volume instance
-func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNullVolume(ctx context.Context, in *pb.DeleteNullVolumeRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteNullVolumeRequest(in); err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 		Name: resourceID,
 	}
 	var result spdk.BdevNullDeleteResult
-	err := s.rpc.Call("bdev_null_delete", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_null_delete", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (s *Server) DeleteNullVolume(_ context.Context, in *pb.DeleteNullVolumeRequ
 }
 
 // UpdateNullVolume updates a Null volume instance
-func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequest) (*pb.NullVolume, error) {
+func (s *Server) UpdateNullVolume(ctx context.Context, in *pb.UpdateNullVolumeRequest) (*pb.NullVolume, error) {
 	// check input correctness
 	if err := s.validateUpdateNullVolumeRequest(in); err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 				NumBlocks: 64,
 			}
 			var result spdk.BdevNullCreateResult
-			err := s.rpc.Call("bdev_null_create", &params, &result)
+			err := s.rpc.Call(ctx, "bdev_null_create", &params, &result)
 			if err != nil {
 				return nil, err
 			}
@@ -147,7 +147,7 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 		Name: resourceID,
 	}
 	var result1 spdk.BdevNullDeleteResult
-	err1 := s.rpc.Call("bdev_null_delete", &params1, &result1)
+	err1 := s.rpc.Call(ctx, "bdev_null_delete", &params1, &result1)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -162,7 +162,7 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 		NumBlocks: 64,
 	}
 	var result2 spdk.BdevNullCreateResult
-	err2 := s.rpc.Call("bdev_null_create", &params2, &result2)
+	err2 := s.rpc.Call(ctx, "bdev_null_create", &params2, &result2)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -177,7 +177,7 @@ func (s *Server) UpdateNullVolume(_ context.Context, in *pb.UpdateNullVolumeRequ
 }
 
 // ListNullVolumes lists Null volume instances
-func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesRequest) (*pb.ListNullVolumesResponse, error) {
+func (s *Server) ListNullVolumes(ctx context.Context, in *pb.ListNullVolumesRequest) (*pb.ListNullVolumesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesReques
 		return nil, perr
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
+	err := s.rpc.Call(ctx, "bdev_get_bdevs", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (s *Server) ListNullVolumes(_ context.Context, in *pb.ListNullVolumesReques
 }
 
 // GetNullVolume gets a a Null volume instance
-func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (*pb.NullVolume, error) {
+func (s *Server) GetNullVolume(ctx context.Context, in *pb.GetNullVolumeRequest) (*pb.NullVolume, error) {
 	// check input correctness
 	if err := s.validateGetNullVolumeRequest(in); err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_bdevs", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (s *Server) GetNullVolume(_ context.Context, in *pb.GetNullVolumeRequest) (
 }
 
 // StatsNullVolume gets a Null volume instance stats
-func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeRequest) (*pb.StatsNullVolumeResponse, error) {
+func (s *Server) StatsNullVolume(ctx context.Context, in *pb.StatsNullVolumeRequest) (*pb.StatsNullVolumeResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNullVolumeRequest(in); err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func (s *Server) StatsNullVolume(_ context.Context, in *pb.StatsNullVolumeReques
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult
-	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, err
 	}

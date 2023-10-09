@@ -33,7 +33,7 @@ func sortNvmeSubsystems(subsystems []*pb.NvmeSubsystem) {
 }
 
 // CreateNvmeSubsystem creates an Nvme Subsystem
-func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
+func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	// check input correctness
 	if err := s.validateCreateNvmeSubsystemRequest(in); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 		MaxNamespaces: int(in.NvmeSubsystem.Spec.MaxNamespaces),
 	}
 	var result spdk.NvmfCreateSubsystemResult
-	err := s.rpc.Call("nvmf_create_subsystem", &params, &result)
+	err := s.rpc.Call(ctx, "nvmf_create_subsystem", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 			Psk:  psk,
 		}
 		var result spdk.NvmfSubsystemAddHostResult
-		err = s.rpc.Call("nvmf_subsystem_add_host", &params, &result)
+		err = s.rpc.Call(ctx, "nvmf_subsystem_add_host", &params, &result)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 	}
 	// get SPDK version
 	var ver spdk.GetVersionResult
-	err = s.rpc.Call("spdk_get_version", nil, &ver)
+	err = s.rpc.Call(ctx, "spdk_get_version", nil, &ver)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (s *Server) CreateNvmeSubsystem(_ context.Context, in *pb.CreateNvmeSubsyst
 }
 
 // DeleteNvmeSubsystem deletes an Nvme Subsystem
-func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsystemRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteNvmeSubsystem(ctx context.Context, in *pb.DeleteNvmeSubsystemRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteNvmeSubsystemRequest(in); err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 		Nqn: subsys.Spec.Nqn,
 	}
 	var result spdk.NvmfDeleteSubsystemResult
-	err := s.rpc.Call("nvmf_delete_subsystem", &params, &result)
+	err := s.rpc.Call(ctx, "nvmf_delete_subsystem", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (s *Server) DeleteNvmeSubsystem(_ context.Context, in *pb.DeleteNvmeSubsyst
 }
 
 // UpdateNvmeSubsystem updates an Nvme Subsystem
-func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
+func (s *Server) UpdateNvmeSubsystem(ctx context.Context, in *pb.UpdateNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeSubsystemRequest(in); err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (s *Server) UpdateNvmeSubsystem(_ context.Context, in *pb.UpdateNvmeSubsyst
 }
 
 // ListNvmeSubsystems lists Nvme Subsystems
-func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystemsRequest) (*pb.ListNvmeSubsystemsResponse, error) {
+func (s *Server) ListNvmeSubsystems(ctx context.Context, in *pb.ListNvmeSubsystemsRequest) (*pb.ListNvmeSubsystemsResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -189,7 +189,7 @@ func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystems
 		return nil, perr
 	}
 	var result []spdk.NvmfGetSubsystemsResult
-	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
+	err := s.rpc.Call(ctx, "nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (s *Server) ListNvmeSubsystems(_ context.Context, in *pb.ListNvmeSubsystems
 }
 
 // GetNvmeSubsystem gets Nvme Subsystems
-func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
+func (s *Server) GetNvmeSubsystem(ctx context.Context, in *pb.GetNvmeSubsystemRequest) (*pb.NvmeSubsystem, error) {
 	// check input correctness
 	if err := s.validateGetNvmeSubsystemRequest(in); err != nil {
 		return nil, err
@@ -224,7 +224,7 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 	}
 
 	var result []spdk.NvmfGetSubsystemsResult
-	err := s.rpc.Call("nvmf_get_subsystems", nil, &result)
+	err := s.rpc.Call(ctx, "nvmf_get_subsystems", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +241,7 @@ func (s *Server) GetNvmeSubsystem(_ context.Context, in *pb.GetNvmeSubsystemRequ
 }
 
 // StatsNvmeSubsystem gets Nvme Subsystem stats
-func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystemRequest) (*pb.StatsNvmeSubsystemResponse, error) {
+func (s *Server) StatsNvmeSubsystem(ctx context.Context, in *pb.StatsNvmeSubsystemRequest) (*pb.StatsNvmeSubsystemResponse, error) {
 	// check input correctness
 	if err := s.validateStatsNvmeSubsystemRequest(in); err != nil {
 		return nil, err
@@ -255,7 +255,7 @@ func (s *Server) StatsNvmeSubsystem(_ context.Context, in *pb.StatsNvmeSubsystem
 	resourceID := path.Base(subsys.Name)
 	log.Printf("TODO: send name to SPDK and get back stats: %v", resourceID)
 	var result spdk.NvmfGetSubsystemStatsResult
-	err := s.rpc.Call("nvmf_get_stats", nil, &result)
+	err := s.rpc.Call(ctx, "nvmf_get_stats", nil, &result)
 	if err != nil {
 		return nil, err
 	}

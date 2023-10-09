@@ -33,7 +33,7 @@ func sortScsiControllers(controllers []*pb.VirtioScsiController) {
 }
 
 // CreateVirtioScsiController creates a Virtio SCSI controller
-func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) CreateVirtioScsiController(ctx context.Context, in *pb.CreateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 		Ctrlr: resourceID,
 	}
 	var result spdk.VhostCreateScsiControllerResult
-	err := s.rpc.Call("vhost_create_scsi_controller", &params, &result)
+	err := s.rpc.Call(ctx, "vhost_create_scsi_controller", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *Server) CreateVirtioScsiController(_ context.Context, in *pb.CreateVirt
 }
 
 // DeleteVirtioScsiController deletes a Virtio SCSI controller
-func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioScsiController(ctx context.Context, in *pb.DeleteVirtioScsiControllerRequest) (*emptypb.Empty, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirt
 		Ctrlr: resourceID,
 	}
 	var result spdk.VhostDeleteControllerResult
-	err := s.rpc.Call("vhost_delete_controller", &params, &result)
+	err := s.rpc.Call(ctx, "vhost_delete_controller", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (s *Server) DeleteVirtioScsiController(_ context.Context, in *pb.DeleteVirt
 }
 
 // UpdateVirtioScsiController updates a Virtio SCSI controller
-func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) UpdateVirtioScsiController(ctx context.Context, in *pb.UpdateVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (s *Server) UpdateVirtioScsiController(_ context.Context, in *pb.UpdateVirt
 }
 
 // ListVirtioScsiControllers lists Virtio SCSI controllers
-func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
+func (s *Server) ListVirtioScsiControllers(ctx context.Context, in *pb.ListVirtioScsiControllersRequest) (*pb.ListVirtioScsiControllersResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 		return nil, perr
 	}
 	var result []spdk.VhostGetControllersResult
-	err := s.rpc.Call("vhost_get_controllers", nil, &result)
+	err := s.rpc.Call(ctx, "vhost_get_controllers", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (s *Server) ListVirtioScsiControllers(_ context.Context, in *pb.ListVirtioS
 }
 
 // GetVirtioScsiController gets a Virtio SCSI controller
-func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
+func (s *Server) GetVirtioScsiController(ctx context.Context, in *pb.GetVirtioScsiControllerRequest) (*pb.VirtioScsiController, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 		Name: resourceID,
 	}
 	var result []spdk.VhostGetControllersResult
-	err := s.rpc.Call("vhost_get_controllers", &params, &result)
+	err := s.rpc.Call(ctx, "vhost_get_controllers", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (s *Server) GetVirtioScsiController(_ context.Context, in *pb.GetVirtioScsi
 }
 
 // StatsVirtioScsiController gets a Virtio SCSI controller stats
-func (s *Server) StatsVirtioScsiController(_ context.Context, in *pb.StatsVirtioScsiControllerRequest) (*pb.StatsVirtioScsiControllerResponse, error) {
+func (s *Server) StatsVirtioScsiController(ctx context.Context, in *pb.StatsVirtioScsiControllerRequest) (*pb.StatsVirtioScsiControllerResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func (s *Server) StatsVirtioScsiController(_ context.Context, in *pb.StatsVirtio
 }
 
 // CreateVirtioScsiLun creates a Virtio SCSI LUN
-func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) CreateVirtioScsiLun(ctx context.Context, in *pb.CreateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 		Bdev: in.VirtioScsiLun.VolumeNameRef,
 	}
 	var result int
-	err := s.rpc.Call("vhost_scsi_controller_add_target", &params, &result)
+	err := s.rpc.Call(ctx, "vhost_scsi_controller_add_target", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (s *Server) CreateVirtioScsiLun(_ context.Context, in *pb.CreateVirtioScsiL
 }
 
 // DeleteVirtioScsiLun deletes a Virtio SCSI LUN
-func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteVirtioScsiLun(ctx context.Context, in *pb.DeleteVirtioScsiLunRequest) (*emptypb.Empty, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiL
 		Num:  5,
 	}
 	var result bool
-	err := s.rpc.Call("vhost_scsi_controller_remove_target", &params, &result)
+	err := s.rpc.Call(ctx, "vhost_scsi_controller_remove_target", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func (s *Server) DeleteVirtioScsiLun(_ context.Context, in *pb.DeleteVirtioScsiL
 }
 
 // UpdateVirtioScsiLun updates a Virtio SCSI LUN
-func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) UpdateVirtioScsiLun(ctx context.Context, in *pb.UpdateVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -345,7 +345,7 @@ func (s *Server) UpdateVirtioScsiLun(_ context.Context, in *pb.UpdateVirtioScsiL
 }
 
 // ListVirtioScsiLuns lists Virtio SCSI LUNs
-func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
+func (s *Server) ListVirtioScsiLuns(ctx context.Context, in *pb.ListVirtioScsiLunsRequest) (*pb.ListVirtioScsiLunsResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -356,7 +356,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 		return nil, perr
 	}
 	var result []spdk.VhostGetControllersResult
-	err := s.rpc.Call("vhost_get_controllers", nil, &result)
+	err := s.rpc.Call(ctx, "vhost_get_controllers", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +379,7 @@ func (s *Server) ListVirtioScsiLuns(_ context.Context, in *pb.ListVirtioScsiLuns
 }
 
 // GetVirtioScsiLun gets a Virtio SCSI LUN
-func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
+func (s *Server) GetVirtioScsiLun(ctx context.Context, in *pb.GetVirtioScsiLunRequest) (*pb.VirtioScsiLun, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -399,7 +399,7 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 		Name: resourceID,
 	}
 	var result []spdk.VhostGetControllersResult
-	err := s.rpc.Call("vhost_get_controllers", &params, &result)
+	err := s.rpc.Call(ctx, "vhost_get_controllers", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +412,7 @@ func (s *Server) GetVirtioScsiLun(_ context.Context, in *pb.GetVirtioScsiLunRequ
 }
 
 // StatsVirtioScsiLun gets a Virtio SCSI LUN stats
-func (s *Server) StatsVirtioScsiLun(_ context.Context, in *pb.StatsVirtioScsiLunRequest) (*pb.StatsVirtioScsiLunResponse, error) {
+func (s *Server) StatsVirtioScsiLun(ctx context.Context, in *pb.StatsVirtioScsiLunRequest) (*pb.StatsVirtioScsiLunResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err

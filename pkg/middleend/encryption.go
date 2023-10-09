@@ -32,7 +32,7 @@ func sortEncryptedVolumes(volumes []*pb.EncryptedVolume) {
 }
 
 // CreateEncryptedVolume creates an encrypted volume
-func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	// check input correctness
 	if err := s.validateCreateEncryptedVolumeRequest(in); err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 	// first create a key
 	params1 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result1 spdk.AccelCryptoKeyCreateResult
-	err1 := s.rpc.Call("accel_crypto_key_create", &params1, &result1)
+	err1 := s.rpc.Call(ctx, "accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -75,7 +75,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 		KeyName:      resourceID,
 	}
 	var result spdk.BdevCryptoCreateResult
-	err := s.rpc.Call("bdev_crypto_create", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_crypto_create", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (s *Server) CreateEncryptedVolume(_ context.Context, in *pb.CreateEncrypted
 }
 
 // DeleteEncryptedVolume deletes an encrypted volume
-func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteEncryptedVolume(ctx context.Context, in *pb.DeleteEncryptedVolumeRequest) (*emptypb.Empty, error) {
 	// check input correctness
 	if err := s.validateDeleteEncryptedVolumeRequest(in); err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 		Name: resourceID,
 	}
 	var bdevCryptoDeleteResult spdk.BdevCryptoDeleteResult
-	err := s.rpc.Call("bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
+	err := s.rpc.Call(ctx, "bdev_crypto_delete", &bdevCryptoDeleteParams, &bdevCryptoDeleteResult)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 		KeyName: resourceID,
 	}
 	var keyDestroyResult spdk.AccelCryptoKeyDestroyResult
-	err = s.rpc.Call("accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)
+	err = s.rpc.Call(ctx, "accel_crypto_key_destroy", &keyDestroyParams, &keyDestroyResult)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (s *Server) DeleteEncryptedVolume(_ context.Context, in *pb.DeleteEncrypted
 }
 
 // UpdateEncryptedVolume updates an encrypted volume
-func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	// check input correctness
 	if err := s.validateUpdateEncryptedVolumeRequest(in); err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		Name: resourceID,
 	}
 	var result1 spdk.BdevCryptoDeleteResult
-	err1 := s.rpc.Call("bdev_crypto_delete", &params1, &result1)
+	err1 := s.rpc.Call(ctx, "bdev_crypto_delete", &params1, &result1)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -167,7 +167,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		KeyName: resourceID,
 	}
 	var result0 spdk.AccelCryptoKeyDestroyResult
-	err0 := s.rpc.Call("accel_crypto_key_destroy", &params0, &result0)
+	err0 := s.rpc.Call(ctx, "accel_crypto_key_destroy", &params0, &result0)
 	if err0 != nil {
 		return nil, err0
 	}
@@ -178,7 +178,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 	}
 	params2 := s.getAccelCryptoKeyCreateParams(in.EncryptedVolume)
 	var result2 spdk.AccelCryptoKeyCreateResult
-	err2 := s.rpc.Call("accel_crypto_key_create", &params2, &result2)
+	err2 := s.rpc.Call(ctx, "accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -194,7 +194,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 		KeyName:      resourceID,
 	}
 	var result3 spdk.BdevCryptoCreateResult
-	err3 := s.rpc.Call("bdev_crypto_create", &params3, &result3)
+	err3 := s.rpc.Call(ctx, "bdev_crypto_create", &params3, &result3)
 	if err3 != nil {
 		return nil, err3
 	}
@@ -209,7 +209,7 @@ func (s *Server) UpdateEncryptedVolume(_ context.Context, in *pb.UpdateEncrypted
 }
 
 // ListEncryptedVolumes lists encrypted volumes
-func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
+func (s *Server) ListEncryptedVolumes(ctx context.Context, in *pb.ListEncryptedVolumesRequest) (*pb.ListEncryptedVolumesResponse, error) {
 	// check required fields
 	if err := fieldbehavior.ValidateRequiredFields(in); err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 		return nil, perr
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", nil, &result)
+	err := s.rpc.Call(ctx, "bdev_get_bdevs", nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (s *Server) ListEncryptedVolumes(_ context.Context, in *pb.ListEncryptedVol
 }
 
 // GetEncryptedVolume gets an encrypted volume
-func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
+func (s *Server) GetEncryptedVolume(ctx context.Context, in *pb.GetEncryptedVolumeRequest) (*pb.EncryptedVolume, error) {
 	// check input correctness
 	if err := s.validateGetEncryptedVolumeRequest(in); err != nil {
 		return nil, err
@@ -259,7 +259,7 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 		Name: resourceID,
 	}
 	var result []spdk.BdevGetBdevsResult
-	err := s.rpc.Call("bdev_get_bdevs", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_bdevs", &params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (s *Server) GetEncryptedVolume(_ context.Context, in *pb.GetEncryptedVolume
 }
 
 // StatsEncryptedVolume gets an encrypted volume stats
-func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVolumeRequest) (*pb.StatsEncryptedVolumeResponse, error) {
+func (s *Server) StatsEncryptedVolume(ctx context.Context, in *pb.StatsEncryptedVolumeRequest) (*pb.StatsEncryptedVolumeResponse, error) {
 	// check input correctness
 	if err := s.validateStatsEncryptedVolumeRequest(in); err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (s *Server) StatsEncryptedVolume(_ context.Context, in *pb.StatsEncryptedVo
 	}
 	// See https://mholt.github.io/json-to-go/
 	var result spdk.BdevGetIostatResult
-	err := s.rpc.Call("bdev_get_iostat", &params, &result)
+	err := s.rpc.Call(ctx, "bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, err
 	}
