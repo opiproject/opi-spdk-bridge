@@ -66,12 +66,12 @@ func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
 
 // CreateTestSpdkServer creates a mock spdk server for testing
 func CreateTestSpdkServer(socket string, spdkResponses []string) (net.Listener, spdk.JSONRPC) {
-	jsonRPC := spdk.NewSpdkJSONRPC(socket)
+	jsonRPC := spdk.NewClient(socket)
 	ln := jsonRPC.StartUnixListener()
 	if len(spdkResponses) > 0 {
 		go spdkMockServerCommunicate(jsonRPC, ln, spdkResponses)
 	}
-	return ln, jsonRPC.(*spdk.SpdkJSONRPC)
+	return ln, jsonRPC
 }
 
 // CloseGrpcConnection is utility function used to defer grpc connection close is tests

@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0
 	github.com/onsi/ginkgo/v2 v2.12.1
-	github.com/opiproject/gospdk v0.0.0-20231003165248-8edbef6eb841
+	github.com/opiproject/gospdk v0.0.0-20231009130851-ff9bd6faf71a
 	github.com/opiproject/opi-api v0.0.0-20231005114927-ec55946e5197
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/gomap v0.6.0
