@@ -5,6 +5,7 @@
 package kvm
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -48,6 +49,9 @@ type stubJSONRRPC struct {
 	err error
 }
 
+// build time check that struct implements interface
+var _ spdk.JSONRPC = (*stubJSONRRPC)(nil)
+
 func (s stubJSONRRPC) GetID() uint64 {
 	return 0
 }
@@ -56,11 +60,11 @@ func (s stubJSONRRPC) StartUnixListener() net.Listener {
 	return nil
 }
 
-func (s stubJSONRRPC) GetVersion() string {
+func (s stubJSONRRPC) GetVersion(_ context.Context) string {
 	return ""
 }
 
-func (s stubJSONRRPC) Call(method string, _, result interface{}) error {
+func (s stubJSONRRPC) Call(_ context.Context, method string, _, result interface{}) error {
 	if method == "vhost_create_blk_controller" {
 		if s.err == nil {
 			resultCreateVirtioBLk, ok := result.(*spdk.VhostCreateBlkControllerResult)

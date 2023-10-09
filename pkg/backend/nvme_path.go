@@ -155,7 +155,7 @@ func (s *Server) DeleteNvmePath(ctx context.Context, in *pb.DeleteNvmePathReques
 }
 
 // UpdateNvmePath updates an Nvme path
-func (s *Server) UpdateNvmePath(ctx context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
+func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest) (*pb.NvmePath, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmePathRequest(in); err != nil {
 		return nil, err

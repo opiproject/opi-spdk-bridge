@@ -5,6 +5,7 @@
 package middleend
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -33,6 +34,9 @@ type stubJSONRRPC struct {
 	params []any
 }
 
+// build time check that struct implements interface
+var _ spdk.JSONRPC = (*stubJSONRRPC)(nil)
+
 func (s *stubJSONRRPC) GetID() uint64 {
 	return 0
 }
@@ -41,11 +45,11 @@ func (s *stubJSONRRPC) StartUnixListener() net.Listener {
 	return nil
 }
 
-func (s *stubJSONRRPC) GetVersion() string {
+func (s *stubJSONRRPC) GetVersion(_ context.Context) string {
 	return ""
 }
 
-func (s *stubJSONRRPC) Call(_ string, param interface{}, _ interface{}) error {
+func (s *stubJSONRRPC) Call(_ context.Context, _ string, param interface{}, _ interface{}) error {
 	s.params = append(s.params, param)
 	return nil
 }
