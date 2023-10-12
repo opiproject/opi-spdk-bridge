@@ -21,7 +21,7 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
+	pc "github.com/opiproject/opi-api/inventory/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 
 	"google.golang.org/grpc"
