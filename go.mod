@@ -13,7 +13,7 @@ require (
 	github.com/opiproject/opi-api v0.0.0-20231012135448-00e9f8d63cb4
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/gomap v0.6.0
-	github.com/vektra/mockery/v2 v2.35.2
+	github.com/vektra/mockery/v2 v2.35.4
 	go.einride.tech/aip v0.62.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0
 	go.opentelemetry.io/otel v1.19.0
