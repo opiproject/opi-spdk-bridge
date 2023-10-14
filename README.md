@@ -53,6 +53,8 @@ It is just an example and implies SPDK just as example, not mandated by OPI.
 
 ## Getting started
 
+:exclamation: `docker-compose` is deprecated. For details, see [Migrate to Compose V2](https://docs.docker.com/compose/migrate/).
+
 * [Setup everything once using ansible](https://github.com/opiproject/opi-poc/tree/main/setup)
 * Run `docker compose up -d` or `docker-compose up -d`
 
