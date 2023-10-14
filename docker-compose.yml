@@ -101,7 +101,7 @@ services:
     command: curl -qkL http://opi-spdk-server:8082/v1/inventory/1/inventory/2
 
   opi-spdk-client:
-    image: ghcr.io/opiproject/godpu:main@sha256:be3ea6c92c68762458d00d9c67faff5b00fb3bda8ce8c7d9d6f3faad0ba16df8
+    image: ghcr.io/opiproject/godpu:main@sha256:9307b68dbbf00d578837baec4155f6c23190e52f24e7e4c852d34c8b271a7661
     networks:
       - opi
     depends_on:
