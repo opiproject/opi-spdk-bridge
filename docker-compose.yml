@@ -6,7 +6,7 @@ version: "3.7"
 services:
 
   spdk:
-    image: ghcr.io/opiproject/spdk:main@sha256:aec0957cf166afc52b9b6b5b1e30c2f58758be599f6226b94e74999e555c96aa
+    image: ghcr.io/opiproject/spdk:main@sha256:b2426a2627586ead27b963317fbc66052399403746f659edaf70ca0e344eeda4
     volumes:
       - /dev/hugepages:/dev/hugepages
       - /dev/shm:/dev/shm
@@ -92,7 +92,7 @@ services:
       - opi
 
   opi-gw-test:
-    image: curlimages/curl:8.3.0
+    image: curlimages/curl:8.4.0
     networks:
       - opi
     depends_on:
@@ -101,7 +101,7 @@ services:
     command: curl -qkL http://opi-spdk-server:8082/v1/inventory/1/inventory/2
 
   opi-spdk-client:
-    image: ghcr.io/opiproject/godpu:main@sha256:8b277ebe30f7a229c8b69a80c91041dd6722b66895a0939140aeed0de7a86678
+    image: ghcr.io/opiproject/godpu:main@sha256:9307b68dbbf00d578837baec4155f6c23190e52f24e7e4c852d34c8b271a7661
     networks:
       - opi
     depends_on:
