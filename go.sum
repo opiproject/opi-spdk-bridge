@@ -431,6 +431,8 @@ github.com/onsi/ginkgo/v2 v2.13.0/go.mod h1:TE309ZR8s5FsKKpuB1YAQYBzCaAfUgatB/xl
 github.com/onsi/gomega v1.27.10 h1:naR28SdDFlqrG6kScpT8VWpu1xWY5nJRCF3XaYyBjhI=
 github.com/opiproject/gospdk v0.0.0-20231014170006-3290904650f7 h1:XJNN9WL1jXm5Iaxz+6uiCmGjoBXogMam5UTPVwU1lAg=
 github.com/opiproject/gospdk v0.0.0-20231014170006-3290904650f7/go.mod h1:/Sbhad4IIF+lrSc8hXp8PbeNjZkCGfW9GW1l2sxT2UQ=
+github.com/opiproject/gospdk v0.0.0-20231016193945-967dd4230965 h1:YWUGv6YAY0z5iLmwTFYVCpbSmV7UaVYNMxV5Hjum+uo=
+github.com/opiproject/gospdk v0.0.0-20231016193945-967dd4230965/go.mod h1:4i/bQT2D9Os0VaZGj1H6GCyK9Um/DVBzCLxObnr/60I=
 github.com/opiproject/opi-api v0.0.0-20231016162146-d81cc5ee60d4 h1:q20p6Hg4Un2St+vnw1b1sMSYTDg6bK0PbNrMb5xi7QU=
 github.com/opiproject/opi-api v0.0.0-20231016162146-d81cc5ee60d4/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/otiai10/copy v1.2.0 h1:HvG945u96iNadPoG2/Ja2+AUJeW5YuFQMixq9yirC+k=
