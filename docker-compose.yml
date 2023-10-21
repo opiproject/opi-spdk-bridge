@@ -74,7 +74,7 @@ services:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 
   redis:
-    image: redis:7.2.1-alpine3.18
+    image: redis:7.2.2-alpine3.18
     networks:
       - opi
     healthcheck:
