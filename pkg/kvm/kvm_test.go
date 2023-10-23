@@ -23,6 +23,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const qmpID = `"id":"`
+
 var (
 	errStub                 = status.Error(codes.Internal, "stub error")
 	alwaysSuccessfulJSONRPC = stubJSONRRPC{nil}
@@ -73,7 +75,6 @@ func (s stubJSONRRPC) Call(_ context.Context, method string, _, result interface
 			}
 			*resultCreateVirtioBLk = spdk.VhostCreateBlkControllerResult(true)
 		}
-		return s.err
 	} else if method == "vhost_delete_controller" {
 		if s.err == nil {
 			resultDeleteVirtioBLk, ok := result.(*spdk.VhostDeleteControllerResult)
@@ -82,7 +83,6 @@ func (s stubJSONRRPC) Call(_ context.Context, method string, _, result interface
 			}
 			*resultDeleteVirtioBLk = spdk.VhostDeleteControllerResult(true)
 		}
-		return s.err
 	} else if method == "nvmf_subsystem_add_listener" || method == "nvmf_subsystem_remove_listener" {
 		if s.err == nil {
 			resultCreateNvmeController, ok := result.(*spdk.NvmfSubsystemAddListenerResult)
@@ -91,10 +91,9 @@ func (s stubJSONRRPC) Call(_ context.Context, method string, _, result interface
 			}
 			*resultCreateNvmeController = spdk.NvmfSubsystemAddListenerResult(true)
 		}
-		return s.err
-	} else {
-		return s.err
 	}
+
+	return s.err
 }
 
 type mockCall struct {
@@ -117,7 +116,7 @@ func (s *mockQmpCalls) ExpectAddChardev(id string) *mockQmpCalls {
 		response: `{"return": {"pty": "/tmp/dev/pty/42"}}` + "\n",
 		expectedArgs: []string{
 			`"execute":"chardev-add"`,
-			`"id":"` + toQemuID(id) + `"`,
+			qmpID + toQemuID(id) + `"`,
 		},
 		expectedRegExpArgs: []*regexp.Regexp{
 			regexp.MustCompile(`"path":"` + pathRegexpStr + id + `"`),
@@ -132,7 +131,7 @@ func (s *mockQmpCalls) ExpectAddVirtioBlk(id string, chardevID string) *mockQmpC
 		expectedArgs: []string{
 			`"execute":"device_add"`,
 			`"driver":"vhost-user-blk-pci"`,
-			`"id":"` + toQemuID(id) + `"`,
+			qmpID + toQemuID(id) + `"`,
 			`"chardev":"` + toQemuID(chardevID) + `"`,
 		},
 	})
@@ -155,7 +154,7 @@ func (s *mockQmpCalls) ExpectAddNvmeController(id string, ctrlrDir string) *mock
 		expectedArgs: []string{
 			`"execute":"device_add"`,
 			`"driver":"vfio-user-pci"`,
-			`"id":"` + toQemuID(id) + `"`,
+			qmpID + toQemuID(id) + `"`,
 		},
 		expectedRegExpArgs: []*regexp.Regexp{
 			regexp.MustCompile(`"socket":"` + pathRegexpStr + ctrlrDir + `/cntrl"`),
@@ -179,7 +178,7 @@ func (s *mockQmpCalls) ExpectDeleteChardev(id string) *mockQmpCalls {
 		response: genericQmpOk,
 		expectedArgs: []string{
 			`"execute":"chardev-remove"`,
-			`"id":"` + toQemuID(id) + `"`,
+			qmpID + toQemuID(id) + `"`,
 		},
 	})
 	return s
@@ -237,7 +236,7 @@ func (s *mockQmpCalls) expectDeleteDevice(id string) *mockQmpCalls {
 		response: genericQmpOk,
 		expectedArgs: []string{
 			`"execute":"device_del"`,
-			`"id":"` + toQemuID(id) + `"`,
+			qmpID + toQemuID(id) + `"`,
 		},
 	})
 	return s
