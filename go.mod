@@ -13,6 +13,7 @@ require (
 	github.com/opiproject/opi-api v0.0.0-20231023065319-bdc4318a2513
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/gomap v0.6.0
+	github.com/philippgille/gokv/redis v0.6.0
 	github.com/vektra/mockery/v2 v2.36.0
 	go.einride.tech/aip v0.63.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0
@@ -74,6 +75,7 @@ require (
 	github.com/go-critic/go-critic v0.9.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/go-toolsmith/astcast v1.1.0 // indirect
 	github.com/go-toolsmith/astcopy v1.1.0 // indirect

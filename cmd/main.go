@@ -29,7 +29,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/philippgille/gokv"
-	"github.com/philippgille/gokv/gomap"
+	"github.com/philippgille/gokv/redis"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -69,13 +69,19 @@ func main() {
 	var tlsFiles string
 	flag.StringVar(&tlsFiles, "tls", "", "TLS files in server_cert:server_key:ca_cert format.")
 
+	var redisAddress string
+	flag.StringVar(&redisAddress, "redis_addr", "127.0.0.1:6379", "Redis address in ip_address:port format")
+
 	flag.Parse()
 
 	// Create KV store for persistence
-	options := gomap.DefaultOptions
+	options := redis.DefaultOptions
+	options.Address = redisAddress
 	options.Codec = utils.ProtoCodec{}
-	// TODO: we can change to redis or badger at any given time
-	store := gomap.NewStore(options)
+	store, err := redis.NewClient(options)
+	if err != nil {
+		log.Panic(err)
+	}
 	defer func(store gokv.Store) {
 		err := store.Close()
 		if err != nil {
