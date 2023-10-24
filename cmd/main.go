@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opiproject/gospdk/spdk"
+	"github.com/spdk/spdk/go/rpc/client"
 
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
@@ -137,7 +137,14 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	)
 	s := grpc.NewServer(serverOptions...)
 
-	jsonRPC := spdk.NewClient(spdkAddress)
+	//create client
+	jsonRPC, err := client.CreateClientWithJsonCodec(client.TCP, spdkAddress)
+	if err != nil {
+		log.Fatalf("error on client creation, err: %s", err.Error())
+	}
+	defer rpcClient.Close()
+
+	// create servers
 	backendServer := backend.NewServer(jsonRPC, store)
 	middleendServer := middleend.NewServer(jsonRPC, store)
 

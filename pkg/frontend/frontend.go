@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/philippgille/gokv"
+	"github.com/spdk/spdk/go/rpc/client"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -37,7 +38,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	rpc        spdk.JSONRPC
+	rpc        client.Client
 	store      gokv.Store
 	Nvme       NvmeParameters
 	Virt       VirtioParameters
@@ -48,7 +49,7 @@ type Server struct {
 
 // NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
+func NewServer(jsonRPC client.Client, store gokv.Store) *Server {
 	if jsonRPC == nil {
 		log.Panic("nil for JSONRPC is not allowed")
 	}

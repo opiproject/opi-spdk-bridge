@@ -1,6 +1,8 @@
 module github.com/opiproject/opi-spdk-bridge
 
-go 1.19
+go 1.21
+
+toolchain go1.21.3
 
 require (
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
@@ -173,6 +175,7 @@ require (
 	github.com/sivchari/tenv v1.7.1 // indirect
 	github.com/sonatard/noctx v0.0.2 // indirect
 	github.com/sourcegraph/go-diff v0.7.0 // indirect
+	github.com/spdk/spdk/go/rpc v0.0.0-20231024143024-470e851852bb // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
