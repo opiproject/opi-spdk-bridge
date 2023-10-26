@@ -12,89 +12,11 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  # if workflow for PR or push is already running stop it, and start new one
-  group: poc-storage-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  storage-push:
-    runs-on: ubuntu-latest
+  call:
     permissions:
       contents: read
       packages: write
       id-token: write
-    steps:
-    - uses: actions/checkout@v4
-    - uses: docker/setup-qemu-action@v3
-    - uses: docker/setup-buildx-action@v3.0.0
-
-    - name: Log in to Docker Hub
-      if: github.event_name != 'pull_request'
-      uses: docker/login-action@v3.0.0
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Log in to the GH Container registry
-      if: github.event_name != 'pull_request'
-      uses: docker/login-action@v3.0.0
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Extract Docker metadata
-      id: meta
-      uses: docker/metadata-action@v5.0.0
-      with:
-        images: |
-          ${{ github.repository }}
-          ghcr.io/${{ github.repository }}
-
-    - name: Get opi-api Version
-      run: echo "OPI_API_VERSION=$(go list -m -f '{{.Version}}' github.com/opiproject/opi-api)" >> $GITHUB_ENV
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5.0.0
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm64
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: |
-          ${{ steps.meta.outputs.labels }},
-          opi-api-version=${{ env.OPI_API_VERSION }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-  storage-ci:
-    runs-on: ubuntu-latest
-    steps:
-    - name: configure HUGE pages
-      run: |
-        sync
-        echo 1 | sudo tee /proc/sys/vm/drop_caches
-        sudo mkdir -p /mnt/huge
-        grep hugetlbfs /proc/mounts || sudo mount -t hugetlbfs nodev /mnt/huge
-        echo 1024 | sudo tee /proc/sys/vm/nr_hugepages
-        echo "Check and fail if not enough"
-        grep 1024 /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
-
-    - uses: actions/checkout@v4
-    - uses: docker/setup-qemu-action@v3
-    - uses: docker/setup-buildx-action@5d9862498505fcac67b9f455d6e94ec0339f7b90
-
-    - name: Start containers
-      run: docker-compose up --build --force-recreate --detach
-
-    - name: Run Tests
-      run: ./scripts/tests.sh
-
-    - name: Logs
-      if: always()
-      run: docker-compose logs
-
-    - name: Stop containers
-      if: always()
-      run: docker-compose down --volumes --remove-orphans
+    uses: opiproject/actions/.github/workflows/docker-publish.yml@main
+    secrets: inherit
