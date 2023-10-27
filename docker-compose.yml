@@ -69,6 +69,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     command: sh -c "/opi-spdk-bridge -grpc_port=50051 -http_port=8082 -spdk_addr=/var/tmp/spdk.sock -redis_addr=redis:6379"
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
@@ -77,6 +79,8 @@ services:
     image: redis:7.2.2-alpine3.18
     networks:
       - opi
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
@@ -100,6 +104,15 @@ services:
         condition: service_healthy
     command: curl -qkL http://opi-spdk-server:8082/v1/inventory/1/inventory/2
 
+  opi-jaeger-test:
+    image: curlimages/curl:8.4.0
+    networks:
+      - opi
+    depends_on:
+      opi-spdk-client:
+        condition: service_completed_successfully
+    command: sh -c 'curl -s "http://jaeger:16686/api/traces?service=opi-spdk-bridge&lookback=20m&prettyPrint=true&limit=10" | grep operationName'
+
   opi-spdk-client:
     image: ghcr.io/opiproject/godpu:main@sha256:2b55d76814befaec963e378b1764a611f37698c70fd55bfe2ddf07f06393fa28
     networks:
@@ -108,6 +121,19 @@ services:
       opi-spdk-server:
         condition: service_healthy
     command: storage test --addr=opi-spdk-server:50051
+
+  opi-test:
+    image: docker.io/namely/grpc-cli
+    networks:
+      - opi
+    depends_on:
+      opi-spdk-client:
+        condition: service_completed_successfully
+      opi-gw-test:
+        condition: service_completed_successfully
+      opi-jaeger-test:
+        condition: service_completed_successfully
+    command: ls opi-spdk-server:50051 opi_api.storage.v1.FrontendNvmeService -l
 
 networks:
   opi:
