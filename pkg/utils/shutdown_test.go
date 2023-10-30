@@ -7,6 +7,7 @@ package utils
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"sync"
 	"testing"
@@ -26,18 +27,23 @@ func newServeShutdownPair(
 	serveIDs, shutdownIDs *[]int,
 	mu *sync.Mutex,
 	serveErr, shutdownErr error,
+	servePanic bool, shutdownPanic bool,
 ) *serveShutdownPair {
 	shutdownTrigger := make(chan struct{}, 1)
 	s := &serveShutdownPair{
 		shutdownTrigger: shutdownTrigger,
 		serve: func() error {
-			if serveErr == nil {
-				<-shutdownTrigger
-			}
-
 			mu.Lock()
 			*serveIDs = append(*serveIDs, fnID)
 			mu.Unlock()
+
+			if servePanic {
+				log.Panic("Panic!")
+			}
+
+			if serveErr == nil {
+				<-shutdownTrigger
+			}
 
 			return serveErr
 		},
@@ -48,6 +54,10 @@ func newServeShutdownPair(
 
 			shutdownTrigger <- struct{}{}
 
+			if shutdownPanic {
+				log.Panic("Panic!")
+			}
+
 			return shutdownErr
 		},
 	}
@@ -55,31 +65,63 @@ func newServeShutdownPair(
 	return s
 }
 
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	return err.Error()
+}
+
 func TestRunAndWait(t *testing.T) {
 	stubErr := errors.New("stub error")
 	tests := map[string]struct {
 		giveServeErr       error
+		giveServePanic     bool
 		giveShutdownErr    error
+		giveShutdownPanic  bool
 		stoppedByInterrupt bool
-		wantErr            error
+		wantErr            string
 	}{
 		"all services successfully completed": {
 			giveServeErr:       nil,
+			giveServePanic:     false,
 			giveShutdownErr:    nil,
+			giveShutdownPanic:  false,
 			stoppedByInterrupt: true,
-			wantErr:            nil,
+			wantErr:            "",
 		},
 		"serve failed": {
 			giveServeErr:       stubErr,
+			giveServePanic:     false,
 			giveShutdownErr:    nil,
 			stoppedByInterrupt: false,
-			wantErr:            stubErr,
+			giveShutdownPanic:  false,
+			wantErr:            stubErr.Error(),
 		},
 		"shutdown failed": {
 			giveServeErr:       nil,
+			giveServePanic:     false,
 			giveShutdownErr:    stubErr,
+			giveShutdownPanic:  false,
 			stoppedByInterrupt: true,
-			wantErr:            stubErr,
+			wantErr:            stubErr.Error(),
+		},
+		"serve panic": {
+			giveServeErr:       nil,
+			giveServePanic:     true,
+			giveShutdownErr:    nil,
+			giveShutdownPanic:  false,
+			stoppedByInterrupt: false,
+			wantErr:            "was panic for serve function, recovered value: Panic!",
+		},
+		"shutdown panic": {
+			giveServeErr:       nil,
+			giveServePanic:     false,
+			giveShutdownErr:    nil,
+			giveShutdownPanic:  true,
+			stoppedByInterrupt: true,
+			wantErr:            "was panic for shutdown function, recovered value: Panic!",
 		},
 	}
 	for testName, tt := range tests {
@@ -89,9 +131,12 @@ func TestRunAndWait(t *testing.T) {
 			serveFnIDs := &[]int{}
 			shutdownFnIDs := &[]int{}
 			mu := sync.Mutex{}
-			s0 := newServeShutdownPair(0, serveFnIDs, shutdownFnIDs, &mu, nil, nil)
-			s1 := newServeShutdownPair(1, serveFnIDs, shutdownFnIDs, &mu, tt.giveServeErr, tt.giveShutdownErr)
-			s2 := newServeShutdownPair(2, serveFnIDs, shutdownFnIDs, &mu, nil, nil)
+			s0 := newServeShutdownPair(0, serveFnIDs, shutdownFnIDs, &mu, nil, nil, false, false)
+			s1 := newServeShutdownPair(1, serveFnIDs, shutdownFnIDs, &mu,
+				tt.giveServeErr, tt.giveShutdownErr,
+				tt.giveServePanic, tt.giveShutdownPanic,
+			)
+			s2 := newServeShutdownPair(2, serveFnIDs, shutdownFnIDs, &mu, nil, nil, false, false)
 
 			sh.AddServe(s0.serve, s0.shutdown)
 			sh.AddServe(s1.serve, s1.shutdown)
@@ -103,7 +148,7 @@ func TestRunAndWait(t *testing.T) {
 
 			err := sh.RunAndWait()
 
-			if !errors.Is(err, tt.wantErr) {
+			if errString(err) != tt.wantErr {
 				t.Errorf("Expected error: %v, received: %v", tt.wantErr, err)
 			}
 

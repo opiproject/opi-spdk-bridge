@@ -7,6 +7,7 @@ package utils
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -141,7 +142,7 @@ func (s *ShutdownHandler) RunAndWait() error {
 	for i := range s.serves {
 		fn := s.serves[i]
 		s.eg.Go(func() error {
-			return fn()
+			return wrapServeFuncPanic(fn)()
 		})
 	}
 
@@ -163,13 +164,38 @@ func (s *ShutdownHandler) RunAndWait() error {
 		for i := len(s.shutdowns) - 1; i >= 0; i-- {
 			timeoutCtx, cancel := context.WithTimeout(context.Background(), s.timeoutPerShutdown)
 			defer cancel()
-			err = errors.Join(err, s.shutdowns[i](timeoutCtx))
+			shutdownFn := wrapShutdownFuncPanic(s.shutdowns[i])
+			err = errors.Join(err, shutdownFn(timeoutCtx))
 		}
 
 		return err
 	})
 
 	return s.eg.Wait()
+}
+
+func wrapServeFuncPanic(fn ServeFunc) ServeFunc {
+	return func() (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("was panic for serve function, recovered value: %v", r)
+			}
+		}()
+		err = fn()
+		return err
+	}
+}
+
+func wrapShutdownFuncPanic(fn ShutdownFunc) ShutdownFunc {
+	return func(ctx context.Context) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("was panic for shutdown function, recovered value: %v", r)
+			}
+		}()
+		err = fn(ctx)
+		return err
+	}
 }
 
 func runWithCtx(ctx context.Context, fn func() error) error {
