@@ -465,6 +465,8 @@ github.com/opiproject/opi-api v0.0.0-20231026170050-b3c06e7f8fbb h1:13gisU+WRfo0
 github.com/opiproject/opi-api v0.0.0-20231026170050-b3c06e7f8fbb/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20231028074849-2fd1b3a4ab9f h1:CCgubUpYT941qu60oEbAaYNn6E3HPGMcTOOOVI9U4sQ=
 github.com/opiproject/opi-api v0.0.0-20231028074849-2fd1b3a4ab9f/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20231030062733-bbe47cce6d77 h1:7XbMFmFH42T9QY2DjL8s5VVU25cdEdDznBDnmUm3YcE=
+github.com/opiproject/opi-api v0.0.0-20231030062733-bbe47cce6d77/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/otiai10/copy v1.2.0/go.mod h1:rrF5dJ5F0t/EWSYODDu4j9/vEeYHMkc8jt0zJChqQWw=
 github.com/otiai10/copy v1.11.0 h1:OKBD80J/mLBrwnzXqGtFCzprFSGioo30JcmR4APsNwc=
 github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95/go.mod h1:9qAhocn7zKJG+0mI8eUu6xqkFDYS2kb2saOteoSB3cE=
