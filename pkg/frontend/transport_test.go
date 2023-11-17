@@ -6,27 +6,44 @@
 package frontend
 
 import (
-	"errors"
+	"reflect"
+	"testing"
 
 	"github.com/opiproject/gospdk/spdk"
-	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
-type stubNvmeTransport struct {
-	err error
-}
-
-func (t *stubNvmeTransport) Params(_ *pb.NvmeController, _ *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
-	return spdk.NvmfSubsystemAddListenerParams{}, t.err
-}
-
-var (
-	alwaysValidNvmeTransport  = &stubNvmeTransport{}
-	alwaysValidNvmeTransports = map[pb.NvmeTransportType]NvmeTransport{
-		pb.NvmeTransportType_NVME_TRANSPORT_TCP: alwaysValidNvmeTransport,
+func TestNewNvmeVfiouserTransport(t *testing.T) {
+	tests := map[string]struct {
+		rpc       spdk.JSONRPC
+		wantPanic bool
+	}{
+		"nil json rpc": {
+			rpc:       nil,
+			wantPanic: true,
+		},
+		"valid transport": {
+			rpc:       spdk.NewClient("/some/path"),
+			wantPanic: false,
+		},
 	}
-	alwaysFailedNvmeTransport  = &stubNvmeTransport{errors.New("some transport error")}
-	alwaysFailedNvmeTransports = map[pb.NvmeTransportType]NvmeTransport{
-		pb.NvmeTransportType_NVME_TRANSPORT_TCP: alwaysFailedNvmeTransport,
+
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if (r != nil) != tt.wantPanic {
+					t.Errorf("NewNvmeVfiouserTransport() recover = %v, wantPanic = %v", r, tt.wantPanic)
+				}
+			}()
+
+			gotTransport := NewNvmeTCPTransport(tt.rpc)
+			wantTransport := &nvmeTCPTransport{
+				rpc: tt.rpc,
+			}
+
+			if !reflect.DeepEqual(gotTransport, wantTransport) {
+				t.Errorf("Received transport %v not equal to expected one %v", gotTransport, wantTransport)
+			}
+		})
 	}
-)
+}

@@ -27,11 +27,19 @@ type VirtioBlkTransport interface {
 	DeleteParams(virtioBlk *pb.VirtioBlk) (any, error)
 }
 
-type nvmeTCPTransport struct{}
+type nvmeTCPTransport struct {
+	rpc spdk.JSONRPC
+}
 
 // NewNvmeTCPTransport creates a new instance of nvmeTcpTransport
-func NewNvmeTCPTransport() NvmeTransport {
-	return &nvmeTCPTransport{}
+func NewNvmeTCPTransport(rpc spdk.JSONRPC) NvmeTransport {
+	if rpc == nil {
+		log.Panicf("rpc cannot be nil")
+	}
+
+	return &nvmeTCPTransport{
+		rpc: rpc,
+	}
 }
 
 func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
