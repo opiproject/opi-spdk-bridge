@@ -46,15 +46,14 @@ var (
 func TestFrontEnd_CreateNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		id         string
-		in         *pb.NvmeController
-		out        *pb.NvmeController
-		spdk       []string
-		errCode    codes.Code
-		errMsg     string
-		exist      bool
-		subsys     string
-		transports map[pb.NvmeTransportType]NvmeTransport
+		id      string
+		in      *pb.NvmeController
+		out     *pb.NvmeController
+		spdk    []string
+		errCode codes.Code
+		errMsg  string
+		exist   bool
+		subsys  string
 	}{
 		"illegal resource_id": {
 			"CapitalLettersNotAllowed",
@@ -71,7 +70,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("user-settable ID must only contain lowercase, numbers and hyphens (%v)", "got: 'C' in position 0"),
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"valid request with invalid SPDK response": {
 			testControllerID,
@@ -88,7 +86,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("Could not create CTRL: %v", testControllerName),
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"valid request with empty SPDK response": {
 			testControllerID,
@@ -105,7 +102,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "EOF"),
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testControllerID,
@@ -122,7 +118,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "json response ID mismatch"),
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"valid request with error code from SPDK response": {
 			testControllerID,
@@ -139,7 +134,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("nvmf_subsystem_add_listener: %v", "json response error: Invalid parameters"),
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"valid request with valid SPDK response": {
 			testControllerID,
@@ -166,7 +160,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"",
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"already exists": {
 			testControllerID,
@@ -183,7 +176,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"",
 			true,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"malformed subsystem name": {
 			testControllerID,
@@ -200,7 +192,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
 			"-ABC-DEF",
-			alwaysValidNvmeTransports,
 		},
 		"no required ctrl field": {
 			testControllerID,
@@ -211,7 +202,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"missing required field: nvme_controller",
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"no required parent field": {
 			testControllerID,
@@ -227,18 +217,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"missing required field: parent",
 			false,
 			"",
-			alwaysValidNvmeTransports,
-		},
-		"failing transport": {
-			testControllerID,
-			&testController,
-			nil,
-			[]string{},
-			codes.InvalidArgument,
-			alwaysFailedNvmeTransport.err.Error(),
-			false,
-			testSubsystemName,
-			alwaysFailedNvmeTransports,
 		},
 		"not corresponding endpoint for pcie transport type": {
 			testControllerID,
@@ -260,7 +238,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"invalid endpoint type passed for transport",
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"not corresponding endpoint for tcp transport type": {
 			testControllerID,
@@ -282,7 +259,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			"invalid endpoint type passed for transport",
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"not supported transport type": {
 			testControllerID,
@@ -304,18 +280,27 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM),
 			false,
 			testSubsystemName,
-			alwaysValidNvmeTransports,
 		},
 		"no transport registered": {
 			testControllerID,
-			&testController,
+			&pb.NvmeController{
+				Spec: &pb.NvmeControllerSpec{
+					Endpoint: &pb.NvmeControllerSpec_PcieId{
+						PcieId: &pb.PciEndpoint{
+							PortId:           wrapperspb.Int32(0),
+							PhysicalFunction: wrapperspb.Int32(0),
+							VirtualFunction:  wrapperspb.Int32(0),
+						},
+					},
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				},
+			},
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_TCP),
+			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_PCIE),
 			false,
 			testSubsystemName,
-			map[pb.NvmeTransportType]NvmeTransport{},
 		},
 	}
 
@@ -325,7 +310,6 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
 
-			testEnv.opiSpdkServer.Nvme.transports = tt.transports
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
 			testEnv.opiSpdkServer.Nvme.Namespaces[testNamespaceName] = utils.ProtoClone(&testNamespace)
 			if tt.exist {
@@ -367,16 +351,16 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		errCode    codes.Code
 		errMsg     string
 		missing    bool
-		transports map[pb.NvmeTransportType]NvmeTransport
+		controller *pb.NvmeController
 	}{
 		"valid request with invalid SPDK response": {
 			testControllerName,
 			nil,
 			[]string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			codes.InvalidArgument,
-			fmt.Sprintf("Could not delete NQN:ID %v", "nqn.2022-09.io.spdk:opi3:17"),
+			fmt.Sprintf("Could not delete CTRL: %v", testControllerName),
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"valid request with empty SPDK response": {
 			testControllerName,
@@ -385,7 +369,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_listener: %v", "EOF"),
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"valid request with ID mismatch SPDK response": {
 			testControllerName,
@@ -394,7 +378,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_listener: %v", "json response ID mismatch"),
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"valid request with error code from SPDK response": {
 			testControllerName,
@@ -403,7 +387,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("nvmf_subsystem_remove_listener: %v", "json response error: myopierr"),
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"valid request with valid SPDK response": {
 			testControllerName,
@@ -412,7 +396,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.OK,
 			"",
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"valid request with unknown key": {
 			utils.ResourceIDToControllerName(testSubsystemID, "unknown-controller-id"),
@@ -421,7 +405,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.NotFound,
 			fmt.Sprintf("unable to find key %v", utils.ResourceIDToControllerName(testSubsystemID, "unknown-controller-id")),
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"unknown key with missing allowed": {
 			utils.ResourceIDToControllerName(testSubsystemID, "unknown-id"),
@@ -430,7 +414,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.OK,
 			"",
 			true,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"malformed name": {
 			"-ABC-DEF",
@@ -439,7 +423,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			false,
-			alwaysValidNvmeTransports,
+			&testController,
 		},
 		"no required field": {
 			"",
@@ -448,25 +432,28 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			codes.Unknown,
 			"missing required field: name",
 			false,
-			alwaysValidNvmeTransports,
-		},
-		"failing transport": {
-			testControllerName,
-			&emptypb.Empty{},
-			[]string{},
-			codes.InvalidArgument,
-			alwaysFailedNvmeTransport.err.Error(),
-			false,
-			alwaysFailedNvmeTransports,
+			&testController,
 		},
 		"no transport registered": {
 			testControllerName,
 			&emptypb.Empty{},
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_TCP),
+			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_PCIE),
 			false,
-			map[pb.NvmeTransportType]NvmeTransport{},
+			&pb.NvmeController{
+				Name: testControllerName,
+				Spec: &pb.NvmeControllerSpec{
+					Endpoint: &pb.NvmeControllerSpec_PcieId{
+						PcieId: &pb.PciEndpoint{
+							PortId:           wrapperspb.Int32(0),
+							PhysicalFunction: wrapperspb.Int32(0),
+							VirtualFunction:  wrapperspb.Int32(0),
+						},
+					},
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				},
+			},
 		},
 	}
 
@@ -475,9 +462,9 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testEnv := createTestEnvironment(tt.spdk)
 			defer testEnv.Close()
-			testEnv.opiSpdkServer.Nvme.transports = tt.transports
 			testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
-			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(tt.controller)
+			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName].Name = testControllerName
 
 			request := &pb.DeleteNvmeControllerRequest{Name: tt.in, AllowMissing: tt.missing}
 			response, err := testEnv.client.DeleteNvmeController(testEnv.ctx, request)
