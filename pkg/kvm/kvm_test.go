@@ -27,8 +27,8 @@ const qmpID = `"id":"`
 
 var (
 	errStub                 = status.Error(codes.Internal, "stub error")
-	alwaysSuccessfulJSONRPC = stubJSONRRPC{nil}
-	alwaysFailingJSONRPC    = stubJSONRRPC{errStub}
+	alwaysSuccessfulJSONRPC = &stubJSONRRPC{err: nil}
+	alwaysFailingJSONRPC    = &stubJSONRRPC{err: errStub}
 
 	genericQmpError = `{"error": {"class": "GenericError", "desc": "some error"}}` + "\n"
 	genericQmpOk    = `{"return": {}}` + "\n"
@@ -49,24 +49,25 @@ var (
 
 type stubJSONRRPC struct {
 	err error
+	arg any
 }
 
 // build time check that struct implements interface
 var _ spdk.JSONRPC = (*stubJSONRRPC)(nil)
 
-func (s stubJSONRRPC) GetID() uint64 {
+func (s *stubJSONRRPC) GetID() uint64 {
 	return 0
 }
 
-func (s stubJSONRRPC) StartUnixListener() net.Listener {
+func (s *stubJSONRRPC) StartUnixListener() net.Listener {
 	return nil
 }
 
-func (s stubJSONRRPC) GetVersion(_ context.Context) string {
+func (s *stubJSONRRPC) GetVersion(_ context.Context) string {
 	return ""
 }
 
-func (s stubJSONRRPC) Call(_ context.Context, method string, _, result interface{}) error {
+func (s *stubJSONRRPC) Call(_ context.Context, method string, arg, result interface{}) error {
 	if method == "vhost_create_blk_controller" {
 		if s.err == nil {
 			resultCreateVirtioBLk, ok := result.(*spdk.VhostCreateBlkControllerResult)
@@ -92,6 +93,7 @@ func (s stubJSONRRPC) Call(_ context.Context, method string, _, result interface
 			*resultCreateNvmeController = spdk.NvmfSubsystemAddListenerResult(true)
 		}
 	}
+	s.arg = arg
 
 	return s.err
 }
