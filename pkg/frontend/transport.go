@@ -6,6 +6,7 @@
 package frontend
 
 import (
+	"context"
 	"errors"
 	"path"
 
@@ -17,7 +18,8 @@ import (
 // NvmeTransport interface is used to provide SPDK call params to create/delete
 // Nvme controllers depending on used transport type.
 type NvmeTransport interface {
-	Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error)
+	CreateController(ctx context.Context, ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) error
+	DeleteController(ctx context.Context, ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) error
 }
 
 // VirtioBlkTransport interface is used to provide SPDK call params to create/delete
