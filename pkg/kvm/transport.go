@@ -5,7 +5,8 @@
 package kvm
 
 import (
-	"errors"
+	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -13,6 +14,8 @@ import (
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type nvmeVfiouserTransport struct {
@@ -44,28 +47,68 @@ func NewNvmeVfiouserTransport(ctrlrDir string, rpc spdk.JSONRPC) frontend.NvmeTr
 	}
 }
 
-func (c *nvmeVfiouserTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
+func (c *nvmeVfiouserTransport) CreateController(
+	ctx context.Context,
+	ctrlr *pb.NvmeController,
+	subsys *pb.NvmeSubsystem,
+) error {
 	pcieID := ctrlr.GetSpec().GetPcieId()
 	if pcieID.PortId.Value != 0 {
-		return spdk.NvmfSubsystemAddListenerParams{},
-			errors.New("only port 0 is supported for vfiouser")
+		return status.Error(codes.InvalidArgument, "only port 0 is supported for vfiouser")
 	}
 
 	if pcieID.VirtualFunction.Value != 0 {
-		return spdk.NvmfSubsystemAddListenerParams{},
-			errors.New("virtual functions are not supported for vfiouser")
+		return status.Error(codes.InvalidArgument, "virtual functions are not supported for vfiouser")
 	}
 
 	if subsys.Spec.Hostnqn != "" {
-		return spdk.NvmfSubsystemAddListenerParams{},
-			errors.New("hostnqn for subsystem is not supported for vfiouser")
+		return status.Error(codes.InvalidArgument, "hostnqn for subsystem is not supported for vfiouser")
 	}
 
-	result := spdk.NvmfSubsystemAddListenerParams{}
-	ctrlrDirPath := controllerDirPath(c.ctrlrDir, utils.GetSubsystemIDFromNvmeName(ctrlr.Name))
-	result.Nqn = subsys.Spec.Nqn
-	result.ListenAddress.Trtype = "vfiouser"
-	result.ListenAddress.Traddr = ctrlrDirPath
+	params := c.params(ctrlr, subsys)
+	var result spdk.NvmfSubsystemAddListenerResult
+	err := c.rpc.Call(ctx, "nvmf_subsystem_add_listener", &params, &result)
+	if err != nil {
+		return err
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not create CTRL: %s", ctrlr.Name)
+		return status.Errorf(codes.InvalidArgument, msg)
+	}
 
-	return result, nil
+	return nil
+}
+
+func (c *nvmeVfiouserTransport) DeleteController(
+	ctx context.Context,
+	ctrlr *pb.NvmeController,
+	subsys *pb.NvmeSubsystem,
+) error {
+	params := c.params(ctrlr, subsys)
+	var result spdk.NvmfSubsystemAddListenerResult
+	err := c.rpc.Call(ctx, "nvmf_subsystem_remove_listener", &params, &result)
+	if err != nil {
+		return err
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not delete CTRL: %s", ctrlr.Name)
+		return status.Errorf(codes.InvalidArgument, msg)
+	}
+
+	return nil
+}
+
+func (c *nvmeVfiouserTransport) params(
+	ctrlr *pb.NvmeController,
+	subsys *pb.NvmeSubsystem,
+) spdk.NvmfSubsystemAddListenerParams {
+	params := spdk.NvmfSubsystemAddListenerParams{}
+	ctrlrDirPath := controllerDirPath(c.ctrlrDir, utils.GetSubsystemIDFromNvmeName(ctrlr.Name))
+	params.Nqn = subsys.Spec.Nqn
+	params.ListenAddress.Trtype = "vfiouser"
+	params.ListenAddress.Traddr = ctrlrDirPath
+
+	return params
 }
