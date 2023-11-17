@@ -106,7 +106,7 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 	validJSONRPC := spdk.NewClient("/some/path")
 	validNvmeTransports := map[pb.NvmeTransportType]NvmeTransport{
-		pb.NvmeTransportType_NVME_TRANSPORT_TCP: NewNvmeTCPTransport(),
+		pb.NvmeTransportType_NVME_TRANSPORT_TCP: NewNvmeTCPTransport(validJSONRPC),
 	}
 	validVirtioBLkTransport := NewVhostUserBlkTransport()
 	validStore := gomap.NewStore(gomap.DefaultOptions)

@@ -18,22 +18,32 @@ import (
 func TestNewNvmeVfiouserTransport(t *testing.T) {
 	tests := map[string]struct {
 		ctrlrDir  string
+		rpc       spdk.JSONRPC
 		wantPanic bool
 	}{
 		"valid controller dir": {
 			ctrlrDir:  ".",
+			rpc:       &stubJSONRRPC{},
 			wantPanic: false,
 		},
 		"empty string for controller dir": {
 			ctrlrDir:  "",
+			rpc:       &stubJSONRRPC{},
 			wantPanic: true,
 		},
 		"non existing path": {
 			ctrlrDir:  "this/is/some/non/existing/path",
+			rpc:       &stubJSONRRPC{},
 			wantPanic: true,
 		},
 		"ctrlrDir points to non-directory": {
 			ctrlrDir:  "/dev/null",
+			rpc:       &stubJSONRRPC{},
+			wantPanic: true,
+		},
+		"nil json rpc": {
+			ctrlrDir:  ".",
+			rpc:       nil,
 			wantPanic: true,
 		},
 	}
@@ -47,9 +57,10 @@ func TestNewNvmeVfiouserTransport(t *testing.T) {
 				}
 			}()
 
-			gotTransport := NewNvmeVfiouserTransport(tt.ctrlrDir)
+			gotTransport := NewNvmeVfiouserTransport(tt.ctrlrDir, tt.rpc)
 			wantTransport := &nvmeVfiouserTransport{
 				ctrlrDir: tt.ctrlrDir,
+				rpc:      tt.rpc,
 			}
 
 			if !reflect.DeepEqual(gotTransport, wantTransport) {
@@ -59,7 +70,7 @@ func TestNewNvmeVfiouserTransport(t *testing.T) {
 	}
 }
 
-func TestNewNvmeVfiouserTransportParams(t *testing.T) {
+func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 	tmpDir := t.TempDir()
 	tests := map[string]struct {
 		pf         int32
@@ -118,7 +129,8 @@ func TestNewNvmeVfiouserTransportParams(t *testing.T) {
 
 	for testName, tt := range tests {
 		t.Run(testName, func(t *testing.T) {
-			vfiouserTransport := NewNvmeVfiouserTransport(tmpDir)
+			rpc := &stubJSONRRPC{}
+			vfiouserTransport := NewNvmeVfiouserTransport(tmpDir, rpc)
 			gotParams, err := vfiouserTransport.Params(&pb.NvmeController{
 				Name: utils.ResourceIDToControllerName("subsys0", "nvme-1"),
 				Spec: &pb.NvmeControllerSpec{

@@ -272,7 +272,7 @@ func TestCreateNvmeController(t *testing.T) {
 			}
 			opiSpdkServer := frontend.NewCustomizedServer(tt.jsonRPC, store,
 				map[pb.NvmeTransportType]frontend.NvmeTransport{
-					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir),
+					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir, tt.jsonRPC),
 				}, frontend.NewVhostUserBlkTransport())
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, tt.buses)
@@ -424,7 +424,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			}
 			opiSpdkServer := frontend.NewCustomizedServer(tt.jsonRPC, store,
 				map[pb.NvmeTransportType]frontend.NvmeTransport{
-					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir),
+					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir, tt.jsonRPC),
 				}, frontend.NewVhostUserBlkTransport())
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			if !tt.noController {

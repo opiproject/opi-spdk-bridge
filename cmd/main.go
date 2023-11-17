@@ -146,8 +146,8 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TCP:  frontend.NewNvmeTCPTransport(),
-				pb.NvmeTransportType_NVME_TRANSPORT_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir),
+				pb.NvmeTransportType_NVME_TRANSPORT_TCP:  frontend.NewNvmeTCPTransport(jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir, jsonRPC),
 			},
 			frontend.NewVhostUserBlkTransport(),
 		)
@@ -160,7 +160,7 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 		frontendServer := frontend.NewCustomizedServer(jsonRPC,
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TCP: frontend.NewNvmeTCPTransport(),
+				pb.NvmeTransportType_NVME_TRANSPORT_TCP: frontend.NewNvmeTCPTransport(jsonRPC),
 			},
 			frontend.NewVhostUserBlkTransport(),
 		)

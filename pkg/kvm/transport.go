@@ -17,10 +17,11 @@ import (
 
 type nvmeVfiouserTransport struct {
 	ctrlrDir string
+	rpc      spdk.JSONRPC
 }
 
 // NewNvmeVfiouserTransport creates a new instance of nvmeVfiouserTransport
-func NewNvmeVfiouserTransport(ctrlrDir string) frontend.NvmeTransport {
+func NewNvmeVfiouserTransport(ctrlrDir string, rpc spdk.JSONRPC) frontend.NvmeTransport {
 	if ctrlrDir == "" {
 		log.Panicf("ctrlrDir cannot be empty")
 	}
@@ -33,8 +34,13 @@ func NewNvmeVfiouserTransport(ctrlrDir string) frontend.NvmeTransport {
 		log.Panicf("%v is not a directory", ctrlrDir)
 	}
 
+	if rpc == nil {
+		log.Panicf("rpc cannot be nil")
+	}
+
 	return &nvmeVfiouserTransport{
 		ctrlrDir: ctrlrDir,
+		rpc:      rpc,
 	}
 }
 
