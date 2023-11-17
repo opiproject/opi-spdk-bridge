@@ -61,7 +61,7 @@ func main() {
 	flag.StringVar(&qmpAddress, "qmp_addr", "127.0.0.1:5555", "Points to QMP unix socket/tcp socket to interact with. Valid only with -kvm option")
 
 	var ctrlrDir string
-	flag.StringVar(&ctrlrDir, "ctrlr_dir", "", "Directory with created SPDK device unix sockets (-S option in SPDK). Valid only with -kvm option")
+	flag.StringVar(&ctrlrDir, "ctrlr_dir", "/var/tmp", "Directory with created SPDK device unix sockets (-S option in SPDK).")
 
 	var busesStr string
 	flag.StringVar(&busesStr, "buses", "", "QEMU PCI buses IDs separated by `:` to attach Nvme/virtio-blk devices on. e.g. \"pci.opi.0:pci.opi.1\". Valid only with -kvm option")
@@ -141,30 +141,23 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	jsonRPC := spdk.NewClient(spdkAddress)
 	backendServer := backend.NewServer(jsonRPC, store)
 	middleendServer := middleend.NewServer(jsonRPC, store)
+	frontendServer := frontend.NewCustomizedServer(jsonRPC,
+		store,
+		map[pb.NvmeTransportType]frontend.NvmeTransport{
+			pb.NvmeTransportType_NVME_TRANSPORT_TCP:  frontend.NewNvmeTCPTransport(),
+			pb.NvmeTransportType_NVME_TRANSPORT_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir),
+		},
+		frontend.NewVhostUserBlkTransport(),
+	)
 
 	if useKvm {
 		log.Println("Creating KVM server.")
-		frontendServer := frontend.NewCustomizedServer(jsonRPC,
-			store,
-			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TCP:  frontend.NewNvmeTCPTransport(),
-				pb.NvmeTransportType_NVME_TRANSPORT_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir),
-			},
-			frontend.NewVhostUserBlkTransport(),
-		)
 		kvmServer := kvm.NewServer(frontendServer, qmpAddress, ctrlrDir, buses)
 
 		pb.RegisterFrontendNvmeServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
-		frontendServer := frontend.NewCustomizedServer(jsonRPC,
-			store,
-			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TCP: frontend.NewNvmeTCPTransport(),
-			},
-			frontend.NewVhostUserBlkTransport(),
-		)
 		pb.RegisterFrontendNvmeServiceServer(s, frontendServer)
 		pb.RegisterFrontendVirtioBlkServiceServer(s, frontendServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, frontendServer)

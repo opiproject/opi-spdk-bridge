@@ -105,5 +105,15 @@ grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : '//storage.opiproject.org/subsystems/subsystem2/controllers/controller2'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeSubsystem "{name : '//storage.opiproject.org/subsystems/subsystem2'}"
 
+# test vfiouser
+rm -f /var/tmp/subsystem3/{cntrl,bar0}
+mkdir -p /var/tmp/subsystem3
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem3',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest3', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller3', parent: '//storage.opiproject.org/subsystems/subsystem3', nvme_controller : {spec : {nvme_controller_id: 2, pcie_id : {physical_function : 0, virtual_function : 0, port_id: 0}, max_nsq:5, max_ncq:5, 'trtype': 'NVME_TRANSPORT_PCIE' } } }"
+
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : '//storage.opiproject.org/subsystems/subsystem3/controllers/controller3'}"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeSubsystem "{name : '//storage.opiproject.org/subsystems/subsystem3'}"
+rm -rf /var/tmp/subsystem3
+
 # this is last line
 docker-compose ps -a
