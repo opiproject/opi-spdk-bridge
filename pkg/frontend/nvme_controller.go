@@ -12,7 +12,6 @@ import (
 	"path"
 	"sort"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
@@ -64,22 +63,11 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 			"handler for transport type %v is not registered", in.NvmeController.Spec.Trtype)
 	}
 
-	params, err := transport.Params(in.NvmeController, subsys)
-	if err != nil {
-		log.Printf("error: failed to create params for spdk call: %v", err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	var result spdk.NvmfSubsystemAddListenerResult
-	err = s.rpc.Call(ctx, "nvmf_subsystem_add_listener", &params, &result)
+	err := transport.CreateController(ctx, in.NvmeController, subsys)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Received from SPDK: %v", result)
-	if !result {
-		msg := fmt.Sprintf("Could not create CTRL: %s", in.NvmeController.Name)
-		return nil, status.Errorf(codes.InvalidArgument, msg)
-	}
+
 	response := utils.ProtoClone(in.NvmeController)
 	response.Spec.NvmeControllerId = proto.Int32(-1)
 	response.Status = &pb.NvmeControllerStatus{Active: true}
@@ -116,23 +104,11 @@ func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeCont
 			"handler for transport type %v is not registered", controller.Spec.Trtype)
 	}
 
-	params, err := transport.Params(controller, subsys)
-	if err != nil {
-		log.Printf("error: failed to create params for spdk call: %v", err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	var result spdk.NvmfSubsystemAddListenerResult
-	err = s.rpc.Call(ctx, "nvmf_subsystem_remove_listener", &params, &result)
+	err := transport.DeleteController(ctx, controller, subsys)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Received from SPDK: %v", result)
-	if !result {
-		msg := fmt.Sprintf("Could not delete NQN:ID %s:%d",
-			subsys.GetSpec().GetNqn(), controller.GetSpec().GetNvmeControllerId())
-		return nil, status.Errorf(codes.InvalidArgument, msg)
-	}
+
 	delete(s.Nvme.Controllers, controller.Name)
 	return &emptypb.Empty{}, nil
 }
