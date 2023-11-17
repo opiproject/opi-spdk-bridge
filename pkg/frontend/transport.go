@@ -8,11 +8,15 @@ package frontend
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"path"
 
 	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // NvmeTransport interface is used to provide SPDK call params to create/delete
@@ -44,7 +48,50 @@ func NewNvmeTCPTransport(rpc spdk.JSONRPC) NvmeTransport {
 	}
 }
 
-func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsystem) (spdk.NvmfSubsystemAddListenerParams, error) {
+func (c *nvmeTCPTransport) CreateController(
+	ctx context.Context,
+	ctrlr *pb.NvmeController,
+	subsys *pb.NvmeSubsystem,
+) error {
+	params := c.params(ctrlr, subsys)
+	var result spdk.NvmfSubsystemAddListenerResult
+	err := c.rpc.Call(ctx, "nvmf_subsystem_add_listener", &params, &result)
+	if err != nil {
+		return err
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not create CTRL: %s", ctrlr.Name)
+		return status.Errorf(codes.InvalidArgument, msg)
+	}
+
+	return nil
+}
+
+func (c *nvmeTCPTransport) DeleteController(
+	ctx context.Context,
+	ctrlr *pb.NvmeController,
+	subsys *pb.NvmeSubsystem,
+) error {
+	params := c.params(ctrlr, subsys)
+	var result spdk.NvmfSubsystemAddListenerResult
+	err := c.rpc.Call(ctx, "nvmf_subsystem_remove_listener", &params, &result)
+	if err != nil {
+		return err
+	}
+	log.Printf("Received from SPDK: %v", result)
+	if !result {
+		msg := fmt.Sprintf("Could not delete CTRL: %s", ctrlr.Name)
+		return status.Errorf(codes.InvalidArgument, msg)
+	}
+
+	return nil
+}
+
+func (c *nvmeTCPTransport) params(
+	ctrlr *pb.NvmeController,
+	subsys *pb.NvmeSubsystem,
+) spdk.NvmfSubsystemAddListenerParams {
 	result := spdk.NvmfSubsystemAddListenerParams{}
 	result.Nqn = subsys.Spec.Nqn
 	result.SecureChannel = len(subsys.Spec.Psk) > 0
@@ -55,7 +102,7 @@ func (c *nvmeTCPTransport) Params(ctrlr *pb.NvmeController, subsys *pb.NvmeSubsy
 		ctrlr.GetSpec().GetFabricsId().GetAdrfam(),
 	)
 
-	return result, nil
+	return result
 }
 
 type vhostUserBlkTransport struct{}
