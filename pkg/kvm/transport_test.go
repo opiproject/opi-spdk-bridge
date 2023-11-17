@@ -5,6 +5,7 @@
 package kvm
 
 import (
+	"context"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -78,7 +79,7 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 		port       int32
 		hostnqn    string
 		wantErr    bool
-		wantParams spdk.NvmfSubsystemAddListenerParams
+		wantParams any
 	}{
 		"not allowed vf": {
 			pf:         0,
@@ -86,7 +87,7 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 			port:       0,
 			hostnqn:    "",
 			wantErr:    true,
-			wantParams: spdk.NvmfSubsystemAddListenerParams{},
+			wantParams: nil,
 		},
 		"not allowed port": {
 			pf:         0,
@@ -94,7 +95,7 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 			port:       2,
 			hostnqn:    "",
 			wantErr:    true,
-			wantParams: spdk.NvmfSubsystemAddListenerParams{},
+			wantParams: nil,
 		},
 		"not allowed hostnqn in subsystem": {
 			pf:         0,
@@ -102,7 +103,7 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 			port:       0,
 			hostnqn:    "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 			wantErr:    true,
-			wantParams: spdk.NvmfSubsystemAddListenerParams{},
+			wantParams: nil,
 		},
 		"successful params": {
 			pf:      3,
@@ -110,7 +111,7 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 			port:    0,
 			hostnqn: "",
 			wantErr: false,
-			wantParams: spdk.NvmfSubsystemAddListenerParams{
+			wantParams: &spdk.NvmfSubsystemAddListenerParams{
 				Nqn: "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
 				ListenAddress: struct {
 					Trtype  string "json:\"trtype\""
@@ -131,30 +132,32 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			rpc := &stubJSONRRPC{}
 			vfiouserTransport := NewNvmeVfiouserTransport(tmpDir, rpc)
-			gotParams, err := vfiouserTransport.Params(&pb.NvmeController{
-				Name: utils.ResourceIDToControllerName("subsys0", "nvme-1"),
-				Spec: &pb.NvmeControllerSpec{
-					Endpoint: &pb.NvmeControllerSpec_PcieId{
-						PcieId: &pb.PciEndpoint{
-							PortId:           wrapperspb.Int32(tt.port),
-							PhysicalFunction: wrapperspb.Int32(tt.pf),
-							VirtualFunction:  wrapperspb.Int32(tt.vf),
+			err := vfiouserTransport.CreateController(
+				context.Background(),
+				&pb.NvmeController{
+					Name: utils.ResourceIDToControllerName("subsys0", "nvme-1"),
+					Spec: &pb.NvmeControllerSpec{
+						Endpoint: &pb.NvmeControllerSpec_PcieId{
+							PcieId: &pb.PciEndpoint{
+								PortId:           wrapperspb.Int32(tt.port),
+								PhysicalFunction: wrapperspb.Int32(tt.pf),
+								VirtualFunction:  wrapperspb.Int32(tt.vf),
+							},
 						},
+						Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
 					},
-					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
-				},
-			}, &pb.NvmeSubsystem{
-				Spec: &pb.NvmeSubsystemSpec{
-					Nqn:     "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
-					Hostnqn: tt.hostnqn,
-				},
-			})
+				}, &pb.NvmeSubsystem{
+					Spec: &pb.NvmeSubsystemSpec{
+						Nqn:     "nqn.2014-08.org.nvmexpress:uuid:1630a3a6-5bac-4563-a1a6-d2b0257c282a",
+						Hostnqn: tt.hostnqn,
+					},
+				})
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Expect error: %v, received: %v", nil, err)
 			}
-			if !reflect.DeepEqual(tt.wantParams, gotParams) {
-				t.Errorf("Expect %v, received %v", tt.wantParams, gotParams)
+			if !reflect.DeepEqual(tt.wantParams, rpc.arg) {
+				t.Errorf("Expect %v, received %v", tt.wantParams, rpc.arg)
 			}
 		})
 	}
