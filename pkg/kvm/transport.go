@@ -23,6 +23,9 @@ type nvmeVfiouserTransport struct {
 	rpc      spdk.JSONRPC
 }
 
+// build time check that struct implements interface
+var _ frontend.NvmeTransport = (*nvmeVfiouserTransport)(nil)
+
 // NewNvmeVfiouserTransport creates a new instance of nvmeVfiouserTransport
 func NewNvmeVfiouserTransport(ctrlrDir string, rpc spdk.JSONRPC) frontend.NvmeTransport {
 	if ctrlrDir == "" {
