@@ -37,6 +37,9 @@ type nvmeTCPTransport struct {
 	rpc spdk.JSONRPC
 }
 
+// build time check that struct implements interface
+var _ NvmeTransport = (*nvmeTCPTransport)(nil)
+
 // NewNvmeTCPTransport creates a new instance of nvmeTcpTransport
 func NewNvmeTCPTransport(rpc spdk.JSONRPC) NvmeTransport {
 	if rpc == nil {
