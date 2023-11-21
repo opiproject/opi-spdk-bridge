@@ -54,8 +54,8 @@ func (s *Server) CreateNullVolume(ctx context.Context, in *pb.CreateNullVolumeRe
 	// not found, so create a new one
 	params := spdk.BdevNullCreateParams{
 		Name:      resourceID,
-		BlockSize: 512,
-		NumBlocks: 64,
+		BlockSize: int(in.GetNullVolume().GetBlockSize()),
+		NumBlocks: int(in.GetNullVolume().GetBlocksCount()),
 	}
 	var result spdk.BdevNullCreateResult
 	err := s.rpc.Call(ctx, "bdev_null_create", &params, &result)
@@ -118,8 +118,8 @@ func (s *Server) UpdateNullVolume(ctx context.Context, in *pb.UpdateNullVolumeRe
 			log.Printf("Got AllowMissing, create a new resource, don't return error when resource not found")
 			params := spdk.BdevNullCreateParams{
 				Name:      path.Base(in.NullVolume.Name),
-				BlockSize: 512,
-				NumBlocks: 64,
+				BlockSize: int(in.GetNullVolume().GetBlockSize()),
+				NumBlocks: int(in.GetNullVolume().GetBlocksCount()),
 			}
 			var result spdk.BdevNullCreateResult
 			err := s.rpc.Call(ctx, "bdev_null_create", &params, &result)
