@@ -15,7 +15,7 @@ require (
 	github.com/philippgille/gokv/gomap v0.6.0
 	github.com/philippgille/gokv/redis v0.6.0
 	github.com/vektra/mockery/v2 v2.37.1
-	go.einride.tech/aip v0.65.0
+	go.einride.tech/aip v0.66.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.21.0
