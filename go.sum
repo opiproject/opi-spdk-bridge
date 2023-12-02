@@ -475,6 +475,8 @@ github.com/opiproject/gospdk v0.0.0-20231113072608-3f4f00449476 h1:IGa+NQCTEXXjF
 github.com/opiproject/gospdk v0.0.0-20231113072608-3f4f00449476/go.mod h1:kd2E5p2dg+k2ahFvg997ZOf9mMmAGiWFrZapf2udUN4=
 github.com/opiproject/gospdk v0.0.0-20231120072346-996905a8e6d2 h1:VbgcLkD5EZRrksVTPNLTAfvzLbt3IYIIcCVUK1+HDDk=
 github.com/opiproject/gospdk v0.0.0-20231120072346-996905a8e6d2/go.mod h1:JGVgRECgxVovRtIrJM/2eTGAjRcEabS9hbeT5a2Hjis=
+github.com/opiproject/gospdk v0.0.0-20231127063937-cb0de08c81f0 h1:sxPrHU27CG539Jwv2/N2ttE1OnxULW0rmqRxx1mFptU=
+github.com/opiproject/gospdk v0.0.0-20231127063937-cb0de08c81f0/go.mod h1:JGVgRECgxVovRtIrJM/2eTGAjRcEabS9hbeT5a2Hjis=
 github.com/opiproject/opi-api v0.0.0-20231024064347-7cfc2845903f h1:/IXOSHQb6d9sqsTIqS5t8eyyzYpZcKGQBJtaNrfXZmQ=
 github.com/opiproject/opi-api v0.0.0-20231024064347-7cfc2845903f/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-api v0.0.0-20231026170050-b3c06e7f8fbb h1:13gisU+WRfo07XBakEoniyJGltlHoGnExh4spXCibac=
