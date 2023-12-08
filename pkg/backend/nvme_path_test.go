@@ -26,11 +26,10 @@ import (
 
 var (
 	testNvmePathID   = "mytest"
-	testNvmePathName = utils.ResourceIDToVolumeName(testNvmePathID)
+	testNvmePathName = utils.ResourceIDToNvmePathName(testNvmeCtrlID, testNvmePathID)
 	testNvmePath     = pb.NvmePath{
-		Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-		Traddr:            "127.0.0.1",
-		ControllerNameRef: testNvmeCtrlName,
+		Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		Traddr: "127.0.0.1",
 		Fabrics: &pb.FabricsPath{
 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 			Subnqn:  "nqn.2016-06.io.spdk:cnode1",
@@ -39,11 +38,10 @@ var (
 		},
 	}
 	testNvmePathWithName = pb.NvmePath{
-		Name:              testNvmePathName,
-		Trtype:            testNvmePath.Trtype,
-		Traddr:            testNvmePath.Traddr,
-		ControllerNameRef: testNvmePath.ControllerNameRef,
-		Fabrics:           testNvmePath.Fabrics,
+		Name:    testNvmePathName,
+		Trtype:  testNvmePath.Trtype,
+		Traddr:  testNvmePath.Traddr,
+		Fabrics: testNvmePath.Fabrics,
 	}
 )
 
@@ -158,15 +156,13 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"valid request with valid SPDK response for pcie": {
 			id: testNvmePathID,
 			in: &pb.NvmePath{
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
-				ControllerNameRef: testNvmePath.ControllerNameRef,
-				Traddr:            "0000:af:00.0",
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Traddr: "0000:af:00.0",
 			},
 			out: &pb.NvmePath{
-				Name:              testNvmePathName,
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
-				ControllerNameRef: testNvmePath.ControllerNameRef,
-				Traddr:            "0000:af:00.0",
+				Name:   testNvmePathName,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Traddr: "0000:af:00.0",
 			},
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
 			errCode: codes.OK,
@@ -201,10 +197,9 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"tcp transport type missing fabrics": {
 			id: testAioVolumeID,
 			in: &pb.NvmePath{
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Traddr:            "127.0.0.1",
-				ControllerNameRef: testNvmePath.ControllerNameRef,
-				Fabrics:           nil,
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Traddr:  "127.0.0.1",
+				Fabrics: nil,
 			},
 			out:        nil,
 			spdk:       []string{},
@@ -216,10 +211,9 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"pcie transport type with specified fabrics message": {
 			id: testAioVolumeID,
 			in: &pb.NvmePath{
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
-				Traddr:            "0000:af:00.0",
-				ControllerNameRef: testNvmePath.ControllerNameRef,
-				Fabrics:           testNvmePath.Fabrics,
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Traddr:  "0000:af:00.0",
+				Fabrics: testNvmePath.Fabrics,
 			},
 			out:        nil,
 			spdk:       []string{},
@@ -231,10 +225,9 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"pcie transport type with specified tcp controller": {
 			id: testAioVolumeID,
 			in: &pb.NvmePath{
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
-				Traddr:            "0000:af:00.0",
-				ControllerNameRef: testNvmePath.ControllerNameRef,
-				Fabrics:           nil,
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Traddr:  "0000:af:00.0",
+				Fabrics: nil,
 			},
 			out:        nil,
 			spdk:       []string{},
@@ -246,9 +239,8 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"not supported transport type": {
 			id: testNvmePathID,
 			in: &pb.NvmePath{
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM,
-				ControllerNameRef: testNvmePath.ControllerNameRef,
-				Traddr:            testNvmePath.Traddr,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM,
+				Traddr: testNvmePath.Traddr,
 			},
 			out:        nil,
 			spdk:       []string{},
@@ -287,7 +279,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 				tt.out.Name = testNvmePathName
 			}
 
-			request := &pb.CreateNvmePathRequest{NvmePath: tt.in, NvmePathId: tt.id}
+			request := &pb.CreateNvmePathRequest{Parent: testNvmeCtrlName, NvmePath: tt.in, NvmePathId: tt.id}
 			response, err := testEnv.client.CreateNvmePath(testEnv.ctx, request)
 
 			if !proto.Equal(response, tt.out) {
@@ -331,7 +323,7 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.InvalidArgument,
-			errMsg:  fmt.Sprintf("Could not delete Nvme Path: %s", testNvmePathID),
+			errMsg:  fmt.Sprintf("Could not delete Nvme Path: %s", testNvmePathName),
 			missing: false,
 		},
 		"valid request with invalid marshal SPDK response": {
@@ -375,15 +367,15 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      utils.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id"),
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
-			in:      utils.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.OK,
@@ -391,7 +383,7 @@ func TestBackEnd_DeleteNvmePath(t *testing.T) {
 			missing: true,
 		},
 		"malformed name": {
-			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToNvmePathName(testNvmeCtrlID, "-ABC-DEF"),
 			out:     &emptypb.Empty{},
 			spdk:    []string{},
 			errCode: codes.Unknown,
@@ -543,10 +535,9 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 		"valid request with unknown key": {
 			mask: nil,
 			in: &pb.NvmePath{
-				Name:              utils.ResourceIDToVolumeName("unknown-id"),
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Traddr:            "127.0.0.1",
-				ControllerNameRef: "TBD",
+				Name:   utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id"),
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Traddr: "127.0.0.1",
 				Fabrics: &pb.FabricsPath{
 					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 					Trsvcid: 4444,
@@ -556,16 +547,15 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
 			mask: nil,
 			in: &pb.NvmePath{
-				Name:              utils.ResourceIDToVolumeName("unknown-id"),
-				Trtype:            pb.NvmeTransportType_NVME_TRANSPORT_TCP,
-				Traddr:            "127.0.0.1",
-				ControllerNameRef: "TBD",
+				Name:   utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id"),
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Traddr: "127.0.0.1",
 				Fabrics: &pb.FabricsPath{
 					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 					Trsvcid: 4444,
@@ -575,16 +565,15 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			out:     nil,
 			spdk:    []string{},
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id")),
 			missing: true,
 		},
 		"malformed name": {
 			mask: nil,
 			in: &pb.NvmePath{
-				Name:              "-ABC-DEF",
-				ControllerNameRef: "TBD",
-				Trtype:            testNvmePath.Trtype,
-				Traddr:            testNvmePath.Traddr,
+				Name:   "-ABC-DEF",
+				Trtype: testNvmePath.Trtype,
+				Traddr: testNvmePath.Traddr,
 			},
 			out:     nil,
 			spdk:    []string{},

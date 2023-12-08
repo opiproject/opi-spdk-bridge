@@ -22,7 +22,7 @@ import (
 
 var (
 	testNvmeCtrlID   = "opi-nvme8"
-	testNvmeCtrlName = utils.ResourceIDToVolumeName(testNvmeCtrlID)
+	testNvmeCtrlName = utils.ResourceIDToRemoteControllerName(testNvmeCtrlID)
 	testNvmeCtrl     = pb.NvmeRemoteController{
 		Tcp: &pb.TcpController{
 			Hdgst: false,
@@ -178,10 +178,10 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			in: testNvmeCtrlID,
 			out: []*pb.NvmeRemoteController{
 				{
-					Name: utils.ResourceIDToVolumeName("OpiNvme12"),
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
 				},
 				{
-					Name: utils.ResourceIDToVolumeName("OpiNvme13"),
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
 				},
 			},
 			errCode: codes.OK,
@@ -189,18 +189,22 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			size:    0,
 			token:   "",
 			existingControllers: map[string]*pb.NvmeRemoteController{
-				utils.ResourceIDToVolumeName("OpiNvme12"): {Name: utils.ResourceIDToVolumeName("OpiNvme12")},
-				utils.ResourceIDToVolumeName("OpiNvme13"): {Name: utils.ResourceIDToVolumeName("OpiNvme13")},
+				utils.ResourceIDToRemoteControllerName("OpiNvme12"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
+				},
+				utils.ResourceIDToRemoteControllerName("OpiNvme13"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
+				},
 			},
 		},
 		"pagination overflow": {
 			in: testNvmeCtrlID,
 			out: []*pb.NvmeRemoteController{
 				{
-					Name: utils.ResourceIDToVolumeName("OpiNvme12"),
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
 				},
 				{
-					Name: utils.ResourceIDToVolumeName("OpiNvme13"),
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
 				},
 			},
 			errCode: codes.OK,
@@ -208,8 +212,12 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			size:    1000,
 			token:   "",
 			existingControllers: map[string]*pb.NvmeRemoteController{
-				utils.ResourceIDToVolumeName("OpiNvme12"): {Name: utils.ResourceIDToVolumeName("OpiNvme12")},
-				utils.ResourceIDToVolumeName("OpiNvme13"): {Name: utils.ResourceIDToVolumeName("OpiNvme13")},
+				utils.ResourceIDToRemoteControllerName("OpiNvme12"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
+				},
+				utils.ResourceIDToRemoteControllerName("OpiNvme13"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
+				},
 			},
 		},
 		"pagination negative": {
@@ -220,8 +228,12 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			size:    -10,
 			token:   "",
 			existingControllers: map[string]*pb.NvmeRemoteController{
-				utils.ResourceIDToVolumeName("OpiNvme12"): {Name: utils.ResourceIDToVolumeName("OpiNvme12")},
-				utils.ResourceIDToVolumeName("OpiNvme13"): {Name: utils.ResourceIDToVolumeName("OpiNvme13")},
+				utils.ResourceIDToRemoteControllerName("OpiNvme12"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
+				},
+				utils.ResourceIDToRemoteControllerName("OpiNvme13"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
+				},
 			},
 		},
 		"pagination error": {
@@ -232,15 +244,19 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			size:    0,
 			token:   "unknown-pagination-token",
 			existingControllers: map[string]*pb.NvmeRemoteController{
-				utils.ResourceIDToVolumeName("OpiNvme12"): {Name: utils.ResourceIDToVolumeName("OpiNvme12")},
-				utils.ResourceIDToVolumeName("OpiNvme13"): {Name: utils.ResourceIDToVolumeName("OpiNvme13")},
+				utils.ResourceIDToRemoteControllerName("OpiNvme12"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
+				},
+				utils.ResourceIDToRemoteControllerName("OpiNvme13"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
+				},
 			},
 		},
 		"pagination": {
 			in: testNvmeCtrlID,
 			out: []*pb.NvmeRemoteController{
 				{
-					Name: utils.ResourceIDToVolumeName("OpiNvme12"),
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
 				},
 			},
 			errCode: codes.OK,
@@ -248,15 +264,19 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			size:    1,
 			token:   "",
 			existingControllers: map[string]*pb.NvmeRemoteController{
-				utils.ResourceIDToVolumeName("OpiNvme12"): {Name: utils.ResourceIDToVolumeName("OpiNvme12")},
-				utils.ResourceIDToVolumeName("OpiNvme13"): {Name: utils.ResourceIDToVolumeName("OpiNvme13")},
+				utils.ResourceIDToRemoteControllerName("OpiNvme12"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
+				},
+				utils.ResourceIDToRemoteControllerName("OpiNvme13"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
+				},
 			},
 		},
 		"pagination offset": {
 			in: testNvmeCtrlID,
 			out: []*pb.NvmeRemoteController{
 				{
-					Name: utils.ResourceIDToVolumeName("OpiNvme13"),
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
 				},
 			},
 			errCode: codes.OK,
@@ -264,18 +284,13 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 			size:    1,
 			token:   "existing-pagination-token",
 			existingControllers: map[string]*pb.NvmeRemoteController{
-				utils.ResourceIDToVolumeName("OpiNvme12"): {Name: utils.ResourceIDToVolumeName("OpiNvme12")},
-				utils.ResourceIDToVolumeName("OpiNvme13"): {Name: utils.ResourceIDToVolumeName("OpiNvme13")},
+				utils.ResourceIDToRemoteControllerName("OpiNvme12"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme12"),
+				},
+				utils.ResourceIDToRemoteControllerName("OpiNvme13"): {
+					Name: utils.ResourceIDToRemoteControllerName("OpiNvme13"),
+				},
 			},
-		},
-		"no required field": {
-			in:                  "",
-			out:                 []*pb.NvmeRemoteController{},
-			errCode:             codes.Unknown,
-			errMsg:              "missing required field: parent",
-			size:                0,
-			token:               "",
-			existingControllers: map[string]*pb.NvmeRemoteController{},
 		},
 	}
 
@@ -290,7 +305,7 @@ func TestBackEnd_ListNvmeRemoteControllers(t *testing.T) {
 				testEnv.opiSpdkServer.Volumes.NvmeControllers[k] = utils.ProtoClone(v)
 			}
 
-			request := &pb.ListNvmeRemoteControllersRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			request := &pb.ListNvmeRemoteControllersRequest{PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListNvmeRemoteControllers(testEnv.ctx, request)
 
 			if !utils.EqualProtoSlices(response.GetNvmeRemoteControllers(), tt.out) {
@@ -464,21 +479,21 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 			missing: false,
 		},
 		"valid request with unknown key": {
-			in:      utils.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToRemoteControllerName("unknown-id"),
 			out:     nil,
 			errCode: codes.NotFound,
-			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
+			errMsg:  fmt.Sprintf("unable to find key %v", utils.ResourceIDToRemoteControllerName("unknown-id")),
 			missing: false,
 		},
 		"unknown key with missing allowed": {
-			in:      utils.ResourceIDToVolumeName("unknown-id"),
+			in:      utils.ResourceIDToRemoteControllerName("unknown-id"),
 			out:     &emptypb.Empty{},
 			errCode: codes.OK,
 			errMsg:  "",
 			missing: true,
 		},
 		"malformed name": {
-			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
+			in:      utils.ResourceIDToRemoteControllerName("-ABC-DEF"),
 			out:     &emptypb.Empty{},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
