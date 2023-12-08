@@ -62,3 +62,33 @@ func GetSubsystemIDFromNvmeName(name string) string {
 
 	return ""
 }
+
+// ResourceIDToRemoteControllerName transforms remote controller resource ID to
+// remote controller name
+func ResourceIDToRemoteControllerName(resourceID string) string {
+	return resourcename.Join(
+		"//storage.opiproject.org/",
+		"nvmeRemoteControllers", resourceID,
+	)
+}
+
+// ResourceIDToNvmePathName transforms path resource ID to path name
+func ResourceIDToNvmePathName(ctrlrResourceID, pathResourceID string) string {
+	return resourcename.Join(
+		"//storage.opiproject.org/",
+		"nvmeRemoteControllers", ctrlrResourceID,
+		"nvmePaths", pathResourceID,
+	)
+}
+
+// GetRemoteControllerIDFromNvmeRemoteName get parent ID (RemoteController ID)
+// from nvme related names
+func GetRemoteControllerIDFromNvmeRemoteName(name string) string {
+	controller := ""
+	_ = resourcename.Sscan(name,
+		"nvmeRemoteControllers/{controller}",
+		&controller,
+	)
+
+	return controller
+}

@@ -45,7 +45,10 @@ func (s *Server) CreateNvmePath(ctx context.Context, in *pb.CreateNvmePathReques
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmePathId, in.NvmePath.Name)
 		resourceID = in.NvmePathId
 	}
-	in.NvmePath.Name = utils.ResourceIDToVolumeName(resourceID)
+	in.NvmePath.Name = utils.ResourceIDToNvmePathName(
+		utils.GetRemoteControllerIDFromNvmeRemoteName(in.Parent),
+		resourceID,
+	)
 
 	nvmePath, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
 	if ok {
@@ -53,9 +56,9 @@ func (s *Server) CreateNvmePath(ctx context.Context, in *pb.CreateNvmePathReques
 		return nvmePath, nil
 	}
 
-	controller, ok := s.Volumes.NvmeControllers[in.NvmePath.ControllerNameRef]
+	controller, ok := s.Volumes.NvmeControllers[in.Parent]
 	if !ok {
-		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.NvmePath.ControllerNameRef)
+		err := status.Errorf(codes.NotFound, "unable to find NvmeRemoteController by key %s", in.Parent)
 		return nil, err
 	}
 
@@ -85,7 +88,7 @@ func (s *Server) CreateNvmePath(ctx context.Context, in *pb.CreateNvmePathReques
 		psk = keyFile
 	}
 	params := spdk.BdevNvmeAttachControllerParams{
-		Name:      path.Base(controller.Name),
+		Name:      utils.GetRemoteControllerIDFromNvmeRemoteName(controller.Name),
 		Trtype:    s.opiTransportToSpdk(in.NvmePath.GetTrtype()),
 		Traddr:    in.NvmePath.GetTraddr(),
 		Adrfam:    utils.OpiAdressFamilyToSpdk(in.NvmePath.GetFabrics().GetAdrfam()),
@@ -123,14 +126,17 @@ func (s *Server) DeleteNvmePath(ctx context.Context, in *pb.DeleteNvmePathReques
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.Name)
 		return nil, err
 	}
-	controller, ok := s.Volumes.NvmeControllers[nvmePath.ControllerNameRef]
+	controllerName := utils.ResourceIDToRemoteControllerName(
+		utils.GetRemoteControllerIDFromNvmeRemoteName(in.Name),
+	)
+	controller, ok := s.Volumes.NvmeControllers[controllerName]
 	if !ok {
-		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", nvmePath.ControllerNameRef)
+		err := status.Errorf(codes.Internal, "unable to find NvmeRemoteController by key %s", controllerName)
 		return nil, err
 	}
 
 	params := spdk.BdevNvmeDetachControllerParams{
-		Name:    path.Base(controller.Name),
+		Name:    utils.GetRemoteControllerIDFromNvmeRemoteName(controller.Name),
 		Trtype:  s.opiTransportToSpdk(nvmePath.GetTrtype()),
 		Traddr:  nvmePath.GetTraddr(),
 		Adrfam:  utils.OpiAdressFamilyToSpdk(nvmePath.GetFabrics().GetAdrfam()),
@@ -145,7 +151,7 @@ func (s *Server) DeleteNvmePath(ctx context.Context, in *pb.DeleteNvmePathReques
 	}
 	log.Printf("Received from SPDK: %v", result)
 	if !result {
-		msg := fmt.Sprintf("Could not delete Nvme Path: %s", path.Base(in.Name))
+		msg := fmt.Sprintf("Could not delete Nvme Path: %s", in.Name)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
@@ -161,7 +167,7 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
+	nvmePath, ok := s.Volumes.NvmePaths[in.NvmePath.Name]
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
@@ -169,7 +175,7 @@ func (s *Server) UpdateNvmePath(_ context.Context, in *pb.UpdateNvmePathRequest)
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmePath.Name)
 		return nil, err
 	}
-	resourceID := path.Base(volume.Name)
+	resourceID := path.Base(nvmePath.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmePath); err != nil {
 		return nil, err
@@ -278,8 +284,9 @@ func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {
 
 func (s *Server) numberOfPathsForController(controllerName string) int {
 	numberOfPaths := 0
+	prefix := controllerName + "/"
 	for _, path := range s.Volumes.NvmePaths {
-		if path.ControllerNameRef == controllerName {
+		if strings.HasPrefix(path.Name, prefix) {
 			numberOfPaths++
 		}
 	}

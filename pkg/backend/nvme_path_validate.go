@@ -27,7 +27,7 @@ func (s *Server) validateCreateNvmePathRequest(in *pb.CreateNvmePathRequest) err
 		}
 	}
 	// Validate that a resource name conforms to the restrictions outlined in AIP-122.
-	if err := resourcename.Validate(in.NvmePath.ControllerNameRef); err != nil {
+	if err := resourcename.Validate(in.Parent); err != nil {
 		return err
 	}
 	// validate Fabrics and Type coordinated

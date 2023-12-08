@@ -41,7 +41,7 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 		log.Printf("client provided the ID of a resource %v, ignoring the name field %v", in.NvmeRemoteControllerId, in.NvmeRemoteController.Name)
 		resourceID = in.NvmeRemoteControllerId
 	}
-	in.NvmeRemoteController.Name = utils.ResourceIDToVolumeName(resourceID)
+	in.NvmeRemoteController.Name = utils.ResourceIDToRemoteControllerName(resourceID)
 	// idempotent API when called with same key, should return same object
 	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
 	if ok {
@@ -92,7 +92,7 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 		return nil, err
 	}
 	// fetch object from the database
-	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
+	controller, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
 	if !ok {
 		if in.AllowMissing {
 			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
@@ -100,7 +100,7 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeRemoteController.Name)
 		return nil, err
 	}
-	resourceID := path.Base(volume.Name)
+	resourceID := utils.GetRemoteControllerIDFromNvmeRemoteName(controller.Name)
 	// update_mask = 2
 	if err := fieldmask.Validate(in.UpdateMask, in.NvmeRemoteController); err != nil {
 		return nil, err
