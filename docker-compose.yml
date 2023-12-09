@@ -83,7 +83,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   jaeger:
-    image: jaegertracing/all-in-one:1.51.0
+    image: jaegertracing/all-in-one:1.52.0
     ports:
       - "16686:16686"
       - "4317:4317"
