@@ -319,6 +319,7 @@ func (s *Server) getAccelCryptoKeyCreateParams(volume *pb.EncryptedVolume) spdk.
 	params.Key = hex.EncodeToString(volume.Key[:keyHalf])
 	params.Key2 = hex.EncodeToString(volume.Key[keyHalf:])
 	params.Name = path.Base(volume.Name)
+	params.TweakMode = s.tweakMode
 
 	return params
 }

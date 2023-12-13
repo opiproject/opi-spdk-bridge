@@ -28,12 +28,19 @@ type Server struct {
 	rpc        spdk.JSONRPC
 	store      gokv.Store
 	volumes    VolumeParameters
+	tweakMode  string
 	Pagination map[string]int
 }
 
 // NewServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
 func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
+	return NewCustomizedServer(jsonRPC, store, spdk.TweakModeSimpleLba)
+}
+
+// NewCustomizedServer creates initialized instance of MiddleEnd server communicating
+// with provided jsonRPC, store and non standard tweak mode
+func NewCustomizedServer(jsonRPC spdk.JSONRPC, store gokv.Store, tweakMode string) *Server {
 	if jsonRPC == nil {
 		log.Panic("nil for JSONRPC is not allowed")
 	}
@@ -47,6 +54,7 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 			qosVolumes: make(map[string]*pb.QosVolume),
 			encVolumes: make(map[string]*pb.EncryptedVolume),
 		},
+		tweakMode:  tweakMode,
 		Pagination: make(map[string]int),
 	}
 }
