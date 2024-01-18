@@ -31,7 +31,7 @@ var (
 		Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		Traddr: "127.0.0.1",
 		Fabrics: &pb.FabricsPath{
-			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 			Subnqn:  "nqn.2016-06.io.spdk:cnode1",
 			Hostnqn: "nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c",
 			Trsvcid: 4444,
@@ -539,7 +539,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				Traddr: "127.0.0.1",
 				Fabrics: &pb.FabricsPath{
-					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+					Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 					Trsvcid: 4444,
 					Subnqn:  testNvmePath.Fabrics.Subnqn,
 				},
@@ -557,7 +557,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				Traddr: "127.0.0.1",
 				Fabrics: &pb.FabricsPath{
-					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+					Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 					Trsvcid: 4444,
 					Subnqn:  testNvmePath.Fabrics.Subnqn,
 				},
@@ -674,14 +674,14 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 		{
 		// 			Name:    "Malloc0",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
 		// 		{
 		// 			Name:    "Malloc1",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -701,14 +701,14 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 		{
 		// 			Name:    "Malloc0",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
 		// 		{
 		// 			Name:    "Malloc1",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -743,7 +743,7 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 		{
 		// 			Name:    "Malloc0",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -760,7 +760,7 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 		{
 		// 			Name:    "Malloc1",
 		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
@@ -865,7 +865,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 		// 	out: &pb.NvmePath{
 		// 		Name:    "Malloc1",
 		// 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
-		// 		Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+		// 		Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 		// 		Traddr:  "127.0.0.1",
 		// 		Trsvcid: 4444,
 		// 	},

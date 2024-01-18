@@ -31,7 +31,7 @@ var (
 				FabricsId: &pb.FabricsEndpoint{
 					Traddr:  "127.0.0.1",
 					Trsvcid: "4420",
-					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+					Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 				},
 			},
 			Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
@@ -226,7 +226,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 						FabricsId: &pb.FabricsEndpoint{
 							Traddr:  "127.0.0.1",
 							Trsvcid: "4420",
-							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
+							Adrfam:  pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4,
 						},
 					},
 					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
