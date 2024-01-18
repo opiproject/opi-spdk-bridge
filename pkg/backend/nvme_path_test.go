@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2024 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
@@ -28,7 +28,7 @@ var (
 	testNvmePathID   = "mytest"
 	testNvmePathName = utils.ResourceIDToNvmePathName(testNvmeCtrlID, testNvmePathID)
 	testNvmePath     = pb.NvmePath{
-		Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		Traddr: "127.0.0.1",
 		Fabrics: &pb.FabricsPath{
 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
@@ -156,12 +156,12 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"valid request with valid SPDK response for pcie": {
 			id: testNvmePathID,
 			in: &pb.NvmePath{
-				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				Traddr: "0000:af:00.0",
 			},
 			out: &pb.NvmePath{
 				Name:   testNvmePathName,
-				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				Traddr: "0000:af:00.0",
 			},
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":["mytest"]}`},
@@ -197,7 +197,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"tcp transport type missing fabrics": {
 			id: testAioVolumeID,
 			in: &pb.NvmePath{
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				Traddr:  "127.0.0.1",
 				Fabrics: nil,
 			},
@@ -211,7 +211,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"pcie transport type with specified fabrics message": {
 			id: testAioVolumeID,
 			in: &pb.NvmePath{
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				Traddr:  "0000:af:00.0",
 				Fabrics: testNvmePath.Fabrics,
 			},
@@ -225,7 +225,7 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"pcie transport type with specified tcp controller": {
 			id: testAioVolumeID,
 			in: &pb.NvmePath{
-				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				Traddr:  "0000:af:00.0",
 				Fabrics: nil,
 			},
@@ -239,13 +239,13 @@ func TestBackEnd_CreateNvmePath(t *testing.T) {
 		"not supported transport type": {
 			id: testNvmePathID,
 			in: &pb.NvmePath{
-				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_CUSTOM,
 				Traddr: testNvmePath.Traddr,
 			},
 			out:        nil,
 			spdk:       []string{},
 			errCode:    codes.InvalidArgument,
-			errMsg:     fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM),
+			errMsg:     fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_TYPE_CUSTOM),
 			exist:      false,
 			controller: &testNvmeCtrlWithName,
 		},
@@ -536,7 +536,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			mask: nil,
 			in: &pb.NvmePath{
 				Name:   utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id"),
-				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				Traddr: "127.0.0.1",
 				Fabrics: &pb.FabricsPath{
 					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
@@ -554,7 +554,7 @@ func TestBackEnd_UpdateNvmePath(t *testing.T) {
 			mask: nil,
 			in: &pb.NvmePath{
 				Name:   utils.ResourceIDToNvmePathName(testNvmeCtrlID, "unknown-id"),
-				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+				Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				Traddr: "127.0.0.1",
 				Fabrics: &pb.FabricsPath{
 					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
@@ -673,14 +673,14 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 	out: []*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc0",
-		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
 		// 		{
 		// 			Name:    "Malloc1",
-		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
@@ -700,14 +700,14 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 	out: []*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc0",
-		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
 		// 		},
 		// 		{
 		// 			Name:    "Malloc1",
-		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
@@ -742,7 +742,7 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 	out: []*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc0",
-		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
@@ -759,7 +759,7 @@ func TestBackEnd_ListNvmePaths(t *testing.T) {
 		// 	out: []*pb.NvmePath{
 		// 		{
 		// 			Name:    "Malloc1",
-		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 			Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 			Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 			Traddr:  "127.0.0.1",
 		// 			Trsvcid: 4444,
@@ -864,7 +864,7 @@ func TestBackEnd_GetNvmePath(t *testing.T) {
 		// 	in: testNvmePathName,
 		// 	out: &pb.NvmePath{
 		// 		Name:    "Malloc1",
-		// 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		// 		Trtype:  pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 		// 		Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 		// 		Traddr:  "127.0.0.1",
 		// 		Trsvcid: 4444,

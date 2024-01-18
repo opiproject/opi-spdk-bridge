@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 Intel Corporation
+// Copyright (C) 2024 Dell Inc, or its subsidiaries.
 
 // Package kvm automates plugging of SPDK devices to a QEMU instance
 package kvm

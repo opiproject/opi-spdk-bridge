@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 Intel Corporation
+// Copyright (C) 2024 Dell Inc, or its subsidiaries.
 
 // Package kvm automates plugging of SPDK devices to a QEMU instance
 package kvm
@@ -47,7 +48,7 @@ var (
 						PortId:           wrapperspb.Int32(0),
 					},
 				},
-				Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+				Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				NvmeControllerId: proto.Int32(43),
 			},
 			Status: &pb.NvmeControllerStatus{
@@ -143,7 +144,7 @@ func TestCreateNvmeController(t *testing.T) {
 							},
 						},
 						NvmeControllerId: proto.Int32(43),
-						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -166,7 +167,7 @@ func TestCreateNvmeController(t *testing.T) {
 								VirtualFunction:  wrapperspb.Int32(0),
 								PortId:           wrapperspb.Int32(0)}},
 						NvmeControllerId: proto.Int32(43),
-						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -181,7 +182,7 @@ func TestCreateNvmeController(t *testing.T) {
 							VirtualFunction:  wrapperspb.Int32(0),
 							PortId:           wrapperspb.Int32(0)}},
 					NvmeControllerId: proto.Int32(-1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -227,7 +228,7 @@ func TestCreateNvmeController(t *testing.T) {
 							},
 						},
 						NvmeControllerId: proto.Int32(43),
-						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -246,7 +247,7 @@ func TestCreateNvmeController(t *testing.T) {
 					Spec: &pb.NvmeControllerSpec{
 						Endpoint:         nil,
 						NvmeControllerId: proto.Int32(43),
-						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -272,7 +273,7 @@ func TestCreateNvmeController(t *testing.T) {
 			}
 			opiSpdkServer := frontend.NewCustomizedServer(tt.jsonRPC, store,
 				map[pb.NvmeTransportType]frontend.NvmeTransport{
-					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir, tt.jsonRPC),
+					pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir, tt.jsonRPC),
 				}, frontend.NewVhostUserBlkTransport())
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			kvmServer := NewServer(opiSpdkServer, qmpAddress, qmpServer.testDir, tt.buses)
@@ -424,7 +425,7 @@ func TestDeleteNvmeController(t *testing.T) {
 			}
 			opiSpdkServer := frontend.NewCustomizedServer(tt.jsonRPC, store,
 				map[pb.NvmeTransportType]frontend.NvmeTransport{
-					pb.NvmeTransportType_NVME_TRANSPORT_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir, tt.jsonRPC),
+					pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: NewNvmeVfiouserTransport(qmpServer.testDir, tt.jsonRPC),
 				}, frontend.NewVhostUserBlkTransport())
 			opiSpdkServer.Nvme.Subsystems[testSubsystemName] = &testSubsystem
 			if !tt.noController {

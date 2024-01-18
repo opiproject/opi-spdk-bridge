@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2024 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
 // Package backend implememnts the BackEnd APIs (network facing) of the storage Server
@@ -498,7 +498,7 @@ func TestBackEnd_ListAioVolumes(t *testing.T) {
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListAioVolumesRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			request := &pb.ListAioVolumesRequest{PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListAioVolumes(testEnv.ctx, request)
 
 			if !utils.EqualProtoSlices(response.GetAioVolumes(), tt.out) {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2024 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
 // Package frontend implememnts the FrontEnd APIs (host facing) of the storage Server
@@ -34,7 +34,7 @@ var (
 					Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 				},
 			},
-			Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+			Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 			NvmeControllerId: proto.Int32(17),
 		},
 		Status: &pb.NvmeControllerStatus{
@@ -61,7 +61,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -77,7 +77,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -93,7 +93,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -109,7 +109,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -125,7 +125,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -141,7 +141,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(17),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			&pb.NvmeController{
@@ -149,7 +149,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(-1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
@@ -167,7 +167,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(17),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			&testController,
@@ -183,7 +183,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -208,7 +208,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 			&pb.NvmeController{
 				Spec: &pb.NvmeControllerSpec{
 					NvmeControllerId: proto.Int32(1),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -229,7 +229,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 							Adrfam:  pb.NvmeAddressFamily_NVME_ADRFAM_IPV4,
 						},
 					},
-					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				},
 			},
 			nil,
@@ -250,7 +250,7 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 							VirtualFunction:  wrapperspb.Int32(0),
 						},
 					},
-					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 			},
 			nil,
@@ -271,13 +271,13 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 							VirtualFunction:  wrapperspb.Int32(0),
 						},
 					},
-					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM,
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_CUSTOM,
 				},
 			},
 			nil,
 			[]string{},
 			codes.Unknown,
-			fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_CUSTOM),
+			fmt.Sprintf("not supported transport type: %v", pb.NvmeTransportType_NVME_TRANSPORT_TYPE_CUSTOM),
 			false,
 			testSubsystemName,
 		},
@@ -292,13 +292,13 @@ func TestFrontEnd_CreateNvmeController(t *testing.T) {
 							VirtualFunction:  wrapperspb.Int32(0),
 						},
 					},
-					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				},
 			},
 			nil,
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_PCIE),
+			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE),
 			false,
 			testSubsystemName,
 		},
@@ -439,7 +439,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 			&emptypb.Empty{},
 			[]string{},
 			codes.NotFound,
-			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_PCIE),
+			fmt.Sprintf("handler for transport type %v is not registered", pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE),
 			false,
 			&pb.NvmeController{
 				Name: testControllerName,
@@ -451,7 +451,7 @@ func TestFrontEnd_DeleteNvmeController(t *testing.T) {
 							VirtualFunction:  wrapperspb.Int32(0),
 						},
 					},
-					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+					Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 				},
 			},
 		},
@@ -491,7 +491,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	spec := &pb.NvmeControllerSpec{
 		Endpoint:         testController.Spec.Endpoint,
 		NvmeControllerId: proto.Int32(17),
-		Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+		Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 	}
 	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
@@ -619,7 +619,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 					Spec: &pb.NvmeControllerSpec{
 						Endpoint:         testController.Spec.Endpoint,
 						NvmeControllerId: proto.Int32(17),
-						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -630,7 +630,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 					Spec: &pb.NvmeControllerSpec{
 						Endpoint:         testController.Spec.Endpoint,
 						NvmeControllerId: proto.Int32(18),
-						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+						Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 					},
 					Status: &pb.NvmeControllerStatus{
 						Active: true,
@@ -670,7 +670,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(18),
-					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TCP,
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
 				},
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
