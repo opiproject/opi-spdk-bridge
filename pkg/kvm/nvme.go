@@ -19,7 +19,7 @@ import (
 
 // CreateNvmeController creates an Nvme controller device and attaches it to QEMU instance
 func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeControllerRequest) (*pb.NvmeController, error) {
-	if in.GetNvmeController().GetSpec().GetTrtype() != pb.NvmeTransportType_NVME_TRANSPORT_PCIE {
+	if in.GetNvmeController().GetSpec().GetTrtype() != pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE {
 		return s.Server.CreateNvmeController(ctx, in)
 	}
 
@@ -80,7 +80,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 // DeleteNvmeController deletes an Nvme controller device and detaches it from QEMU instance
 func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeControllerRequest) (*emptypb.Empty, error) {
 	controller, ok := s.Nvme.Controllers[in.GetName()]
-	if !ok || controller.GetSpec().GetTrtype() != pb.NvmeTransportType_NVME_TRANSPORT_PCIE {
+	if !ok || controller.GetSpec().GetTrtype() != pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE {
 		return s.Server.DeleteNvmeController(ctx, in)
 	}
 

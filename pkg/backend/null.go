@@ -13,7 +13,6 @@ import (
 	"sort"
 
 	"github.com/opiproject/gospdk/spdk"
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
@@ -203,7 +202,7 @@ func (s *Server) ListNullVolumes(ctx context.Context, in *pb.ListNullVolumesRequ
 	Blobarray := make([]*pb.NullVolume, len(result))
 	for i := range result {
 		r := &result[i]
-		Blobarray[i] = &pb.NullVolume{Name: r.Name, Uuid: &pc.Uuid{Value: r.UUID}, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
+		Blobarray[i] = &pb.NullVolume{Name: r.Name, Uuid: r.UUID, BlockSize: r.BlockSize, BlocksCount: r.NumBlocks}
 	}
 	sortNullVolumes(Blobarray)
 	return &pb.ListNullVolumesResponse{NullVolumes: Blobarray, NextPageToken: token}, nil
@@ -235,7 +234,7 @@ func (s *Server) GetNullVolume(ctx context.Context, in *pb.GetNullVolumeRequest)
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result))
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
-	return &pb.NullVolume{Name: result[0].Name, Uuid: &pc.Uuid{Value: result[0].UUID}, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
+	return &pb.NullVolume{Name: result[0].Name, Uuid: result[0].UUID, BlockSize: result[0].BlockSize, BlocksCount: result[0].NumBlocks}, nil
 }
 
 // StatsNullVolume gets a Null volume instance stats

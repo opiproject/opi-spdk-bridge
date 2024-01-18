@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
@@ -393,13 +392,13 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			out: []*pb.NullVolume{
 				{
 					Name:        "Malloc0",
-					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
+					Uuid:        "11d3902e-d9bb-49a7-bb27-cd7261ef3217",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
 				{
 					Name:        "Malloc1",
-					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+					Uuid:        "88112c76-8c49-4395-955a-0d695b1d2099",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -418,13 +417,13 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			out: []*pb.NullVolume{
 				{
 					Name:        "Malloc0",
-					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
+					Uuid:        "11d3902e-d9bb-49a7-bb27-cd7261ef3217",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
 				{
 					Name:        "Malloc1",
-					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+					Uuid:        "88112c76-8c49-4395-955a-0d695b1d2099",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -458,7 +457,7 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			out: []*pb.NullVolume{
 				{
 					Name:        "Malloc0",
-					Uuid:        &pc.Uuid{Value: "11d3902e-d9bb-49a7-bb27-cd7261ef3217"},
+					Uuid:        "11d3902e-d9bb-49a7-bb27-cd7261ef3217",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -474,7 +473,7 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			out: []*pb.NullVolume{
 				{
 					Name:        "Malloc1",
-					Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+					Uuid:        "88112c76-8c49-4395-955a-0d695b1d2099",
 					BlockSize:   512,
 					BlocksCount: 131072,
 				},
@@ -577,7 +576,7 @@ func TestBackEnd_GetNullVolume(t *testing.T) {
 			in: testNullVolumeName,
 			out: &pb.NullVolume{
 				Name:        "Malloc1",
-				Uuid:        &pc.Uuid{Value: "88112c76-8c49-4395-955a-0d695b1d2099"},
+				Uuid:        "88112c76-8c49-4395-955a-0d695b1d2099",
 				BlockSize:   512,
 				BlocksCount: 131072,
 			},

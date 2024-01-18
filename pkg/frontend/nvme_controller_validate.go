@@ -28,13 +28,13 @@ func (s *Server) validateCreateNvmeControllerRequest(in *pb.CreateNvmeController
 	}
 
 	switch in.NvmeController.Spec.Trtype {
-	case pb.NvmeTransportType_NVME_TRANSPORT_PCIE:
+	case pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE:
 		if _, ok := in.NvmeController.Spec.Endpoint.(*pb.NvmeControllerSpec_PcieId); !ok {
 			return errors.New("invalid endpoint type passed for transport")
 		}
-	case pb.NvmeTransportType_NVME_TRANSPORT_TCP:
+	case pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:
 		fallthrough
-	case pb.NvmeTransportType_NVME_TRANSPORT_RDMA:
+	case pb.NvmeTransportType_NVME_TRANSPORT_TYPE_RDMA:
 		if _, ok := in.NvmeController.Spec.Endpoint.(*pb.NvmeControllerSpec_FabricsId); !ok {
 			return errors.New("invalid endpoint type passed for transport")
 		}

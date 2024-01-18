@@ -63,7 +63,7 @@ func (s *Server) CreateNvmePath(ctx context.Context, in *pb.CreateNvmePathReques
 	}
 
 	// TODO: consider moving to _validate.go
-	if in.NvmePath.Trtype == pb.NvmeTransportType_NVME_TRANSPORT_PCIE && controller.Tcp != nil {
+	if in.NvmePath.Trtype == pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE && controller.Tcp != nil {
 		err := status.Errorf(codes.FailedPrecondition, "pcie transport on tcp controller is not allowed")
 		return nil, err
 	}
