@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 Intel Corporation
+// Copyright (C) 2024 Dell Inc, or its subsidiaries.
 
 // Package kvm automates plugging of SPDK devices to a QEMU instance
 package kvm
@@ -144,7 +145,7 @@ func TestNvmeVfiouserTransportCreateController(t *testing.T) {
 								VirtualFunction:  wrapperspb.Int32(tt.vf),
 							},
 						},
-						Trtype: pb.NvmeTransportType_NVME_TRANSPORT_PCIE,
+						Trtype: pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE,
 					},
 				}, &pb.NvmeSubsystem{
 					Spec: &pb.NvmeSubsystemSpec{

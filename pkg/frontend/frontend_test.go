@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2024 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
 // Package frontend implements the FrontEnd APIs (host facing) of the storage Server
@@ -106,7 +106,7 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 	validJSONRPC := spdk.NewClient("/some/path")
 	validNvmeTransports := map[pb.NvmeTransportType]NvmeTransport{
-		pb.NvmeTransportType_NVME_TRANSPORT_TCP: NewNvmeTCPTransport(validJSONRPC),
+		pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: NewNvmeTCPTransport(validJSONRPC),
 	}
 	validVirtioBLkTransport := NewVhostUserBlkTransport()
 	validStore := gomap.NewStore(gomap.DefaultOptions)
@@ -136,7 +136,7 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 			jsonRPC: validJSONRPC,
 			store:   validStore,
 			nvmeTransports: map[pb.NvmeTransportType]NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TCP: nil,
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: nil,
 			},
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,

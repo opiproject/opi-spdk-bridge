@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2024 Dell Inc, or its subsidiaries.
 // Copyright (C) 2023 Intel Corporation
 
 // Package frontend implements the FrontEnd APIs (host facing) of the storage Server
@@ -445,7 +445,7 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 
 			testEnv.opiSpdkServer.Pagination["existing-pagination-token"] = 1
 
-			request := &pb.ListVirtioBlksRequest{Parent: tt.in, PageSize: tt.size, PageToken: tt.token}
+			request := &pb.ListVirtioBlksRequest{PageSize: tt.size, PageToken: tt.token}
 			response, err := testEnv.client.ListVirtioBlks(testEnv.ctx, request)
 
 			if !utils.EqualProtoSlices(response.GetVirtioBlks(), tt.out) {
