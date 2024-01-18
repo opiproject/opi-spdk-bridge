@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	pc "github.com/opiproject/opi-api/common/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
@@ -40,14 +39,14 @@ func TestFrontEnd_CreateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
 		HostNsid:      0,
 		VolumeNameRef: "Malloc1",
-		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Uuid:          "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:         1967554867335598546,
 	}
 	namespaceSpec := &pb.NvmeNamespaceSpec{
 		HostNsid:      22,
 		VolumeNameRef: "Malloc1",
-		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Uuid:          "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:         1967554867335598546,
 	}
@@ -376,7 +375,7 @@ func TestFrontEnd_UpdateNvmeNamespace(t *testing.T) {
 	spec := &pb.NvmeNamespaceSpec{
 		HostNsid:      22,
 		VolumeNameRef: "Malloc1",
-		Uuid:          &pc.Uuid{Value: "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb"},
+		Uuid:          "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Nguid:         "1b4e28ba-2fa1-11d2-883f-b9a761bde3fb",
 		Eui64:         1967554867335598546,
 	}

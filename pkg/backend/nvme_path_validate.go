@@ -32,14 +32,14 @@ func (s *Server) validateCreateNvmePathRequest(in *pb.CreateNvmePathRequest) err
 	}
 	// validate Fabrics and Type coordinated
 	switch in.NvmePath.Trtype {
-	case pb.NvmeTransportType_NVME_TRANSPORT_PCIE:
+	case pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE:
 		if in.NvmePath.Fabrics != nil {
 			err := status.Errorf(codes.InvalidArgument, "fabrics field is not allowed for pcie transport")
 			return err
 		}
-	case pb.NvmeTransportType_NVME_TRANSPORT_TCP:
+	case pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:
 		fallthrough
-	case pb.NvmeTransportType_NVME_TRANSPORT_RDMA:
+	case pb.NvmeTransportType_NVME_TRANSPORT_TYPE_RDMA:
 		if in.NvmePath.Fabrics == nil {
 			err := status.Errorf(codes.InvalidArgument, "missing required field for fabrics transports: fabrics")
 			return err
