@@ -484,15 +484,6 @@ func TestBackEnd_ListNullVolumes(t *testing.T) {
 			size:    1,
 			token:   "existing-pagination-token",
 		},
-		"no required field": {
-			in:      "",
-			out:     []*pb.NullVolume{},
-			spdk:    []string{},
-			errCode: codes.Unknown,
-			errMsg:  "missing required field: parent",
-			size:    0,
-			token:   "",
-		},
 	}
 
 	// run tests

@@ -426,16 +426,6 @@ func TestFrontEnd_ListVirtioBlks(t *testing.T) {
 			1,
 			"existing-pagination-token",
 		},
-		// Parent field not in message - depricate test
-		//	"no required field": {
-		//		"",
-		//		[]*pb.VirtioBlk{},
-		//		[]string{},
-		//		codes.Unknown,
-		//		"missing required field: parent",
-		//		0,
-		//		"",
-		//	},
 	}
 
 	// run tests
