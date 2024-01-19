@@ -479,15 +479,16 @@ func TestBackEnd_ListAioVolumes(t *testing.T) {
 			size:    1,
 			token:   "existing-pagination-token",
 		},
-		"no required field": {
-			in:      "",
-			out:     []*pb.AioVolume{},
-			spdk:    []string{},
-			errCode: codes.Unknown,
-			errMsg:  "missing required field: parent",
-			size:    0,
-			token:   "",
-		},
+		// Parent field not in message - depricate test
+		//	"no required field": {
+		//		in:      "",
+		//		out:     []*pb.AioVolume{},
+		//		spdk:    []string{},
+		//		errCode: codes.Unknown,
+		//		errMsg:  "missing required field: parent",
+		//		size:    0,
+		//		token:   "",
+		//	},
 	}
 
 	// run tests
