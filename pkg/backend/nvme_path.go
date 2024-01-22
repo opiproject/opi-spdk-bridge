@@ -273,7 +273,7 @@ func (s *Server) StatsNvmePath(ctx context.Context, in *pb.StatsNvmePathRequest)
 }
 
 func (s *Server) opiTransportToSpdk(transport pb.NvmeTransportType) string {
-	return strings.ReplaceAll(transport.String(), "NVME_TRANSPORT_", "")
+	return strings.ReplaceAll(transport.String(), "NVME_TRANSPORT_TYPE_", "")
 }
 
 func (s *Server) opiMultipathToSpdk(multipath pb.NvmeMultipath) string {

@@ -148,5 +148,5 @@ func OpiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
 		return ""
 	}
 
-	return strings.ReplaceAll(adrfam.String(), "NVME_ADRFAM_", "")
+	return strings.ReplaceAll(adrfam.String(), "NVME_ADDRESS_FAMILY_", "")
 }
