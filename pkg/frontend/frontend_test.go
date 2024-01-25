@@ -17,8 +17,8 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/philippgille/gokv/gomap"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
@@ -45,7 +45,7 @@ type testEnv struct {
 	testSocket    string
 	ctx           context.Context
 	conn          *grpc.ClientConn
-	jsonRPC       spdk.JSONRPC
+	spdkClient    client.IClient
 }
 
 func (e *testEnv) Close() {
@@ -59,11 +59,11 @@ func (e *testEnv) Close() {
 func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = utils.GenerateSocketName("frontend")
-	env.ln, env.jsonRPC = utils.CreateTestSpdkServer(env.testSocket, spdkResponses)
+	env.ln, env.spdkClient = utils.CreateTestSpdkServer(env.testSocket, spdkResponses)
 	options := gomap.DefaultOptions
 	options.Codec = utils.ProtoCodec{}
 	store := gomap.NewStore(options)
-	env.opiSpdkServer = NewServer(env.jsonRPC, store)
+	env.opiSpdkServer = NewServer(env.spdkClient, store)
 
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx,
@@ -103,8 +103,15 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	}
 }
 
+type spdkCLientStub struct {
+}
+
+func (s spdkCLientStub) Call(string, any) (*client.Response, error) {
+	return nil, nil
+}
+
 func TestFrontEnd_NewCustomizedServer(t *testing.T) {
-	validJSONRPC := spdk.NewClient("/some/path")
+	validJSONRPC := spdkCLientStub{}
 	validNvmeTransports := map[pb.NvmeTransportType]NvmeTransport{
 		pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: NewNvmeTCPTransport(validJSONRPC),
 	}
@@ -112,29 +119,29 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 	validStore := gomap.NewStore(gomap.DefaultOptions)
 
 	tests := map[string]struct {
-		jsonRPC            spdk.JSONRPC
+		spdkClient         client.IClient
 		store              gomap.Store
 		nvmeTransports     map[pb.NvmeTransportType]NvmeTransport
 		virtioBlkTransport VirtioBlkTransport
 		wantPanic          bool
 	}{
 		"nil json rpc": {
-			jsonRPC:            nil,
+			spdkClient:         nil,
 			store:              validStore,
 			nvmeTransports:     validNvmeTransports,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
 		"nil nvme transports": {
-			jsonRPC:            validJSONRPC,
+			spdkClient:         validJSONRPC,
 			store:              validStore,
 			nvmeTransports:     nil,
 			virtioBlkTransport: validVirtioBLkTransport,
 			wantPanic:          true,
 		},
 		"nil one of nvme transports": {
-			jsonRPC: validJSONRPC,
-			store:   validStore,
+			spdkClient: validJSONRPC,
+			store:      validStore,
 			nvmeTransports: map[pb.NvmeTransportType]NvmeTransport{
 				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: nil,
 			},
@@ -142,14 +149,14 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 			wantPanic:          true,
 		},
 		"nil virtio blk transport": {
-			jsonRPC:            validJSONRPC,
+			spdkClient:         validJSONRPC,
 			store:              validStore,
 			nvmeTransports:     validNvmeTransports,
 			virtioBlkTransport: nil,
 			wantPanic:          true,
 		},
 		"all valid arguments": {
-			jsonRPC:            validJSONRPC,
+			spdkClient:         validJSONRPC,
 			store:              validStore,
 			nvmeTransports:     validNvmeTransports,
 			virtioBlkTransport: validVirtioBLkTransport,
@@ -166,7 +173,7 @@ func TestFrontEnd_NewCustomizedServer(t *testing.T) {
 				}
 			}()
 
-			server := NewCustomizedServer(tt.jsonRPC, tt.store, tt.nvmeTransports, tt.virtioBlkTransport)
+			server := NewCustomizedServer(tt.spdkClient, tt.store, tt.nvmeTransports, tt.virtioBlkTransport)
 			if server == nil && !tt.wantPanic {
 				t.Error("expected non nil server or panic")
 			}

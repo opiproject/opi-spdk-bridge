@@ -160,10 +160,10 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 
 	if useKvm {
 		log.Println("Creating KVM server.")
-		frontendServer := frontend.NewCustomizedServer(jsonRPC,
+		frontendServer := frontend.NewCustomizedServer(spdkClient,
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:  frontend.NewNvmeTCPTransport(jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:  frontend.NewNvmeTCPTransport(spdkClient),
 				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir, jsonRPC),
 			},
 			frontend.NewVhostUserBlkTransport(),
@@ -174,10 +174,10 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
-		frontendServer := frontend.NewCustomizedServer(jsonRPC,
+		frontendServer := frontend.NewCustomizedServer(spdkClient,
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: frontend.NewNvmeTCPTransport(jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: frontend.NewNvmeTCPTransport(spdkClient),
 			},
 			frontend.NewVhostUserBlkTransport(),
 		)

@@ -12,8 +12,8 @@ import (
 	"path"
 	"sort"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"github.com/google/uuid"
@@ -59,7 +59,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	}
 
 	var result spdk.VhostCreateBlkControllerResult
-	err = s.rpc.Call(ctx, "vhost_create_blk_controller", &params, &result)
+	err = s.rpc.Call(ctx, "vhost_create_blk_controller", params, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *Server) DeleteVirtioBlk(ctx context.Context, in *pb.DeleteVirtioBlkRequ
 	}
 
 	var result spdk.VhostDeleteControllerResult
-	err = s.rpc.Call(ctx, "vhost_delete_controller", &params, &result)
+	err = s.rpc.Call(ctx, "vhost_delete_controller", params, &result)
 	if err != nil {
 		return nil, err
 	}
