@@ -8,9 +8,10 @@ package middleend
 import (
 	"log"
 
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/philippgille/gokv"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 )
 
@@ -25,7 +26,7 @@ type Server struct {
 	pb.UnimplementedMiddleendEncryptionServiceServer
 	pb.UnimplementedMiddleendQosVolumeServiceServer
 
-	rpc        spdk.JSONRPC
+	rpc        *spdk.SpdkClientAdapter
 	store      gokv.Store
 	volumes    VolumeParameters
 	tweakMode  string
@@ -34,21 +35,21 @@ type Server struct {
 
 // NewServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
-	return NewCustomizedServer(jsonRPC, store, spdk.TweakModeSimpleLba)
+func NewServer(spdkClient client.IClient, store gokv.Store) *Server {
+	return NewCustomizedServer(spdkClient, store, spdk.TweakModeSimpleLba)
 }
 
 // NewCustomizedServer creates initialized instance of MiddleEnd server communicating
 // with provided jsonRPC, store and non standard tweak mode
-func NewCustomizedServer(jsonRPC spdk.JSONRPC, store gokv.Store, tweakMode string) *Server {
-	if jsonRPC == nil {
-		log.Panic("nil for JSONRPC is not allowed")
+func NewCustomizedServer(spdkClient client.IClient, store gokv.Store, tweakMode string) *Server {
+	if spdkClient == nil {
+		log.Panic("nil for spdkClient is not allowed")
 	}
 	if store == nil {
 		log.Panic("nil for Store is not allowed")
 	}
 	return &Server{
-		rpc:   jsonRPC,
+		rpc:   spdk.NewSpdkClientAdapter(spdkClient),
 		store: store,
 		volumes: VolumeParameters{
 			qosVolumes: make(map[string]*pb.QosVolume),

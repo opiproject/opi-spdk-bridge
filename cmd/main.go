@@ -156,7 +156,7 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	}()
 
 	backendServer := backend.NewServer(spdkClient, store)
-	middleendServer := middleend.NewServer(jsonRPC, store)
+	middleendServer := middleend.NewServer(spdkClient, store)
 
 	if useKvm {
 		log.Println("Creating KVM server.")
