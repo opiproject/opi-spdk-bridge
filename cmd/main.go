@@ -201,6 +201,9 @@ func runGatewayServer(grpcPort int, httpPort int) {
 	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterNullVolumeServiceHandlerFromEndpoint, "backend null")
 	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterNvmeRemoteControllerServiceHandlerFromEndpoint, "backend nvme")
 
+	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterMiddleendEncryptionServiceHandlerFromEndpoint, "middleend encryption")
+	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterMiddleendQosVolumeServiceHandlerFromEndpoint, "middleend qos")
+
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
 	log.Printf("HTTP Server listening at %v", httpPort)
 	server := &http.Server{
