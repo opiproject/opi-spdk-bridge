@@ -24,6 +24,8 @@ import (
 	pc "github.com/opiproject/opi-api/inventory/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 
+	"github.com/spdk/spdk/go/rpc/client"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -139,7 +141,21 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	s := grpc.NewServer(serverOptions...)
 
 	jsonRPC := spdk.NewClient(spdkAddress)
-	backendServer := backend.NewServer(jsonRPC, store)
+	protocol := client.TCP
+	if _, _, err := net.SplitHostPort(spdkAddress); err != nil {
+		protocol = client.Unix
+	}
+	spdkClient, err := client.CreateClientWithJsonCodec(protocol, spdkAddress)
+	if err != nil {
+		log.Panicf("spdk client creation failed %v", err)
+	}
+	defer func() {
+		if err := spdkClient.Close(); err != nil {
+			log.Panicf("spdk client close: %v", err)
+		}
+	}()
+
+	backendServer := backend.NewServer(spdkClient, store)
 	middleendServer := middleend.NewServer(jsonRPC, store)
 
 	if useKvm {
