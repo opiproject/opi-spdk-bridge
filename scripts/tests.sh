@@ -79,6 +79,12 @@ grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmePath "{parent: '//storage.opiproject.org/nvmeRemoteControllers/nvmetcp12', nvme_path : {traddr:\"$SPDK_IP\", trtype:'NVME_TRANSPORT_TYPE_TCP', fabrics: { subnqn:'nqn.2022-09.io.spdk:opitest1', trsvcid:'7777', adrfam:'NVME_ADDRESS_FAMILY_IPV4', hostnqn:'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c'}}, nvme_path_id: 'nvmetcp12path0'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeRemoteController "{name: '//storage.opiproject.org/nvmeRemoteControllers/nvmetcp12'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmePath "{name: '//storage.opiproject.org/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0'}"
+
+# check http gateway is responding on List commands
+curl -X GET -f "http://127.0.0.1:8082/v1/nvmeRemoteControllers" | jq '.nvmeRemoteControllers[0].name'
+curl -X GET -f "http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths" | jq .nvmePaths[0].name
+curl -X GET -f "http://127.0.0.1:8082/v1/nvmeSubsystems" | jq .nvmeSubsystems[1].spec.nqn
+
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmePath "{name: '//storage.opiproject.org/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeRemoteController "{name: '//storage.opiproject.org/nvmeRemoteControllers/nvmetcp12'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeNamespace "{name : '//storage.opiproject.org/subsystems/subsystem1/namespaces/namespace1'}"
