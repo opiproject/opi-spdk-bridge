@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -29,7 +31,7 @@ func (s *Server) CreateVirtioBlk(ctx context.Context, in *pb.CreateVirtioBlkRequ
 	out, err := s.Server.CreateVirtioBlk(ctx, in)
 	if err != nil {
 		log.Println("Error running cmd on opi-spdk bridge:", err)
-		return out, err
+		return out, status.Error(codes.Unknown, err.Error())
 	}
 
 	mon, err := newMonitor(s.qmpAddress, s.protocol, s.timeout, s.pollDevicePresenceStep)

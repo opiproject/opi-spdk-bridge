@@ -5,7 +5,7 @@
 package kvm
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -17,18 +17,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/spdk/spdk/go/rpc/client"
 )
 
 const qmpID = `"id":"`
 
 var (
-	errStub                 = status.Error(codes.Internal, "stub error")
 	alwaysSuccessfulJSONRPC = &stubJSONRRPC{err: nil}
-	alwaysFailingJSONRPC    = &stubJSONRRPC{err: errStub}
+	alwaysFailingJSONRPC    = &stubJSONRRPC{err: errors.New("stub error")}
 
 	genericQmpError = `{"error": {"class": "GenericError", "desc": "some error"}}` + "\n"
 	genericQmpOk    = `{"return": {}}` + "\n"
@@ -53,49 +51,27 @@ type stubJSONRRPC struct {
 }
 
 // build time check that struct implements interface
-var _ spdk.JSONRPC = (*stubJSONRRPC)(nil)
+var _ client.IClient = (*stubJSONRRPC)(nil)
 
-func (s *stubJSONRRPC) GetID() uint64 {
-	return 0
-}
+func (s *stubJSONRRPC) Call(method string, arg any) (*client.Response, error) {
+	s.arg = arg
 
-func (s *stubJSONRRPC) StartUnixListener() net.Listener {
-	return nil
-}
-
-func (s *stubJSONRRPC) GetVersion(_ context.Context) string {
-	return ""
-}
-
-func (s *stubJSONRRPC) Call(_ context.Context, method string, arg, result interface{}) error {
+	response := &client.Response{}
 	if method == "vhost_create_blk_controller" {
 		if s.err == nil {
-			resultCreateVirtioBLk, ok := result.(*spdk.VhostCreateBlkControllerResult)
-			if !ok {
-				log.Panicf("Unexpected type for virtio-blk device creation result")
-			}
-			*resultCreateVirtioBLk = spdk.VhostCreateBlkControllerResult(true)
+			response.Result = spdk.VhostCreateBlkControllerResult(true)
 		}
 	} else if method == "vhost_delete_controller" {
 		if s.err == nil {
-			resultDeleteVirtioBLk, ok := result.(*spdk.VhostDeleteControllerResult)
-			if !ok {
-				log.Panicf("Unexpected type for virtio-blk device deletion result")
-			}
-			*resultDeleteVirtioBLk = spdk.VhostDeleteControllerResult(true)
+			response.Result = spdk.VhostDeleteControllerResult(true)
 		}
 	} else if method == "nvmf_subsystem_add_listener" || method == "nvmf_subsystem_remove_listener" {
 		if s.err == nil {
-			resultCreateNvmeController, ok := result.(*spdk.NvmfSubsystemAddListenerResult)
-			if !ok {
-				log.Panicf("Unexpected type for add subsystem listener result")
-			}
-			*resultCreateNvmeController = spdk.NvmfSubsystemAddListenerResult(true)
+			response.Result = spdk.NvmfSubsystemAddListenerResult(true)
 		}
 	}
-	s.arg = arg
 
-	return s.err
+	return response, s.err
 }
 
 type mockCall struct {

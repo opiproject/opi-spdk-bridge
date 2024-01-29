@@ -11,16 +11,17 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/spdk/spdk/go/rpc/client"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestNewNvmeVfiouserTransport(t *testing.T) {
 	tests := map[string]struct {
 		ctrlrDir  string
-		rpc       spdk.JSONRPC
+		rpc       client.IClient
 		wantPanic bool
 	}{
 		"valid controller dir": {
@@ -62,7 +63,7 @@ func TestNewNvmeVfiouserTransport(t *testing.T) {
 			gotTransport := NewNvmeVfiouserTransport(tt.ctrlrDir, tt.rpc)
 			wantTransport := &nvmeVfiouserTransport{
 				ctrlrDir: tt.ctrlrDir,
-				rpc:      tt.rpc,
+				rpc:      spdk.NewSpdkClientAdapter(tt.rpc),
 			}
 
 			if !reflect.DeepEqual(gotTransport, wantTransport) {

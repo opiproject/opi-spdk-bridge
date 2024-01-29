@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opiproject/gospdk/spdk"
-
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/kvm"
@@ -140,7 +138,6 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	)
 	s := grpc.NewServer(serverOptions...)
 
-	jsonRPC := spdk.NewClient(spdkAddress)
 	protocol := client.TCP
 	if _, _, err := net.SplitHostPort(spdkAddress); err != nil {
 		protocol = client.Unix
@@ -164,7 +161,7 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
 				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:  frontend.NewNvmeTCPTransport(spdkClient),
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir, jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir, spdkClient),
 			},
 			frontend.NewVhostUserBlkTransport(),
 		)
