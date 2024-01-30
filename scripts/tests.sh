@@ -107,5 +107,32 @@ grep "Total" log.txt
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 DeleteNvmeSubsystem "{name : 'nvmeSubsystems/subsystem2'}"
 
 
+
+# HTTP gateway to Nvme
+# Backend
+# create
+curl -X POST -f http://127.0.0.1:8082/v1/nvmeRemoteControllers?nvme_remote_controller_id=nvmetcp12 -d '{"multipath": "NVME_MULTIPATH_MULTIPATH"}'
+curl -X POST -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths?nvme_path_id=nvmetcp12path0 -d "{\"traddr\":\"${SPDK_IP}\", \"trtype\":\"NVME_TRANSPORT_TYPE_TCP\", \"fabrics\":{\"subnqn\":\"nqn.2016-06.io.spdk:cnode1\", \"trsvcid\":\"4444\", \"adrfam\":\"NVME_ADDRESS_FAMILY_IPV4\", \"hostnqn\":\"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c\"}}"
+
+# get
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0
+# list
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeRemoteControllers | jq '.nvmeRemoteControllers[0].name'
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths | jq .nvmePaths[0].name
+# stats
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12:stats
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0:stats
+# update
+curl -X PATCH -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12 -d '{"multipath": "NVME_MULTIPATH_MULTIPATH"}'
+curl -X PATCH -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0 -d "{\"traddr\":\"${SPDK_IP}\", \"trtype\":\"NVME_TRANSPORT_TYPE_TCP\", \"fabrics\":{\"subnqn\":\"nqn.2016-06.io.spdk:cnode1\", \"trsvcid\":\"4444\", \"adrfam\":\"NVME_ADDRESS_FAMILY_IPV4\", \"hostnqn\":\"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c\"}}"
+# delete
+curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0
+curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12
+
+# Frontend
+# list
+# curl -X GET -f "http://127.0.0.1:8082/v1/nvmeSubsystems" | jq .nvmeSubsystems[1].spec.nqn
+
 # this is last line
 docker-compose ps -a
