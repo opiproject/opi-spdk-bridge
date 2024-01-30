@@ -34,7 +34,7 @@ type Server struct {
 	pb.UnimplementedNullVolumeServiceServer
 	pb.UnimplementedAioVolumeServiceServer
 
-	rpc                *spdk.SpdkClientAdapter
+	rpc                *spdk.ClientAdapter
 	store              gokv.Store
 	Volumes            VolumeParameters
 	Pagination         map[string]int

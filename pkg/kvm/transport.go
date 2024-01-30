@@ -21,7 +21,7 @@ import (
 
 type nvmeVfiouserTransport struct {
 	ctrlrDir string
-	rpc      *spdk.SpdkClientAdapter
+	rpc      *spdk.ClientAdapter
 }
 
 // build time check that struct implements interface

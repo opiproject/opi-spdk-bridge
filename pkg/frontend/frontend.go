@@ -38,7 +38,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	rpc        *spdk.SpdkClientAdapter
+	rpc        *spdk.ClientAdapter
 	store      gokv.Store
 	Nvme       NvmeParameters
 	Virt       VirtioParameters

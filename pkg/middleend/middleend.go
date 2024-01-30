@@ -26,7 +26,7 @@ type Server struct {
 	pb.UnimplementedMiddleendEncryptionServiceServer
 	pb.UnimplementedMiddleendQosVolumeServiceServer
 
-	rpc        *spdk.SpdkClientAdapter
+	rpc        *spdk.ClientAdapter
 	store      gokv.Store
 	volumes    VolumeParameters
 	tweakMode  string

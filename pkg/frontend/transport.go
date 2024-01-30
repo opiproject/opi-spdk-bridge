@@ -35,7 +35,7 @@ type VirtioBlkTransport interface {
 }
 
 type nvmeTCPTransport struct {
-	rpc *spdk.SpdkClientAdapter
+	rpc *spdk.ClientAdapter
 }
 
 // build time check that struct implements interface

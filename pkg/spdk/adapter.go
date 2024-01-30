@@ -14,24 +14,24 @@ import (
 	"github.com/spdk/spdk/go/rpc/client"
 )
 
-// SpdkClientAdapter provides an adapter between old gospdk api and new spdk client
+// ClientAdapter provides an adapter between old gospdk api and new spdk client
 // This is needed due to:
 // * awkward response unmarshaling in the new client. A Result in Response is
 // provided in the form described in json.Unmarshal
 // * New error codes affecting a lot of tests. The adapter converts the new
 // format to the old one. It enables gradual transition. The tests will be
 // reworked to new errors eliminating transformations in the adapter.
-type SpdkClientAdapter struct {
+type ClientAdapter struct {
 	client client.IClient
 }
 
 // NewSpdkClientAdapter creates a new instance if SpdkClientAdapter
-func NewSpdkClientAdapter(client client.IClient) *SpdkClientAdapter {
-	return &SpdkClientAdapter{client}
+func NewSpdkClientAdapter(client client.IClient) *ClientAdapter {
+	return &ClientAdapter{client}
 }
 
 // Call performs a call to spdk client and unmarshalls the result into requested structure
-func (c *SpdkClientAdapter) Call(ctx context.Context, method string, params any, result any) error {
+func (c *ClientAdapter) Call(ctx context.Context, method string, params any, result any) error {
 	ch := make(chan error)
 
 	go func() {
@@ -58,7 +58,7 @@ func (c *SpdkClientAdapter) Call(ctx context.Context, method string, params any,
 	}
 }
 
-func (c *SpdkClientAdapter) convertToLegacyErrorFormat(err error, method string) error {
+func (c *ClientAdapter) convertToLegacyErrorFormat(err error, method string) error {
 	e := errors.Unwrap(err)
 	spdkErr, _ := e.(*client.Error)
 
