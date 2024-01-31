@@ -14,7 +14,6 @@ import (
 // ResourceIDToVolumeName creates name of volume resource based on ID
 func ResourceIDToVolumeName(resourceID string) string {
 	return resourcename.Join(
-		"//storage.opiproject.org/",
 		"volumes", resourceID,
 	)
 }
@@ -22,7 +21,6 @@ func ResourceIDToVolumeName(resourceID string) string {
 // ResourceIDToSubsystemName transforms subsystem resource ID to subsystem name
 func ResourceIDToSubsystemName(resourceID string) string {
 	return resourcename.Join(
-		"//storage.opiproject.org/",
 		"subsystems", resourceID,
 	)
 }
@@ -31,7 +29,6 @@ func ResourceIDToSubsystemName(resourceID string) string {
 // resource ID to namespace name
 func ResourceIDToNamespaceName(subsysResourceID, ctrlrResourceID string) string {
 	return resourcename.Join(
-		"//storage.opiproject.org/",
 		"subsystems", subsysResourceID,
 		"namespaces", ctrlrResourceID,
 	)
@@ -41,7 +38,6 @@ func ResourceIDToNamespaceName(subsysResourceID, ctrlrResourceID string) string 
 // resource ID to controller name
 func ResourceIDToControllerName(subsysResourceID, ctrlrResourceID string) string {
 	return resourcename.Join(
-		"//storage.opiproject.org/",
 		"subsystems", subsysResourceID,
 		"controllers", ctrlrResourceID,
 	)
@@ -67,7 +63,6 @@ func GetSubsystemIDFromNvmeName(name string) string {
 // remote controller name
 func ResourceIDToRemoteControllerName(resourceID string) string {
 	return resourcename.Join(
-		"//storage.opiproject.org/",
 		"nvmeRemoteControllers", resourceID,
 	)
 }
@@ -75,7 +70,6 @@ func ResourceIDToRemoteControllerName(resourceID string) string {
 // ResourceIDToNvmePathName transforms path resource ID to path name
 func ResourceIDToNvmePathName(ctrlrResourceID, pathResourceID string) string {
 	return resourcename.Join(
-		"//storage.opiproject.org/",
 		"nvmeRemoteControllers", ctrlrResourceID,
 		"nvmePaths", pathResourceID,
 	)
