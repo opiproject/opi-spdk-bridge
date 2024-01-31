@@ -12,6 +12,9 @@ import (
 	"strings"
 
 	"github.com/spdk/spdk/go/rpc/client"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ClientAdapter provides an adapter between old gospdk api and new spdk client
@@ -23,15 +26,22 @@ import (
 // reworked to new errors eliminating transformations in the adapter.
 type ClientAdapter struct {
 	client client.IClient
+	tracer trace.Tracer
 }
 
 // NewSpdkClientAdapter creates a new instance if SpdkClientAdapter
 func NewSpdkClientAdapter(client client.IClient) *ClientAdapter {
-	return &ClientAdapter{client}
+	return &ClientAdapter{
+		client: client,
+		tracer: otel.Tracer(""),
+	}
 }
 
 // Call performs a call to spdk client and unmarshalls the result into requested structure
 func (c *ClientAdapter) Call(ctx context.Context, method string, params any, result any) error {
+	_, childSpan := c.tracer.Start(ctx, "spdk."+method)
+	defer childSpan.End()
+
 	ch := make(chan error)
 
 	go func() {
