@@ -601,7 +601,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 
 func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
-	secondSubsystemName := utils.ResourceIDToVolumeName("controller-test1")
+	secondControllerName := utils.ResourceIDToControllerName(testSubsystemName, "controller-test1")
 	tests := map[string]struct {
 		in      string
 		out     []*pb.NvmeController
@@ -626,7 +626,7 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 					},
 				},
 				{
-					Name: secondSubsystemName,
+					Name: secondControllerName,
 					Spec: &pb.NvmeControllerSpec{
 						Endpoint:         testController.Spec.Endpoint,
 						NvmeControllerId: proto.Int32(18),
@@ -665,8 +665,8 @@ func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 				Spec:   testController.Spec,
 				Status: testController.Status,
 			})
-			testEnv.opiSpdkServer.Nvme.Controllers[secondSubsystemName] = utils.ProtoClone(&pb.NvmeController{
-				Name: secondSubsystemName,
+			testEnv.opiSpdkServer.Nvme.Controllers[secondControllerName] = utils.ProtoClone(&pb.NvmeController{
+				Name: secondControllerName,
 				Spec: &pb.NvmeControllerSpec{
 					Endpoint:         testController.Spec.Endpoint,
 					NvmeControllerId: proto.Int32(18),
