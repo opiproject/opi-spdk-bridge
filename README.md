@@ -74,9 +74,10 @@ $ docker run --rm -it -v /var/tmp/:/var/tmp/ -p 50051:50051 -p 8082:8082 ghcr.io
 2023/09/12 20:29:05 HTTP Server listening at 8082
 ```
 
-on X86 management VM run
+on X86 management VM run either gRPC or HTTP requests
 
 ```bash
+# gRPC requests
 docker run --network=host --rm -it namely/grpc-cli ls   --json_input --json_output 10.10.10.10:50051 -l
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeSubsystem "{nvme_subsystem : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} }, nvme_subsystem_id : 'subsystem2' }"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeSubsystems "{}"
@@ -109,6 +110,45 @@ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_outp
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'nvmeSubsystems/subsystem2'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeController "{name : 'nvmeSubsystems/subsystem3/nvmeControllers/controller3'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'nvmeSubsystems/subsystem3'}"
+```
+
+```bash
+# HTTP requests
+# create
+curl -X POST -f http://10.10.10.10:8082/v1/nvmeRemoteControllers?nvme_remote_controller_id=nvmetcp12 -d '{"multipath": "NVME_MULTIPATH_MULTIPATH"}'
+curl -X POST -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths?nvme_path_id=nvmetcp12path0 -d '{"traddr":"11.11.11.2", "trtype":"NVME_TRANSPORT_TYPE_TCP", "fabrics":{"subnqn":"nqn.2016-06.com.opi.spdk.target0", "trsvcid":"4444", "adrfam":"NVME_ADDRESS_FAMILY_IPV4", "hostnqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}}'
+curl -X POST -f http://10.10.10.10:8082/v1/nvmeSubsystems?nvme_subsystem_id=subsys0 -d '{"spec": {"nqn": "nqn.2022-09.io.spdk:opitest1"}}'
+curl -X POST -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces?nvme_namespace_id=namespace0 -d '{"spec": {"volume_name_ref": "Malloc0", "host_nsid": 10}}'
+curl -X POST -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers?nvme_controller_id=ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
+# get
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0
+# list
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeRemoteControllers
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers
+# stats
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12:stats
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0:stats
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0:stats
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0:stats
+curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0:stats
+# update
+curl -X PATCH -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12 -d '{"multipath": "NVME_MULTIPATH_MULTIPATH"}'
+curl -X PATCH -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0 -d '{"traddr":"11.11.11.2", "trtype":"NVME_TRANSPORT_TYPE_TCP", "fabrics":{"subnqn":"nqn.2016-06.com.opi.spdk.target0", "trsvcid":"4444", "adrfam":"NVME_ADDRESS_FAMILY_IPV4", "hostnqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}}'
+curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
+curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
+# delete
+curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0
+curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0
+curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0
+curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0
+curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12
 ```
 
 ## Test SPDK is up
