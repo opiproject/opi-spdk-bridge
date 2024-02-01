@@ -131,8 +131,36 @@ curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmeP
 curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12
 
 # Frontend
+# create
+curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems?nvme_subsystem_id=subsys0 -d '{"spec": {"nqn": "nqn.2022-09.io.spdk:opitest1"}}'
+curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces?nvme_namespace_id=namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
+curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers?nvme_controller_id=ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
+
+# get
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0
+
 # list
-# curl -X GET -f "http://127.0.0.1:8082/v1/nvmeSubsystems" | jq .nvmeSubsystems[1].spec.nqn
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers
+
+# stats
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0:stats
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0:stats
+curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0:stats
+
+# update
+# update subsys returns not implemented error
+#curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0 -d '{"spec": {"nqn": "nqn.2022-09.io.spdk:opitest1"}}'
+curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
+curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
+
+# delete
+curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0
+curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0
+curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0
 
 # this is last line
 docker-compose ps -a
