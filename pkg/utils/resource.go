@@ -21,7 +21,7 @@ func ResourceIDToVolumeName(resourceID string) string {
 // ResourceIDToSubsystemName transforms subsystem resource ID to subsystem name
 func ResourceIDToSubsystemName(resourceID string) string {
 	return resourcename.Join(
-		"subsystems", resourceID,
+		"nvmeSubsystems", resourceID,
 	)
 }
 
@@ -29,8 +29,8 @@ func ResourceIDToSubsystemName(resourceID string) string {
 // resource ID to namespace name
 func ResourceIDToNamespaceName(subsysResourceID, ctrlrResourceID string) string {
 	return resourcename.Join(
-		"subsystems", subsysResourceID,
-		"namespaces", ctrlrResourceID,
+		"nvmeSubsystems", subsysResourceID,
+		"nvmeNamespaces", ctrlrResourceID,
 	)
 }
 
@@ -38,8 +38,8 @@ func ResourceIDToNamespaceName(subsysResourceID, ctrlrResourceID string) string 
 // resource ID to controller name
 func ResourceIDToControllerName(subsysResourceID, ctrlrResourceID string) string {
 	return resourcename.Join(
-		"subsystems", subsysResourceID,
-		"controllers", ctrlrResourceID,
+		"nvmeSubsystems", subsysResourceID,
+		"nvmeControllers", ctrlrResourceID,
 	)
 }
 
@@ -51,7 +51,7 @@ func GetSubsystemIDFromNvmeName(name string) string {
 			return ""
 		}
 
-		if segments[i] == "subsystems" {
+		if segments[i] == "nvmeSubsystems" {
 			return segments[i+1]
 		}
 	}

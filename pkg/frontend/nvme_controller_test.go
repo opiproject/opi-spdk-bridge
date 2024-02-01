@@ -601,7 +601,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 
 func TestFrontEnd_ListNvmeControllers(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
-	secondControllerName := utils.ResourceIDToControllerName(testSubsystemName, "controller-test1")
+	secondControllerName := utils.ResourceIDToControllerName(testSubsystemID, "controller-test1")
 	tests := map[string]struct {
 		in      string
 		out     []*pb.NvmeController

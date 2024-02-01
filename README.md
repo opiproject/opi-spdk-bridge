@@ -80,17 +80,17 @@ on X86 management VM run
 docker run --network=host --rm -it namely/grpc-cli ls   --json_input --json_output 10.10.10.10:50051 -l
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeSubsystem "{nvme_subsystem : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} }, nvme_subsystem_id : 'subsystem2' }"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeSubsystems "{}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeSubsystem "{name : 'subsystems/subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeController "{parent: 'subsystems/subsystem2', nvme_controller : {spec : {nvme_controller_id: 2, pcie_id : {physical_function : 0, virtual_function : 0, port_id: 0}, max_nsq:5, max_ncq:5, 'trtype': 'NVME_TRANSPORT_TYPE_PCIE' } }, nvme_controller_id : 'controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeSubsystem "{name : 'nvmeSubsystems/subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeController "{parent: 'nvmeSubsystems/subsystem2', nvme_controller : {spec : {nvme_controller_id: 2, pcie_id : {physical_function : 0, virtual_function : 0, port_id: 0}, max_nsq:5, max_ncq:5, 'trtype': 'NVME_TRANSPORT_TYPE_PCIE' } }, nvme_controller_id : 'controller1'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeSubsystem "{nvme_subsystem : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest3', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 11} }, nvme_subsystem_id : 'subsystem3' }"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeController "{'parent':'subsystems/subsystem3','nvme_controller':{'spec':{'nvme_controller_id':2,'fabrics_id':{'traddr': '127.0.0.1', trsvcid: '4421', adrfam: 'NVME_ADDRESS_FAMILY_IPV4'}, 'max_nsq':5,'max_ncq':5, 'trtype': 'NVME_TRANSPORT_TYPE_TCP'}},'nvme_controller_id':'controller3'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeControllers "{parent : 'subsystems/subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeController "{name : 'subsystems/subsystem2/controllers/controller1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeController "{name : 'subsystems/subsystem3/controllers/controller3'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeNamespace "{parent: 'subsystems/subsystem2', nvme_namespace : {spec : {volume_name_ref : 'Malloc0', 'host_nsid' : '10', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } }, nvme_namespace_id: 'namespace1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeNamespaces "{parent : 'subsystems/subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeNamespace "{name : 'subsystems/subsystem2/namespaces/namespace1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 StatsNvmeNamespace "{name : 'subsystems/subsystem2/namespaces/namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeController "{'parent':'nvmeSubsystems/subsystem3','nvme_controller':{'spec':{'nvme_controller_id':2,'fabrics_id':{'traddr': '127.0.0.1', trsvcid: '4421', adrfam: 'NVME_ADDRESS_FAMILY_IPV4'}, 'max_nsq':5,'max_ncq':5, 'trtype': 'NVME_TRANSPORT_TYPE_TCP'}},'nvme_controller_id':'controller3'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeControllers "{parent : 'nvmeSubsystems/subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeController "{name : 'nvmeSubsystems/subsystem2/nvmeControllers/controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeController "{name : 'nvmeSubsystems/subsystem3/nvmeControllers/controller3'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeNamespace "{parent: 'nvmeSubsystems/subsystem2', nvme_namespace : {spec : {volume_name_ref : 'Malloc0', 'host_nsid' : '10', uuid:{value : '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb'}, nguid: '1b4e28ba-2fa1-11d2-883f-b9a761bde3fb', eui64: 1967554867335598546 } }, nvme_namespace_id: 'namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeNamespaces "{parent : 'nvmeSubsystems/subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeNamespace "{name : 'nvmeSubsystems/subsystem2/nvmeNamespaces/namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 StatsNvmeNamespace "{name : 'nvmeSubsystems/subsystem2/nvmeNamespaces/namespace1'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 CreateNvmeRemoteController "{nvme_remote_controller : {multipath: 'NVME_MULTIPATH_MULTIPATH', tcp: {hdgst: false, ddgst: false}}, nvme_remote_controller_id: 'nvmetcp12'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 ListNvmeRemoteControllers "{}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmeRemoteController "{name: 'nvmeRemoteControllers/nvmetcp12'}"
@@ -104,11 +104,11 @@ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_outp
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 GetNvmePath "{name: 'nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmePath "{name: 'nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0'}"
 docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeRemoteController "{name: 'nvmeRemoteControllers/nvmetcp12'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeNamespace "{name : 'subsystems/subsystem2/namespaces/namespace1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeController "{name : 'subsystems/subsystem2/controllers/controller1'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'subsystems/subsystem2'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeController "{name : 'subsystems/subsystem3/controllers/controller3'}"
-docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'subsystems/subsystem3'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeNamespace "{name : 'nvmeSubsystems/subsystem2/nvmeNamespaces/namespace1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeController "{name : 'nvmeSubsystems/subsystem2/nvmeControllers/controller1'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'nvmeSubsystems/subsystem2'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeController "{name : 'nvmeSubsystems/subsystem3/nvmeControllers/controller3'}"
+docker run --network=host --rm -it namely/grpc-cli call --json_input --json_output 10.10.10.10:50051 DeleteNvmeSubsystem "{name : 'nvmeSubsystems/subsystem3'}"
 ```
 
 ## Test SPDK is up
@@ -204,7 +204,7 @@ message PciEndpoint {
 Call remote method
 
 ```bash
-$ grpc_cli call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : 'subsystems/subsystem2/controllers/controller1'}"
+$ grpc_cli call --json_input --json_output opi-spdk-server:50051 DeleteNvmeController "{name : 'nvmeSubsystems/subsystem2/nvmeControllers/controller1'}"
 connecting to opi-spdk-server:50051
 {}
 Rpc succeeded with OK status
