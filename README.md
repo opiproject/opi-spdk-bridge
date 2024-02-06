@@ -114,6 +114,10 @@ docker run --network=host --rm -it namely/grpc-cli call --json_input --json_outp
 
 ```bash
 # HTTP requests
+# inventory
+curl -kL http://10.10.10.10:8082/v1/inventory/1/inventory/2
+
+# Nvme
 # create
 curl -X POST -f http://10.10.10.10:8082/v1/nvmeRemoteControllers?nvme_remote_controller_id=nvmetcp12 -d '{"multipath": "NVME_MULTIPATH_MULTIPATH"}'
 curl -X POST -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths?nvme_path_id=nvmetcp12path0 -d '{"traddr":"11.11.11.2", "trtype":"NVME_TRANSPORT_TYPE_TCP", "fabrics":{"subnqn":"nqn.2016-06.com.opi.spdk.target0", "trsvcid":"4444", "adrfam":"NVME_ADDRESS_FAMILY_IPV4", "hostnqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}}'
@@ -260,12 +264,6 @@ opi-spdk-server_1  | 2022/08/05 14:39:40 Received from SPDK: {1 {-19 No such dev
 opi-spdk-server_1  | 2022/08/05 14:39:40 error: bdev_malloc_delete: json response error: No such device
 opi-spdk-server_1  | 2022/08/05 14:39:40 Received from SPDK: false
 opi-spdk-server_1  | 2022/08/05 14:39:40 Could not delete: id:8
-```
-
-In addition HTTP is supported via grpc gateway, for example:
-
-```bash
-curl -kL http://10.10.10.10:8082/v1/inventory/1/inventory/2
 ```
 
 Another remote call example
