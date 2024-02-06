@@ -141,8 +141,8 @@ curl -X GET -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers
 # update
 curl -X PATCH -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12 -d '{"multipath": "NVME_MULTIPATH_MULTIPATH"}'
 curl -X PATCH -f http://10.10.10.10:8082/v1/nvmeRemoteControllers/nvmetcp12/nvmePaths/nvmetcp12path0 -d '{"traddr":"11.11.11.2", "trtype":"NVME_TRANSPORT_TYPE_TCP", "fabrics":{"subnqn":"nqn.2016-06.com.opi.spdk.target0", "trsvcid":"4444", "adrfam":"NVME_ADDRESS_FAMILY_IPV4", "hostnqn":"nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c"}}'
-curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
-curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
+curl -X PATCH -k http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
+curl -X PATCH -k http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
 # delete
 curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0
 curl -X DELETE -f http://10.10.10.10:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0
