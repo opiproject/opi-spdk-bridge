@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opiproject/gospdk/spdk"
-
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/kvm"
@@ -23,6 +21,8 @@ import (
 
 	pc "github.com/opiproject/opi-api/inventory/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+
+	"github.com/spdk/spdk/go/rpc/client"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -138,17 +138,30 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 	)
 	s := grpc.NewServer(serverOptions...)
 
-	jsonRPC := spdk.NewClient(spdkAddress)
-	backendServer := backend.NewServer(jsonRPC, store)
-	middleendServer := middleend.NewServer(jsonRPC, store)
+	protocol := client.TCP
+	if _, _, err := net.SplitHostPort(spdkAddress); err != nil {
+		protocol = client.Unix
+	}
+	spdkClient, err := client.CreateClientWithJsonCodec(protocol, spdkAddress)
+	if err != nil {
+		log.Panicf("spdk client creation failed %v", err)
+	}
+	defer func() {
+		if err := spdkClient.Close(); err != nil {
+			log.Panicf("spdk client close: %v", err)
+		}
+	}()
+
+	backendServer := backend.NewServer(spdkClient, store)
+	middleendServer := middleend.NewServer(spdkClient, store)
 
 	if useKvm {
 		log.Println("Creating KVM server.")
-		frontendServer := frontend.NewCustomizedServer(jsonRPC,
+		frontendServer := frontend.NewCustomizedServer(spdkClient,
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:  frontend.NewNvmeTCPTransport(jsonRPC),
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir, jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP:  frontend.NewNvmeTCPTransport(spdkClient),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE: kvm.NewNvmeVfiouserTransport(ctrlrDir, spdkClient),
 			},
 			frontend.NewVhostUserBlkTransport(),
 		)
@@ -158,10 +171,10 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 		pb.RegisterFrontendVirtioBlkServiceServer(s, kvmServer)
 		pb.RegisterFrontendVirtioScsiServiceServer(s, kvmServer)
 	} else {
-		frontendServer := frontend.NewCustomizedServer(jsonRPC,
+		frontendServer := frontend.NewCustomizedServer(spdkClient,
 			store,
 			map[pb.NvmeTransportType]frontend.NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: frontend.NewNvmeTCPTransport(jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: frontend.NewNvmeTCPTransport(spdkClient),
 			},
 			frontend.NewVhostUserBlkTransport(),
 		)

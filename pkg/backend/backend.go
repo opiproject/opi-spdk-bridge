@@ -9,9 +9,10 @@ import (
 	"log"
 
 	"github.com/philippgille/gokv"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
@@ -33,7 +34,7 @@ type Server struct {
 	pb.UnimplementedNullVolumeServiceServer
 	pb.UnimplementedAioVolumeServiceServer
 
-	rpc                spdk.JSONRPC
+	rpc                *spdk.ClientAdapter
 	store              gokv.Store
 	Volumes            VolumeParameters
 	Pagination         map[string]int
@@ -42,15 +43,15 @@ type Server struct {
 
 // NewServer creates initialized instance of BackEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
-	if jsonRPC == nil {
-		log.Panic("nil for JSONRPC is not allowed")
+func NewServer(spdkClient client.IClient, store gokv.Store) *Server {
+	if spdkClient == nil {
+		log.Panic("nil for spdkClient is not allowed")
 	}
 	if store == nil {
 		log.Panic("nil for Store is not allowed")
 	}
 	return &Server{
-		rpc:   jsonRPC,
+		rpc:   spdk.NewSpdkClientAdapter(spdkClient),
 		store: store,
 		Volumes: VolumeParameters{
 			AioVolumes:      make(map[string]*pb.AioVolume),

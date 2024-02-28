@@ -12,9 +12,10 @@ import (
 	"log"
 	"path"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/spdk/spdk/go/rpc/client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -34,20 +35,20 @@ type VirtioBlkTransport interface {
 }
 
 type nvmeTCPTransport struct {
-	rpc spdk.JSONRPC
+	rpc *spdk.ClientAdapter
 }
 
 // build time check that struct implements interface
 var _ NvmeTransport = (*nvmeTCPTransport)(nil)
 
 // NewNvmeTCPTransport creates a new instance of nvmeTcpTransport
-func NewNvmeTCPTransport(rpc spdk.JSONRPC) NvmeTransport {
-	if rpc == nil {
-		log.Panicf("rpc cannot be nil")
+func NewNvmeTCPTransport(spdkClient client.IClient) NvmeTransport {
+	if spdkClient == nil {
+		log.Panicf("spdkClient cannot be nil")
 	}
 
 	return &nvmeTCPTransport{
-		rpc: rpc,
+		rpc: spdk.NewSpdkClientAdapter(spdkClient),
 	}
 }
 

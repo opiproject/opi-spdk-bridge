@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/philippgille/gokv/gomap"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
@@ -42,7 +42,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
-		jsonRPC              spdk.JSONRPC
+		jsonRPC              client.IClient
 		errCode              codes.Code
 		errMsg               string
 		nonDefaultQmpAddress string
@@ -65,8 +65,8 @@ func TestCreateVirtioBlk(t *testing.T) {
 		"spdk failed to create virtio-blk": {
 			in:      testCreateVirtioBlkRequest,
 			jsonRPC: alwaysFailingJSONRPC,
-			errCode: status.Convert(errStub).Code(),
-			errMsg:  status.Convert(errStub).Message(),
+			errCode: codes.Unknown,
+			errMsg:  "vhost_create_blk_controller: stub error",
 		},
 		"qemu chardev add failed": {
 			in:      testCreateVirtioBlkRequest,
@@ -207,7 +207,7 @@ func TestCreateVirtioBlk(t *testing.T) {
 func TestDeleteVirtioBlk(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		jsonRPC              spdk.JSONRPC
+		jsonRPC              client.IClient
 		errCode              codes.Code
 		errMsg               string
 		nonDefaultQmpAddress string

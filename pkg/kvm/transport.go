@@ -10,24 +10,25 @@ import (
 	"log"
 	"os"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/spdk/spdk/go/rpc/client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type nvmeVfiouserTransport struct {
 	ctrlrDir string
-	rpc      spdk.JSONRPC
+	rpc      *spdk.ClientAdapter
 }
 
 // build time check that struct implements interface
 var _ frontend.NvmeTransport = (*nvmeVfiouserTransport)(nil)
 
 // NewNvmeVfiouserTransport creates a new instance of nvmeVfiouserTransport
-func NewNvmeVfiouserTransport(ctrlrDir string, rpc spdk.JSONRPC) frontend.NvmeTransport {
+func NewNvmeVfiouserTransport(ctrlrDir string, spdkClient client.IClient) frontend.NvmeTransport {
 	if ctrlrDir == "" {
 		log.Panicf("ctrlrDir cannot be empty")
 	}
@@ -40,13 +41,13 @@ func NewNvmeVfiouserTransport(ctrlrDir string, rpc spdk.JSONRPC) frontend.NvmeTr
 		log.Panicf("%v is not a directory", ctrlrDir)
 	}
 
-	if rpc == nil {
-		log.Panicf("rpc cannot be nil")
+	if spdkClient == nil {
+		log.Panicf("spdkClient cannot be nil")
 	}
 
 	return &nvmeVfiouserTransport{
 		ctrlrDir: ctrlrDir,
-		rpc:      rpc,
+		rpc:      spdk.NewSpdkClientAdapter(spdkClient),
 	}
 }
 

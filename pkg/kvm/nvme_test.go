@@ -14,8 +14,8 @@ import (
 	"testing"
 
 	"github.com/philippgille/gokv/gomap"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
@@ -71,7 +71,7 @@ func TestCreateNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
 	tests := map[string]struct {
-		jsonRPC                       spdk.JSONRPC
+		jsonRPC                       client.IClient
 		nonDefaultQmpAddress          string
 		ctrlrDirExistsBeforeOperation bool
 		ctrlrDirExistsAfterOperation  bool
@@ -101,8 +101,8 @@ func TestCreateNvmeController(t *testing.T) {
 			jsonRPC:                       alwaysFailingJSONRPC,
 			ctrlrDirExistsBeforeOperation: false,
 			ctrlrDirExistsAfterOperation:  false,
-			errCode:                       status.Convert(errStub).Code(),
-			errMsg:                        status.Convert(errStub).Message(),
+			errCode:                       codes.Unknown,
+			errMsg:                        "nvmf_subsystem_add_listener: stub error",
 		},
 		"qemu Nvme controller add failed": {
 			in:                            testCreateNvmeControllerRequest,
@@ -316,7 +316,7 @@ func TestCreateNvmeController(t *testing.T) {
 func TestDeleteNvmeController(t *testing.T) {
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 	tests := map[string]struct {
-		jsonRPC              spdk.JSONRPC
+		jsonRPC              client.IClient
 		nonDefaultQmpAddress string
 
 		ctrlrDirExistsBeforeOperation bool

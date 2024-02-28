@@ -9,12 +9,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/opiproject/gospdk/spdk"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
+	"github.com/spdk/spdk/go/rpc/client"
 )
 
 func TestNewNvmeVfiouserTransport(t *testing.T) {
 	tests := map[string]struct {
-		rpc       spdk.JSONRPC
+		rpc       client.IClient
 		wantPanic bool
 	}{
 		"nil json rpc": {
@@ -22,7 +23,7 @@ func TestNewNvmeVfiouserTransport(t *testing.T) {
 			wantPanic: true,
 		},
 		"valid transport": {
-			rpc:       spdk.NewClient("/some/path"),
+			rpc:       spdkCLientStub{},
 			wantPanic: false,
 		},
 	}
@@ -38,7 +39,7 @@ func TestNewNvmeVfiouserTransport(t *testing.T) {
 
 			gotTransport := NewNvmeTCPTransport(tt.rpc)
 			wantTransport := &nvmeTCPTransport{
-				rpc: tt.rpc,
+				rpc: spdk.NewSpdkClientAdapter(spdkCLientStub{}),
 			}
 
 			if !reflect.DeepEqual(gotTransport, wantTransport) {

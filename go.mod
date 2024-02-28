@@ -1,6 +1,6 @@
 module github.com/opiproject/opi-spdk-bridge
 
-go 1.19
+go 1.21
 
 require (
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
@@ -9,11 +9,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0
 	github.com/onsi/ginkgo/v2 v2.14.0
-	github.com/opiproject/gospdk v0.0.0-20240108075015-92d689fff706
 	github.com/opiproject/opi-api v0.0.0-20240118183513-e44db269fba4
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/gomap v0.6.0
 	github.com/philippgille/gokv/redis v0.6.0
+	github.com/spdk/spdk/go/rpc v0.0.0-20240118091712-b0eb3ed8f752
 	github.com/vektra/mockery/v2 v2.38.0
 	go.einride.tech/aip v0.66.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1

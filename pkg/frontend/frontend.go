@@ -9,9 +9,10 @@ import (
 	"log"
 
 	"github.com/philippgille/gokv"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
@@ -37,7 +38,7 @@ type Server struct {
 	pb.UnimplementedFrontendVirtioBlkServiceServer
 	pb.UnimplementedFrontendVirtioScsiServiceServer
 
-	rpc        spdk.JSONRPC
+	rpc        *spdk.ClientAdapter
 	store      gokv.Store
 	Nvme       NvmeParameters
 	Virt       VirtioParameters
@@ -48,22 +49,22 @@ type Server struct {
 
 // NewServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC
-func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
-	if jsonRPC == nil {
-		log.Panic("nil for JSONRPC is not allowed")
+func NewServer(spdkClient client.IClient, store gokv.Store) *Server {
+	if spdkClient == nil {
+		log.Panic("nil for spdkClient is not allowed")
 	}
 	if store == nil {
 		log.Panic("nil for Store is not allowed")
 	}
 	return &Server{
-		rpc:   jsonRPC,
+		rpc:   spdk.NewSpdkClientAdapter(spdkClient),
 		store: store,
 		Nvme: NvmeParameters{
 			Subsystems:  make(map[string]*pb.NvmeSubsystem),
 			Controllers: make(map[string]*pb.NvmeController),
 			Namespaces:  make(map[string]*pb.NvmeNamespace),
 			transports: map[pb.NvmeTransportType]NvmeTransport{
-				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: NewNvmeTCPTransport(jsonRPC),
+				pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP: NewNvmeTCPTransport(spdkClient),
 			},
 		},
 		Virt: VirtioParameters{
@@ -81,7 +82,7 @@ func NewServer(jsonRPC spdk.JSONRPC, store gokv.Store) *Server {
 // NewCustomizedServer creates initialized instance of FrontEnd server communicating
 // with provided jsonRPC and externally created NvmeTransport and VirtioBlkTransport
 func NewCustomizedServer(
-	jsonRPC spdk.JSONRPC,
+	spdkClient client.IClient,
 	store gokv.Store,
 	nvmeTransports map[pb.NvmeTransportType]NvmeTransport,
 	virtioBlkTransport VirtioBlkTransport,
@@ -100,14 +101,14 @@ func NewCustomizedServer(
 		log.Panic("nil for VirtioBlkTransport is not allowed")
 	}
 
-	if jsonRPC == nil {
+	if spdkClient == nil {
 		log.Panic("nil for JSONRPC is not allowed")
 	}
 	if store == nil {
 		log.Panic("nil for Store is not allowed")
 	}
 
-	server := NewServer(jsonRPC, store)
+	server := NewServer(spdkClient, store)
 	server.Nvme.transports = nvmeTransports
 	server.Virt.transport = virtioBlkTransport
 	return server

@@ -5,14 +5,13 @@
 package middleend
 
 import (
-	"context"
 	"fmt"
-	"net"
 	"testing"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
+	"github.com/spdk/spdk/go/rpc/client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -30,28 +29,19 @@ var (
 	}
 )
 
-type stubJSONRRPC struct {
+type stubClient struct {
 	params []any
 }
 
 // build time check that struct implements interface
-var _ spdk.JSONRPC = (*stubJSONRRPC)(nil)
+var _ client.IClient = (*stubClient)(nil)
 
-func (s *stubJSONRRPC) GetID() uint64 {
-	return 0
-}
-
-func (s *stubJSONRRPC) StartUnixListener() net.Listener {
-	return nil
-}
-
-func (s *stubJSONRRPC) GetVersion(_ context.Context) string {
-	return ""
-}
-
-func (s *stubJSONRRPC) Call(_ context.Context, _ string, param interface{}, _ interface{}) error {
-	s.params = append(s.params, param)
-	return nil
+func (s *stubClient) Call(_ string, params any) (*client.Response, error) {
+	s.params = append(s.params, params)
+	return &client.Response{
+		ID:     0,
+		Result: true,
+	}, nil
 }
 
 func TestMiddleEnd_CreateQosVolume(t *testing.T) {
@@ -327,8 +317,8 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 	t.Run("valid values are sent to SPDK", func(t *testing.T) {
 		testEnv := createTestEnvironment([]string{})
 		defer testEnv.Close()
-		stubRPC := &stubJSONRRPC{}
-		testEnv.opiSpdkServer.rpc = stubRPC
+		stubClient := &stubClient{}
+		testEnv.opiSpdkServer.rpc = spdk.NewSpdkClientAdapter(stubClient)
 
 		_, _ = testEnv.client.CreateQosVolume(testEnv.ctx, &pb.CreateQosVolumeRequest{
 			QosVolumeId: testQosVolumeID,
@@ -344,10 +334,11 @@ func TestMiddleEnd_CreateQosVolume(t *testing.T) {
 				},
 			},
 		})
-		if len(stubRPC.params) != 1 {
-			t.Fatalf("Expect only one call to SPDK, received %v", stubRPC.params)
+		if len(stubClient.params) != 1 {
+			t.Fatalf("Expect only one call to SPDK, received %v", stubClient.params)
 		}
-		qosParams := stubRPC.params[0].(*spdk.BdevQoSParams)
+
+		qosParams := stubClient.params[0].(*spdk.BdevQoSParams)
 		expectedParams := spdk.BdevQoSParams{
 			Name:           "volume-42",
 			RwIosPerSec:    1000,

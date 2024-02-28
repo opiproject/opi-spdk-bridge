@@ -16,8 +16,8 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/philippgille/gokv/gomap"
+	"github.com/spdk/spdk/go/rpc/client"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
@@ -42,7 +42,7 @@ type testEnv struct {
 	testSocket    string
 	ctx           context.Context
 	conn          *grpc.ClientConn
-	jsonRPC       spdk.JSONRPC
+	spdkClient    client.IClient
 }
 
 func (e *testEnv) Close() {
@@ -56,11 +56,11 @@ func (e *testEnv) Close() {
 func createTestEnvironment(spdkResponses []string) *testEnv {
 	env := &testEnv{}
 	env.testSocket = utils.GenerateSocketName("middleend")
-	env.ln, env.jsonRPC = utils.CreateTestSpdkServer(env.testSocket, spdkResponses)
+	env.ln, env.spdkClient = utils.CreateTestSpdkServer(env.testSocket, spdkResponses)
 	options := gomap.DefaultOptions
 	options.Codec = utils.ProtoCodec{}
 	store := gomap.NewStore(options)
-	env.opiSpdkServer = NewServer(env.jsonRPC, store)
+	env.opiSpdkServer = NewServer(env.spdkClient, store)
 
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx,

@@ -7,6 +7,7 @@ package utils
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -19,8 +20,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/spdk/spdk/go/rpc/client"
 )
 
 // ExtractPagination is a helper function for List pagination to fetch PageSize and PageToken
@@ -65,13 +66,29 @@ func LimitPagination[T any](result []T, offset int, size int) ([]T, bool) {
 }
 
 // CreateTestSpdkServer creates a mock spdk server for testing
-func CreateTestSpdkServer(socket string, spdkResponses []string) (net.Listener, spdk.JSONRPC) {
-	jsonRPC := spdk.NewClient(socket)
-	ln := jsonRPC.StartUnixListener()
+func CreateTestSpdkServer(socket string, spdkResponses []string) (net.Listener, client.IClient) {
+	ln := startUnixListener(socket)
 	if len(spdkResponses) > 0 {
-		go spdkMockServerCommunicate(jsonRPC, ln, spdkResponses)
+		go spdkMockServerCommunicate(ln, spdkResponses)
 	}
-	return ln, jsonRPC
+
+	spdkClient, err := client.CreateClientWithJsonCodec("unix", socket)
+	if err != nil {
+		log.Panicf("Cannot create spdk client for test: %v", err)
+	}
+
+	return ln, spdkClient
+}
+
+func startUnixListener(socket string) net.Listener {
+	if err := os.RemoveAll(socket); err != nil {
+		log.Fatal(err)
+	}
+	ln, err := net.Listen("unix", socket)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	return ln
 }
 
 // CloseGrpcConnection is utility function used to defer grpc connection close is tests
@@ -100,16 +117,15 @@ func GenerateSocketName(testType string) string {
 	return filepath.Join(os.TempDir(), "opi-spdk-"+testType+"-test-"+fmt.Sprint(n)+".sock")
 }
 
-func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string) {
+func spdkMockServerCommunicate(l net.Listener, toSend []string) {
+	fd, err := l.Accept()
+	defer func() { _ = fd.Close() }()
 	for _, spdk := range toSend {
 		// wait for client to connect (accept stage)
-		fd, err := l.Accept()
 		if err != nil {
-			log.Fatal("accept error:", err)
+			log.Panic("accept error:", err)
 		}
 		log.Printf("SPDK mockup Server: client connected [%s]", fd.RemoteAddr().Network())
-		id := rpc.GetID()
-		log.Printf("SPDK ID [%d]", id)
 		// read from client
 		// we just read to extract ID, rest of the data is discarded here
 		buf := make([]byte, 512)
@@ -117,29 +133,58 @@ func spdkMockServerCommunicate(rpc spdk.JSONRPC, l net.Listener, toSend []string
 		if err != nil {
 			log.Panic("Read: ", err)
 		}
-		// fill in ID, since client expects the same ID in the response
 		data := buf[0:nr]
+		req := client.Request{}
+		id := uint64(0)
+		if err := json.Unmarshal(data, &req); err != nil {
+			log.Printf("request parsing error: %v", err)
+		} else {
+			// fill in ID, since client expects the same ID in the response
+			id = req.ID
+		}
+		log.Printf("SPDK ID [%d]", id)
 		if strings.Contains(spdk, "%") {
 			spdk = fmt.Sprintf(spdk, id)
 		}
 		log.Printf("SPDK mockup Server: got : %s", string(data))
 		log.Printf("SPDK mockup Server: snd : %s", spdk)
+
+		// Remove all zero code errors from test responses since JSON-RPC
+		// states that error member in response must not exist if there was no
+		// error triggered during invocation. Delete this part when unit tests
+		// are reworked.
+		spdk = removeZeroCode(spdk)
+
 		// send data back to client
 		_, err = fd.Write([]byte(spdk))
 		if err != nil {
 			log.Panic("Write: ", err)
 		}
-		// close connection
-		switch fd := fd.(type) {
-		case *net.TCPConn:
-			err = fd.CloseWrite()
-		case *net.UnixConn:
-			err = fd.CloseWrite()
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
 	}
+}
+
+func removeZeroCode(jsonSpdkResponseStr string) string {
+	if jsonSpdkResponseStr == "" {
+		return jsonSpdkResponseStr
+	}
+
+	var response client.Response
+	err := json.Unmarshal([]byte(jsonSpdkResponseStr), &response)
+	if err != nil {
+		return jsonSpdkResponseStr
+	}
+
+	// If the error code is 0, set the Error field to nil
+	if response.Error != nil && response.Error.Code == 0 {
+		response.Error = nil
+	}
+
+	newResponse, err := json.Marshal(response)
+	if err != nil {
+		log.Panicf("error marshalling JSON: %v", err)
+	}
+
+	return string(newResponse)
 }
 
 // OpiAdressFamilyToSpdk converts opi address family to the one used in spdk

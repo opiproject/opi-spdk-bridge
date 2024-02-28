@@ -14,8 +14,8 @@ import (
 	"sort"
 
 	"github.com/google/uuid"
-	"github.com/opiproject/gospdk/spdk"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+	"github.com/opiproject/opi-spdk-bridge/pkg/spdk"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 
 	"go.einride.tech/aip/fieldbehavior"

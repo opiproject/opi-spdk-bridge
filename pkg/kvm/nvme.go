@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -55,7 +57,7 @@ func (s *Server) CreateNvmeController(ctx context.Context, in *pb.CreateNvmeCont
 	if err != nil {
 		log.Println("Error running cmd on opi-spdk bridge:", err)
 		_ = deleteControllerDir(s.ctrlrDir, dirName)
-		return out, err
+		return out, status.Error(codes.Unknown, err.Error())
 	}
 	name := out.Name
 
