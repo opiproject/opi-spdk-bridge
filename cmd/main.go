@@ -172,6 +172,7 @@ func runGrpcServer(grpcPort int, useKvm bool, store gokv.Store, spdkAddress, qmp
 
 	pb.RegisterNvmeRemoteControllerServiceServer(s, backendServer)
 	pb.RegisterNullVolumeServiceServer(s, backendServer)
+	pb.RegisterMallocVolumeServiceServer(s, backendServer)
 	pb.RegisterAioVolumeServiceServer(s, backendServer)
 	pb.RegisterMiddleendEncryptionServiceServer(s, middleendServer)
 	pb.RegisterMiddleendQosVolumeServiceServer(s, middleendServer)
@@ -199,6 +200,7 @@ func runGatewayServer(grpcPort int, httpPort int) {
 
 	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterAioVolumeServiceHandlerFromEndpoint, "backend aio")
 	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterNullVolumeServiceHandlerFromEndpoint, "backend null")
+	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterMallocVolumeServiceHandlerFromEndpoint, "backend malloc")
 	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterNvmeRemoteControllerServiceHandlerFromEndpoint, "backend nvme")
 
 	registerGatewayHandler(ctx, mux, endpoint, opts, pb.RegisterMiddleendEncryptionServiceHandlerFromEndpoint, "middleend encryption")
