@@ -27,6 +27,8 @@ var checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChange
 	&testAioVolumeWithName,
 	&testNullVolume,
 	&testNullVolumeWithName,
+	&testMallocVolume,
+	&testMallocVolumeWithName,
 	&testNvmeCtrl,
 	&testNvmeCtrlWithName,
 	&testNvmePath,
@@ -38,6 +40,7 @@ var checkGlobalTestProtoObjectsNotChanged = utils.CheckTestProtoObjectsNotChange
 type backendClient struct {
 	pb.NvmeRemoteControllerServiceClient
 	pb.NullVolumeServiceClient
+	pb.MallocVolumeServiceClient
 	pb.AioVolumeServiceClient
 }
 
@@ -83,6 +86,7 @@ func createTestEnvironment(spdkResponses []string) *testEnv {
 	env.client = &backendClient{
 		pb.NewNvmeRemoteControllerServiceClient(env.conn),
 		pb.NewNullVolumeServiceClient(env.conn),
+		pb.NewMallocVolumeServiceClient(env.conn),
 		pb.NewAioVolumeServiceClient(env.conn),
 	}
 
@@ -94,6 +98,7 @@ func dialer(opiSpdkServer *Server) func(context.Context, string) (net.Conn, erro
 	server := grpc.NewServer()
 	pb.RegisterNvmeRemoteControllerServiceServer(server, opiSpdkServer)
 	pb.RegisterNullVolumeServiceServer(server, opiSpdkServer)
+	pb.RegisterMallocVolumeServiceServer(server, opiSpdkServer)
 	pb.RegisterAioVolumeServiceServer(server, opiSpdkServer)
 
 	go func() {
