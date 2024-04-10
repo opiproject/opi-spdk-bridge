@@ -48,6 +48,7 @@ grpc_cli=(docker run --network=opi-spdk-bridge_opi --rm docker.io/namely/grpc-cl
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.MiddleendQosVolumeService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NvmeRemoteControllerService -l
 "${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.NullVolumeService -l
+"${grpc_cli[@]}" ls opi-spdk-server:50051 opi_api.storage.v1.MallocVolumeService -l
 
 # check spdk sanity
 docker run --rm --network=host --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf     -r 'traddr:127.0.0.1 trtype:TCP adrfam:IPv4 trsvcid:4444 subnqn:nqn.2016-06.io.spdk:cnode1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c' -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
@@ -65,10 +66,13 @@ SPDK_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{e
 docker run --rm --network=opi-spdk-bridge_opi --privileged -v /dev/hugepages:/dev/hugepages ghcr.io/opiproject/spdk:main spdk_nvme_perf -r "traddr:${SPDK_IP} trtype:TCP adrfam:IPv4 trsvcid:4444 subnqn:nqn.2016-06.io.spdk:cnode1 hostnqn:nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c" -c 0x1 -q 1 -o 4096 -w randread -t 10 | tee log.txt
 grep "Total" log.txt
 
+# create backend volume
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateMallocVolume "{malloc_volume_id: 'mallocvolume0', malloc_volume: {block_size: 512, blocks_count: 32} }"
+
 # test nvme
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem1',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest1', serial_number: 'myserial1', model_number: 'mymodel1', max_namespaces: 11} } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller1', parent: 'nvmeSubsystems/subsystem1', nvme_controller : {spec : {nvme_controller_id: 2, 'fabrics_id':{'traddr': '${SPDK_IP}', trsvcid: '7777', adrfam: 'NVME_ADDRESS_FAMILY_IPV4'}, max_nsq:5, max_ncq:5, 'trtype': 'NVME_TRANSPORT_TYPE_TCP' } } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeNamespace  "{nvme_namespace_id:  'namespace1',  parent: 'nvmeSubsystems/subsystem1', nvme_namespace  : {spec : {volume_name_ref : 'Malloc1', host_nsid : 1 } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeNamespace  "{nvme_namespace_id:  'namespace1',  parent: 'nvmeSubsystems/subsystem1', nvme_namespace  : {spec : {volume_name_ref : 'mallocvolume0', host_nsid : 1 } } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeSubsystem "{name : 'nvmeSubsystems/subsystem1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeController "{name : 'nvmeSubsystems/subsystem1/nvmeControllers/controller1'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeNamespace "{name :  'nvmeSubsystems/subsystem1/nvmeNamespaces/namespace1'}"
@@ -89,7 +93,7 @@ grep "Total" log.txt
 # test nvme with TLS
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeSubsystem  "{nvme_subsystem_id:  'subsystem2',  nvme_subsystem  : {spec : {nqn: 'nqn.2022-09.io.spdk:opitest2', serial_number: 'myserial2', model_number: 'mymodel2', max_namespaces: 22, hostnqn: 'nqn.2014-08.org.nvmexpress:uuid:feb98abe-d51f-40c8-b348-2753f3571d3c', psk: 'TlZNZVRMU2tleS0xOjAxOk1EQXhNVEl5TXpNME5EVTFOalkzTnpnNE9UbGhZV0ppWTJOa1pHVmxabVp3SkVpUTo='} } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeController "{nvme_controller_id: 'controller2', parent: 'nvmeSubsystems/subsystem2', nvme_controller : {spec : {nvme_controller_id: 22, 'fabrics_id':{'traddr': '${SPDK_IP}', trsvcid: '8888', adrfam: 'NVME_ADDRESS_FAMILY_IPV4'}, max_nsq:5, max_ncq:5, 'trtype': 'NVME_TRANSPORT_TYPE_TCP' } } }"
-"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeNamespace  "{nvme_namespace_id:  'namespace2',  parent: 'nvmeSubsystems/subsystem2', nvme_namespace  : {spec : {volume_name_ref : 'Malloc1', host_nsid : 1 } } }"
+"${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 CreateNvmeNamespace  "{nvme_namespace_id:  'namespace2',  parent: 'nvmeSubsystems/subsystem2', nvme_namespace  : {spec : {volume_name_ref : 'mallocvolume0', host_nsid : 1 } } }"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeSubsystem "{name : 'nvmeSubsystems/subsystem2'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeController "{name : 'nvmeSubsystems/subsystem2/nvmeControllers/controller2'}"
 "${grpc_cli[@]}" call --json_input --json_output opi-spdk-server:50051 GetNvmeNamespace "{name :  'nvmeSubsystems/subsystem2/nvmeNamespaces/namespace2'}"
@@ -133,7 +137,7 @@ curl -X DELETE -f http://127.0.0.1:8082/v1/nvmeRemoteControllers/nvmetcp12
 # Frontend
 # create
 curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems?nvme_subsystem_id=subsys0 -d '{"spec": {"nqn": "nqn.2022-09.io.spdk:opitest1"}}'
-curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces?nvme_namespace_id=namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
+curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces?nvme_namespace_id=namespace0 -d '{"spec": {"volume_name_ref": "mallocvolume0", "host_nsid": 10}}'
 curl -X POST -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers?nvme_controller_id=ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
 
 # get
@@ -154,7 +158,7 @@ curl -X GET -f http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/c
 # update
 # update subsys returns not implemented error
 #curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0 -d '{"spec": {"nqn": "nqn.2022-09.io.spdk:opitest1"}}'
-curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0 -d '{"spec": {"volume_name_ref": "Malloc1", "host_nsid": 10}}'
+curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeNamespaces/namespace0 -d '{"spec": {"volume_name_ref": "mallocvolume0", "host_nsid": 10}}'
 curl -X PATCH -k http://127.0.0.1:8082/v1/nvmeSubsystems/subsys0/nvmeControllers/ctrl0 -d '{"spec": {"trtype": "NVME_TRANSPORT_TYPE_TCP", "fabrics_id":{"traddr": "127.0.0.1", "trsvcid": "4421", "adrfam": "NVME_ADDRESS_FAMILY_IPV4"}}}'
 
 # delete
