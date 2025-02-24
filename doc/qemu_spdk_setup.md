@@ -91,8 +91,10 @@ make -j
 
 ## Download guest image
 
+From <https://fedoraproject.org/cloud/download> for example
+
 ```bash
-wget -O guest_os_image.qcow2  https://download.fedoraproject.org/pub/fedora/linux/releases/36/Cloud/x86_64/images/Fedora-Cloud-Base-36-1.5.x86_64.qcow2
+wget -O guest_os_image.qcow2  https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2
 ```
 
 ## Change password
