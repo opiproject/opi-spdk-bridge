@@ -210,13 +210,30 @@ func (s *Server) ListNvmePaths(ctx context.Context, in *pb.ListNvmePathsRequest)
 		token = uuid.New().String()
 		s.Pagination[token] = offset + size
 	}
-	Blobarray := make([]*pb.NvmePath, len(result))
-	for i := range result {
-		r := &result[i]
-		Blobarray[i] = &pb.NvmePath{Name: r.Name /* TODO: fill this */}
+	Blobarray := make([]*pb.NvmePath, 0, len(result))
+	for _, r := range result {
+		for _, c := range r.Ctrlrs {
+			path := &pb.NvmePath{
+				Name:   r.Name,
+				Trtype: utils.ParseOpiTransportType(c.Trid.Trtype),
+				Traddr: c.Trid.Traddr,
+				Fabrics: &pb.FabricsPath{
+					Trsvcid:       utils.ParseTrsvcid(c.Trid.Trsvcid),
+					Subnqn:        c.Trid.Subnqn,
+					Adrfam:        utils.SpdkAddressFamilyToOpi(c.Trid.Adrfam),
+					SourceTraddr:  c.Host.Addr,
+					SourceTrsvcid: utils.ParseTrsvcid(c.Host.Svcid),
+					Hostnqn:       c.Host.Nqn,
+				},
+			}
+			Blobarray = append(Blobarray, path)
+		}
 	}
 	sortNvmePaths(Blobarray)
-	return &pb.ListNvmePathsResponse{NvmePaths: Blobarray, NextPageToken: token}, nil
+	return &pb.ListNvmePathsResponse{
+		NvmePaths:     Blobarray,
+		NextPageToken: token,
+	}, nil
 }
 
 // GetNvmePath gets Nvme path
@@ -239,10 +256,23 @@ func (s *Server) GetNvmePath(ctx context.Context, in *pb.GetNvmePathRequest) (*p
 	}
 	log.Printf("Received from SPDK: %v", result)
 
-	for i := range result {
-		r := &result[i]
-		if r.Name != "" {
-			return &pb.NvmePath{ /* TODO: fill this */ }, nil
+	for _, r := range result {
+		for _, c := range r.Ctrlrs {
+			if c.Trid.Subnqn == path.Fabrics.Subnqn {
+				return &pb.NvmePath{
+					Name:   r.Name,
+					Trtype: utils.ParseOpiTransportType(c.Trid.Trtype),
+					Traddr: c.Trid.Traddr,
+					Fabrics: &pb.FabricsPath{
+						Trsvcid:       utils.ParseTrsvcid(c.Trid.Trsvcid),
+						Subnqn:        c.Trid.Subnqn,
+						Adrfam:        utils.SpdkAddressFamilyToOpi(c.Trid.Adrfam),
+						SourceTraddr:  c.Host.Addr,
+						SourceTrsvcid: utils.ParseTrsvcid(c.Host.Svcid),
+						Hostnqn:       c.Host.Nqn,
+					},
+				}, nil
+			}
 		}
 	}
 	msg := fmt.Sprintf("Could not find NQN: %s", path.Fabrics.Subnqn)

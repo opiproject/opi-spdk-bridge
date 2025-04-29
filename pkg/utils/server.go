@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -149,4 +150,48 @@ func OpiAdressFamilyToSpdk(adrfam pb.NvmeAddressFamily) string {
 	}
 
 	return strings.ReplaceAll(adrfam.String(), "NVME_ADDRESS_FAMILY_", "")
+}
+
+// SpdkAddressFamilyToOpi converts a SPDK address family string to the corresponding OPI NvmeAddressFamily enum.
+func SpdkAddressFamilyToOpi(adrfam string) pb.NvmeAddressFamily {
+	switch strings.ToLower(adrfam) {
+	case "ipv4":
+		return pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV4
+	case "ipv6":
+		return pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IPV6
+	case "ib":
+		return pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_IB
+	case "fc":
+		return pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_FC
+	case "intra_host":
+		return pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_INTRA_HOST
+	default:
+		return pb.NvmeAddressFamily_NVME_ADDRESS_FAMILY_UNSPECIFIED
+	}
+}
+
+// ParseOpiTransportType parses a string to the corresponding OPI TransportType enum.
+func ParseOpiTransportType(t string) pb.NvmeTransportType {
+	switch strings.ToLower(t) {
+	case "fc":
+		return pb.NvmeTransportType_NVME_TRANSPORT_TYPE_FC
+	case "pcie":
+		return pb.NvmeTransportType_NVME_TRANSPORT_TYPE_PCIE
+	case "rdma":
+		return pb.NvmeTransportType_NVME_TRANSPORT_TYPE_RDMA
+	case "tcp":
+		return pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP
+	default:
+		return pb.NvmeTransportType_NVME_TRANSPORT_TYPE_UNSPECIFIED
+	}
+}
+
+// ParseTrsvcid parses a string into int64, returning -1 on failure.
+func ParseTrsvcid(s string) int64 {
+	// if it fails, it just returns -1
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return -1
+	}
+	return i
 }
