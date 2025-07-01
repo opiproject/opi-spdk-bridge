@@ -114,7 +114,7 @@ func (s *Server) DeleteNvmeController(ctx context.Context, in *pb.DeleteNvmeCont
 }
 
 // UpdateNvmeController updates an Nvme controller
-func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
+func (s *Server) UpdateNvmeController(ctx context.Context, in *pb.UpdateNvmeControllerRequest) (*pb.NvmeController, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeControllerRequest(in); err != nil {
 		return nil, err
@@ -122,11 +122,18 @@ func (s *Server) UpdateNvmeController(_ context.Context, in *pb.UpdateNvmeContro
 	// fetch object from the database
 	ctrlr, ok := s.Nvme.Controllers[in.NvmeController.Name]
 	if !ok {
-		if in.AllowMissing {
-			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		if !in.AllowMissing {
+			err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeController.Name)
+			return nil, err
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeController.Name)
-		return nil, err
+		// If AllowMissing is true and controller doesn't exist, create it
+		subsysID := utils.GetSubsystemIDFromNvmeName(in.NvmeController.Name)
+		ctrlrID := path.Base(in.NvmeController.Name)
+		return s.CreateNvmeController(ctx, &pb.CreateNvmeControllerRequest{
+			Parent:             utils.ResourceIDToSubsystemName(subsysID),
+			NvmeControllerId:   ctrlrID,
+			NvmeController:     in.NvmeController,
+		})
 	}
 	resourceID := path.Base(ctrlr.Name)
 	// update_mask = 2
