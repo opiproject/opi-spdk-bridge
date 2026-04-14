@@ -48,7 +48,7 @@ type CheckTestProtoObjectsNotChangedInTestFunc = func(
 func CheckTestProtoObjectsNotChanged(
 	msgs ...proto.Message,
 ) CheckTestProtoObjectsNotChangedInTestFunc {
-	origMsgs := []proto.Message{}
+	origMsgs := make([]proto.Message, 0, len(msgs))
 	for _, m := range msgs {
 		origMsgs = append(origMsgs, ProtoClone(m))
 	}

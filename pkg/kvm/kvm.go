@@ -66,7 +66,7 @@ func NewServer(s *frontend.Server, qmpAddress string, ctrlrDir string, buses []s
 
 	qmpProtocol, err := getProtocol(qmpAddress)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 
 	timeout := 2 * time.Second
