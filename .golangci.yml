@@ -1,29 +1,20 @@
 # This file contains all available configuration options
 # with their default values.
 
-# options for analysis running
-run:
+version: "2"
 
 # output configuration options
 output:
-  # colored-line-number|line-number|json|tab|checkstyle|code-climate, default is "colored-line-number"
-  format: colored-line-number
-
-linters-settings:
-  funlen:
-    lines: 120
-    statements: 120
-  dupl:
-    threshold: 200
-  gocognit:
-    min-complexity: 32
+  formats:
+    text:
+      colors: true
 
 linters:
   enable:
     - bodyclose
     - dogsled
+    - dupl
     - errcheck
-    - exportloopref
     - funlen
     - gochecknoglobals
     - gochecknoinits
@@ -31,10 +22,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
@@ -42,28 +30,45 @@ linters:
     - prealloc
     - revive
     - staticcheck
-    - stylecheck
     - unconvert
     - unparam
     - whitespace
+  settings:
+    funlen:
+      lines: 120
+      statements: 120
+    dupl:
+      threshold: 200
+    gocognit:
+      min-complexity: 32
+    gosec:
+      excludes:
+        - G115
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF*"
+  exclusions:
+    # Disable default exclude patterns so all issues are reported.
+    presets: []
+    rules:
+      - path: (.+)_test.go
+        linters:
+          - funlen
+          - gochecknoglobals
+          - gocritic
+          - gocognit
+          - dupl
+          - gosec
+          - revive
 
 issues:
-  # Independently from option `exclude` we use default exclude patterns,
-  # it can be disabled by this option. To list all
-  # excluded by default patterns execute `golangci-lint run --help`.
-  # Default value for this option is true.
-  exclude-use-default: false
-
-  exclude-rules:
-    - path: (.+)_test.go
-      linters:
-        - funlen
-        - gochecknoglobals
-        - gocritic
-        - gocognit
-
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
-
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
