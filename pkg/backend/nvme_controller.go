@@ -86,7 +86,7 @@ func (s *Server) ResetNvmeRemoteController(_ context.Context, in *pb.ResetNvmeRe
 }
 
 // UpdateNvmeRemoteController resets an Nvme remote controller
-func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
+func (s *Server) UpdateNvmeRemoteController(ctx context.Context, in *pb.UpdateNvmeRemoteControllerRequest) (*pb.NvmeRemoteController, error) {
 	// check input correctness
 	if err := s.validateUpdateNvmeRemoteControllerRequest(in); err != nil {
 		return nil, err
@@ -94,11 +94,15 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 	// fetch object from the database
 	controller, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
 	if !ok {
-		if in.AllowMissing {
-			log.Printf("TODO: in case of AllowMissing, create a new resource, don;t return error")
+		if !in.AllowMissing {
+			err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeRemoteController.Name)
+			return nil, err
 		}
-		err := status.Errorf(codes.NotFound, "unable to find key %s", in.NvmeRemoteController.Name)
-		return nil, err
+		resourceID := utils.GetRemoteControllerIDFromNvmeRemoteName(in.NvmeRemoteController.Name)
+		return s.CreateNvmeRemoteController(ctx, &pb.CreateNvmeRemoteControllerRequest{
+			NvmeRemoteControllerId: resourceID,
+			NvmeRemoteController:   in.NvmeRemoteController,
+		})
 	}
 	resourceID := utils.GetRemoteControllerIDFromNvmeRemoteName(controller.Name)
 	// update_mask = 2
