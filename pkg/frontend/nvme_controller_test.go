@@ -496,6 +496,7 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 	t.Cleanup(utils.CheckTestProtoObjectsNotChanged(spec)(t, t.Name()))
 	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
 
+	unknownControllerName := utils.ResourceIDToControllerName(testSubsystemID, "unknown-controller-id")
 	tests := map[string]struct {
 		mask    *fieldmaskpb.FieldMask
 		in      *pb.NvmeController
@@ -504,69 +505,94 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 		errCode codes.Code
 		errMsg  string
 		missing bool
+		subsys  bool
 	}{
 		"invalid fieldmask": {
-			&fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
-			&pb.NvmeController{
+			mask: &fieldmaskpb.FieldMask{Paths: []string{"*", "author"}},
+			in: &pb.NvmeController{
 				Name: testControllerName,
 				Spec: spec,
 			},
-			nil,
-			[]string{},
-			codes.Unknown,
-			fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
-			false,
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("invalid field path: %s", "'*' must not be used with other paths"),
+			missing: false,
 		},
 		"valid request without SPDK": {
-			nil,
-			&pb.NvmeController{
+			mask: nil,
+			in: &pb.NvmeController{
 				Name: testControllerName,
 				Spec: spec,
 			},
-			&pb.NvmeController{
+			out: &pb.NvmeController{
 				Name: testControllerName,
 				Spec: spec,
 				Status: &pb.NvmeControllerStatus{
 					Active: true,
 				},
 			},
-			[]string{},
-			codes.OK,
-			"",
-			false,
+			spdk:    []string{},
+			errCode: codes.OK,
+			errMsg:  "",
+			missing: false,
 		},
 		"valid request with unknown key": {
-			nil,
-			&pb.NvmeController{
-				Name: utils.ResourceIDToVolumeName("unknown-id"),
+			mask: nil,
+			in: &pb.NvmeController{
+				Name: unknownControllerName,
 				Spec: spec,
 			},
-			nil,
-			[]string{},
-			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
-			false,
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %v", unknownControllerName),
+			missing: false,
 		},
 		"unknown key with missing allowed": {
-			nil,
-			&pb.NvmeController{
-				Name: utils.ResourceIDToVolumeName("unknown-id"),
+			mask: nil,
+			in: &pb.NvmeController{
+				Name: unknownControllerName,
 				Spec: spec,
 			},
-			nil,
-			[]string{},
-			codes.NotFound,
-			fmt.Sprintf("unable to find key %v", utils.ResourceIDToVolumeName("unknown-id")),
-			true,
+			out: &pb.NvmeController{
+				Name: unknownControllerName,
+				Spec: &pb.NvmeControllerSpec{
+					Endpoint:         spec.Endpoint,
+					NvmeControllerId: proto.Int32(-1),
+					Trtype:           pb.NvmeTransportType_NVME_TRANSPORT_TYPE_TCP,
+				},
+				Status: &pb.NvmeControllerStatus{
+					Active: true,
+				},
+			},
+			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`},
+			errCode: codes.OK,
+			errMsg:  "",
+			missing: true,
+			subsys:  true,
+		},
+		"unknown key with missing allowed and SPDK failure": {
+			mask: nil,
+			in: &pb.NvmeController{
+				Name: unknownControllerName,
+				Spec: spec,
+			},
+			out:     nil,
+			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
+			errCode: codes.InvalidArgument,
+			errMsg:  fmt.Sprintf("Could not create CTRL: %v", unknownControllerName),
+			missing: true,
+			subsys:  true,
 		},
 		"malformed name": {
-			nil,
-			&pb.NvmeController{Name: "-ABC-DEF", Spec: spec},
-			nil,
-			[]string{},
-			codes.Unknown,
-			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
-			false,
+			mask:    nil,
+			in:      &pb.NvmeController{Name: "-ABC-DEF", Spec: spec},
+			out:     nil,
+			spdk:    []string{},
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			missing: false,
 		},
 	}
 
@@ -577,6 +603,9 @@ func TestFrontEnd_UpdateNvmeController(t *testing.T) {
 			defer testEnv.Close()
 
 			testEnv.opiSpdkServer.Nvme.Controllers[testControllerName] = utils.ProtoClone(&testController)
+			if tt.subsys {
+				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName] = utils.ProtoClone(&testSubsystem)
+			}
 
 			request := &pb.UpdateNvmeControllerRequest{NvmeController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateNvmeController(testEnv.ctx, request)
