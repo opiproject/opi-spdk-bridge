@@ -7,7 +7,6 @@ package frontend
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -702,7 +701,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 		},
 		"malformed name": {
 			"-ABC-DEF",
-			&emptypb.Empty{},
+			nil,
 			[]string{},
 			codes.Unknown,
 			fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
@@ -711,7 +710,7 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 		},
 		"no required field": {
 			"",
-			&emptypb.Empty{},
+			nil,
 			[]string{},
 			codes.Unknown,
 			"missing required field: name",
@@ -754,8 +753,8 @@ func TestFrontEnd_DeleteVirtioBlk(t *testing.T) {
 				t.Error("expected grpc error status")
 			}
 
-			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
-				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 		})
 	}
