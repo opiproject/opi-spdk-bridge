@@ -6,7 +6,6 @@
 package utils
 
 import (
-	"strings"
 
 	"go.einride.tech/aip/resourcename"
 )
@@ -44,19 +43,16 @@ func ResourceIDToControllerName(subsysResourceID, ctrlrResourceID string) string
 }
 
 // GetSubsystemIDFromNvmeName get parent ID (subsystem ID) from nvme related names
+// using AIP Ancestor pattern instead of manual string parsing
 func GetSubsystemIDFromNvmeName(name string) string {
-	segments := strings.Split(name, "/")
-	for i := range segments {
-		if (i + 1) == len(segments) {
-			return ""
-		}
-
-		if segments[i] == "nvmeSubsystems" {
-			return segments[i+1]
-		}
+	ancestor, ok := resourcename.Ancestor(name, "nvmeSubsystems/{subsystem}")
+	if !ok {
+		return ""
 	}
 
-	return ""
+	var subsystemID string
+	_ = resourcename.Sscan(ancestor, "nvmeSubsystems/{subsystem}", &subsystemID)
+	return subsystemID
 }
 
 // ResourceIDToRemoteControllerName transforms remote controller resource ID to
