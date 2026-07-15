@@ -37,6 +37,9 @@ linters:
     funlen:
       lines: 120
       statements: 120
+    goconst:
+      ignore-tests: true
+      min-occurrences: 4
     dupl:
       threshold: 200
     gocognit:
@@ -55,6 +58,7 @@ linters:
       - path: (.+)_test.go
         linters:
           - funlen
+          - goconst
           - gochecknoglobals
           - gocritic
           - gocognit
