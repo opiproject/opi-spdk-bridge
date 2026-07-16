@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
@@ -446,6 +447,97 @@ func TestBackEnd_StatsNvmeRemoteController(t *testing.T) {
 
 			if !proto.Equal(response.GetStats(), tt.out) {
 				t.Error("response: expected", tt.out, "received", response.GetStats())
+			}
+
+			if er, ok := status.FromError(err); ok {
+				if er.Code() != tt.errCode {
+					t.Error("error code: expected", tt.errCode, "received", er.Code())
+				}
+				if er.Message() != tt.errMsg {
+					t.Error("error message: expected", tt.errMsg, "received", er.Message())
+				}
+			} else {
+				t.Error("expected grpc error status")
+			}
+		})
+	}
+}
+
+func TestBackEnd_UpdateNvmeRemoteController(t *testing.T) {
+	t.Cleanup(checkGlobalTestProtoObjectsNotChanged(t, t.Name()))
+
+	unknownControllerName := utils.ResourceIDToRemoteControllerName("unknown-controller-id")
+	tests := map[string]struct {
+		mask    *fieldmaskpb.FieldMask
+		in      *pb.NvmeRemoteController
+		out     *pb.NvmeRemoteController
+		errCode codes.Code
+		errMsg  string
+		missing bool
+	}{
+		"valid request without SPDK": {
+			mask:    nil,
+			in:      &testNvmeCtrlWithName,
+			out:     &testNvmeCtrlWithName,
+			errCode: codes.OK,
+			errMsg:  "",
+			missing: false,
+		},
+		"valid request with unknown key": {
+			mask: nil,
+			in: &pb.NvmeRemoteController{
+				Name:      unknownControllerName,
+				Tcp:       testNvmeCtrl.Tcp,
+				Multipath: testNvmeCtrl.Multipath,
+			},
+			out:     nil,
+			errCode: codes.NotFound,
+			errMsg:  fmt.Sprintf("unable to find key %v", unknownControllerName),
+			missing: false,
+		},
+		"unknown key with missing allowed": {
+			mask: nil,
+			in: &pb.NvmeRemoteController{
+				Name:      unknownControllerName,
+				Tcp:       testNvmeCtrl.Tcp,
+				Multipath: testNvmeCtrl.Multipath,
+			},
+			out: &pb.NvmeRemoteController{
+				Name:      unknownControllerName,
+				Tcp:       testNvmeCtrl.Tcp,
+				Multipath: testNvmeCtrl.Multipath,
+			},
+			errCode: codes.OK,
+			errMsg:  "",
+			missing: true,
+		},
+		"malformed name": {
+			mask: nil,
+			in: &pb.NvmeRemoteController{
+				Name:      "-ABC-DEF",
+				Tcp:       testNvmeCtrl.Tcp,
+				Multipath: testNvmeCtrl.Multipath,
+			},
+			out:     nil,
+			errCode: codes.Unknown,
+			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
+			missing: false,
+		},
+	}
+
+	// run tests
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			testEnv := createTestEnvironment([]string{})
+			defer testEnv.Close()
+
+			testEnv.opiSpdkServer.Volumes.NvmeControllers[testNvmeCtrlName] = utils.ProtoClone(&testNvmeCtrlWithName)
+
+			request := &pb.UpdateNvmeRemoteControllerRequest{NvmeRemoteController: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
+			response, err := testEnv.client.UpdateNvmeRemoteController(testEnv.ctx, request)
+
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 
 			if er, ok := status.FromError(err); ok {
