@@ -7,7 +7,6 @@ package middleend
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
@@ -1101,7 +1100,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		},
 		"valid request with key delete fails": {
 			in:      encryptedVolumeName,
-			out:     &emptypb.Empty{},
+			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.InvalidArgument,
 			errMsg:  fmt.Sprintf("Could not destroy Crypto Key: %v", encryptedVolumeID),
@@ -1109,7 +1108,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		},
 		"valid request with error code from key delete SPDK response": {
 			in:      encryptedVolumeName,
-			out:     &emptypb.Empty{},
+			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":true}`},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("accel_crypto_key_destroy: %v", "json response error: myopierr"),
@@ -1133,7 +1132,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		},
 		"malformed name": {
 			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
-			out:     &emptypb.Empty{},
+			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
@@ -1141,7 +1140,7 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 		},
 		"no required field": {
 			in:      "",
-			out:     &emptypb.Empty{},
+			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: name",
@@ -1171,8 +1170,8 @@ func TestMiddleEnd_DeleteEncryptedVolume(t *testing.T) {
 				t.Error("expected grpc error status")
 			}
 
-			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
-				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 		})
 	}

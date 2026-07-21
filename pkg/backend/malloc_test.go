@@ -8,7 +8,6 @@ package backend
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -799,7 +798,7 @@ func TestBackEnd_DeleteMallocVolume(t *testing.T) {
 		},
 		"malformed name": {
 			in:      utils.ResourceIDToVolumeName("-ABC-DEF"),
-			out:     &emptypb.Empty{},
+			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
@@ -807,7 +806,7 @@ func TestBackEnd_DeleteMallocVolume(t *testing.T) {
 		},
 		"no required field": {
 			in:      "",
-			out:     &emptypb.Empty{},
+			out:     nil,
 			spdk:    []string{},
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: name",
@@ -837,8 +836,8 @@ func TestBackEnd_DeleteMallocVolume(t *testing.T) {
 				t.Error("expected grpc error status")
 			}
 
-			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
-				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 		})
 	}

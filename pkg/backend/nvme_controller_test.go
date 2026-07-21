@@ -7,7 +7,6 @@ package backend
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"google.golang.org/protobuf/proto"
@@ -494,14 +493,14 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 		},
 		"malformed name": {
 			in:      utils.ResourceIDToRemoteControllerName("-ABC-DEF"),
-			out:     &emptypb.Empty{},
+			out:     nil,
 			errCode: codes.Unknown,
 			errMsg:  fmt.Sprintf("segment '%s': not a valid DNS name", "-ABC-DEF"),
 			missing: false,
 		},
 		"no required field": {
 			in:      "",
-			out:     &emptypb.Empty{},
+			out:     nil,
 			errCode: codes.Unknown,
 			errMsg:  "missing required field: name",
 			missing: false,
@@ -530,8 +529,8 @@ func TestBackEnd_DeleteNvmeRemoteController(t *testing.T) {
 				t.Error("expected grpc error status")
 			}
 
-			if reflect.TypeOf(response) != reflect.TypeOf(tt.out) {
-				t.Error("response: expected", reflect.TypeOf(tt.out), "received", reflect.TypeOf(response))
+			if !proto.Equal(response, tt.out) {
+				t.Error("response: expected", tt.out, "received", response)
 			}
 		})
 	}
