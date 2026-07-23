@@ -168,7 +168,7 @@ func (s *Server) ListVirtioBlks(ctx context.Context, in *pb.ListVirtioBlksReques
 				VirtualFunction:  wrapperspb.Int32(0),
 				PortId:           wrapperspb.Int32(0),
 			},
-			VolumeNameRef: "TBD"}
+			VolumeNameRef: placeholderValue}
 	}
 	sortVirtioBlks(Blobarray)
 
@@ -208,7 +208,7 @@ func (s *Server) GetVirtioBlk(ctx context.Context, in *pb.GetVirtioBlkRequest) (
 			VirtualFunction:  wrapperspb.Int32(0),
 			PortId:           wrapperspb.Int32(0),
 		},
-		VolumeNameRef: "TBD"}, nil
+		VolumeNameRef: placeholderValue}, nil
 }
 
 // StatsVirtioBlk gets a Virtio block device stats

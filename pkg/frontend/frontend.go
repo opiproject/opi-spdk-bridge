@@ -15,6 +15,8 @@ import (
 	"github.com/opiproject/opi-spdk-bridge/pkg/utils"
 )
 
+const placeholderValue = "TBD"
+
 // NvmeParameters contains all Nvme related structures
 type NvmeParameters struct {
 	Subsystems  map[string]*pb.NvmeSubsystem

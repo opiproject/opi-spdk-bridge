@@ -62,6 +62,7 @@ linters:
           - gochecknoglobals
           - gocritic
           - gocognit
+          - goconst
           - dupl
           - gosec
           - revive
