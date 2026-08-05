@@ -1,6 +1,8 @@
 module github.com/opiproject/opi-spdk-bridge
 
-go 1.19
+go 1.21
+
+toolchain go1.21.6
 
 require (
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
@@ -14,7 +16,7 @@ require (
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/gomap v0.6.0
 	github.com/philippgille/gokv/redis v0.6.0
-	github.com/vektra/mockery/v2 v2.38.0
+	github.com/vektra/mockery/v2 v2.40.1
 	go.einride.tech/aip v0.66.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1
 	go.opentelemetry.io/otel v1.21.0
@@ -58,7 +60,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/chavacava/garif v0.1.0 // indirect
-	github.com/chigopher/pathlib v0.15.0 // indirect
+	github.com/chigopher/pathlib v0.19.1 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
 	github.com/daixiang0/gci v0.11.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
