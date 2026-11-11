@@ -49,7 +49,7 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 	subsys, ok := s.Nvme.Subsystems[in.NvmeSubsystem.Name]
 	if ok {
 		log.Printf("Already existing NvmeSubsystem with id %v", in.NvmeSubsystem.Name)
-		return subsys, nil
+		return utils.SecretSafeNvmeSubsystem(subsys), nil
 	}
 	// check if another object exists with same NQN, it is not allowed
 	for _, item := range s.Nvme.Subsystems {
@@ -118,7 +118,7 @@ func (s *Server) CreateNvmeSubsystem(ctx context.Context, in *pb.CreateNvmeSubsy
 	response := utils.ProtoClone(in.NvmeSubsystem)
 	response.Status = &pb.NvmeSubsystemStatus{FirmwareRevision: ver.Version}
 	s.Nvme.Subsystems[in.NvmeSubsystem.Name] = response
-	return response, nil
+	return utils.SecretSafeNvmeSubsystem(response), nil
 }
 
 // DeleteNvmeSubsystem deletes an Nvme Subsystem

@@ -8,6 +8,7 @@ package middleend
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"path"
@@ -53,7 +54,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	volume, ok := s.volumes.encVolumes[in.EncryptedVolume.Name]
 	if ok {
 		log.Printf("Already existing EncryptedVolume with id %v", in.EncryptedVolume.Name)
-		return volume, nil
+		return utils.SecretSafeEncryptedVolume(volume), nil
 	}
 
 	// first create a key
@@ -61,11 +62,11 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	var result1 spdk.AccelCryptoKeyCreateResult
 	err1 := s.rpc.Call(ctx, "accel_crypto_key_create", &params1, &result1)
 	if err1 != nil {
-		return nil, err1
+		return nil, cryptoKeyCreateError(err1, params1.Name)
 	}
 	log.Printf("Received from SPDK: %v", result1)
 	if !result1 {
-		msg := fmt.Sprintf("Could not create Crypto Key: %s", string(in.EncryptedVolume.Key))
+		msg := fmt.Sprintf("Could not create Crypto Key: %s", params1.Name)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// create bdev now
@@ -86,7 +87,7 @@ func (s *Server) CreateEncryptedVolume(ctx context.Context, in *pb.CreateEncrypt
 	}
 	response := utils.ProtoClone(in.EncryptedVolume)
 	s.volumes.encVolumes[in.EncryptedVolume.Name] = response
-	return response, nil
+	return utils.SecretSafeEncryptedVolume(response), nil
 }
 
 // DeleteEncryptedVolume deletes an encrypted volume
@@ -180,11 +181,11 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	var result2 spdk.AccelCryptoKeyCreateResult
 	err2 := s.rpc.Call(ctx, "accel_crypto_key_create", &params2, &result2)
 	if err2 != nil {
-		return nil, err2
+		return nil, cryptoKeyCreateError(err2, params2.Name)
 	}
 	log.Printf("Received from SPDK: %v", result2)
 	if !result2 {
-		msg := fmt.Sprintf("Could not create Crypto Key: %s", string(in.EncryptedVolume.Key))
+		msg := fmt.Sprintf("Could not create Crypto Key: %s", params2.Name)
 		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 	// create bdev now
@@ -205,7 +206,17 @@ func (s *Server) UpdateEncryptedVolume(ctx context.Context, in *pb.UpdateEncrypt
 	}
 	// return result
 	response := utils.ProtoClone(in.EncryptedVolume)
-	return response, nil
+	return utils.SecretSafeEncryptedVolume(response), nil
+}
+
+func cryptoKeyCreateError(err error, keyName string) error {
+	code := status.Code(err)
+	if errors.Is(err, context.Canceled) {
+		code = codes.Canceled
+	} else if errors.Is(err, context.DeadlineExceeded) {
+		code = codes.DeadlineExceeded
+	}
+	return status.Errorf(code, "Could not create Crypto Key: %s", keyName)
 }
 
 // ListEncryptedVolumes lists encrypted volumes

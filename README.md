@@ -14,6 +14,16 @@
 
 This is a simple SPDK based storage API PoC.
 
+Client-facing storage responses omit encryption keys and NVMe PSKs, including
+repeated-create responses. Redaction clones response objects so internal key
+configuration remains available for encryption and TLS setup. Crypto-key creation
+errors identify the key resource without returning backend error text that could
+echo key material. Existing update input requirements are unchanged.
+
+This response-boundary protection does not change the underlying JSON-RPC
+transport's logging policy. Deployment logging and access controls still require
+independent review; this PoC is not a production security boundary.
+
 * SPDK - container with SPDK app that is running on xPU
 * Server - container with OPI gRPC storage APIs to SPDK json-rpc APIs bridge
 * Client - use [goDPU](https://github.com/opiproject/godpu) for testing of the above server/bridge
