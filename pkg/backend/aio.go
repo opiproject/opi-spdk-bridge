@@ -254,7 +254,7 @@ func (s *Server) StatsAioVolume(ctx context.Context, in *pb.StatsAioVolumeReques
 		Name: resourceID,
 	}
 	// See https://mholt.github.io/json-to-go/
-	var result spdk.BdevGetIostatResult
+	var result utils.IostatSnapshot
 	err := s.rpc.Call(ctx, "bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, err
@@ -263,6 +263,10 @@ func (s *Server) StatsAioVolume(ctx context.Context, in *pb.StatsAioVolumeReques
 	if len(result.Bdevs) != 1 {
 		msg := fmt.Sprintf("expecting exactly 1 result, got %d", len(result.Bdevs))
 		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+	metadata, err := utils.IostatSampleMetadata(result)
+	if err != nil {
+		return nil, err
 	}
 	return &pb.StatsAioVolumeResponse{Stats: &pb.VolumeStats{
 		ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
@@ -274,5 +278,5 @@ func (s *Server) StatsAioVolume(ctx context.Context, in *pb.StatsAioVolumeReques
 		ReadLatencyTicks:  int32(result.Bdevs[0].ReadLatencyTicks),
 		WriteLatencyTicks: int32(result.Bdevs[0].WriteLatencyTicks),
 		UnmapLatencyTicks: int32(result.Bdevs[0].UnmapLatencyTicks),
-	}}, nil
+	}, SampleMetadata: metadata}, nil
 }

@@ -174,7 +174,7 @@ func (s *Server) StatsQosVolume(ctx context.Context, in *pb.StatsQosVolumeReques
 	params := spdk.BdevGetIostatParams{
 		Name: volume.VolumeNameRef,
 	}
-	var result spdk.BdevGetIostatResult
+	var result utils.IostatSnapshot
 	err := s.rpc.Call(ctx, "bdev_get_iostat", &params, &result)
 	if err != nil {
 		return nil, spdk.ErrFailedSpdkCall
@@ -185,7 +185,12 @@ func (s *Server) StatsQosVolume(ctx context.Context, in *pb.StatsQosVolumeReques
 		return nil, spdk.ErrUnexpectedSpdkCallResult
 	}
 
+	metadata, err := utils.IostatSampleMetadata(result)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.StatsQosVolumeResponse{
+		SampleMetadata: metadata,
 		Stats: &pb.VolumeStats{
 			ReadBytesCount:    int32(result.Bdevs[0].BytesRead),
 			ReadOpsCount:      int32(result.Bdevs[0].NumReadOps),

@@ -1090,8 +1090,15 @@ func TestMiddleEnd_StatsQosVolume(t *testing.T) {
 			request := &pb.StatsQosVolumeRequest{Name: tt.in}
 			response, err := testEnv.client.StatsQosVolume(testEnv.ctx, request)
 
-			if !proto.Equal(tt.out, response) {
-				t.Error("response: expected", tt.out, "received", response)
+			if !proto.Equal(tt.out.GetStats(), response.GetStats()) {
+				t.Error("statistics: expected", tt.out.GetStats(), "received", response.GetStats())
+			}
+			if err == nil {
+				metadata := response.GetSampleMetadata()
+				if metadata == nil || metadata.CollectionTime == nil || metadata.CollectionTime.CheckValid() != nil ||
+					metadata.GetTickRateHz() != 3300000000 || metadata.GetSampleTicks() != 5 {
+					t.Error("successful QoS statistics must preserve SPDK sample context")
+				}
 			}
 
 			if er, ok := status.FromError(err); ok {
