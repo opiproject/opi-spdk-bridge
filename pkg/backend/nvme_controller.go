@@ -46,12 +46,12 @@ func (s *Server) CreateNvmeRemoteController(_ context.Context, in *pb.CreateNvme
 	volume, ok := s.Volumes.NvmeControllers[in.NvmeRemoteController.Name]
 	if ok {
 		log.Printf("Already existing NvmeRemoteController with id %v", in.NvmeRemoteController.Name)
-		return volume, nil
+		return utils.SecretSafeNvmeRemoteController(volume), nil
 	}
 	// not found, so create a new one
 	response := utils.ProtoClone(in.NvmeRemoteController)
 	s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
-	return response, nil
+	return utils.SecretSafeNvmeRemoteController(response), nil
 }
 
 // DeleteNvmeRemoteController deletes an Nvme remote controller
@@ -108,7 +108,7 @@ func (s *Server) UpdateNvmeRemoteController(_ context.Context, in *pb.UpdateNvme
 	log.Printf("TODO: use resourceID=%v", resourceID)
 	response := utils.ProtoClone(in.NvmeRemoteController)
 	// s.Volumes.NvmeControllers[in.NvmeRemoteController.Name] = response
-	return response, nil
+	return utils.SecretSafeNvmeRemoteController(response), nil
 }
 
 // ListNvmeRemoteControllers lists an Nvme remote controllers
@@ -125,7 +125,7 @@ func (s *Server) ListNvmeRemoteControllers(_ context.Context, in *pb.ListNvmeRem
 
 	Blobarray := []*pb.NvmeRemoteController{}
 	for _, controller := range s.Volumes.NvmeControllers {
-		Blobarray = append(Blobarray, controller)
+		Blobarray = append(Blobarray, utils.SecretSafeNvmeRemoteController(controller))
 	}
 	sortNvmeRemoteControllers(Blobarray)
 
@@ -152,7 +152,7 @@ func (s *Server) GetNvmeRemoteController(_ context.Context, in *pb.GetNvmeRemote
 		return nil, err
 	}
 
-	response := utils.ProtoClone(volume)
+	response := utils.SecretSafeNvmeRemoteController(volume)
 	return response, nil
 }
 

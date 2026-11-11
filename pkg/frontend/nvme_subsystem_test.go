@@ -294,7 +294,7 @@ func TestFrontEnd_CreateNvmeSubsystem(t *testing.T) {
 				testEnv.opiSpdkServer.Nvme.Subsystems[testSubsystemName].Name = testSubsystemName
 			}
 			if tt.out != nil {
-				tt.out = utils.ProtoClone(tt.out)
+				tt.out = utils.SecretSafeNvmeSubsystem(tt.out)
 				tt.out.Name = testSubsystemName
 			}
 

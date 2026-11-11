@@ -36,7 +36,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.InvalidArgument,
-			errMsg:  fmt.Sprintf("Could not create Crypto Key: %v", "0123456789abcdef0123456789abcdef"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			exist:   false,
 		},
 		"valid request with invalid marshal SPDK response": {
@@ -45,7 +45,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":""}`},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "json: cannot unmarshal string into Go value of type spdk.AccelCryptoKeyCreateResult"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			exist:   false,
 		},
 		"valid request with empty SPDK response": {
@@ -54,7 +54,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{""},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "EOF"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			exist:   false,
 		},
 		"valid request with ID mismatch SPDK response": {
@@ -63,7 +63,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "json response ID mismatch"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			exist:   false,
 		},
 		"valid request with error code from SPDK response": {
@@ -72,7 +72,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "json response error: myopierr"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			exist:   false,
 		},
 		"valid request with valid key and invalid bdev response": {
@@ -280,7 +280,7 @@ func TestMiddleEnd_CreateEncryptedVolume(t *testing.T) {
 				testEnv.opiSpdkServer.volumes.encVolumes[encryptedVolumeName] = utils.ProtoClone(&encryptedVolumeWithName)
 			}
 			if tt.out != nil {
-				tt.out = utils.ProtoClone(tt.out)
+				tt.out = utils.SecretSafeEncryptedVolume(tt.out)
 				tt.out.Name = encryptedVolumeName
 			}
 
@@ -404,7 +404,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.InvalidArgument,
-			errMsg:  fmt.Sprintf("Could not create Crypto Key: %v", "0123456789abcdef0123456789abcdef"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			missing: false,
 		},
 		"bdev delete ok ; key delete ok ; key create empty": {
@@ -413,7 +413,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, ""},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "EOF"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			missing: false,
 		},
 		"bdev delete ok ; key delete ok ; key create ID mismatch": {
@@ -422,7 +422,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":0,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "json response ID mismatch"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			missing: false,
 		},
 		"bdev delete ok ; key delete ok ; key create exception": {
@@ -431,7 +431,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":0,"message":""},"result":true}`, `{"id":%d,"error":{"code":1,"message":"myopierr"},"result":false}`},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("accel_crypto_key_create: %v", "json response error: myopierr"),
+			errMsg:  fmt.Sprintf("Could not create Crypto Key: %s", encryptedVolumeID),
 			missing: false,
 		},
 		"bdev delete ok ; key delete ok ; key create ok ; bdev create fails": {
@@ -635,7 +635,7 @@ func TestMiddleEnd_UpdateEncryptedVolume(t *testing.T) {
 			request := &pb.UpdateEncryptedVolumeRequest{EncryptedVolume: tt.in, UpdateMask: tt.mask, AllowMissing: tt.missing}
 			response, err := testEnv.client.UpdateEncryptedVolume(testEnv.ctx, request)
 
-			if !proto.Equal(response, tt.out) {
+			if !proto.Equal(response, utils.SecretSafeEncryptedVolume(tt.out)) {
 				t.Error("response: expected", tt.out, "received", response)
 			}
 
