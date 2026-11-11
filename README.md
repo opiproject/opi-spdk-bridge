@@ -14,6 +14,25 @@
 
 This is a simple SPDK based storage API PoC.
 
+Implemented bdev I/O statistics responses include observation time and SPDK's
+actual `tick_rate`/`ticks` when the clock is reported. This covers AIO, malloc,
+null, encryption, and QoS volume statistics. A missing frequency stays unknown;
+negative clock data fails explicitly. Placeholder/unimplemented statistics are
+not upgraded into measured data by adding metadata.
+Individual JSON clock fields retain their presence: a valid source-tick zero
+does not stand in for an omitted field, and a reported zero frequency is invalid.
+
+SPDK iostat does not identify a trustworthy counter epoch or actual reset/start
+time, so those optional fields remain absent. A bridge restart is not reported
+as a hardware counter reset. Collectors must rebaseline on observable decreases
+and known epoch changes; resets followed by growth between polls may remain
+undetectable when the backend supplies no epoch.
+
+The temporary API fork replacement in `go.mod` is pinned to the sampling-context
+contract under review in opiproject/opi-api#511. Replace it with the corresponding
+upstream module version after that API change merges; it is not an unrelated
+dependency or a claim that the contract has already been released.
+
 * SPDK - container with SPDK app that is running on xPU
 * Server - container with OPI gRPC storage APIs to SPDK json-rpc APIs bridge
 * Client - use [goDPU](https://github.com/opiproject/godpu) for testing of the above server/bridge

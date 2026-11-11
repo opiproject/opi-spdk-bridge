@@ -649,7 +649,7 @@ func TestBackEnd_StatsMallocVolume(t *testing.T) {
 			out:     nil,
 			spdk:    []string{`{"id":%d,"error":{"code":0,"message":""},"result":false}`},
 			errCode: codes.Unknown,
-			errMsg:  fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type spdk.BdevGetIostatResult"),
+			errMsg:  fmt.Sprintf("bdev_get_iostat: %v", "json: cannot unmarshal bool into Go value of type utils.IostatSnapshot"),
 		},
 		"valid request with empty SPDK response": {
 			in:      testMallocVolumeName,
